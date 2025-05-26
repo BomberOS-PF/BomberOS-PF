@@ -1,0 +1,14 @@
+.registrar-bombero-wrapper {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  background-color: black;
+}
+
+
+.form-abm {
+  margin-top: 264px !important;
+}

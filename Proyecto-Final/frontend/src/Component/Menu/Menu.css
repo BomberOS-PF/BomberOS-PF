@@ -1,0 +1,69 @@
+.menu-container {
+  background-color: #111;
+  color: #fff;
+  font-family: 'Segoe UI', sans-serif;
+  max-width: 700px;
+  margin: 3rem auto;
+  padding: 3rem 2rem;
+  border-top: 5px solid #d52b1e;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.menu-container h1 {
+  margin-bottom: 0.5rem;
+}
+
+.menu-container h2 {
+  margin-bottom: 2rem;
+  color: #d52b1e;
+}
+
+.menu-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem; /* Espaciado uniforme entre botones */
+  margin-bottom: 1.5rem;
+}
+
+.menu-buttons .btn {
+  background-color: #b02118;
+  border: none;
+  color: #fff;
+  padding: 0.6rem 1.3rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  min-width: 170px; /* Mismo ancho para todos */
+  text-align: center;
+}
+
+.menu-buttons .btn:hover {
+  background-color: #cd2f1a;
+}
+
+.menu-content {
+  background-color: #222;
+  padding: 1.5rem;
+  border-radius: 6px;
+  min-height: 150px;
+  font-size: 1.1rem;
+  color: #ddd;
+}
+
+.btn-danger.mt-3 {
+  margin-top: 1.5rem !important;
+  background-color: #b02118;
+  border: none;
+  padding: 0.6rem 1.3rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-danger.mt-3:hover {
+  background-color: #cd2f1a;
+}
