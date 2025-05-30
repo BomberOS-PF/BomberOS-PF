@@ -13,10 +13,14 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       {/* <Header /> */}
+
       <main>
         <App />
       </main>
+
       {/* <Footer /> */}
+        {/* <App /> */}
+
     </BrowserRouter>
   </StrictMode>
 )

@@ -57,7 +57,7 @@ const handleSubmit = async (e) => {
 
   return (
     <div className="container-fluid d-flex justify-content-center align-items-center min-vh-100 login-bg">
-      <div className="form-login p-4 shadow rounded text-center w-100" style={{ maxWidth: '600px' }}>
+      <div className="form-login p-4 shadow rounded text-center w-100">
         <img
           src="/img/logo-bomberos.png"
           alt="Logo BomberOS"
@@ -66,7 +66,7 @@ const handleSubmit = async (e) => {
         <h2 className="text-black mb-4">Iniciar Sesión</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3 text-start">
-            <label htmlFor="usuario" className="form-label">Usuario</label>
+            <label htmlFor="usuario" className="text-black form-label">Usuario</label>
             <input
               type="text"
               className="form-control"
@@ -78,7 +78,7 @@ const handleSubmit = async (e) => {
             />
           </div>
           <div className="mb-3 text-start">
-            <label htmlFor="contrasena" className="form-label">Contraseña</label>
+            <label htmlFor="contrasena" className="text-black form-label">Contraseña</label>
             <input
               type="password"
               className="form-control"
