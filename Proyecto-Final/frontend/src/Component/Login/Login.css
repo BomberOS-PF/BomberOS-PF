@@ -1,32 +1,26 @@
-body {
-  background-color: #111;
-  font-family: 'Segoe UI', sans-serif;
-}
-
-.login-bg {
-  background-color: #111;
-}
-
 .form-login {
   background-color: white;
   border-top: 5px solid #d52b1e;
-  border-radius: 8px;
-  padding: 2.5rem;
+  border-radius: 10px;
+  padding: 3.5rem; /* más espacio interno */
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
   width: 100%;
-  max-width: 600px;
+  max-width: 720px; /* lo aumentamos de 600px a 720px */
   margin: 0 auto;
 }
 
 .form-label {
   font-weight: 600;
-  color: #000;
+  font-size: 1rem; /* fuente más grande */
 }
 
 .form-control {
   background-color: #fff;
   border: 1px solid #444;
   color: #000;
+  font-size: 1rem;
+  height: 50px; /* altura más cómoda */
+  padding: 0.75rem;
 }
 
 .form-control::placeholder {
@@ -36,6 +30,8 @@ body {
 .btn-danger {
   background-color: #b02118;
   border-color: #cd2f1a;
+  font-size: 1.05rem; /* botón más grande */
+  height: 50px;
 }
 
 .btn-danger:hover {
@@ -44,16 +40,17 @@ body {
 }
 
 .logo-bomberos {
-  width: 120px;
+  width: 150px; /* logo más grande */
   height: auto;
   display: block;
-  margin: 0 auto 1.5rem;
+  margin: 0 auto 2rem;
 }
 
 .btn-link.recuperar-link {
   color: #b02118;
   font-weight: 600;
   text-decoration: none;
+  font-size: 0.95rem;
   cursor: pointer;
 }
 
