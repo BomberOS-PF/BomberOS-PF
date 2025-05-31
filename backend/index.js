@@ -21,7 +21,7 @@ app.post('/login', async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM login WHERE user = ? AND pass = ?',
+      'SELECT * FROM usuario WHERE usuario = ? AND contrasena = ?',
       [usuario, contrasena]
     )
 
