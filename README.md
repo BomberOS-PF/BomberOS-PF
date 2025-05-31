@@ -19,5 +19,3 @@ Abrir [http://localhost:xxxx] para ver la app en el navegador.
 
 La página se refresca al realizar cambios.
 Algunos errores y warnings aparecerán en la consola/terminal.
-
-## Integración con Twilio
