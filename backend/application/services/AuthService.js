@@ -1,4 +1,4 @@
-import { AuthRepository } from '../infrastructure/repositories/AuthRepository.js'
+import { AuthRepository } from '../../infrastructure/repositories/AuthRepository.js'
 
 export class AuthService {
   constructor() {

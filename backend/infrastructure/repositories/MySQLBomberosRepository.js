@@ -1,6 +1,6 @@
-import { IBomberosRepository } from '../domain/repositories/IBomberosRepository.js'
-import { Bombero } from '../domain/entities/Bombero.js'
-import pool from '../db.js'
+import { IBomberosRepository } from '../../domain/repositories/IBomberosRepository.js'
+import { Bombero } from '../../domain/entities/Bombero.js'
+import pool from '../../db.js'
 
 /**
  * Implementación MySQL del repositorio de bomberos
