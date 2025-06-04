@@ -1,0 +1,37 @@
+{
+  "name": "bomberos-pf",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión de Bomberos - Proyecto Final con Arquitectura Hexagonal",
+  "type": "module",
+  "scripts": {
+    "start": "./start-app.sh",
+    "dev": "./start-app.sh",
+    "stop": "./stop-app.sh",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm run dev",
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "test:api": "curl -s http://localhost:3000/health | jq . || curl -s http://localhost:3000/health",
+    "test:frontend": "curl -s http://localhost:5173 > /dev/null && echo '✅ Frontend OK' || echo '❌ Frontend no disponible'",
+    "test:all": "npm run test:api && npm run test:frontend",
+    "logs:backend": "cd backend && npm start",
+    "logs:frontend": "cd frontend && npm run dev"
+  },
+  "keywords": [
+    "bomberos",
+    "hexagonal-architecture",
+    "react",
+    "express",
+    "mysql",
+    "nodejs"
+  ],
+  "author": "Octavio Garcia",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+} 
