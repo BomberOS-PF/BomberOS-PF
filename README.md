@@ -1,23 +1,116 @@
-# Proyecto-Final
+# 🚒 BomberOS - Sistema de Gestión de Bomberos
 
-## Tecnologías utilizadas
+Sistema completo de gestión de bomberos con **Arquitectura Hexagonal** (Ports & Adapters).
 
-Este proyecto fue creado con [Create React App](https://create-react-app.dev/).
+## 🏗️ Arquitectura
 
-### Correr la aplicación
-Instalar Node.js
+- **Backend**: Node.js + Express + MySQL (Arquitectura Hexagonal)
+- **Frontend**: React + Vite + Bootstrap
+- **Base de Datos**: MySQL (Railway)
 
-Abrir la consola/terminal y ejecutar el siguiente comando en la carpeta del proyecto:
+## 🚀 Inicio Rápido
 
+### Opción 1: Script Automático (Recomendado)
+```bash
+# Iniciar backend y frontend juntos
+./start-app.sh
 ```
-npm install
+
+### Opción 2: Comandos NPM
+```bash
+# Instalar dependencias de ambos proyectos
+npm run install:all
+
+# Iniciar ambos servicios
+npm start
+# o
 npm run dev
 ```
 
-Corre la aplicación en modo desarrollador.
-Abrir [http://localhost:xxxx] para ver la app en el navegador.
+### Opción 3: Manual
+```bash
+# Terminal 1 - Backend
+cd backend
+npm start
 
-La página se refresca al realizar cambios.
-Algunos errores y warnings aparecerán en la consola/terminal.
+# Terminal 2 - Frontend
+cd frontend  
+npm run dev
+```
 
-##twilio api
+## 📱 URLs del Sistema
+
+- **Frontend (React)**: http://localhost:5173
+- **Backend API**: http://localhost:3000
+- **Health Check**: http://localhost:3000/health
+
+## 🎯 Funcionalidades
+
+- ✅ **ABMC completo** de bomberos
+- ✅ **Formulario React** conectado a API
+- ✅ **Validación** en frontend y backend
+- ✅ **Arquitectura Hexagonal** limpia y escalable
+- ✅ **Base de datos MySQL** con constrains
+- ✅ **CORS configurado** para desarrollo
+
+## 📋 Campos del Bombero
+
+- **Información Personal**: Nombre completo, DNI, domicilio
+- **Contacto**: Correo electrónico, teléfono
+- **Profesional**: Legajo, antigüedad, rango
+- **Médico**: Ficha médica, grupo sanguíneo, apto psicológico
+- **Adicional**: Es del plan (guardias pagas)
+
+## 🛠️ Comandos Útiles
+
+```bash
+# Probar API
+npm run test:api
+curl http://localhost:3000/health
+
+# Detener servicios
+npm run stop
+
+# Solo backend
+npm run start:backend
+
+# Solo frontend  
+npm run start:frontend
+```
+
+## 🏗️ Estructura del Proyecto
+
+```
+BomberOS-PF/
+├── backend/                     # API Node.js
+│   ├── domain/                  # Entidades y puertos
+│   ├── application/             # Casos de uso
+│   ├── infrastructure/          # Adaptadores
+│   └── index.js                 # Servidor Express
+├── frontend/                    # App React
+│   └── src/Component/RegistrarBombero/
+└── start-app.sh                 # Script de inicio
+```
+
+## 🎨 Tecnologías Utilizadas
+
+**Backend:**
+- Node.js + Express
+- MySQL2
+- CORS
+- Arquitectura Hexagonal
+
+**Frontend:**
+- React 19
+- Vite
+- Bootstrap 5
+- React Router DOM
+
+## 👨‍💻 Desarrollo
+
+El proyecto está estructurado para ser fácilmente escalable:
+- Agregar nuevos módulos siguiendo el patrón hexagonal
+- Cada funcionalidad tiene sus propios puertos y adaptadores
+- Separación clara entre dominio, aplicación e infraestructura
+
+**Desarrollado con Arquitectura Hexagonal** ⬡ **Node.js + React**
