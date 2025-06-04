@@ -94,7 +94,7 @@ const CargarIncidente = () => {
             <input type="text" className="form-control" id="lugar" placeholder="Ej: Av. Siempre Viva 742, km 12" required onChange={handleChange} />
           </div>
 
-          <button type="submit" className="btn btn-danger w-100">Cargar Incidente</button>
+          <button type="submit" className="btn btn-danger w-100">Notificar</button>
           <button type="button" className="btn btn-secondary w-100 mt-2" onClick={() => navigate('/')}>Volver</button>
         </form>
       </div>
