@@ -1,6 +1,6 @@
 # 🚒 BomberOS - Sistema de Gestión de Bomberos
 
-Sistema completo de gestión de bomberos con **Arquitectura Hexagonal** (Ports & Adapters).
+Sistema completo de gestión de bomberos con **Arquitectura Hexagonal**.
 
 ## 🏗️ Arquitectura
 
@@ -10,13 +10,7 @@ Sistema completo de gestión de bomberos con **Arquitectura Hexagonal** (Ports &
 
 ## 🚀 Inicio Rápido
 
-### Opción 1: Script Automático (Recomendado)
-```bash
-# Iniciar backend y frontend juntos
-./start-app.sh
-```
-
-### Opción 2: Comandos NPM
+### Comandos NPM
 ```bash
 # Instalar dependencias de ambos proyectos
 npm run install:all
@@ -24,17 +18,6 @@ npm run install:all
 # Iniciar ambos servicios
 npm start
 # o
-npm run dev
-```
-
-### Opción 3: Manual
-```bash
-# Terminal 1 - Backend
-cd backend
-npm start
-
-# Terminal 2 - Frontend
-cd frontend  
 npm run dev
 ```
 
@@ -61,22 +44,6 @@ npm run dev
 - **Médico**: Ficha médica, grupo sanguíneo, apto psicológico
 - **Adicional**: Es del plan (guardias pagas)
 
-## 🛠️ Comandos Útiles
-
-```bash
-# Probar API
-npm run test:api
-curl http://localhost:3000/health
-
-# Detener servicios
-npm run stop
-
-# Solo backend
-npm run start:backend
-
-# Solo frontend  
-npm run start:frontend
-```
 
 ## 🏗️ Estructura del Proyecto
 
