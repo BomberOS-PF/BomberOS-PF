@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Menu.css'
+import CargarIncidente from '../CargarIncidente/CargarIncidente' // asegurate que la ruta sea correcta
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [opcionSeleccionada, setOpcionSeleccionada] = useState(null)
 
   const handleLogOut = () => {
     setUser('')
@@ -53,8 +55,12 @@ const Menu = ({ user, setUser }) => {
             key={path}
             className="sidebar-button"
             onClick={() => {
-              navigate(path)
               closeSidebar()
+              if (label === 'Cargar Incidente') {
+                setOpcionSeleccionada('cargar-incidente')
+              } else {
+                navigate(path)
+              }
             }}
           >
             {label}
@@ -70,7 +76,14 @@ const Menu = ({ user, setUser }) => {
         <div className="menu-container">
           <h1>Bienvenido</h1>
           <h2>{user.user}</h2>
-          <p>Seleccioná una opción desde el menú lateral izquierdo.</p>
+
+          {!opcionSeleccionada && (
+            <p>Seleccioná una opción desde el menú lateral izquierdo.</p>
+          )}
+
+          {opcionSeleccionada === 'cargar-incidente' && (
+            <CargarIncidente onVolver={() => setOpcionSeleccionada(null)} />
+          )}
         </div>
       </div>
     </div>

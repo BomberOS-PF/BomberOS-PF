@@ -1,10 +1,8 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import './CargarIncidente.css'
 
-const CargarIncidente = () => {
+const CargarIncidente = ({ onVolver }) => {
   const [formData, setFormData] = useState({})
-  const navigate = useNavigate()
 
   const handleChange = (e) => {
     const { id, value } = e.target
@@ -23,8 +21,8 @@ const CargarIncidente = () => {
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label htmlFor="persona" className="form-label">Persona que carga</label>
-            <select className="form-select" id="persona" required onChange={handleChange}>
-              <option disabled selected>Seleccione persona</option>
+            <select className="form-select" id="persona" required onChange={handleChange} defaultValue="">
+              <option disabled value="">Seleccione persona</option>
               <option>Jefe</option>
               <option>Oficial</option>
               <option>Subteniente</option>
@@ -37,8 +35,8 @@ const CargarIncidente = () => {
 
           <div className="mb-3">
             <label htmlFor="tipoSiniestro" className="form-label">Tipo de Siniestro</label>
-            <select className="form-select" id="tipoSiniestro" required onChange={handleChange}>
-              <option disabled selected>Seleccione tipo</option>
+            <select className="form-select" id="tipoSiniestro" required onChange={handleChange} defaultValue="">
+              <option disabled value="">Seleccione tipo</option>
               <option>Accidente</option>
               <option>Factores Climáticos</option>
               <option>Incendio Estructural</option>
@@ -78,8 +76,8 @@ const CargarIncidente = () => {
 
           <div className="mb-3">
             <label htmlFor="localizacion" className="form-label">Localización</label>
-            <select className="form-select" id="localizacion" required onChange={handleChange}>
-              <option disabled selected>Seleccione localización</option>
+            <select className="form-select" id="localizacion" required onChange={handleChange} defaultValue="">
+              <option disabled value="">Seleccione localización</option>
               <option>Despeñaderos</option>
               <option>Zona Rural</option>
               <option>Zona Urbana</option>
@@ -95,7 +93,7 @@ const CargarIncidente = () => {
           </div>
 
           <button type="submit" className="btn btn-danger w-100">Notificar</button>
-          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={() => navigate('/')}>Volver</button>
+          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={onVolver}>Volver</button>
         </form>
       </div>
     </div>
