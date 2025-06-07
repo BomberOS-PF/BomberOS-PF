@@ -1,17 +1,27 @@
 import { useState } from 'react'
 import './CargarIncidente.css'
 
-const CargarIncidente = ({ onVolver }) => {
+const CargarIncidente = ({ onVolver, onNotificar }) => {
   const [formData, setFormData] = useState({})
 
   const handleChange = (e) => {
     const { id, value } = e.target
     setFormData(prev => ({ ...prev, [id]: value }))
   }
-
+  
   const handleSubmit = (e) => {
     e.preventDefault()
-    console.log(formData)
+
+    const id = Date.now() // más adelante reemplazalo por el ID real del backend
+    const datosConId = { ...formData, id }
+
+    if (onNotificar) {
+      onNotificar(formData.tipoSiniestro, datosConId)
+    }
+
+    if (onVolver) {
+      onVolver()
+    }
   }
 
   return (
@@ -40,9 +50,9 @@ const CargarIncidente = ({ onVolver }) => {
                 <option>Accidente</option>
                 <option>Factores Climáticos</option>
                 <option>Incendio Estructural</option>
+                <option>Incendio Forestal</option>
                 <option>Material Peligroso</option>
                 <option>Rescate</option>
-                <option>Servicios Especiales / Otros</option>
               </select>
             </div>
           </div>

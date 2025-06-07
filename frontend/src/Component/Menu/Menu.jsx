@@ -5,11 +5,13 @@ import CargarIncidente from '../CargarIncidente/CargarIncidente'
 import RegistrarBombero from '../RegistrarBombero/RegistrarBombero'
 import RegistrarUsuario from '../RegistrarUsuario/RegistrarUsuario'
 import RegistrarRol from '../RegistrarRol/RegistrarRol'
+import BurbujaFormulario from '../BurbujaFormulario/BurbujaFormulario'
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [opcionSeleccionada, setOpcionSeleccionada] = useState(null)
+  const [burbujas, setBurbujas] = useState([])
 
   const handleLogOut = () => {
     setUser('')
@@ -24,22 +26,37 @@ const Menu = ({ user, setUser }) => {
     setSidebarOpen(false)
   }
 
+  const agregarBurbuja = (tipo, datosPrevios) => {
+    const id = datosPrevios?.id || Date.now()
+    const yaExiste = burbujas.find(b => b.id === id)
+    if (!yaExiste) {
+      const nueva = { id, tipo, datosPrevios, minimizada: false }
+      setBurbujas(prev => [...prev, nueva])
+    }
+    setOpcionSeleccionada(null)
+  }
+
+  const cerrarBurbuja = (id) => {
+    setBurbujas(prev => prev.filter(b => b.id !== id))
+  }
+
+  const toggleMinimizada = (id) => {
+    setBurbujas(prev => prev.map(b =>
+      b.id === id ? { ...b, minimizada: !b.minimizada } : b
+    ))
+  }
+
   const items = [
     { key: 'cargar-incidente', label: 'Cargar Incidente' },
     { key: 'registrar-bombero', label: 'Registrar Bombero' },
     { key: 'registrar-usuario', label: 'Registrar Usuario' },
     { key: 'registrar-rol', label: 'Registrar Rol' }
-    // Agregá más formularios internos si querés que se comporten igual
   ]
 
   return (
     <div className="sidebar-container">
-      {/* Botón hamburguesa */}
-      <button className="hamburger-btn d-lg-none" onClick={toggleSidebar}>
-        ☰
-      </button>
+      <button className="hamburger-btn d-lg-none" onClick={toggleSidebar}>☰</button>
 
-      {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header d-flex justify-content-between align-items-center">
           <span>Menú</span>
@@ -54,12 +71,9 @@ const Menu = ({ user, setUser }) => {
               closeSidebar()
               setOpcionSeleccionada(key)
             }}
-          >
-            {label}
-          </button>
+          >{label}</button>
         ))}
 
-        {/* Otros componentes que se abren por ruta */}
         <button onClick={() => navigate('/accidente-transito')} className="sidebar-button">Accidente de Tránsito</button>
         <button onClick={() => navigate('/factor-climatico')} className="sidebar-button">Factores Climáticos</button>
         <button onClick={() => navigate('/incendio-estructural')} className="sidebar-button">Incendio Estructural</button>
@@ -68,13 +82,9 @@ const Menu = ({ user, setUser }) => {
         <button onClick={() => navigate('/rescate')} className="sidebar-button">Rescate</button>
         <button onClick={() => navigate('/vehiculo-involucrado')} className="sidebar-button">Vehículo Involucrado</button>
         <button onClick={() => navigate('/participacion-incidente')} className="sidebar-button">Participación</button>
-
-        <button className="sidebar-button logout" onClick={handleLogOut}>
-          Cerrar sesión
-        </button>
+        <button className="sidebar-button logout" onClick={handleLogOut}>Cerrar sesión</button>
       </aside>
 
-      {/* Contenido */}
       <div className="menu-content-wrapper">
         {opcionSeleccionada === null ? (
           <div className="menu-container">
@@ -85,7 +95,10 @@ const Menu = ({ user, setUser }) => {
         ) : (
           <div className="form-wrapper">
             {opcionSeleccionada === 'cargar-incidente' && (
-              <CargarIncidente onVolver={() => setOpcionSeleccionada(null)} />
+              <CargarIncidente
+                onVolver={() => setOpcionSeleccionada(null)}
+                onNotificar={agregarBurbuja}
+              />
             )}
 
             {opcionSeleccionada === 'registrar-bombero' && (
@@ -102,6 +115,19 @@ const Menu = ({ user, setUser }) => {
           </div>
         )}
       </div>
+
+      {burbujas.map((b, index) => (
+        <div key={b.id} style={{ position: 'fixed', right: `${20 + index * 370}px`, bottom: '0', zIndex: 9999 }}>
+          <BurbujaFormulario
+            id={b.id}
+            tipo={b.tipo}
+            datosPrevios={b.datosPrevios}
+            minimizada={b.minimizada}
+            onCerrar={cerrarBurbuja}
+            onToggleMinimizada={toggleMinimizada}
+          />
+        </div>
+      ))}
     </div>
   )
 }
