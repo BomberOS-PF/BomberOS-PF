@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './IncendioEstructural.css'
 
-const IncendioEstructural = ({ datosPrevios = {}, onMinimizar }) => {
+const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
   const incidenteId = datosPrevios.id || 'temp'
   const storageKey = `incendioEstructural-${incidenteId}`
 
@@ -35,19 +35,20 @@ const IncendioEstructural = ({ datosPrevios = {}, onMinimizar }) => {
   const guardarLocalmente = () => {
     localStorage.setItem(storageKey, JSON.stringify(formData))
     alert('Datos guardados localmente. Podés continuar después.')
-    if (onMinimizar) onMinimizar()
   }
 
-  const handleSubmit = (e) => {
+  const handleFinalizar = (e) => {
     e.preventDefault()
-    if (onFinalizar) onFinalizar(formData)
+    localStorage.setItem(storageKey, JSON.stringify(formData))
+    console.log('Datos enviados:', formData)
+    if (onFinalizar) onFinalizar()
   }
 
   return (
     <div className="container d-flex justify-content-center align-items-center">
       <div className="form-abm p-4 shadow rounded">
         <h2 className="text-white text-center mb-4">Incendio Estructural</h2>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleFinalizar}>
           <div className="mb-3">
             <label className="form-label">Nombre del comercio/casa de familia</label>
             <input type="text" className="form-control" id="nombreLugar" value={formData.nombreLugar || ''} onChange={handleChange} />
