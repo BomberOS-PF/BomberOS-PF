@@ -7,6 +7,7 @@ import RegistrarUsuario from '../RegistrarUsuario/RegistrarUsuario'
 import RegistrarRol from '../RegistrarRol/RegistrarRol'
 import BurbujaFormulario from '../BurbujaFormulario/BurbujaFormulario'
 import AccidenteTransito from '../AccidenteTransito/AccidenteTransito'
+import FactorClimatico from '../FactorClimatico/FactorClimatico'
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
@@ -56,7 +57,8 @@ const Menu = ({ user, setUser }) => {
     switch (burbuja.tipo) {
       case 'Accidente':
         return <AccidenteTransito datosPrevios={burbuja.datosPrevios} />
-      // Acá podés agregar los demás tipos
+      case 'Factores Climáticos':
+        return <FactorClimatico datosPrevios={burbuja.datosPrevios} />
       default:
         return <p>Formulario no encontrado</p>
     }

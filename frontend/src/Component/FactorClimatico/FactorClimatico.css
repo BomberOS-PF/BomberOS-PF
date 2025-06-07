@@ -1,14 +1,13 @@
 .form-abm {
-  background-color: #1d1d1d;
-  border-top: 5px solid #1e90ff;
+  background-color: red;
+  border-top: 5px solid #1e90ff; /* Azul para diferenciar tipo */
   padding: 2rem 2.5rem;
   border-radius: 0 0 10px 10px;
-  max-width: 700px;
-  width: 90%;
+  width: 100%;
   box-sizing: border-box;
   color: #fff;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.7);
-  margin: auto;
+  margin-top: 0 !important;
 }
 
 .form-abm h2 {
@@ -65,9 +64,26 @@
 .btn-secondary {
   background-color: #6c757d;
   border: none;
-  margin-top: 0.5rem;
+  padding: 0.6rem 1rem;
+  font-size: 1.1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 100%;
 }
 
 .btn-secondary:hover {
   background-color: #5a6268;
+}
+
+.row > .col,
+.row > .col-md-4,
+.row > .col-md-6 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.row {
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
 }
