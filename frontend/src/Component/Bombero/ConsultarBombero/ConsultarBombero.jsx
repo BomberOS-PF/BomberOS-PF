@@ -79,6 +79,26 @@ const ConsultarBombero = ({ onVolver }) => {
     }
   }
 
+  const eliminarBombero = async (id) => {
+    if (!window.confirm('¿Estás seguro de que querés eliminar este bombero?')) return
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/bomberos/${id}`, {
+        method: 'DELETE'
+      })
+      if (res.ok) {
+        setMensaje('Bombero eliminado correctamente')
+        fetchBomberos()
+      } else {
+        const error = await res.json()
+        setMensaje(error.error || 'No se pudo eliminar el bombero')
+      }
+    } catch (error) {
+      console.error('Error al eliminar bombero:', error)
+      setMensaje('Error de conexión')
+    }
+  }
+
   const volverListado = () => {
     setBomberoSeleccionado(null)
     setModoEdicion(false)
@@ -86,69 +106,87 @@ const ConsultarBombero = ({ onVolver }) => {
   }
 
   return (
-    <div className="container mt-4">
-      <h2 className="text-white mb-3">Consultar Bomberos</h2>
+    <>
+      <div className="container mt-4">
+        <h2 className="text-white mb-3">Consultar Bomberos</h2>
 
-      {mensaje && <div className="alert alert-info">{mensaje}</div>}
+        {mensaje && <div className="alert alert-info">{mensaje}</div>}
 
-      {!bomberoSeleccionado && (
-        <>
-          <div className="mb-3 d-flex">
-            <input
+        {!bomberoSeleccionado && (
+          <>
+            <div className="mb-3 d-flex">
+              <input
                 type="text"
                 className="form-control me-2 buscador-dni"
                 placeholder="Buscar por DNI"
                 value={dniBusqueda}
                 onChange={(e) => setDniBusqueda(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') buscarPorDNI() }}
-            />
-            <button className="btn btn-primary btn-sm me-2" onClick={buscarPorDNI}>Buscar</button>
-            <button className="btn btn-secondary btn-limpiar" onClick={limpiarBusqueda}>Limpiar</button>
-          </div>
-
-          <table className="table table-dark table-hover table-bordered">
-            <thead>
-              <tr>
-                <th>Nombre completo</th>
-                <th>DNI</th>
-                <th>Teléfono</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.isArray(resultadosFiltrados) && resultadosFiltrados.map((b) => (
-                <tr key={b.id}>
-                  <td>{b.nombreCompleto}</td>
-                  <td>{b.DNI}</td>
-                  <td>{b.telefono}</td>
-                  <td>
-                    <button className="btn btn-outline-light btn-sm" onClick={() => seleccionarBombero(b)}>
-                      Ver detalles
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
-      )}
-
-      {bomberoSeleccionado && (
-        <>
-          <FormularioBombero
-            modo={modoEdicion ? 'edicion' : 'consulta'}
-            datosIniciales={bomberoSeleccionado}
-            onSubmit={guardarCambios}
-            onVolver={volverListado}
-          />
-          {!modoEdicion && (
-            <div className="text-center mt-2">
-              <button className="btn btn-warning" onClick={activarEdicion}>Editar datos</button>
+              />
+              <button className="btn btn-primary btn-sm me-2" onClick={buscarPorDNI}>Buscar</button>
+              <button className="btn btn-secondary btn-limpiar" onClick={limpiarBusqueda}>Limpiar</button>
             </div>
-          )}
-        </>
-      )}
-    </div>
+
+            <table className="table table-dark table-hover table-bordered">
+              <thead>
+                <tr>
+                  <th>Nombre completo</th>
+                  <th>DNI</th>
+                  <th>Teléfono</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.isArray(resultadosFiltrados) && resultadosFiltrados.map((b) => (
+                  <tr key={b.id}>
+                    <td>{b.nombreCompleto}</td>
+                    <td>{b.DNI}</td>
+                    <td>{b.telefono}</td>
+                    <td>
+                      <button
+                        className="btn btn-outline-light btn-sm me-2"
+                        onClick={() => seleccionarBombero(b)}
+                      >
+                        Ver detalles
+                      </button>
+                      <button
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={() => eliminarBombero(b.id)}
+                        title="Eliminar bombero"
+                      >
+                        ❌
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+
+        {bomberoSeleccionado && (
+          <>
+            <FormularioBombero
+              modo={modoEdicion ? 'edicion' : 'consulta'}
+              datosIniciales={bomberoSeleccionado}
+              onSubmit={guardarCambios}
+              onVolver={volverListado}
+            />
+            {!modoEdicion && (
+              <div className="text-center mt-2">
+                <button className="btn btn-warning" onClick={activarEdicion}>Editar datos</button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      <div className="text-center mt-4">
+        <button className="btn btn-light" onClick={onVolver}>
+          Volver
+        </button>
+      </div>
+    </>
   )
 }
 
