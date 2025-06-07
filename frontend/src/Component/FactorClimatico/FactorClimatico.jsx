@@ -1,10 +1,21 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './FactorClimatico.css'
 
-const FactorClimatico = ({ datosPrevios = {} }) => {
-  const [formData, setFormData] = useState({
-    ...datosPrevios
+const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
+  const incidenteId = datosPrevios.id || 'temp'
+  const storageKey = `factorClimatico-${incidenteId}`
+
+  const [formData, setFormData] = useState(() => {
+    const guardado = localStorage.getItem(storageKey)
+    return guardado ? JSON.parse(guardado) : {}
   })
+
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      ...datosPrevios
+    }))
+  }, [datosPrevios])
 
   const handleChange = (e) => {
     const { id, value, type, checked } = e.target
@@ -15,20 +26,22 @@ const FactorClimatico = ({ datosPrevios = {} }) => {
   }
 
   const guardarLocalmente = () => {
-    localStorage.setItem(`factorClimatico-${formData.id || 'temp'}`, JSON.stringify(formData))
+    localStorage.setItem(storageKey, JSON.stringify(formData))
     alert('Datos guardados localmente. Podés continuar después.')
   }
 
-  const handleSubmit = (e) => {
+  const handleFinalizar = (e) => {
     e.preventDefault()
-    if (onFinalizar) onFinalizar(formData)
+    localStorage.setItem(storageKey, JSON.stringify(formData))
+    console.log('Datos enviados:', formData)
+    if (onFinalizar) onFinalizar()
   }
 
   return (
     <div className="container d-flex justify-content-center align-items-center">
       <div className="form-abm p-4 shadow rounded">
         <h2 className="text-white text-center mb-4">Factores Climáticos</h2>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleFinalizar}>
           <div className="row mb-3">
             <div className="col">
               <label htmlFor="superficie" className="form-label">Superficie evacuada</label>
