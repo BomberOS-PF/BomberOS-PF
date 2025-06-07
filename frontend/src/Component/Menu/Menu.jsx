@@ -4,6 +4,7 @@ import './Menu.css'
 import CargarIncidente from '../CargarIncidente/CargarIncidente'
 import RegistrarBombero from '../RegistrarBombero/RegistrarBombero'
 import RegistrarUsuario from '../RegistrarUsuario/RegistrarUsuario'
+import RegistrarRol from '../RegistrarRol/RegistrarRol'
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
@@ -26,7 +27,8 @@ const Menu = ({ user, setUser }) => {
   const items = [
     { key: 'cargar-incidente', label: 'Cargar Incidente' },
     { key: 'registrar-bombero', label: 'Registrar Bombero' },
-    { key: 'registrar-usuario', label: 'Registrar Usuario' }
+    { key: 'registrar-usuario', label: 'Registrar Usuario' },
+    { key: 'registrar-rol', label: 'Registrar Rol' }
     // Agregá más formularios internos si querés que se comporten igual
   ]
 
@@ -56,16 +58,6 @@ const Menu = ({ user, setUser }) => {
             {label}
           </button>
         ))}
-
-        <button
-          className="sidebar-button"
-          onClick={() => {
-            closeSidebar()
-            navigate('/registrar-rol')
-          }}
-        >
-          Registrar Rol
-        </button>
 
         {/* Otros componentes que se abren por ruta */}
         <button onClick={() => navigate('/accidente-transito')} className="sidebar-button">Accidente de Tránsito</button>
@@ -102,6 +94,10 @@ const Menu = ({ user, setUser }) => {
 
             {opcionSeleccionada === 'registrar-usuario' && (
               <RegistrarUsuario onVolver={() => setOpcionSeleccionada(null)} />
+            )}
+
+            {opcionSeleccionada === 'registrar-rol' && (
+              <RegistrarRol onVolver={() => setOpcionSeleccionada(null)} />
             )}
           </div>
         )}
