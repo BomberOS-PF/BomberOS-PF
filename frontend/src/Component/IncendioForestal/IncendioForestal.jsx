@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './IncendioForestal.css'
 
-const IncendioForestal = ({ datosPrevios = {}, onMinimizar }) => {
+const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
   const incidenteId = datosPrevios.id || 'temp'
   const storageKey = `incendioForestal-${incidenteId}`
 
@@ -22,12 +22,13 @@ const IncendioForestal = ({ datosPrevios = {}, onMinimizar }) => {
   const guardarLocalmente = () => {
     localStorage.setItem(storageKey, JSON.stringify(formData))
     alert('Datos guardados localmente. Podés continuar después.')
-    if (onMinimizar) onMinimizar()
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (onFinalizar) onFinalizar(formData)
+    localStorage.setItem(storageKey, JSON.stringify(formData))
+    console.log('Datos enviados:', formData)
+    if (onFinalizar) onFinalizar()
   }
 
   return (

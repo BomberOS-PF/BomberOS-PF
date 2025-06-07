@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import './Rescate.css'
 
-const Rescate = ({ datosPrevios = {}, onMinimizar }) => {
+const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
   const incidenteId = datosPrevios.id || 'temp'
   const storageKey = `rescate-${incidenteId}`
 
   const [formData, setFormData] = useState(() => {
     const guardado = localStorage.getItem(storageKey)
-    return guardado ? JSON.parse(guardado) : {}
+    return guardado ? JSON.parse(guardado) : { ...datosPrevios }
   })
 
   const [mostrarOtroLugar, setMostrarOtroLugar] = useState(formData.lugar === 'Otro')
@@ -30,12 +30,12 @@ const Rescate = ({ datosPrevios = {}, onMinimizar }) => {
   const guardarLocalmente = () => {
     localStorage.setItem(storageKey, JSON.stringify(formData))
     alert('Datos guardados localmente. Podés continuar después.')
-    if (onMinimizar) onMinimizar()
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (onFinalizar) onFinalizar(formData)
+    localStorage.setItem(storageKey, JSON.stringify(formData))
+    if (onFinalizar) onFinalizar()
   }
 
   return (
