@@ -6,31 +6,28 @@ import RegistrarBombero from '../RegistrarBombero/RegistrarBombero'
 import RegistrarUsuario from '../RegistrarUsuario/RegistrarUsuario'
 import RegistrarRol from '../RegistrarRol/RegistrarRol'
 import BurbujaFormulario from '../BurbujaFormulario/BurbujaFormulario'
+import AccidenteTransito from '../AccidenteTransito/AccidenteTransito'
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [opcionSeleccionada, setOpcionSeleccionada] = useState(null)
   const [burbujas, setBurbujas] = useState([])
+  const [burbujaExpandida, setBurbujaExpandida] = useState(null)
 
   const handleLogOut = () => {
     setUser('')
     navigate('/login')
   }
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen)
-  }
-
-  const closeSidebar = () => {
-    setSidebarOpen(false)
-  }
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen)
+  const closeSidebar = () => setSidebarOpen(false)
 
   const agregarBurbuja = (tipo, datosPrevios) => {
     const id = datosPrevios?.id || Date.now()
     const yaExiste = burbujas.find(b => b.id === id)
     if (!yaExiste) {
-      const nueva = { id, tipo, datosPrevios, minimizada: false }
+      const nueva = { id, tipo, datosPrevios, minimizada: true }
       setBurbujas(prev => [...prev, nueva])
     }
     setOpcionSeleccionada(null)
@@ -38,12 +35,31 @@ const Menu = ({ user, setUser }) => {
 
   const cerrarBurbuja = (id) => {
     setBurbujas(prev => prev.filter(b => b.id !== id))
+    if (burbujaExpandida === id) setBurbujaExpandida(null)
   }
 
   const toggleMinimizada = (id) => {
-    setBurbujas(prev => prev.map(b =>
-      b.id === id ? { ...b, minimizada: !b.minimizada } : b
-    ))
+    setBurbujas(prev => prev.map(b => {
+      if (b.id === id) {
+        const nuevaMin = !b.minimizada
+        setBurbujaExpandida(nuevaMin ? null : id)
+        return { ...b, minimizada: nuevaMin }
+      }
+      return { ...b, minimizada: true }
+    }))
+  }
+
+  const renderFormularioExpandido = () => {
+    const burbuja = burbujas.find(b => b.id === burbujaExpandida)
+    if (!burbuja) return null
+
+    switch (burbuja.tipo) {
+      case 'Accidente':
+        return <AccidenteTransito datosPrevios={burbuja.datosPrevios} />
+      // Acá podés agregar los demás tipos
+      default:
+        return <p>Formulario no encontrado</p>
+    }
   }
 
   const items = [
@@ -64,29 +80,20 @@ const Menu = ({ user, setUser }) => {
         </div>
 
         {items.map(({ key, label }) => (
-          <button
-            key={key}
-            className="sidebar-button"
-            onClick={() => {
-              closeSidebar()
-              setOpcionSeleccionada(key)
-            }}
-          >{label}</button>
+          <button key={key} className="sidebar-button" onClick={() => {
+            closeSidebar()
+            setOpcionSeleccionada(key)
+            setBurbujaExpandida(null)
+          }}>{label}</button>
         ))}
 
-        <button onClick={() => navigate('/accidente-transito')} className="sidebar-button">Accidente de Tránsito</button>
-        <button onClick={() => navigate('/factor-climatico')} className="sidebar-button">Factores Climáticos</button>
-        <button onClick={() => navigate('/incendio-estructural')} className="sidebar-button">Incendio Estructural</button>
-        <button onClick={() => navigate('/incendio-forestal')} className="sidebar-button">Incendio Forestal</button>
-        <button onClick={() => navigate('/material-peligroso')} className="sidebar-button">Material Peligroso</button>
-        <button onClick={() => navigate('/rescate')} className="sidebar-button">Rescate</button>
-        <button onClick={() => navigate('/vehiculo-involucrado')} className="sidebar-button">Vehículo Involucrado</button>
-        <button onClick={() => navigate('/participacion-incidente')} className="sidebar-button">Participación</button>
         <button className="sidebar-button logout" onClick={handleLogOut}>Cerrar sesión</button>
       </aside>
 
       <div className="menu-content-wrapper">
-        {opcionSeleccionada === null ? (
+        {burbujaExpandida ? (
+          <div className="form-wrapper">{renderFormularioExpandido()}</div>
+        ) : opcionSeleccionada === null ? (
           <div className="menu-container">
             <h1>Bienvenido</h1>
             <h2>{user.user}</h2>
@@ -100,15 +107,12 @@ const Menu = ({ user, setUser }) => {
                 onNotificar={agregarBurbuja}
               />
             )}
-
             {opcionSeleccionada === 'registrar-bombero' && (
               <RegistrarBombero onVolver={() => setOpcionSeleccionada(null)} />
             )}
-
             {opcionSeleccionada === 'registrar-usuario' && (
               <RegistrarUsuario onVolver={() => setOpcionSeleccionada(null)} />
             )}
-
             {opcionSeleccionada === 'registrar-rol' && (
               <RegistrarRol onVolver={() => setOpcionSeleccionada(null)} />
             )}

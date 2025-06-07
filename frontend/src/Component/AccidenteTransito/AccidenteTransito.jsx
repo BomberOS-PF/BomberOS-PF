@@ -7,13 +7,47 @@ const AccidenteTransito = ({ datosPrevios = {} }) => {
 
   const [formData, setFormData] = useState(() => {
     const guardado = localStorage.getItem(storageKey)
-    return guardado ? JSON.parse(guardado) : {}
+    return guardado ? JSON.parse(guardado) : { vehiculos: [] }
   })
 
   useEffect(() => {
-    // Al cargar datosPrevios, mergearlos con lo guardado
-    setFormData(prev => ({ ...prev, ...datosPrevios }))
+    setFormData(prev => ({
+      ...prev,
+      ...datosPrevios,
+      vehiculos: datosPrevios.vehiculos || prev.vehiculos || []
+    }))
   }, [datosPrevios])
+
+  const handleVehiculoChange = (index, field, value) => {
+    const nuevosVehiculos = [...formData.vehiculos]
+    nuevosVehiculos[index][field] = value
+    setFormData(prev => ({
+      ...prev,
+      vehiculos: nuevosVehiculos,
+      cantidadVehiculos: nuevosVehiculos.length
+    }))
+  }
+
+  const agregarVehiculo = () => {
+    const nuevosVehiculos = [
+      ...(formData.vehiculos || []),
+      { tipo: '', dominio: '', cantidad: '', modelo: '', anio: '', aseguradora: '', poliza: '' }
+    ]
+    setFormData(prev => ({
+      ...prev,
+      vehiculos: nuevosVehiculos,
+      cantidadVehiculos: nuevosVehiculos.length
+    }))
+  }
+
+  const eliminarVehiculo = (index) => {
+    const nuevosVehiculos = formData.vehiculos.filter((_, i) => i !== index)
+    setFormData(prev => ({
+      ...prev,
+      vehiculos: nuevosVehiculos,
+      cantidadVehiculos: nuevosVehiculos.length
+    }))
+  }
 
   const handleChange = (e) => {
     const { id, value, type, checked } = e.target
@@ -31,26 +65,11 @@ const AccidenteTransito = ({ datosPrevios = {} }) => {
   const handleSubmit = (e) => {
     e.preventDefault()
     console.log('Datos enviados:', formData)
-
-    // 🔴 Aquí podrías enviar al backend:
-    /*
-    fetch('/api/incidentes/accidente', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
-    })
-      .then(res => res.json())
-      .then(data => console.log('Guardado en backend:', data))
-      .catch(err => console.error('Error al guardar:', err))
-    */
-
-    // También podrías limpiar el localStorage si ya fue enviado:
-    // localStorage.removeItem(storageKey)
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="form-abm p-4 shadow rounded w-100" style={{ maxWidth: '700px' }}>
+    <div className="container d-flex justify-content-center align-items-center">
+      <div className="form-accidente p-4 shadow rounded">
         <h2 className="text-white text-center mb-4">Accidente de Tránsito</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
@@ -64,39 +83,53 @@ const AccidenteTransito = ({ datosPrevios = {} }) => {
             </select>
           </div>
 
-          <h5 className="text-white mt-4">Vehículos involucrados</h5>
-          <div className="row mb-3">
-            <div className="col-md-4">
-              <label className="form-label">Tipo</label>
-              <input type="text" className="form-control" id="tipoVehiculo" value={formData.tipoVehiculo || ''} onChange={handleChange} />
+          <h5 className="text-white mt-3 mb-2">Vehículos involucrados</h5>
+          {formData.vehiculos.map((vehiculo, index) => (
+            <div className="row mb-2 align-items-center" key={index}>
+              <div className="col">
+                <label className="form-label">Tipo</label>
+                <input type="text" className="form-control form-control-sm" value={vehiculo.tipo} onChange={(e) => handleVehiculoChange(index, 'tipo', e.target.value)} />
+              </div>
+              <div className="col">
+                <label className="form-label">Dominio</label>
+                <input type="text" className="form-control form-control-sm" value={vehiculo.dominio} onChange={(e) => handleVehiculoChange(index, 'dominio', e.target.value)} />
+              </div>
+              <div className="col">
+                <label className="form-label">Cantidad</label>
+                <input type="number" className="form-control form-control-sm" value={vehiculo.cantidad} onChange={(e) => handleVehiculoChange(index, 'cantidad', e.target.value)} />
+              </div>
+              <div className="col">
+                <label className="form-label">Modelo</label>
+                <input type="text" className="form-control form-control-sm" value={vehiculo.modelo} onChange={(e) => handleVehiculoChange(index, 'modelo', e.target.value)} />
+              </div>
+              <div className="col">
+                <label className="form-label">Año</label>
+                <input type="number" className="form-control form-control-sm" value={vehiculo.anio} onChange={(e) => handleVehiculoChange(index, 'anio', e.target.value)} />
+              </div>
+              <div className="col">
+                <label className="form-label">Aseguradora</label>
+                <input type="text" className="form-control form-control-sm" value={vehiculo.aseguradora} onChange={(e) => handleVehiculoChange(index, 'aseguradora', e.target.value)} />
+              </div>
+              <div className="col">
+                <label className="form-label">Póliza</label>
+                <input type="text" className="form-control form-control-sm" value={vehiculo.poliza} onChange={(e) => handleVehiculoChange(index, 'poliza', e.target.value)} />
+              </div>
+              <div className="col-auto d-flex align-items-center pt-4">
+                <button
+                  type="button"
+                  className="btn btn-outline-danger btn-xs px-2 py-1"
+                  onClick={() => eliminarVehiculo(index)}
+                >
+                  ❌
+                </button>
+              </div>
             </div>
-            <div className="col-md-4">
-              <label className="form-label">Dominio</label>
-              <input type="text" className="form-control" id="dominio" value={formData.dominio || ''} onChange={handleChange} />
-            </div>
-            <div className="col-md-4">
-              <label className="form-label">Cantidad</label>
-              <input type="number" className="form-control" id="cantidadVehiculos" value={formData.cantidadVehiculos || ''} onChange={handleChange} />
-            </div>
-          </div>
+          ))}
 
-          <div className="row mb-3">
-            <div className="col">
-              <label className="form-label">Modelo</label>
-              <input type="text" className="form-control" id="modelo" value={formData.modelo || ''} onChange={handleChange} />
-            </div>
-            <div className="col">
-              <label className="form-label">Año</label>
-              <input type="number" className="form-control" id="anio" value={formData.anio || ''} onChange={handleChange} />
-            </div>
-            <div className="col">
-              <label className="form-label">Aseguradora</label>
-              <input type="text" className="form-control" id="aseguradora" value={formData.aseguradora || ''} onChange={handleChange} />
-            </div>
-            <div className="col">
-              <label className="form-label">Póliza</label>
-              <input type="text" className="form-control" id="poliza" value={formData.poliza || ''} onChange={handleChange} />
-            </div>
+          <input type="hidden" id="cantidadVehiculos" value={formData.vehiculos.length} />
+
+          <div className="d-flex justify-content-end mb-3">
+            <button type="button" className="btn btn-sm btn-success" onClick={agregarVehiculo}>+ Agregar vehículo</button>
           </div>
 
           <div className="mb-3">

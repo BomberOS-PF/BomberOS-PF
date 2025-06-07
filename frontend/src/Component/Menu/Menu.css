@@ -173,3 +173,22 @@
     padding-top: 5rem;
   }
 }
+
+.formulario-expandido {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 400px;
+  height: 600px;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  z-index: 9999;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.formulario-expandido-body {
+  overflow-y: auto;
+  flex: 1;
+}
