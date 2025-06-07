@@ -11,6 +11,7 @@ import FactorClimatico from '../FactorClimatico/FactorClimatico'
 import IncendioEstructural from '../IncendioEstructural/IncendioEstructural'
 import IncendioForestal from '../IncendioForestal/IncendioForestal'
 import MaterialPeligroso from '../MaterialPeligroso/MaterialPeligroso'
+import Rescate from '../Rescate/Rescate'
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
@@ -68,6 +69,8 @@ const Menu = ({ user, setUser }) => {
         return <IncendioForestal datosPrevios={burbuja.datosPrevios} />
       case 'Material Peligroso':
         return <MaterialPeligroso datosPrevios={burbuja.datosPrevios} />
+      case 'Rescate':
+        return <Rescate datosPrevios={burbuja.datosPrevios} />
       default:
         return <p>Formulario no encontrado</p>
     }
