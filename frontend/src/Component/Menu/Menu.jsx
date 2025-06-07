@@ -8,6 +8,7 @@ import RegistrarRol from '../RegistrarRol/RegistrarRol'
 import BurbujaFormulario from '../BurbujaFormulario/BurbujaFormulario'
 import AccidenteTransito from '../AccidenteTransito/AccidenteTransito'
 import FactorClimatico from '../FactorClimatico/FactorClimatico'
+import IncendioEstructural from '../IncendioEstructural/IncendioEstructural'
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
@@ -59,6 +60,8 @@ const Menu = ({ user, setUser }) => {
         return <AccidenteTransito datosPrevios={burbuja.datosPrevios} />
       case 'Factores Climáticos':
         return <FactorClimatico datosPrevios={burbuja.datosPrevios} />
+      case 'Incendio Estructural':
+        return <IncendioEstructural datosPrevios={burbuja.datosPrevios} />
       default:
         return <p>Formulario no encontrado</p>
     }
