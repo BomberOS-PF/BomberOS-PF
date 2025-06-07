@@ -16,7 +16,7 @@ const MaterialPeligroso = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    console.log(formData)
+    if (onFinalizar) onFinalizar(formData)
   }
 
   return (

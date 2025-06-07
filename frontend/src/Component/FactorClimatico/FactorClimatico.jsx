@@ -21,7 +21,7 @@ const FactorClimatico = ({ datosPrevios = {} }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    console.log('Datos del formulario:', formData)
+    if (onFinalizar) onFinalizar(formData)
   }
 
   return (

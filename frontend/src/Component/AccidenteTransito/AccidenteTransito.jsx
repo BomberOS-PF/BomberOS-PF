@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './AccidenteTransito.css'
 
-const AccidenteTransito = ({ datosPrevios = {} }) => {
+const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
   const incidenteId = datosPrevios.id || 'temp'
   const storageKey = `accidente-${incidenteId}`
 
@@ -170,7 +170,13 @@ const AccidenteTransito = ({ datosPrevios = {} }) => {
             <label className="form-check-label" htmlFor="fallecio">¿Falleció?</label>
           </div>
 
-          <button type="submit" className="btn btn-danger w-100 mt-3">Finalizar carga</button>
+          <button type="submit" className="btn btn-danger w-100 mt-3" onClick={(e) => {
+            e.preventDefault()
+            console.log('Datos enviados:', formData)
+            if (onFinalizar) onFinalizar()
+            }}>Finalizar carga
+          </button>
+
           <button type="button" className="btn btn-secondary w-100 mt-2" onClick={guardarLocalmente}>Guardar y continuar después</button>
         </form>
       </div>

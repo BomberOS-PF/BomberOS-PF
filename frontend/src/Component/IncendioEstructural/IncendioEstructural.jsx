@@ -40,7 +40,7 @@ const IncendioEstructural = ({ datosPrevios = {}, onMinimizar }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    console.log('Datos enviados:', formData)
+    if (onFinalizar) onFinalizar(formData)
   }
 
   return (

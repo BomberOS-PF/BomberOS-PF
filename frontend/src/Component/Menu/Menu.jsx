@@ -12,6 +12,7 @@ import IncendioEstructural from '../IncendioEstructural/IncendioEstructural'
 import IncendioForestal from '../IncendioForestal/IncendioForestal'
 import MaterialPeligroso from '../MaterialPeligroso/MaterialPeligroso'
 import Rescate from '../Rescate/Rescate'
+import ParticipacionIncidente from '../ParticipacionIncidente/ParticipacionIncidente'
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
@@ -19,6 +20,7 @@ const Menu = ({ user, setUser }) => {
   const [opcionSeleccionada, setOpcionSeleccionada] = useState(null)
   const [burbujas, setBurbujas] = useState([])
   const [burbujaExpandida, setBurbujaExpandida] = useState(null)
+  const [datosFinalizados, setDatosFinalizados] = useState(null)
 
   const handleLogOut = () => {
     setUser('')
@@ -54,23 +56,36 @@ const Menu = ({ user, setUser }) => {
     }))
   }
 
+  const manejarFinalizarCarga = (datos) => {
+    if (burbujaExpandida) {
+      cerrarBurbuja(burbujaExpandida) // elimina la burbuja actual
+    }
+    setDatosFinalizados(datos)
+    setOpcionSeleccionada('participacion-incidente')
+  }
+
   const renderFormularioExpandido = () => {
     const burbuja = burbujas.find(b => b.id === burbujaExpandida)
     if (!burbuja) return null
 
+    const props = {
+      datosPrevios: burbuja.datosPrevios,
+      onFinalizar: manejarFinalizarCarga
+    }
+
     switch (burbuja.tipo) {
       case 'Accidente':
-        return <AccidenteTransito datosPrevios={burbuja.datosPrevios} />
+        return <AccidenteTransito {...props} />
       case 'Factores Climáticos':
-        return <FactorClimatico datosPrevios={burbuja.datosPrevios} />
+        return <FactorClimatico {...props} />
       case 'Incendio Estructural':
-        return <IncendioEstructural datosPrevios={burbuja.datosPrevios} />
+        return <IncendioEstructural {...props} />
       case 'Incendio Forestal':
-        return <IncendioForestal datosPrevios={burbuja.datosPrevios} />
+        return <IncendioForestal {...props} />
       case 'Material Peligroso':
-        return <MaterialPeligroso datosPrevios={burbuja.datosPrevios} />
+        return <MaterialPeligroso {...props} />
       case 'Rescate':
-        return <Rescate datosPrevios={burbuja.datosPrevios} />
+        return <Rescate {...props} />
       default:
         return <p>Formulario no encontrado</p>
     }
@@ -80,7 +95,8 @@ const Menu = ({ user, setUser }) => {
     { key: 'cargar-incidente', label: 'Cargar Incidente' },
     { key: 'registrar-bombero', label: 'Registrar Bombero' },
     { key: 'registrar-usuario', label: 'Registrar Usuario' },
-    { key: 'registrar-rol', label: 'Registrar Rol' }
+    { key: 'registrar-rol', label: 'Registrar Rol' },
+    { key: 'participacion-incidente', label: 'Participación del Incidente' }
   ]
 
   return (
@@ -129,6 +145,9 @@ const Menu = ({ user, setUser }) => {
             )}
             {opcionSeleccionada === 'registrar-rol' && (
               <RegistrarRol onVolver={() => setOpcionSeleccionada(null)} />
+            )}
+            {opcionSeleccionada === 'participacion-incidente' && (
+              <ParticipacionIncidente datosPrevios={datosFinalizados} onVolver={() => setOpcionSeleccionada(null)} />
             )}
           </div>
         )}
