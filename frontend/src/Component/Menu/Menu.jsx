@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Menu.css'
 import CargarIncidente from '../CargarIncidente/CargarIncidente'
-import RegistrarBombero from '../RegistrarBombero/RegistrarBombero'
+import RegistrarBombero from '../Bombero/RegistrarBombero/RegistrarBombero'
 import RegistrarUsuario from '../RegistrarUsuario/RegistrarUsuario'
 import RegistrarRol from '../RegistrarRol/RegistrarRol'
 import BurbujaFormulario from '../BurbujaFormulario/BurbujaFormulario'
@@ -14,6 +14,7 @@ import MaterialPeligroso from '../MaterialPeligroso/MaterialPeligroso'
 import Rescate from '../Rescate/Rescate'
 import ParticipacionIncidente from '../ParticipacionIncidente/ParticipacionIncidente'
 import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
+import ConsultarBombero from '../Bombero/ConsultarBombero/ConsultarBombero'
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
@@ -95,6 +96,7 @@ const Menu = ({ user, setUser }) => {
   const items = [
     { key: 'cargar-incidente', label: 'Cargar Incidente' },
     { key: 'registrar-bombero', label: 'Registrar Bombero' },
+    { key: 'consultar-bombero', label: 'Consultar Bombero' },
     { key: 'registrar-usuario', label: 'Registrar Usuario' },
     { key: 'registrar-rol', label: 'Registrar Rol' },
     { key: 'participacion-incidente', label: 'Participación del Incidente' },
@@ -141,6 +143,9 @@ const Menu = ({ user, setUser }) => {
             )}
             {opcionSeleccionada === 'registrar-bombero' && (
               <RegistrarBombero onVolver={() => setOpcionSeleccionada(null)} />
+            )}
+            {opcionSeleccionada === 'consultar-bombero' && (
+              <ConsultarBombero onVolver={() => setOpcionSeleccionada(null)} />
             )}
             {opcionSeleccionada === 'registrar-usuario' && (
               <RegistrarUsuario onVolver={() => setOpcionSeleccionada(null)} />
