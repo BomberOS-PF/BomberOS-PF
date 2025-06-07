@@ -2,23 +2,18 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './ParticipacionIncidente.css'
 
-const ParticipacionIncidente = ({ onVolver }) => {
+const ParticipacionIncidente = ({ onVolver, onFinalizar, datosPrevios = {} }) => {
   const [sirena, setSirena] = useState(false)
   const navigate = useNavigate()
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    // Aquí podrías guardar los datos en el backend si querés
-    if (onVolver) {
-      onVolver() // Cierra el formulario
-    } else {
-      navigate('/') // fallback por si se accede directo
-    }
+    if (onFinalizar) onFinalizar()
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center">
-      <div className="form-abm p-4 shadow rounded w-100">
+    <div className="container d-flex justify-content-center align-items-center min-vh-100">
+      <div className="form-abm p-4 shadow rounded w-100" style={{ maxWidth: '700px' }}>
         <h2 className="text-white text-center mb-4">Formulario de Participación</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
@@ -69,7 +64,7 @@ const ParticipacionIncidente = ({ onVolver }) => {
           </div>
 
           <button type="submit" className="btn btn-danger w-100 mt-3">Finalizar carga</button>
-          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={() => navigate('/menu')}>Volver al menú</button>
+          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={onVolver}>Volver al menú</button>
         </form>
       </div>
     </div>
