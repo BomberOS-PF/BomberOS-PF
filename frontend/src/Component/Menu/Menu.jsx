@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import './Menu.css'
 import CargarIncidente from '../CargarIncidente/CargarIncidente'
 import RegistrarBombero from '../RegistrarBombero/RegistrarBombero'
+import RegistrarUsuario from '../RegistrarUsuario/RegistrarUsuario'
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
@@ -25,6 +26,7 @@ const Menu = ({ user, setUser }) => {
   const items = [
     { key: 'cargar-incidente', label: 'Cargar Incidente' },
     { key: 'registrar-bombero', label: 'Registrar Bombero' },
+    { key: 'registrar-usuario', label: 'Registrar Usuario' }
     // Agregá más formularios internos si querés que se comporten igual
   ]
 
@@ -54,17 +56,6 @@ const Menu = ({ user, setUser }) => {
             {label}
           </button>
         ))}
-
-        {/* Otros ítems que navegan */}
-        <button
-          className="sidebar-button"
-          onClick={() => {
-            closeSidebar()
-            navigate('/registrar-usuario')
-          }}
-        >
-          Registrar Usuario
-        </button>
 
         <button
           className="sidebar-button"
@@ -107,6 +98,10 @@ const Menu = ({ user, setUser }) => {
 
             {opcionSeleccionada === 'registrar-bombero' && (
               <RegistrarBombero onVolver={() => setOpcionSeleccionada(null)} />
+            )}
+
+            {opcionSeleccionada === 'registrar-usuario' && (
+              <RegistrarUsuario onVolver={() => setOpcionSeleccionada(null)} />
             )}
           </div>
         )}

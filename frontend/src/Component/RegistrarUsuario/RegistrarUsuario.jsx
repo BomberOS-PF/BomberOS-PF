@@ -1,14 +1,11 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import './RegistrarUsuario.css'
 
-const RegistrarUsuario = () => {
+const RegistrarUsuario = ({ onVolver }) => {
   const [formData, setFormData] = useState({
     user: '',
     pass: ''
   })
-
-  const navigate = useNavigate()
 
   const handleChange = (e) => {
     const { id, value } = e.target
@@ -32,7 +29,7 @@ const RegistrarUsuario = () => {
 
       if (response.ok && data.success) {
         alert('Usuario registrado con éxito')
-        navigate('/') // o donde quieras redirigir
+        if (onVolver) onVolver()
       } else {
         alert(data.error || 'Error al registrar usuario')
       }
@@ -48,29 +45,29 @@ const RegistrarUsuario = () => {
         <h2 className="text-white text-center mb-4">Registrar nuevo usuario</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
-            <label htmlFor="usuario" className="form-label">Nombre de usuario</label>
+            <label htmlFor="user" className="form-label">Nombre de usuario</label>
             <input
               type="text"
               className="form-control"
               id="user"
               required
-              value={formData.usuario}
+              value={formData.user}
               onChange={handleChange}
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="contrasena" className="form-label">Contraseña</label>
+            <label htmlFor="pass" className="form-label">Contraseña</label>
             <input
               type="password"
               className="form-control"
               id="pass"
               required
-              value={formData.contrasena}
+              value={formData.pass}
               onChange={handleChange}
             />
           </div>
           <button type="submit" className="btn btn-danger w-100 mb-3">Registrar Usuario</button>
-          <button type="button" className="btn btn-secondary w-100" onClick={() => navigate('/')}>Volver al menú</button>
+          <button type="button" className="btn btn-secondary w-100" onClick={onVolver}>Volver</button>
         </form>
       </div>
     </div>
