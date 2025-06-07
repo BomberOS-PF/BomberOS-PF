@@ -2,13 +2,14 @@
   background-color: white;
   color: black;
   font-family: 'Segoe UI', sans-serif;
-  max-width: 700px;
+  width: 600px; /* antes era 100% */
   margin: 3rem auto;
-  padding: 3rem 2rem;
   border-top: 5px solid #d52b1e;
   border-radius: 6px;
   text-align: center;
+  padding: 2rem 1.5rem;
 }
+
 
 .menu-container h1 {
   margin-bottom: 0.5rem;

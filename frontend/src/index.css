@@ -14,7 +14,7 @@ main {
   background-color: #212830;
   min-height: 100vh;
   width: 100%;
-  max-width: 100vw; /*cambie esto y se agrando el contenedor, peor quiero que se adapte al tamaño de la pantalla de forma automatica*/
+  max-width: 100vw; /*cambie esto y se agrando el contenedor, pero quiero que se adapte al tamaño de la pantalla de forma automatica*/
   display: flex;
   justify-content: center;
   align-items: flex-start;

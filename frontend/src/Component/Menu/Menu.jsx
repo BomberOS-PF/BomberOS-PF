@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Menu.css'
-import CargarIncidente from '../CargarIncidente/CargarIncidente' // asegurate que la ruta sea correcta
+import CargarIncidente from '../CargarIncidente/CargarIncidente'
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
@@ -73,18 +73,19 @@ const Menu = ({ user, setUser }) => {
 
       {/* Contenido */}
       <div className="menu-content-wrapper">
-        <div className="menu-container">
-          <h1>Bienvenido</h1>
-          <h2>{user.user}</h2>
-
-          {!opcionSeleccionada && (
+        {opcionSeleccionada === null ? (
+          <div className="menu-container">
+            <h1>Bienvenido</h1>
+            <h2>{user.user}</h2>
             <p>Seleccioná una opción desde el menú lateral izquierdo.</p>
-          )}
-
-          {opcionSeleccionada === 'cargar-incidente' && (
-            <CargarIncidente onVolver={() => setOpcionSeleccionada(null)} />
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="form-wrapper">
+            {opcionSeleccionada === 'cargar-incidente' && (
+              <CargarIncidente onVolver={() => setOpcionSeleccionada(null)} />
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
