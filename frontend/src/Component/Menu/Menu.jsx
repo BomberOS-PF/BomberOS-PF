@@ -13,6 +13,7 @@ import IncendioForestal from '../IncendioForestal/IncendioForestal'
 import MaterialPeligroso from '../MaterialPeligroso/MaterialPeligroso'
 import Rescate from '../Rescate/Rescate'
 import ParticipacionIncidente from '../ParticipacionIncidente/ParticipacionIncidente'
+import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
@@ -96,7 +97,8 @@ const Menu = ({ user, setUser }) => {
     { key: 'registrar-bombero', label: 'Registrar Bombero' },
     { key: 'registrar-usuario', label: 'Registrar Usuario' },
     { key: 'registrar-rol', label: 'Registrar Rol' },
-    { key: 'participacion-incidente', label: 'Participación del Incidente' }
+    { key: 'participacion-incidente', label: 'Participación del Incidente' },
+    { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' }
   ]
 
   return (
@@ -147,7 +149,11 @@ const Menu = ({ user, setUser }) => {
               <RegistrarRol onVolver={() => setOpcionSeleccionada(null)} />
             )}
             {opcionSeleccionada === 'participacion-incidente' && (
-              <ParticipacionIncidente datosPrevios={datosFinalizados} onVolver={() => setOpcionSeleccionada(null)} />
+              <ParticipacionIncidente datosPrevios={datosFinalizados} onFinalizar={() => setOpcionSeleccionada('vehiculo-involucrado')}
+              onVolver={() => setOpcionSeleccionada(null)} />
+            )}
+            {opcionSeleccionada === 'vehiculo-involucrado' && (
+              <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />
             )}
           </div>
         )}
