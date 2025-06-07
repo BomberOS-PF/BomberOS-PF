@@ -2,22 +2,21 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './VehiculoInvolucrado.css'
 
-const VehiculoInvolucrado = () => {
-  const navigate = useNavigate()
+const VehiculoInvolucrado = ({ onVolver }) => {
   const [participa, setParticipa] = useState(false)
 
   const handleCheckboxChange = () => setParticipa(!participa)
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    // Backend: enviar datos
     alert('Formulario enviado correctamente.')
+    if (onVolver) onVolver()
   }
 
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100">
       <div className="form-abm p-4 shadow rounded w-100" style={{ maxWidth: '700px' }}>
-        <h2 className="text-black text-center mb-4">Vehículo Involucrado - Móvil 1</h2>
+        <h2 className="text-white text-center mb-4">Vehículo Involucrado - Móvil 1</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3 form-check">
             <input type="checkbox" className="form-check-input" id="movilParticipa" checked={participa} onChange={handleCheckboxChange} />
@@ -64,7 +63,7 @@ const VehiculoInvolucrado = () => {
           </fieldset>
 
           <button type="submit" className="btn btn-danger w-100 mt-3">Finalizar carga</button>
-          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={() => navigate('/')}>Volver al menú</button>
+          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={onVolver}>Volver al menú</button>
         </form>
       </div>
     </div>

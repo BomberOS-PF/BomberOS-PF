@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './ParticipacionIncidente.css'
 
-const ParticipacionIncidente = () => {
+const ParticipacionIncidente = ({ onVolver, onFinalizar, datosPrevios = {} }) => {
   const [sirena, setSirena] = useState(false)
   const navigate = useNavigate()
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    // Aquí se podrá implementar lógica de backend
+    if (onFinalizar) onFinalizar()
   }
 
   return (
@@ -64,7 +64,7 @@ const ParticipacionIncidente = () => {
           </div>
 
           <button type="submit" className="btn btn-danger w-100 mt-3">Finalizar carga</button>
-          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={() => navigate('/')}>Volver al menú</button>
+          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={onVolver}>Volver al menú</button>
         </form>
       </div>
     </div>

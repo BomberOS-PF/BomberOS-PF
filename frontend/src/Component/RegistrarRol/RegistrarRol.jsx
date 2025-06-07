@@ -1,14 +1,11 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import './RegistrarRol.css'
 
-const RegistrarRol = () => {
+const RegistrarRol = ({ onVolver }) => {
   const [formData, setFormData] = useState({
     nombreRol: '',
     descripcionRol: ''
   })
-
-  const navigate = useNavigate()
 
   const handleChange = (e) => {
     const { id, value } = e.target
@@ -50,7 +47,7 @@ const RegistrarRol = () => {
             />
           </div>
           <button type="submit" className="btn btn-danger w-100 mb-3">Registrar Rol</button>
-          <button type="button" className="btn btn-secondary w-100" onClick={() => navigate('/')}>Volver al menú</button>
+          <button type="button" className="btn btn-secondary w-100" onClick={onVolver}>Volver</button>
         </form>
       </div>
     </div>

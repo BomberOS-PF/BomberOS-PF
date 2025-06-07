@@ -6,6 +6,10 @@ body {
 .form-abm {
   background-color: #1d1d1d;
   border-top: 5px solid #d52b1e;
+  margin-top: 60px;
+  padding: 30px;
+  width: 100%;
+  max-width: 850px;
 }
 
 .form-control,
@@ -17,6 +21,12 @@ body {
 
 .form-control::placeholder {
   color: #aaa;
+}
+
+.form-check-label,
+.form-label,
+legend {
+  color: #fff;
 }
 
 .btn-danger {

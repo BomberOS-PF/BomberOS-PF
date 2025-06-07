@@ -1,51 +1,60 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import './CargarIncidente.css'
 
-const CargarIncidente = () => {
+const CargarIncidente = ({ onVolver, onNotificar }) => {
   const [formData, setFormData] = useState({})
-  const navigate = useNavigate()
 
   const handleChange = (e) => {
     const { id, value } = e.target
     setFormData(prev => ({ ...prev, [id]: value }))
   }
-
+  
   const handleSubmit = (e) => {
     e.preventDefault()
-    console.log(formData)
+
+    const id = Date.now() // más adelante reemplazalo por el ID real del backend
+    const datosConId = { ...formData, id }
+
+    if (onNotificar) {
+      onNotificar(formData.tipoSiniestro, datosConId)
+    }
+
+    if (onVolver) {
+      onVolver()
+    }
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="form-incidente p-4 shadow rounded w-100" style={{ maxWidth: '700px' }}>
+    <div className="container d-flex justify-content-center align-items-center">
+      <div className="form-incidente p-4 shadow rounded">
         <h2 className="text-white text-center mb-4">Cargar Incidente</h2>
         <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label htmlFor="persona" className="form-label">Persona que carga</label>
-            <select className="form-select" id="persona" required onChange={handleChange}>
-              <option disabled selected>Seleccione persona</option>
-              <option>Jefe</option>
-              <option>Oficial</option>
-              <option>Subteniente</option>
-              <option>Sargento</option>
-              <option>Cabo</option>
-              <option>Bombero</option>
-              <option>Aspirante</option>
-            </select>
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="tipoSiniestro" className="form-label">Tipo de Siniestro</label>
-            <select className="form-select" id="tipoSiniestro" required onChange={handleChange}>
-              <option disabled selected>Seleccione tipo</option>
-              <option>Accidente</option>
-              <option>Factores Climáticos</option>
-              <option>Incendio Estructural</option>
-              <option>Material Peligroso</option>
-              <option>Rescate</option>
-              <option>Servicios Especiales / Otros</option>
-            </select>
+          <div className="row mb-3">
+            <div className="col-md-6">
+              <label htmlFor="persona" className="form-label">Persona que carga</label>
+              <select className="form-select" id="persona" required onChange={handleChange} defaultValue="">
+                <option disabled value="">Seleccione persona</option>
+                <option>Jefe</option>
+                <option>Oficial</option>
+                <option>Subteniente</option>
+                <option>Sargento</option>
+                <option>Cabo</option>
+                <option>Bombero</option>
+                <option>Aspirante</option>
+              </select>
+            </div>
+            <div className="col-md-6">
+              <label htmlFor="tipoSiniestro" className="form-label">Tipo de Siniestro</label>
+              <select className="form-select" id="tipoSiniestro" required onChange={handleChange} defaultValue="">
+                <option disabled value="">Seleccione tipo</option>
+                <option>Accidente</option>
+                <option>Factores Climáticos</option>
+                <option>Incendio Estructural</option>
+                <option>Incendio Forestal</option>
+                <option>Material Peligroso</option>
+                <option>Rescate</option>
+              </select>
+            </div>
           </div>
 
           <div className="mb-3">
@@ -76,26 +85,35 @@ const CargarIncidente = () => {
             </div>
           </div>
 
-          <div className="mb-3">
-            <label htmlFor="localizacion" className="form-label">Localización</label>
-            <select className="form-select" id="localizacion" required onChange={handleChange}>
-              <option disabled selected>Seleccione localización</option>
-              <option>Despeñaderos</option>
-              <option>Zona Rural</option>
-              <option>Zona Urbana</option>
-              <option>Zona Industrial</option>
-              <option>Zona Costera</option>
-              <option>Otros</option>
-            </select>
-          </div>
+          <div className="row mb-3">
+            <div className="col-md-6">
+              <label htmlFor="localizacion" className="form-label">Localización</label>
+              <select className="form-select" id="localizacion" required onChange={handleChange} defaultValue="">
+                <option disabled value="">Seleccione localización</option>
+                <option>Despeñaderos</option>
+                <option>Zona Rural</option>
+                <option>Zona Urbana</option>
+                <option>Zona Industrial</option>
+                <option>Zona Costera</option>
+                <option>Otros</option>
+              </select>
+            </div>
 
-          <div className="mb-3">
-            <label htmlFor="lugar" className="form-label">Calle y/o Kilometraje o Lugar</label>
-            <input type="text" className="form-control" id="lugar" placeholder="Ej: Av. Siempre Viva 742, km 12" required onChange={handleChange} />
+            <div className="col-md-6">
+              <label htmlFor="lugar" className="form-label">Calle y/o Kilometraje o Lugar</label>
+              <input
+                type="text"
+                className="form-control"
+                id="lugar"
+                placeholder="Ej: Av. Siempre Viva 742, km 12"
+                required
+                onChange={handleChange}
+              />
+            </div>
           </div>
 
           <button type="submit" className="btn btn-danger w-100">Notificar</button>
-          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={() => navigate('/')}>Volver</button>
+          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={onVolver}>Volver</button>
         </form>
       </div>
     </div>
