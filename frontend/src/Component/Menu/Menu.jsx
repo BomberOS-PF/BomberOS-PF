@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Menu.css'
 import CargarIncidente from '../CargarIncidente/CargarIncidente'
+import RegistrarBombero from '../RegistrarBombero/RegistrarBombero'
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
@@ -22,18 +23,9 @@ const Menu = ({ user, setUser }) => {
   }
 
   const items = [
-    { path: '/cargar-incidente', label: 'Cargar Incidente' },
-    { path: '/registrar-bombero', label: 'Registrar Bombero' },
-    { path: '/registrar-usuario', label: 'Registrar Usuario' },
-    { path: '/registrar-rol', label: 'Registrar Rol' },
-    { path: '/accidente-transito', label: 'Accidente de Tránsito' },
-    { path: '/factor-climatico', label: 'Factores Climáticos' },
-    { path: '/incendio-estructural', label: 'Incendio Estructural' },
-    { path: '/incendio-forestal', label: 'Incendio Forestal' },
-    { path: '/material-peligroso', label: 'Material Peligroso' },
-    { path: '/rescate', label: 'Rescate' },
-    { path: '/vehiculo-involucrado', label: 'Vehículo Involucrado' },
-    { path: '/participacion-incidente', label: 'Participación' }
+    { key: 'cargar-incidente', label: 'Cargar Incidente' },
+    { key: 'registrar-bombero', label: 'Registrar Bombero' },
+    // Agregá más formularios internos si querés que se comporten igual
   ]
 
   return (
@@ -50,22 +42,50 @@ const Menu = ({ user, setUser }) => {
           <button className="close-btn d-lg-none" onClick={closeSidebar}>×</button>
         </div>
 
-        {items.map(({ path, label }) => (
+        {items.map(({ key, label }) => (
           <button
-            key={path}
+            key={key}
             className="sidebar-button"
             onClick={() => {
               closeSidebar()
-              if (label === 'Cargar Incidente') {
-                setOpcionSeleccionada('cargar-incidente')
-              } else {
-                navigate(path)
-              }
+              setOpcionSeleccionada(key)
             }}
           >
             {label}
           </button>
         ))}
+
+        {/* Otros ítems que navegan */}
+        <button
+          className="sidebar-button"
+          onClick={() => {
+            closeSidebar()
+            navigate('/registrar-usuario')
+          }}
+        >
+          Registrar Usuario
+        </button>
+
+        <button
+          className="sidebar-button"
+          onClick={() => {
+            closeSidebar()
+            navigate('/registrar-rol')
+          }}
+        >
+          Registrar Rol
+        </button>
+
+        {/* Otros componentes que se abren por ruta */}
+        <button onClick={() => navigate('/accidente-transito')} className="sidebar-button">Accidente de Tránsito</button>
+        <button onClick={() => navigate('/factor-climatico')} className="sidebar-button">Factores Climáticos</button>
+        <button onClick={() => navigate('/incendio-estructural')} className="sidebar-button">Incendio Estructural</button>
+        <button onClick={() => navigate('/incendio-forestal')} className="sidebar-button">Incendio Forestal</button>
+        <button onClick={() => navigate('/material-peligroso')} className="sidebar-button">Material Peligroso</button>
+        <button onClick={() => navigate('/rescate')} className="sidebar-button">Rescate</button>
+        <button onClick={() => navigate('/vehiculo-involucrado')} className="sidebar-button">Vehículo Involucrado</button>
+        <button onClick={() => navigate('/participacion-incidente')} className="sidebar-button">Participación</button>
+
         <button className="sidebar-button logout" onClick={handleLogOut}>
           Cerrar sesión
         </button>
@@ -83,6 +103,10 @@ const Menu = ({ user, setUser }) => {
           <div className="form-wrapper">
             {opcionSeleccionada === 'cargar-incidente' && (
               <CargarIncidente onVolver={() => setOpcionSeleccionada(null)} />
+            )}
+
+            {opcionSeleccionada === 'registrar-bombero' && (
+              <RegistrarBombero onVolver={() => setOpcionSeleccionada(null)} />
             )}
           </div>
         )}
