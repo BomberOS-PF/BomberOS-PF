@@ -1,43 +1,44 @@
+/* RegistrarUsuario.css */
+
 body {
-  background-color: #111;
-  font-family: 'Segoe UI', sans-serif;
+  background-color: #121212;
 }
 
-.form-usuario {
-  background-color: #1d1d1d;
-  border-top: 5px solid #d52b1e;
-  border-radius: 10px;
-  padding: 2.5rem;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.5);
+.form-incidente {
+  background-color: #1e1e1e;
+  border: 1px solid #dc3545;
+  color: white;
   width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-  color: #fff;
+  max-width: 800px;
+  min-height: 300px;
 }
 
-.form-usuario .form-label {
-  color: #fff;
-  font-weight: 600;
+.form-label {
+  color: white;
 }
 
-.form-usuario .form-control {
+.form-control,
+.form-select {
   background-color: #2c2c2c;
-  border: 1px solid #444;
-  color: #fff;
+  color: white;
+  border: 1px solid #dc3545;
 }
 
-.form-usuario .form-control::placeholder {
-  color: #aaa;
+.form-control:focus,
+.form-select:focus {
+  background-color: #2c2c2c;
+  color: white;
+  border-color: #ff6b6b;
+  box-shadow: none;
 }
 
 .btn-danger {
-  background-color: #d52b1e;
-  border-color: #d52b1e;
+  background-color: #dc3545;
+  border: none;
 }
 
 .btn-danger:hover {
-  background-color: #b02118;
-  border-color: #a11c15;
+  background-color: #c82333;
 }
 
 .btn-secondary {
@@ -47,4 +48,8 @@ body {
 
 .btn-secondary:hover {
   background-color: #5a6268;
+}
+
+.alert {
+  font-weight: bold;
 }
