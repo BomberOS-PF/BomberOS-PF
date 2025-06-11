@@ -4,6 +4,7 @@ import './Menu.css'
 import CargarIncidente from '../CargarIncidente/CargarIncidente'
 import RegistrarBombero from '../Bombero/RegistrarBombero/RegistrarBombero'
 import RegistrarUsuario from '../Usuario/RegistrarUsuario/RegistrarUsuario'
+import ConsultarUsuario from '../Usuario/ConsultarUsuario/ConsultarUsuario'
 import RegistrarRol from '../RegistrarRol/RegistrarRol'
 import BurbujaFormulario from '../BurbujaFormulario/BurbujaFormulario'
 import AccidenteTransito from '../AccidenteTransito/AccidenteTransito'
@@ -98,6 +99,7 @@ const Menu = ({ user, setUser }) => {
     { key: 'registrar-bombero', label: 'Registrar Bombero' },
     { key: 'consultar-bombero', label: 'Consultar Bombero' },
     { key: 'registrar-usuario', label: 'Registrar Usuario' },
+    { key: 'consultar-usuario', label: 'Consultar Usuario' },
     { key: 'registrar-rol', label: 'Registrar Rol' },
     { key: 'participacion-incidente', label: 'Participación del Incidente' },
     { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' }
@@ -150,6 +152,10 @@ const Menu = ({ user, setUser }) => {
             {opcionSeleccionada === 'registrar-usuario' && (
               <RegistrarUsuario onVolver={() => setOpcionSeleccionada(null)} />
             )}
+            {opcionSeleccionada === 'consultar-usuario' && (
+              <ConsultarUsuario onVolver={() => setOpcionSeleccionada(null)} />
+            )}
+
             {opcionSeleccionada === 'registrar-rol' && (
               <RegistrarRol onVolver={() => setOpcionSeleccionada(null)} />
             )}
