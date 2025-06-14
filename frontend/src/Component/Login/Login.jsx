@@ -7,6 +7,8 @@ const Login = ({ setUser, user }) => {
   const [usuario, setUsuario] = useState('')
   const [contrasena, setContrasena] = useState('')
   const [mostrarRecuperar, setMostrarRecuperar] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -16,35 +18,51 @@ const Login = ({ setUser, user }) => {
   const resetForm = () => {
     setUsuario('')
     setContrasena('')
+    setError('')
   }
 
-const handleSubmit = async (e) => {
-  e.preventDefault()
-  
-  //aca deberia ir la URL publica cuando lo deployemos
-  try {
-    const response = await fetch('http://localhost:3000/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usuario, contrasena })
-    })
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    
+    // Simulación de autenticación local (sin backend)
+    // En un entorno real, esto se conectaría al backend de autenticación
+    try {
+      // Credenciales de prueba
+      const credencialesValidas = [
+        { usuario: 'admin', contrasena: 'admin123', rol: 'administrador' },
+        { usuario: 'jefe', contrasena: 'jefe123', rol: 'jefe_cuartel' },
+        { usuario: 'bombero', contrasena: 'bombero123', rol: 'bombero' }
+      ]
 
-    const data = await response.json()
+      // Simular delay de red
+      await new Promise(resolve => setTimeout(resolve, 1000))
 
-    if (response.ok && data.success) {
-      setUser(data.usuario)
+      const credencial = credencialesValidas.find(
+        c => c.usuario === usuario && c.contrasena === contrasena
+      )
+
+      if (credencial) {
+        setUser({
+          user: credencial.usuario,
+          rol: credencial.rol,
+          timestamp: new Date().toISOString()
+        })
+        resetForm()
+        navigate('/')
+      } else {
+        setError('Usuario o contraseña incorrectos')
+        resetForm()
+      }
+    } catch (error) {
+      console.error('Error al iniciar sesión:', error)
+      setError('Error en el sistema. Intenta más tarde.')
       resetForm()
-      navigate('/menu')
-    } else {
-      alert(data.error || 'Usuario o contraseña incorrectos')
-      resetForm()
+    } finally {
+      setLoading(false)
     }
-  } catch (error) {
-    console.error('Error al iniciar sesión:', error)
-    alert('Error en el servidor. Intenta más tarde.')
   }
-}
-
 
   if (mostrarRecuperar) {
     return (
@@ -64,6 +82,13 @@ const handleSubmit = async (e) => {
           className="logo-bomberos mb-3"
         />
         <h2 className="text-black mb-4">Iniciar Sesión</h2>
+        
+        {error && (
+          <div className="alert alert-danger mb-3">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="mb-3 text-start">
             <label htmlFor="usuario" className="text-black form-label">Usuario</label>
@@ -75,6 +100,7 @@ const handleSubmit = async (e) => {
               required
               value={usuario}
               onChange={(e) => setUsuario(e.target.value)}
+              disabled={loading}
             />
           </div>
           <div className="mb-3 text-start">
@@ -87,20 +113,29 @@ const handleSubmit = async (e) => {
               required
               value={contrasena}
               onChange={(e) => setContrasena(e.target.value)}
+              disabled={loading}
             />
           </div>
           <div className="mb-3 text-start">
             <button
               type="button"
               className="btn btn-link recuperar-link p-0"
-              onClick={() => navigate('/recuperar-clave')}>
+              onClick={() => navigate('/recuperar-clave')}
+              disabled={loading}>
               Recuperar contraseña
             </button>
           </div>
-          <button type="submit" className="btn btn-danger w-100">
-            Ingresar
+          <button type="submit" className="btn btn-danger w-100" disabled={loading}>
+            {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
+
+        <div className="mt-4 text-muted">
+          <small>
+            <strong>Usuarios de prueba:</strong><br/>
+            admin/admin123 | jefe/jefe123 | bombero/bombero123
+          </small>
+        </div>
       </div>
     </div>
   )

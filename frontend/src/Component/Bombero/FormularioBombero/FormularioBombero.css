@@ -1,0 +1,116 @@
+/* Estilos para FormularioBombero */
+.formulario-bombero {
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 10px;
+  padding: 2rem;
+  margin: 1rem auto;
+  max-width: 1200px;
+}
+
+.formulario-bombero .form-control,
+.formulario-bombero .form-select {
+  background-color: #ffffff;
+  border: 1px solid #ced4da;
+  color: #212529 !important;
+  font-weight: 500;
+}
+
+.formulario-bombero .form-control:focus,
+.formulario-bombero .form-select:focus {
+  background-color: #ffffff;
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+  color: #212529 !important;
+}
+
+.formulario-bombero .form-control:disabled,
+.formulario-bombero .form-select:disabled {
+  background-color: #f8f9fa;
+  color: #6c757d !important;
+  opacity: 0.8;
+}
+
+.formulario-bombero .form-label {
+  color: #ffffff;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.formulario-bombero .form-check-label {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.formulario-bombero .text-muted {
+  color: #adb5bd !important;
+}
+
+.formulario-bombero h2 {
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-weight: 700;
+}
+
+/* Estilos específicos para modo consulta */
+.formulario-bombero.modo-consulta .form-control,
+.formulario-bombero.modo-consulta .form-select {
+  background-color: #f8f9fa;
+  color: #495057 !important;
+  border-color: #dee2e6;
+}
+
+/* Estilos para los botones */
+.formulario-bombero .btn {
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+.formulario-bombero .btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.formulario-bombero .btn-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+  transform: translateY(-1px);
+}
+
+.formulario-bombero .btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.formulario-bombero .btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #545b62;
+  transform: translateY(-1px);
+}
+
+.formulario-bombero .btn-warning {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #212529;
+}
+
+.formulario-bombero .btn-warning:hover {
+  background-color: #e0a800;
+  border-color: #d39e00;
+  color: #212529;
+  transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .formulario-bombero {
+    padding: 1rem;
+    margin: 0.5rem;
+  }
+  
+  .formulario-bombero h2 {
+    font-size: 1.5rem;
+  }
+}
