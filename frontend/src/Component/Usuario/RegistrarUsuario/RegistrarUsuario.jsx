@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { API_URLS, apiRequest } from '../../../config/api'
 import './RegistrarUsuario.css'
 
 const RegistrarUsuario = ({ onVolver, usuario }) => {
@@ -12,6 +13,7 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('')
+  const [passwordStrength, setPasswordStrength] = useState(null)
 
   useEffect(() => {
     if (usuario) {
@@ -24,33 +26,152 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
     }
   }, [usuario])
 
+  const validatePasswordStrength = (password) => {
+    if (!password) {
+      setPasswordStrength(null)
+      return
+    }
+
+    const result = {
+      score: 0,
+      errors: [],
+      suggestions: [],
+      isValid: false
+    }
+
+    // Longitud mínima
+    if (password.length < 6) {
+      result.errors.push('Debe tener al menos 6 caracteres')
+    } else if (password.length >= 8) {
+      result.score += 1
+    }
+
+    // Contiene números
+    if (/\d/.test(password)) {
+      result.score += 1
+    } else {
+      result.suggestions.push('Incluye al menos un número')
+    }
+
+    // Contiene letras minúsculas
+    if (/[a-z]/.test(password)) {
+      result.score += 1
+    } else {
+      result.suggestions.push('Incluye al menos una letra minúscula')
+    }
+
+    // Contiene letras mayúsculas
+    if (/[A-Z]/.test(password)) {
+      result.score += 1
+    } else {
+      result.suggestions.push('Incluye al menos una letra mayúscula')
+    }
+
+    // Contiene caracteres especiales
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      result.score += 1
+    } else {
+      result.suggestions.push('Incluye al menos un carácter especial')
+    }
+
+    // No contiene espacios
+    if (/\s/.test(password)) {
+      result.errors.push('No debe contener espacios')
+    }
+
+    result.isValid = result.errors.length === 0 && result.score >= 2
+    setPasswordStrength(result)
+  }
+
   const handleChange = (e) => {
     const { id, value } = e.target
     setFormData(prev => ({
       ...prev,
       [id]: value
     }))
+
+    // Validar fortaleza de contraseña en tiempo real
+    if (id === 'password') {
+      validatePasswordStrength(value)
+    }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setMessage('')
 
-    setTimeout(() => {
-      setMessage(usuario ? '¡Usuario actualizado!' : '¡Usuario registrado!')
-      setMessageType('success')
-      setLoading(false)
+    try {
+      console.log('📝 Enviando datos de usuario:', formData)
 
-      if (!usuario) {
-        setFormData({
-          username: '',
-          password: '',
-          email: '',
-          rol: ''
+      if (usuario) {
+        // Actualizar usuario existente
+        const updateData = {
+          email: formData.email,
+          rol: formData.rol,
+          ...(formData.password && { password: formData.password })
+        }
+
+        console.log('🔄 Actualizando usuario:', { id: usuario.id, data: updateData })
+        
+        const response = await apiRequest(API_URLS.usuarios.update(usuario.id), {
+          method: 'PUT',
+          body: JSON.stringify(updateData)
         })
+
+        if (response.success) {
+          setMessage('✅ Usuario actualizado correctamente. Volviendo al listado...')
+          setMessageType('success')
+          
+          setTimeout(() => {
+            if (onVolver) onVolver()
+          }, 1500)
+        } else {
+          throw new Error(response.message || 'Error al actualizar usuario')
+        }
+      } else {
+        // Crear nuevo usuario
+        const newUserData = {
+          username: formData.username,
+          password: formData.password,
+          email: formData.email,
+          rol: formData.rol
+        }
+
+        console.log('➕ Creando nuevo usuario:', newUserData)
+        
+        const response = await apiRequest(API_URLS.usuarios.create, {
+          method: 'POST',
+          body: JSON.stringify(newUserData)
+        })
+
+        if (response.success) {
+          setMessage('✅ Usuario registrado correctamente!')
+          setMessageType('success')
+          
+          // Limpiar formulario
+          setFormData({
+            username: '',
+            password: '',
+            email: '',
+            rol: ''
+          })
+
+          setTimeout(() => {
+            if (onVolver) onVolver()
+          }, 1500)
+        } else {
+          throw new Error(response.message || 'Error al crear usuario')
+        }
       }
-    }, 1500)
+
+    } catch (error) {
+      console.error('❌ Error al procesar usuario:', error)
+      setMessage(`Error: ${error.message}`)
+      setMessageType('error')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -78,7 +199,7 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
                 value={formData.username}
                 required
                 onChange={handleChange}
-                disabled={!!usuario}
+                disabled={!!usuario || loading}
               />
             </div>
             <div className="col-md-4">
@@ -90,8 +211,46 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
                 value={formData.password}
                 onChange={handleChange}
                 required={!usuario}
+                disabled={loading}
                 placeholder={usuario ? 'Dejar en blanco para no cambiar' : ''}
               />
+              
+              {/* Indicador de fortaleza de contraseña */}
+              {passwordStrength && formData.password && (
+                <div className="mt-2">
+                  <div className="d-flex align-items-center mb-1">
+                    <small className="text-white me-2">Fortaleza:</small>
+                    <div className="progress flex-grow-1" style={{ height: '6px' }}>
+                      <div 
+                        className={`progress-bar ${
+                          passwordStrength.score <= 1 ? 'bg-danger' :
+                          passwordStrength.score <= 3 ? 'bg-warning' : 'bg-success'
+                        }`}
+                        style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+                      ></div>
+                    </div>
+                    <small className={`ms-2 ${
+                      passwordStrength.score <= 1 ? 'text-danger' :
+                      passwordStrength.score <= 3 ? 'text-warning' : 'text-success'
+                    }`}>
+                      {passwordStrength.score <= 1 ? 'Débil' :
+                       passwordStrength.score <= 3 ? 'Media' : 'Fuerte'}
+                    </small>
+                  </div>
+                  
+                  {passwordStrength.errors.length > 0 && (
+                    <div className="text-danger">
+                      <small>❌ {passwordStrength.errors.join(', ')}</small>
+                    </div>
+                  )}
+                  
+                  {passwordStrength.suggestions.length > 0 && passwordStrength.errors.length === 0 && (
+                    <div className="text-warning">
+                      <small>💡 {passwordStrength.suggestions.join(', ')}</small>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="col-md-4">
               <label htmlFor="email" className="form-label">Correo electrónico</label>
@@ -101,6 +260,7 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
                 id="email"
                 value={formData.email}
                 required
+                disabled={loading}
                 onChange={handleChange}
               />
             </div>
@@ -114,6 +274,7 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
               id="rol"
               value={formData.rol}
               required
+              disabled={loading}
               onChange={handleChange}
             >
               <option value="">Seleccione un rol</option>
@@ -135,6 +296,13 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
             </button>
           )}
         </form>
+
+        <div className="mt-3 text-muted">
+          <small>
+            <strong>Nota:</strong> Los usuarios se guardan en la base de datos del servidor.
+            Las contraseñas se almacenan de forma segura usando encriptación bcrypt.
+          </small>
+        </div>
       </div>
     </div>
   )

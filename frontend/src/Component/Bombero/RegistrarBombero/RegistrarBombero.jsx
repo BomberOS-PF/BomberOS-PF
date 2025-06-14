@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { API_URLS } from '../../../config/api'
 import './RegistrarBombero.css'
 
 const RegistrarBombero = ({ onVolver }) => {
@@ -37,6 +38,14 @@ const RegistrarBombero = ({ onVolver }) => {
     setMessage('')
 
     try {
+      // Validaciones adicionales
+      if (!formData.dni || !formData.nombre || !formData.apellido || !formData.email || !formData.telefono || !formData.domicilio || !formData.rango || !formData.grupoSanguineo) {
+        setMessage('Por favor, complete todos los campos obligatorios')
+        setMessageType('error')
+        setLoading(false)
+        return
+      }
+
       const dataToSend = {
         DNI: formData.dni,
         nombreCompleto: `${formData.nombre} ${formData.apellido}`.trim(),
@@ -45,25 +54,33 @@ const RegistrarBombero = ({ onVolver }) => {
         domicilio: formData.domicilio,
         legajo: formData.legajo || null,
         antiguedad: formData.antiguedad ? parseInt(formData.antiguedad) : 0,
-        idRango: 1,
+        idRango: getRangoId(formData.rango),
         esDelPlan: formData.esPlan,
         aptoPsicologico: formData.aptoPsico,
         grupoSanguineo: formData.grupoSanguineo,
-        fichaMedica: formData.fichaMedica ? formData.fichaMedica.name : null,
+        fichaMedica: formData.fichaMedica ? 1 : null, // Campo booleano/entero
+        fichaMedicaArchivo: formData.fichaMedica ? formData.fichaMedica.name : null, // Nombre del archivo
         fechaFichaMedica: formData.fechaFicha || null
       }
 
-      const response = await fetch('http://localhost:3000/api/bomberos', {
+      console.log('🚀 Enviando datos al backend:', dataToSend)
+              console.log('📡 URL de la API:', API_URLS.bomberos.create)
+        
+        const response = await fetch(API_URLS.bomberos.create, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dataToSend)
       })
 
-      const result = await response.json()
+      console.log('📥 Respuesta del servidor:', response.status, response.statusText)
 
-      if (response.ok) {
+      const result = await response.json()
+      console.log('📋 Datos de respuesta:', result)
+
+      if (response.ok && result.success) {
         setMessage('¡Bombero registrado exitosamente!')
         setMessageType('success')
+        
         setFormData({
           dni: '',
           nombre: '',
@@ -85,16 +102,43 @@ const RegistrarBombero = ({ onVolver }) => {
           if (onVolver) onVolver()
         }, 2000)
       } else {
-        setMessage(result.error || 'Error al registrar bombero')
+        const errorMessage = result.message || result.error || 'Error al registrar bombero'
+        console.error('❌ Error del servidor:', errorMessage)
+        setMessage(errorMessage)
         setMessageType('error')
       }
     } catch (error) {
-      console.error('Error al enviar datos:', error)
-      setMessage('Error de conexión. Verifique que el servidor esté funcionando.')
+      console.error('💥 Error al enviar datos:', error)
+      console.error('🔍 Detalles del error:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      })
+      setMessage(`Error de conexión: ${error.message}. Verifique que el servidor esté funcionando en http://localhost:3000`)
       setMessageType('error')
     } finally {
       setLoading(false)
     }
+  }
+
+  const getRangoId = (rangoNombre) => {
+    const rangos = {
+      'Bombero': 1,
+      'Cabo': 2,
+      'Sargento': 3,
+      'Sargento Primero': 4,
+      'Suboficial': 5,
+      'Suboficial Principal': 6,
+      'Suboficial Mayor': 7,
+      'Oficial': 8,
+      'Teniente': 9,
+      'Capitán': 10,
+      'Mayor': 11,
+      'Teniente Coronel': 12,
+      'Coronel': 13,
+      'Jefe': 14
+    }
+    return rangos[rangoNombre] || 1
   }
 
   return (
@@ -113,15 +157,41 @@ const RegistrarBombero = ({ onVolver }) => {
           <div className="row mb-3">
             <div className="col-md-4">
               <label htmlFor="nombre" className="form-label">Nombre</label>
-              <input type="text" className="form-control" id="nombre" value={formData.nombre} required onChange={handleChange} />
+              <input 
+                type="text" 
+                className="form-control" 
+                id="nombre" 
+                value={formData.nombre} 
+                required 
+                disabled={loading}
+                onChange={handleChange} 
+              />
             </div>
             <div className="col-md-4">
               <label htmlFor="apellido" className="form-label">Apellido</label>
-              <input type="text" className="form-control" id="apellido" value={formData.apellido} required onChange={handleChange} />
+              <input 
+                type="text" 
+                className="form-control" 
+                id="apellido" 
+                value={formData.apellido} 
+                required 
+                disabled={loading}
+                onChange={handleChange} 
+              />
             </div>
             <div className="col-md-4">
               <label htmlFor="dni" className="form-label">DNI</label>
-              <input type="text" className="form-control" id="dni" value={formData.dni} required onChange={handleChange} />
+              <input 
+                type="text" 
+                className="form-control" 
+                id="dni" 
+                value={formData.dni} 
+                required 
+                disabled={loading}
+                pattern="[0-9]{7,8}"
+                title="Ingrese un DNI válido (7-8 dígitos)"
+                onChange={handleChange} 
+              />
             </div>
           </div>
 
@@ -129,47 +199,115 @@ const RegistrarBombero = ({ onVolver }) => {
           <div className="row mb-3">
             <div className="col-md-4">
               <label htmlFor="domicilio" className="form-label">Domicilio</label>
-              <input type="text" className="form-control" id="domicilio" value={formData.domicilio} required onChange={handleChange} />
+              <input 
+                type="text" 
+                className="form-control" 
+                id="domicilio" 
+                value={formData.domicilio} 
+                required 
+                disabled={loading}
+                onChange={handleChange} 
+              />
             </div>
             <div className="col-md-4">
               <label htmlFor="telefono" className="form-label">Teléfono</label>
-              <input type="tel" className="form-control" id="telefono" value={formData.telefono} required onChange={handleChange} />
+              <input 
+                type="tel" 
+                className="form-control" 
+                id="telefono" 
+                value={formData.telefono} 
+                required 
+                disabled={loading}
+                pattern="[0-9+\-\s\(\)]{8,15}"
+                title="Ingrese un teléfono válido (8-15 dígitos)"
+                onChange={handleChange} 
+              />
             </div>
             <div className="col-md-4">
               <label htmlFor="email" className="form-label">Correo electrónico</label>
-              <input type="email" className="form-control" id="email" value={formData.email} required onChange={handleChange} />
+              <input 
+                type="email" 
+                className="form-control" 
+                id="email" 
+                value={formData.email} 
+                required 
+                disabled={loading}
+                onChange={handleChange} 
+              />
             </div>
           </div>
 
-          {/* Legajo - Antigüedad */}
+          {/* Legajo - Antigüedad - Rango */}
           <div className="row mb-3">
             <div className="col-md-4">
               <label htmlFor="legajo" className="form-label">Legajo (opcional)</label>
-              <input type="text" className="form-control" id="legajo" value={formData.legajo} onChange={handleChange} />
+              <input 
+                type="text" 
+                className="form-control" 
+                id="legajo" 
+                value={formData.legajo} 
+                disabled={loading}
+                onChange={handleChange} 
+              />
             </div>
             <div className="col-md-4">
               <label htmlFor="antiguedad" className="form-label">Antigüedad (años)</label>
-              <input type="number" className="form-control" id="antiguedad" value={formData.antiguedad} min="0" onChange={handleChange} />
+              <input 
+                type="number" 
+                className="form-control" 
+                id="antiguedad" 
+                value={formData.antiguedad} 
+                min="0" 
+                max="50"
+                disabled={loading}
+                onChange={handleChange} 
+              />
             </div>
             <div className="col-md-4">
               <label htmlFor="rango" className="form-label">Rango</label>
-              <select className="form-select" id="rango" value={formData.rango} required onChange={handleChange}>
+              <select 
+                className="form-select" 
+                id="rango" 
+                value={formData.rango} 
+                required 
+                disabled={loading}
+                onChange={handleChange}
+              >
                 <option value="">Seleccione un rango</option>
                 <option value="Bombero">Bombero</option>
                 <option value="Cabo">Cabo</option>
                 <option value="Sargento">Sargento</option>
-                <option value="Subteniente">Subteniente</option>
-                <option value="Teniente">Teniente</option>
+                <option value="Sargento Primero">Sargento Primero</option>
+                <option value="Suboficial">Suboficial</option>
+                <option value="Suboficial Principal">Suboficial Principal</option>
+                <option value="Suboficial Mayor">Suboficial Mayor</option>
                 <option value="Oficial">Oficial</option>
+                <option value="Teniente">Teniente</option>
+                <option value="Capitán">Capitán</option>
+                <option value="Mayor">Mayor</option>
+                <option value="Teniente Coronel">Teniente Coronel</option>
+                <option value="Coronel">Coronel</option>
+                <option value="Jefe">Jefe</option>
               </select>
             </div>
           </div>
 
+          {/* Es del Plan */}
           <div className="form-check form-switch mb-3">
-            <input className="form-check-input" type="checkbox" id="esPlan" checked={formData.esPlan} onChange={handleChange} />
-            <label className="form-check-label" htmlFor="esPlan">Es del plan (guardias pagas)</label>
+            <input 
+              className="form-check-input" 
+              type="checkbox" 
+              id="esPlan" 
+              checked={formData.esPlan} 
+              disabled={loading}
+              onChange={handleChange} 
+            />
+            <label className="form-check-label" htmlFor="esPlan">
+              Es del plan (guardias pagas)
+            </label>
           </div>
 
+          {/* Ficha Médica - Fecha - Grupo Sanguíneo */}
           <div className="row mb-3">
             <div className="col-md-4">
               <label htmlFor="fichaMedica" className="form-label">Ficha médica (PDF)</label>
@@ -178,6 +316,7 @@ const RegistrarBombero = ({ onVolver }) => {
                 type="file"
                 id="fichaMedica"
                 accept="application/pdf"
+                disabled={loading}
                 onChange={handleChange}
               />
             </div>
@@ -189,6 +328,7 @@ const RegistrarBombero = ({ onVolver }) => {
                 type="date"
                 id="fechaFicha"
                 value={formData.fechaFicha}
+                disabled={loading}
                 onChange={handleChange}
               />
             </div>
@@ -200,6 +340,7 @@ const RegistrarBombero = ({ onVolver }) => {
                 id="grupoSanguineo"
                 value={formData.grupoSanguineo}
                 required
+                disabled={loading}
                 onChange={handleChange}
               >
                 <option value="">Seleccione</option>
@@ -215,10 +356,19 @@ const RegistrarBombero = ({ onVolver }) => {
             </div>
           </div>
 
-
+          {/* Apto Psicológico */}
           <div className="form-check form-switch mb-3">
-            <input className="form-check-input" type="checkbox" id="aptoPsico" checked={formData.aptoPsico} onChange={handleChange} />
-            <label className="form-check-label" htmlFor="aptoPsico">Apto psicológico</label>
+            <input 
+              className="form-check-input" 
+              type="checkbox" 
+              id="aptoPsico" 
+              checked={formData.aptoPsico} 
+              disabled={loading}
+              onChange={handleChange} 
+            />
+            <label className="form-check-label" htmlFor="aptoPsico">
+              Apto psicológico
+            </label>
           </div>
 
           <button type="submit" className="btn btn-danger w-100" disabled={loading}>
@@ -226,7 +376,12 @@ const RegistrarBombero = ({ onVolver }) => {
           </button>
 
           {onVolver && (
-            <button type="button" className="btn btn-secondary w-100 mt-2" onClick={onVolver} disabled={loading}>
+            <button 
+              type="button" 
+              className="btn btn-secondary w-100 mt-2" 
+              onClick={onVolver} 
+              disabled={loading}
+            >
               Volver
             </button>
           )}
