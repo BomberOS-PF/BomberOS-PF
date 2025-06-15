@@ -191,3 +191,9 @@
   overflow-y: auto;
   flex: 1;
 }
+
+.usuario-logueado {
+  color: #d52b1e;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}

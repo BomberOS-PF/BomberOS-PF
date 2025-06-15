@@ -65,6 +65,9 @@ export class UsuarioService {
     try {
       logger.debug('Servicio: Crear nuevo usuario', { username: datosUsuario.username })
 
+      // 🔍 VERIFICAR qué datos llegan del frontend
+      console.log('📦 Datos recibidos en crearUsuario():', datosUsuario)
+      
       // Validar fortaleza de contraseña
       if (datosUsuario.password) {
         const passwordValidation = PasswordUtils.validatePasswordStrength(datosUsuario.password)
@@ -89,7 +92,10 @@ export class UsuarioService {
 
       // Crear entidad de dominio
       const nuevoUsuario = Usuario.create({
-        ...datosUsuario,
+        username: datosUsuario.username,
+        password: datosUsuario.password,
+        email: datosUsuario.email,
+        idRol: datosUsuario.idRol,
         createdAt: new Date(),
         updatedAt: new Date()
       })
@@ -233,16 +239,34 @@ export class UsuarioService {
         throw new Error('Usuario desactivado')
       }
 
+      // ✅ Mapear idRol a nombre textual antes de devolver al frontend
+      const usuarioPlano = usuario.toJSON?.() || usuario
+
       logger.info('Usuario autenticado exitosamente', { 
         id: usuario.id, 
         username: usuario.username,
-        rol: usuario.rol
+        rol: usuarioPlano.rol
       })
 
-      return usuario
+      // return usuarioPlano
+      return {
+        id: usuario.id,
+        usuario: usuario.username || usuario.usuario,
+        email: usuario.email,
+        rol: usuarioPlano.rol || usuario.rol
+      }
     } catch (error) {
       logger.error('Error en autenticación', { username, error: error.message })
       throw error
     }
   }
-} 
+
+  // ✅ Método privado para traducir idRol a string
+  _mapIdToRol(idRol) {
+    const roles = {
+      1: 'administrador',
+      2: 'bombero'
+    }
+    return roles[idRol] || 'desconocido'
+  }
+}

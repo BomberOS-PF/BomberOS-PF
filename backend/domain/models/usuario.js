@@ -49,18 +49,22 @@ export class Usuario {
   _mapRolToId(rol) {
     const rolesMap = {
       'administrador': 1,
-      'cuartelero': 1,
-      'jefe_cuartel': 1,
-      'bombero': 1
+      'bombero': 2
     }
-    return rolesMap[rol] || 1 // Por defecto usar el único rol disponible
-  }
 
+    // También permitir que llegue un número en string
+    if (typeof rol === 'string' && /^\d+$/.test(rol)) {
+      return parseInt(rol)
+    }
+
+    return rolesMap[rol] || null
+  }
   _mapIdToRol(idRol) {
     const rolesMap = {
-      1: 'administrador' // El único rol disponible es Cuartelero, pero lo mapeamos como administrador
+      1: 'administrador',
+      2: 'bombero'
     }
-    return rolesMap[idRol] || 'administrador'
+    return rolesMap[idRol] || 'desconocido'
   }
 
   _createEmail(email) {

@@ -27,6 +27,7 @@ const Login = ({ setUser, user }) => {
   }
 
   const handleSubmit = async (e) => {
+    console.log('🧠 Sesión guardada:', JSON.parse(localStorage.getItem('usuario')))
     e.preventDefault()
     setLoading(true)
     setError('')
@@ -38,10 +39,10 @@ const Login = ({ setUser, user }) => {
       })
 
       const data = await res.json()
-      
+      console.log('📦 Respuesta del backend:', data)
       if (res.ok && data.success) {
         const sesion = {
-          user: data.user.usuario,
+          usuario: data.user.usuario,
           rol: data.user.rol,
           timestamp: new Date().toISOString()
         }
