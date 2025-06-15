@@ -7,7 +7,7 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
     username: '',
     password: '',
     email: '',
-    rol: ''
+    idRol: ''
   })
 
   const [loading, setLoading] = useState(false)
@@ -108,7 +108,7 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
         // Actualizar usuario existente
         const updateData = {
           email: formData.email,
-          rol: formData.rol,
+          idRol: parseInt(formData.idRol),
           ...(formData.password && { password: formData.password })
         }
 
@@ -135,7 +135,7 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
           username: formData.username,
           password: formData.password,
           email: formData.email,
-          rol: formData.rol
+          idRol: parseInt(formData.rol, 10)
         }
 
         console.log('➕ Creando nuevo usuario:', newUserData)
@@ -278,9 +278,8 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
               onChange={handleChange}
             >
               <option value="">Seleccione un rol</option>
-              <option value="administrador">Administrador</option>
-              <option value="jefe_cuartel">Jefe de cuartel</option>
-              <option value="bombero">Bombero</option>
+              <option value="1">Administrador</option>
+              <option value="2">Bombero</option>
             </select>
           </div>
 

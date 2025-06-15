@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+// ✅ Menu.jsx completo con visualización de usuario y rol
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Menu.css'
 import CargarIncidente from '../Incidente/CargarIncidente/CargarIncidente'
@@ -25,8 +26,13 @@ const Menu = ({ user, setUser }) => {
   const [burbujaExpandida, setBurbujaExpandida] = useState(null)
   const [datosFinalizados, setDatosFinalizados] = useState(null)
 
+  const usuarioActual = user || JSON.parse(localStorage.getItem('usuario')) || {}
+  const nombreUsuario = usuarioActual.usuario || 'Usuario'
+  const rol = usuarioActual.rol || 'desconocido'
+
   const handleLogOut = () => {
-    setUser('')
+    localStorage.removeItem('usuario')
+    setUser(null)
     navigate('/login')
   }
 
@@ -60,9 +66,7 @@ const Menu = ({ user, setUser }) => {
   }
 
   const manejarFinalizarCarga = (datos) => {
-    if (burbujaExpandida) {
-      cerrarBurbuja(burbujaExpandida) // elimina la burbuja actual
-    }
+    if (burbujaExpandida) cerrarBurbuja(burbujaExpandida)
     setDatosFinalizados(datos)
     setOpcionSeleccionada('participacion-incidente')
   }
@@ -70,28 +74,29 @@ const Menu = ({ user, setUser }) => {
   const renderFormularioExpandido = () => {
     const burbuja = burbujas.find(b => b.id === burbujaExpandida)
     if (!burbuja) return null
-
-    const props = {
-      datosPrevios: burbuja.datosPrevios,
-      onFinalizar: manejarFinalizarCarga
-    }
+    const props = { datosPrevios: burbuja.datosPrevios, onFinalizar: manejarFinalizarCarga }
 
     switch (burbuja.tipo) {
-      case 'Accidente':
-        return <AccidenteTransito {...props} />
-      case 'Factores Climáticos':
-        return <FactorClimatico {...props} />
-      case 'Incendio Estructural':
-        return <IncendioEstructural {...props} />
-      case 'Incendio Forestal':
-        return <IncendioForestal {...props} />
-      case 'Material Peligroso':
-        return <MaterialPeligroso {...props} />
-      case 'Rescate':
-        return <Rescate {...props} />
-      default:
-        return <p>Formulario no encontrado</p>
+      case 'Accidente': return <AccidenteTransito {...props} />
+      case 'Factores Climáticos': return <FactorClimatico {...props} />
+      case 'Incendio Estructural': return <IncendioEstructural {...props} />
+      case 'Incendio Forestal': return <IncendioForestal {...props} />
+      case 'Material Peligroso': return <MaterialPeligroso {...props} />
+      case 'Rescate': return <Rescate {...props} />
+      default: return <p>Formulario no encontrado</p>
     }
+  }
+
+  const permisos = {
+    administrador: [
+      'cargar-incidente', 'registrar-bombero', 'consultar-bombero',
+      'registrar-usuario', 'consultar-usuario',
+      'registrar-rol', 'participacion-incidente', 'vehiculo-involucrado'
+    ],
+    bombero: [
+      'cargar-incidente', 'consultar-bombero',
+      'participacion-incidente'
+    ]
   }
 
   const items = [
@@ -105,6 +110,8 @@ const Menu = ({ user, setUser }) => {
     { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' }
   ]
 
+  const puedeVer = (key) => permisos[rol]?.includes(key)
+
   return (
     <div className="sidebar-container">
       <button className="hamburger-btn d-lg-none" onClick={toggleSidebar}>☰</button>
@@ -116,11 +123,13 @@ const Menu = ({ user, setUser }) => {
         </div>
 
         {items.map(({ key, label }) => (
-          <button key={key} className="sidebar-button" onClick={() => {
-            closeSidebar()
-            setOpcionSeleccionada(key)
-            setBurbujaExpandida(null)
-          }}>{label}</button>
+          puedeVer(key) && (
+            <button key={key} className="sidebar-button" onClick={() => {
+              closeSidebar()
+              setOpcionSeleccionada(key)
+              setBurbujaExpandida(null)
+            }}>{label}</button>
+          )
         ))}
 
         <button className="sidebar-button logout" onClick={handleLogOut}>Cerrar sesión</button>
@@ -131,41 +140,21 @@ const Menu = ({ user, setUser }) => {
           <div className="form-wrapper">{renderFormularioExpandido()}</div>
         ) : opcionSeleccionada === null ? (
           <div className="menu-container">
-            <h1>Bienvenido</h1>
-            <h2>{user.user}</h2>
+            <h2 className="usuario-logueado">
+              <strong>{rol?.toUpperCase()}</strong> - {nombreUsuario}
+            </h2>
             <p>Seleccioná una opción desde el menú lateral izquierdo.</p>
           </div>
         ) : (
           <div className="form-wrapper">
-            {opcionSeleccionada === 'cargar-incidente' && (
-              <CargarIncidente
-                onVolver={() => setOpcionSeleccionada(null)}
-                onNotificar={agregarBurbuja}
-              />
-            )}
-            {opcionSeleccionada === 'registrar-bombero' && (
-              <RegistrarBombero onVolver={() => setOpcionSeleccionada(null)} />
-            )}
-            {opcionSeleccionada === 'consultar-bombero' && (
-              <ConsultarBombero onVolver={() => setOpcionSeleccionada(null)} />
-            )}
-            {opcionSeleccionada === 'registrar-usuario' && (
-              <RegistrarUsuario onVolver={() => setOpcionSeleccionada(null)} />
-            )}
-            {opcionSeleccionada === 'consultar-usuario' && (
-              <ConsultarUsuario onVolver={() => setOpcionSeleccionada(null)} />
-            )}
-
-            {opcionSeleccionada === 'registrar-rol' && (
-              <RegistrarRol onVolver={() => setOpcionSeleccionada(null)} />
-            )}
-            {opcionSeleccionada === 'participacion-incidente' && (
-              <ParticipacionIncidente datosPrevios={datosFinalizados} onFinalizar={() => setOpcionSeleccionada('vehiculo-involucrado')}
-              onVolver={() => setOpcionSeleccionada(null)} />
-            )}
-            {opcionSeleccionada === 'vehiculo-involucrado' && (
-              <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />
-            )}
+            {opcionSeleccionada === 'cargar-incidente' && <CargarIncidente onVolver={() => setOpcionSeleccionada(null)} onNotificar={agregarBurbuja} />}
+            {opcionSeleccionada === 'registrar-bombero' && <RegistrarBombero onVolver={() => setOpcionSeleccionada(null)} />}
+            {opcionSeleccionada === 'consultar-bombero' && <ConsultarBombero onVolver={() => setOpcionSeleccionada(null)} />}
+            {opcionSeleccionada === 'registrar-usuario' && <RegistrarUsuario onVolver={() => setOpcionSeleccionada(null)} />}
+            {opcionSeleccionada === 'consultar-usuario' && <ConsultarUsuario onVolver={() => setOpcionSeleccionada(null)} />}
+            {opcionSeleccionada === 'registrar-rol' && <RegistrarRol onVolver={() => setOpcionSeleccionada(null)} />}
+            {opcionSeleccionada === 'participacion-incidente' && <ParticipacionIncidente datosPrevios={datosFinalizados} onFinalizar={() => setOpcionSeleccionada('vehiculo-involucrado')} onVolver={() => setOpcionSeleccionada(null)} />}
+            {opcionSeleccionada === 'vehiculo-involucrado' && <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />}
           </div>
         )}
       </div>

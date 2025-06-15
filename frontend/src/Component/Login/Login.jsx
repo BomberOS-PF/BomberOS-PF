@@ -12,8 +12,13 @@ const Login = ({ setUser, user }) => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (user) navigate('/')
-  }, [user])
+    // Recuperar sesión previa si existe
+    const savedUser = localStorage.getItem('usuario')
+    if (savedUser) {
+      setUser(JSON.parse(savedUser))
+      navigate('/')
+    }
+  }, [])
 
   const resetForm = () => {
     setUsuario('')
@@ -22,56 +27,95 @@ const Login = ({ setUser, user }) => {
   }
 
   const handleSubmit = async (e) => {
+    console.log('🧠 Sesión guardada:', JSON.parse(localStorage.getItem('usuario')))
     e.preventDefault()
     setLoading(true)
     setError('')
-    
-    // Simulación de autenticación local (sin backend)
-    // En un entorno real, esto se conectaría al backend de autenticación
     try {
-      // Credenciales de prueba
-      const credencialesValidas = [
-        { usuario: 'admin', contrasena: 'admin123', rol: 'administrador' },
-        { usuario: 'jefe', contrasena: 'jefe123', rol: 'jefe_cuartel' },
-        { usuario: 'bombero', contrasena: 'bombero123', rol: 'bombero' }
-      ]
+      const res = await fetch ('http://localhost:3000/api/usuarios/auth', {
+        method:'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ usuario, contrasena })
+      })
 
-      // Simular delay de red
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
-      const credencial = credencialesValidas.find(
-        c => c.usuario === usuario && c.contrasena === contrasena
-      )
-
-      if (credencial) {
-        setUser({
-          user: credencial.usuario,
-          rol: credencial.rol,
+      const data = await res.json()
+      console.log('📦 Respuesta del backend:', data)
+      if (res.ok && data.success) {
+        const sesion = {
+          usuario: data.user.usuario,
+          rol: data.user.rol,
           timestamp: new Date().toISOString()
-        })
+        }
+        setUser(sesion)
+        localStorage.setItem('usuario', JSON.stringify(sesion))
         resetForm()
         navigate('/')
       } else {
-        setError('Usuario o contraseña incorrectos')
+        setError(data.message || 'Usuario o contraseña incorrectos')
         resetForm()
       }
     } catch (error) {
-      console.error('Error al iniciar sesión:', error)
+      console.error('Error en el login:', error)
       setError('Error en el sistema. Intenta más tarde.')
       resetForm()
     } finally {
       setLoading(false)
     }
-  }
 
-  if (mostrarRecuperar) {
-    return (
+    if (mostrarRecuperar) {
+      return (
       <RecuperarClave volver={() => {
         resetForm()
         setMostrarRecuperar(false)
-      }} />
-    )
+        }} />
+      )
+    }
   }
+
+  //   try {
+
+  //     const credencialesValidas = [
+  //       { usuario: 'admin', contrasena: 'admin123', rol: 'administrador' },
+  //       { usuario: 'jefe', contrasena: 'jefe123', rol: 'jefe_cuartel' },
+  //       { usuario: 'bombero', contrasena: 'bombero123', rol: 'bombero' }
+  //     ]
+
+  //     // Simular delay de red
+  //     await new Promise(resolve => setTimeout(resolve, 1000))
+
+  //     const credencial = credencialesValidas.find(
+  //       c => c.usuario === usuario && c.contrasena === contrasena
+  //     )
+
+  //     if (credencial) {
+  //       setUser({
+  //         user: credencial.usuario,
+  //         rol: credencial.rol,
+  //         timestamp: new Date().toISOString()
+  //       })
+  //       resetForm()
+  //       navigate('/')
+  //     } else {
+  //       setError('Usuario o contraseña incorrectos')
+  //       resetForm()
+  //     }
+  //   } catch (error) {
+  //     console.error('Error al iniciar sesión:', error)
+  //     setError('Error en el sistema. Intenta más tarde.')
+  //     resetForm()
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
+
+  // if (mostrarRecuperar) {
+  //   return (
+  //     <RecuperarClave volver={() => {
+  //       resetForm()
+  //       setMostrarRecuperar(false)
+  //     }} />
+  //   )
+  // }
 
   return (
     <div className="container-fluid d-flex justify-content-center align-items-center min-vh-100 login-bg">
@@ -129,13 +173,6 @@ const Login = ({ setUser, user }) => {
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
-
-        <div className="mt-4 text-muted">
-          <small>
-            <strong>Usuarios de prueba:</strong><br/>
-            admin/admin123 | jefe/jefe123 | bombero/bombero123
-          </small>
-        </div>
       </div>
     </div>
   )

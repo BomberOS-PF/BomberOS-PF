@@ -18,8 +18,11 @@ import ParticipacionIncidente from './Component/Incidente/ParticipacionIncidente
 import VehiculoInvolucrado from './Component/VehiculoInvolucrado/VehiculoInvolucrado'
 
 const App = () => {
-  const [user, setUser] = useState('')
-
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('usuario')
+    return saved ? JSON.parse(saved) : null
+  })
+  
   return (
     <Routes>
       <Route path="/login" element={<Login setUser={setUser} user={user}/>} />
