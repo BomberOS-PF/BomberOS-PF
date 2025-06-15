@@ -128,6 +128,7 @@ const dbConfig = {
 ```bash
 npm start
 # Inicia backend (puerto 3000) y frontend (puerto 5173)
+# En caso de tener un error con bcrypt, ejecutar npm install bcrypt
 ```
 
 #### Opción 2: Iniciar por separado
@@ -144,6 +145,7 @@ npm run dev:frontend
 ```bash
 # Desarrollo
 npm start                    # Iniciar backend + frontend
+                            # En caso de tener un error con bcrypt, ejecutar npm install bcrypt
 npm run dev                  # Alias de start
 npm run dev:backend         # Solo backend
 npm run dev:frontend        # Solo frontend
