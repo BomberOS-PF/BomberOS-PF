@@ -95,7 +95,7 @@ export class UsuarioHandler {
         method: req.method,
         url: req.url,
         ip: req.ip,
-        username: req.body?.username
+        usuario: req.body?.usuario
       })
 
       const nuevoUsuario = await this.usuarioService.crearUsuario(req.body)
@@ -110,7 +110,7 @@ export class UsuarioHandler {
         error: error.message,
         method: req.method,
         url: req.url,
-        username: req.body?.username,
+        usuario: req.body?.usuario,
         responseTime: `${Date.now() - req.startTime}ms`
       })
       
@@ -254,25 +254,31 @@ export class UsuarioHandler {
    */
   async authenticateUsuario(req, res) {
     try {
-      const { username, password } = req.body
+      const { usuario, contrasena } = req.body
       
       logger.info('Solicitud: Autenticar usuario', {
-        username,
+        usuario,
         method: req.method,
         url: req.url,
         ip: req.ip
       })
 
-      const usuario = await this.usuarioService.autenticarUsuario(username, password)
+      const usuarioAutenticado = await this.usuarioService.autenticarUsuario(usuario, contrasena)
       
       res.status(200).json({
         success: true,
         message: 'Autenticación exitosa',
-        data: usuario.toJSON() // Sin password
-      })
+        user: {
+        id: usuarioAutenticado.id,
+        usuario: usuarioAutenticado.usuario,
+        email: usuarioAutenticado.email,
+        rol: usuarioAutenticado.rol
+      }
+    })
+    
     } catch (error) {
       logger.error('Error en autenticación', {
-        username: req.body?.username,
+        usuario: req.body?.usuario,
         error: error.message,
         method: req.method,
         url: req.url,

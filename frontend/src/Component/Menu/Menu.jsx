@@ -26,7 +26,8 @@ const Menu = ({ user, setUser }) => {
   const [datosFinalizados, setDatosFinalizados] = useState(null)
 
   const handleLogOut = () => {
-    setUser('')
+    localStorage.removeItem('usuario')
+    setUser(null)
     navigate('/login')
   }
 
@@ -94,6 +95,18 @@ const Menu = ({ user, setUser }) => {
     }
   }
 
+  const permisos = {
+    administrador: [
+      'cargar-incidente', 'registrar-bombero', 'consultar-bombero',
+      'registrar-usuario', 'consultar-usuario',
+      'registrar-rol', 'participacion-incidente', 'vehiculo-involucrado'
+    ],
+    bombero: [
+      'cargar-incidente', 'consultar-bombero',
+      'participacion-incidente'
+    ]
+  }
+
   const items = [
     { key: 'cargar-incidente', label: 'Cargar Incidente' },
     { key: 'registrar-bombero', label: 'Registrar Bombero' },
@@ -104,6 +117,8 @@ const Menu = ({ user, setUser }) => {
     { key: 'participacion-incidente', label: 'Participación del Incidente' },
     { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' }
   ]
+
+  const puedeVer = (key) => permisos[user?.rol]?.includes(key)
 
   return (
     <div className="sidebar-container">
@@ -116,11 +131,13 @@ const Menu = ({ user, setUser }) => {
         </div>
 
         {items.map(({ key, label }) => (
-          <button key={key} className="sidebar-button" onClick={() => {
-            closeSidebar()
-            setOpcionSeleccionada(key)
-            setBurbujaExpandida(null)
-          }}>{label}</button>
+          puedeVer(key) && (
+            <button key={key} className="sidebar-button" onClick={() => {
+              closeSidebar()
+              setOpcionSeleccionada(key)
+              setBurbujaExpandida(null)
+            }}>{label}</button>
+          )
         ))}
 
         <button className="sidebar-button logout" onClick={handleLogOut}>Cerrar sesión</button>
@@ -131,8 +148,7 @@ const Menu = ({ user, setUser }) => {
           <div className="form-wrapper">{renderFormularioExpandido()}</div>
         ) : opcionSeleccionada === null ? (
           <div className="menu-container">
-            <h1>Bienvenido</h1>
-            <h2>{user.user}</h2>
+            <h2>{user.user} ({user.rol})</h2>
             <p>Seleccioná una opción desde el menú lateral izquierdo.</p>
           </div>
         ) : (
