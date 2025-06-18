@@ -2,27 +2,78 @@ import { useState } from 'react'
 import './CargarIncidente.css'
 
 const CargarIncidente = ({ onVolver, onNotificar }) => {
+  const now = new Date()
+  const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16)
+
   const [formData, setFormData] = useState({
-    fechaHora: new Date().toISOString().slice(0, 16) // Inicializa con fecha y hora actual
+    fechaHora: localDateTime
   })
 
   const handleChange = (e) => {
     const { id, value } = e.target
     setFormData(prev => ({ ...prev, [id]: value }))
   }
-  
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
-    const id = Date.now() // más adelante reemplazalo por el ID real del backend
-    const datosConId = { ...formData, id }
+    try {
+      const tipoMap = {
+        'Accidente': 1,
+        'Factores Climáticos': 2,
+        'Incendio Estructural': 3,
+        'Incendio Forestal': 4,
+        'Material Peligroso': 5,
+        'Rescate': 6
+      }
 
-    if (onNotificar) {
-      onNotificar(formData.tipoSiniestro, datosConId)
-    }
+      const localizacionMap = {
+        'Despeñaderos': 1,
+        'Zona Rural': 2,
+        'Zona Urbana': 3,
+        'Zona Industrial': 4,
+        'Zona Costera': 5,
+        'Otros': 6
+      }
 
-    if (onVolver) {
-      onVolver()
+      const usuarioDNI = '12345678' // ⚠️ luego reemplazar por usuario logueado
+
+      const payload = {
+        DNI: usuarioDNI,
+        idTipoIncidente: tipoMap[formData.tipoSiniestro],
+        fecha: formData.fechaHora,
+        idDenunciante: 1, // 🔧 luego reemplazar por ID real de denunciante
+        idLocalizacion: localizacionMap[formData.localizacion] || 99,
+        descripcion: formData.lugar
+      }
+
+      const response = await fetch('http://localhost:3000/api/incidentes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al guardar el incidente')
+      }
+
+      alert('✅ Incidente guardado correctamente')
+
+      if (onNotificar) {
+        onNotificar(formData.tipoSiniestro, data.incidente)
+      }
+
+      if (onVolver) {
+        onVolver()
+      }
+
+    } catch (error) {
+      console.error('❌ Error al guardar incidente:', error)
+      alert(`Error: ${error.message}`)
     }
   }
 
