@@ -2,7 +2,9 @@ import { useState } from 'react'
 import './CargarIncidente.css'
 
 const CargarIncidente = ({ onVolver, onNotificar }) => {
-  const [formData, setFormData] = useState({})
+  const [formData, setFormData] = useState({
+    fechaHora: new Date().toISOString().slice(0, 16) // Inicializa con fecha y hora actual
+  })
 
   const handleChange = (e) => {
     const { id, value } = e.target
@@ -57,9 +59,18 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
             </div>
           </div>
 
-          <div className="mb-3">
-            <label htmlFor="fechaHora" className="form-label">Fecha y Hora</label>
-            <input type="datetime-local" className="form-control" id="fechaHora" required onChange={handleChange} />
+          <div className="row mb-3">
+            <div className="col-md-4">
+              <label htmlFor="fechaHora" className="form-label">Fecha y Hora</label>
+              <input
+                type="datetime-local"
+                className="form-control estrecho"
+                id="fechaHora"
+                value={formData.fechaHora}
+                required
+                onChange={handleChange}
+              />
+            </div>
           </div>
 
           <h5 className="text-white mb-3">Datos del denunciante</h5>

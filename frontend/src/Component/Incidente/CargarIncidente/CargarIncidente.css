@@ -82,3 +82,6 @@
   margin-right: -0.5rem;
 }
 
+.form-control.estrecho {
+  max-width: 300px;
+}
