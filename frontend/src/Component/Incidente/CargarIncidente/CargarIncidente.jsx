@@ -38,15 +38,23 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
         'Otros': 6
       }
 
-      const usuarioDNI = '12345678' // ⚠️ luego reemplazar por usuario logueado
+      const usuario = JSON.parse(localStorage.getItem('usuario'))
+      const usuarioDNI = usuario?.dni || '00000000'
 
       const payload = {
         DNI: usuarioDNI,
         idTipoIncidente: tipoMap[formData.tipoSiniestro],
         fecha: formData.fechaHora,
-        idDenunciante: 1, // 🔧 luego reemplazar por ID real de denunciante
         idLocalizacion: localizacionMap[formData.localizacion] || 99,
         descripcion: formData.lugar
+      }
+
+      // Agrega datos del denunciante solo si se completaron
+      if (formData.nombreDenunciante || formData.apellidoDenunciante || formData.telefonoDenunciante || formData.dniDenunciante) {
+        payload.nombreDenunciante = formData.nombreDenunciante
+        payload.apellidoDenunciante = formData.apellidoDenunciante
+        payload.telefonoDenunciante = formData.telefonoDenunciante
+        payload.dniDenunciante = formData.dniDenunciante
       }
 
       const response = await fetch('http://localhost:3000/api/incidentes', {
@@ -64,7 +72,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
       alert('✅ Incidente guardado correctamente')
 
       if (onNotificar) {
-        onNotificar(formData.tipoSiniestro, data.incidente)
+        onNotificar(formData.tipoSiniestro, data)
       }
 
       if (onVolver) {
@@ -124,26 +132,26 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
             </div>
           </div>
 
-          <h5 className="text-white mb-3">Datos del denunciante</h5>
+          <h5 className="text-white mb-3">Datos del denunciante (opcional)</h5>
           <div className="row mb-3">
             <div className="col">
               <label htmlFor="nombreDenunciante" className="form-label">Nombre</label>
-              <input type="text" className="form-control" id="nombreDenunciante" required onChange={handleChange} />
+              <input type="text" className="form-control" id="nombreDenunciante" onChange={handleChange} />
             </div>
             <div className="col">
               <label htmlFor="apellidoDenunciante" className="form-label">Apellido</label>
-              <input type="text" className="form-control" id="apellidoDenunciante" required onChange={handleChange} />
+              <input type="text" className="form-control" id="apellidoDenunciante" onChange={handleChange} />
             </div>
           </div>
 
           <div className="row mb-3">
             <div className="col">
               <label htmlFor="telefonoDenunciante" className="form-label">Teléfono</label>
-              <input type="tel" className="form-control" id="telefonoDenunciante" required onChange={handleChange} />
+              <input type="tel" className="form-control" id="telefonoDenunciante" onChange={handleChange} />
             </div>
             <div className="col">
               <label htmlFor="dniDenunciante" className="form-label">DNI</label>
-              <input type="text" className="form-control" id="dniDenunciante" required onChange={handleChange} />
+              <input type="text" className="form-control" id="dniDenunciante" onChange={handleChange} />
             </div>
           </div>
 
