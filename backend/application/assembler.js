@@ -16,6 +16,10 @@ import { MySQLDenuncianteRepository } from '../internal/repositories/mysql/denun
 import { createConnection } from '../internal/platform/database/connection.js'
 import { logger } from '../internal/platform/logger/logger.js'
 
+import { MySQLRolRepository } from '../internal/repositories/mysql/rol.repository.js'
+import { RolService } from '../internal/services/rol.service.js'
+import { RolHandler } from '../roles/handler.js'
+
 export async function createServer(config) {
   try {
     logger.info('🏗️ Iniciando assembler de dependencias...')
@@ -27,14 +31,17 @@ export async function createServer(config) {
     const usuarioRepository = new MySQLUsuarioRepository()
     const incidenteRepository = new MySQLIncidenteRepository()
     const denuncianteRepository = new MySQLDenuncianteRepository()
+    const rolRepository = new MySQLRolRepository()
 
     const bomberoService = new BomberoService(bomberoRepository)
     const usuarioService = new UsuarioService(usuarioRepository)
     const incidenteService = new IncidenteService(incidenteRepository, denuncianteRepository)
+    const rolService = new RolService(rolRepository)
 
     const bomberoHandler = new BomberoHandler(bomberoService)
     const usuarioHandler = new UsuarioHandler(usuarioService)
     const incidenteHandler = construirIncidenteHandler(incidenteService)
+    const rolHandler = new RolHandler(rolService)
 
     logger.level = config.logging.level
     logger.format = config.logging.format
@@ -50,6 +57,9 @@ export async function createServer(config) {
       incidenteRepository,
       incidenteHandler,
       denuncianteRepository,
+      rolRepository,
+      rolService,
+      rolHandler,
       dbConnection,
       config
     }
@@ -93,6 +103,10 @@ async function validateDependencies(container) {
 
     if (!container.denuncianteRepository) throw new Error('DenuncianteRepository no inicializado')
 
+    if (!container.rolRepository) throw new Error('RolRepository no inicializado')
+    if (!container.rolService) throw new Error('RolService no inicializado')
+    if (!container.rolHandler) throw new Error('RolHandler no inicializado')
+      
     if (!container.dbConnection) throw new Error('Database connection no inicializada')
 
     const testConnection = await container.dbConnection.getConnection()

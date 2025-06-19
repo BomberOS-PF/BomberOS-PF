@@ -27,7 +27,7 @@ export function setupRoutes(app, container) {
   })
 
   // Handlers del container
-  const { bomberoHandler, usuarioHandler, incidenteHandler } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, rolHandler } = container
 
   // BOMBEROS
   app.get('/api/bomberos/plan', async (req, res) => {
@@ -148,6 +148,16 @@ export function setupRoutes(app, container) {
     }
   })
 
+    // ROLES
+  app.get('/api/roles', async (req, res) => {
+    try {
+      await rolHandler.getAllRoles(req, res)
+    } catch (error) {
+      logger.error('Error en ruta getAllRoles:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
   // INCIDENTES
   app.get('/api/incidentes', async (req, res) => {
     try {
@@ -221,6 +231,7 @@ export function setupRoutes(app, container) {
         'DELETE /api/usuarios/:id',
         'GET /api/usuarios/rol/:rol',
         'POST /api/usuarios/auth',
+        'GET /api/roles',
         'GET /api/incidentes',
         'POST /api/incidentes',
         'GET /api/incidentes/:id',

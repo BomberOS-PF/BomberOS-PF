@@ -23,6 +23,11 @@ export const API_URLS = {
     authenticate: `${API_BASE_URL}/usuarios/auth`
   },
   
+  // Roles
+  roles: {
+    getAll: `${API_BASE_URL}/roles`
+  },
+
   // Health check
   health: 'http://localhost:3000/health'
 }
