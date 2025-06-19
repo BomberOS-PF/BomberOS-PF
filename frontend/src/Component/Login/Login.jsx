@@ -12,7 +12,6 @@ const Login = ({ setUser, user }) => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Recuperar sesión previa si existe
     const savedUser = localStorage.getItem('usuario')
     if (savedUser) {
       setUser(JSON.parse(savedUser))
@@ -27,27 +26,37 @@ const Login = ({ setUser, user }) => {
   }
 
   const handleSubmit = async (e) => {
-    console.log('🧠 Sesión guardada:', JSON.parse(localStorage.getItem('usuario')))
     e.preventDefault()
     setLoading(true)
     setError('')
     try {
-      const res = await fetch ('http://localhost:3000/api/usuarios/auth', {
-        method:'POST',
-        headers: {'Content-Type': 'application/json'},
+      const res = await fetch('http://localhost:3000/api/usuarios/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ usuario, contrasena })
       })
 
       const data = await res.json()
       console.log('📦 Respuesta del backend:', data)
+
       if (res.ok && data.success) {
         const sesion = {
+          id: data.user.id,
           usuario: data.user.usuario,
           rol: data.user.rol,
+          nombre: data.user.nombre,
+          apellido: data.user.apellido,
+          email: data.user.email,
           timestamp: new Date().toISOString()
         }
+
+        console.log('🧠 Sesión a guardar en localStorage:', sesion)
         setUser(sesion)
         localStorage.setItem('usuario', JSON.stringify(sesion))
+
+        const stored = JSON.parse(localStorage.getItem('usuario'))
+        console.log('📥 Datos guardados efectivamente:', stored)
+
         resetForm()
         navigate('/')
       } else {
@@ -61,61 +70,16 @@ const Login = ({ setUser, user }) => {
     } finally {
       setLoading(false)
     }
+  }
 
-    if (mostrarRecuperar) {
-      return (
+  if (mostrarRecuperar) {
+    return (
       <RecuperarClave volver={() => {
         resetForm()
         setMostrarRecuperar(false)
-        }} />
-      )
-    }
+      }} />
+    )
   }
-
-  //   try {
-
-  //     const credencialesValidas = [
-  //       { usuario: 'admin', contrasena: 'admin123', rol: 'administrador' },
-  //       { usuario: 'jefe', contrasena: 'jefe123', rol: 'jefe_cuartel' },
-  //       { usuario: 'bombero', contrasena: 'bombero123', rol: 'bombero' }
-  //     ]
-
-  //     // Simular delay de red
-  //     await new Promise(resolve => setTimeout(resolve, 1000))
-
-  //     const credencial = credencialesValidas.find(
-  //       c => c.usuario === usuario && c.contrasena === contrasena
-  //     )
-
-  //     if (credencial) {
-  //       setUser({
-  //         user: credencial.usuario,
-  //         rol: credencial.rol,
-  //         timestamp: new Date().toISOString()
-  //       })
-  //       resetForm()
-  //       navigate('/')
-  //     } else {
-  //       setError('Usuario o contraseña incorrectos')
-  //       resetForm()
-  //     }
-  //   } catch (error) {
-  //     console.error('Error al iniciar sesión:', error)
-  //     setError('Error en el sistema. Intenta más tarde.')
-  //     resetForm()
-  //   } finally {
-  //     setLoading(false)
-  //   }
-  // }
-
-  // if (mostrarRecuperar) {
-  //   return (
-  //     <RecuperarClave volver={() => {
-  //       resetForm()
-  //       setMostrarRecuperar(false)
-  //     }} />
-  //   )
-  // }
 
   return (
     <div className="container-fluid d-flex justify-content-center align-items-center min-vh-100 login-bg">
@@ -126,7 +90,7 @@ const Login = ({ setUser, user }) => {
           className="logo-bomberos mb-3"
         />
         <h2 className="text-black mb-4">Iniciar Sesión</h2>
-        
+
         {error && (
           <div className="alert alert-danger mb-3">
             {error}
@@ -164,7 +128,7 @@ const Login = ({ setUser, user }) => {
             <button
               type="button"
               className="btn btn-link recuperar-link p-0"
-              onClick={() => navigate('/recuperar-clave')}
+              onClick={() => setMostrarRecuperar(true)}
               disabled={loading}>
               Recuperar contraseña
             </button>

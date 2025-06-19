@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import './CargarIncidente.css'
 
-const CargarIncidente = ({ onVolver, onNotificar }) => {
+const CargarIncidente = ({ onVolver, onNotificar}) => {
   const now = new Date()
   const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
     .toISOString()
     .slice(0, 16)
+
+  const usuario = JSON.parse(localStorage.getItem('usuario'))
+  console.log('🧾 Usuario cargado desde localStorage:', usuario)
+  const nombreCompleto = `${usuario?.nombre || ''} ${usuario?.apellido || ''}`.trim()
 
   const [formData, setFormData] = useState({
     fechaHora: localDateTime
@@ -38,11 +42,8 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
         'Otros': 6
       }
 
-      const usuario = JSON.parse(localStorage.getItem('usuario'))
-      const usuarioDNI = usuario?.dni || '00000000'
-
       const payload = {
-        DNI: usuarioDNI,
+        idUsuario: usuario?.id,
         idTipoIncidente: tipoMap[formData.tipoSiniestro],
         fecha: formData.fechaHora,
         idLocalizacion: localizacionMap[formData.localizacion] || 99,
@@ -92,17 +93,13 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
         <form onSubmit={handleSubmit}>
           <div className="row mb-3">
             <div className="col-md-6">
-              <label htmlFor="persona" className="form-label">Persona que carga</label>
-              <select className="form-select" id="persona" required onChange={handleChange} defaultValue="">
-                <option disabled value="">Seleccione persona</option>
-                <option>Jefe</option>
-                <option>Oficial</option>
-                <option>Subteniente</option>
-                <option>Sargento</option>
-                <option>Cabo</option>
-                <option>Bombero</option>
-                <option>Aspirante</option>
-              </select>
+              <label className="form-label">Persona que carga</label>
+              <input
+                type="text"
+                className="form-control"
+                value={nombreCompleto || 'Desconocido'}
+                disabled
+              />
             </div>
             <div className="col-md-6">
               <label htmlFor="tipoSiniestro" className="form-label">Tipo de Siniestro</label>

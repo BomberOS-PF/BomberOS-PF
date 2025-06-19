@@ -272,7 +272,9 @@ export class UsuarioHandler {
         id: usuarioAutenticado.id,
         usuario: usuarioAutenticado.usuario,
         email: usuarioAutenticado.email,
-        rol: usuarioAutenticado.rol
+        rol: usuarioAutenticado.rol,
+        nombre: usuarioAutenticado.nombre,
+        apellido: usuarioAutenticado.apellido        
       }
     })
     
