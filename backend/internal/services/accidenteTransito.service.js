@@ -45,4 +45,14 @@ export class AccidenteTransitoService {
       throw new Error('Error al registrar el accidente de tránsito')
     }
   }
+
+  async obtenerAccidentePorIncidente(idIncidente) {
+    return await this.accidenteRepository.obtenerAccidenteCompleto(idIncidente)
+  }
+
+  async obtenerTodos() {
+    logger.debug('📥 Llamando a obtenerTodosAccidentesCompletos desde el service')
+    return await this.accidenteRepository.obtenerTodosAccidentesCompletos()
+  }
+
 }

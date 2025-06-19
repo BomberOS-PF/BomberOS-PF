@@ -17,6 +17,7 @@ import Rescate from '../Incidente/TipoIncidente/Rescate/Rescate'
 import ParticipacionIncidente from '../Incidente/ParticipacionIncidente/ParticipacionIncidente'
 import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
 import ConsultarBombero from '../Bombero/ConsultarBombero/ConsultarBombero'
+import ConsultarIncidente from '../Incidente/ConsultarIncidente/ConsultarIncidente'
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
@@ -91,7 +92,8 @@ const Menu = ({ user, setUser }) => {
     administrador: [
       'cargar-incidente', 'registrar-bombero', 'consultar-bombero',
       'registrar-usuario', 'consultar-usuario',
-      'registrar-rol', 'participacion-incidente', 'vehiculo-involucrado', 'accidente-transito'
+      'registrar-rol', 'participacion-incidente', 'vehiculo-involucrado', 
+      'accidente-transito', 'consultar-incidente'
     ],
     bombero: [
       'cargar-incidente', 'consultar-bombero',
@@ -101,6 +103,7 @@ const Menu = ({ user, setUser }) => {
 
   const items = [
     { key: 'cargar-incidente', label: 'Cargar Incidente' },
+    { key: 'consultar-incidente', label: 'Consultar Incidente' },
     { key: 'registrar-bombero', label: 'Registrar Bombero' },
     { key: 'consultar-bombero', label: 'Consultar Bombero' },
     { key: 'registrar-usuario', label: 'Registrar Usuario' },
@@ -108,7 +111,7 @@ const Menu = ({ user, setUser }) => {
     { key: 'registrar-rol', label: 'Registrar Rol' },
     { key: 'participacion-incidente', label: 'Participación del Incidente' },
     { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' },
-
+    
     { key: 'accidente-transito', label: 'Accidente de Tránsito' }
   ]
 
@@ -150,6 +153,7 @@ const Menu = ({ user, setUser }) => {
         ) : (
           <div className="form-wrapper">
             {opcionSeleccionada === 'cargar-incidente' && <CargarIncidente onVolver={() => setOpcionSeleccionada(null)} onNotificar={agregarBurbuja} />}
+            {opcionSeleccionada === 'consultar-incidente' && <ConsultarIncidente onVolver={() => setOpcionSeleccionada(null)} />} 
             {opcionSeleccionada === 'registrar-bombero' && <RegistrarBombero onVolver={() => setOpcionSeleccionada(null)} />}
             {opcionSeleccionada === 'consultar-bombero' && <ConsultarBombero onVolver={() => setOpcionSeleccionada(null)} />}
             {opcionSeleccionada === 'registrar-usuario' && <RegistrarUsuario onVolver={() => setOpcionSeleccionada(null)} />}
