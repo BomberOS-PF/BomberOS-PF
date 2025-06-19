@@ -91,7 +91,7 @@ const Menu = ({ user, setUser }) => {
     administrador: [
       'cargar-incidente', 'registrar-bombero', 'consultar-bombero',
       'registrar-usuario', 'consultar-usuario',
-      'registrar-rol', 'participacion-incidente', 'vehiculo-involucrado'
+      'registrar-rol', 'participacion-incidente', 'vehiculo-involucrado', 'accidente-transito'
     ],
     bombero: [
       'cargar-incidente', 'consultar-bombero',
@@ -107,7 +107,9 @@ const Menu = ({ user, setUser }) => {
     { key: 'consultar-usuario', label: 'Consultar Usuario' },
     { key: 'registrar-rol', label: 'Registrar Rol' },
     { key: 'participacion-incidente', label: 'Participación del Incidente' },
-    { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' }
+    { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' },
+
+    { key: 'accidente-transito', label: 'Accidente de Tránsito' }
   ]
 
   const puedeVer = (key) => permisos[rol]?.includes(key)
@@ -155,6 +157,10 @@ const Menu = ({ user, setUser }) => {
             {opcionSeleccionada === 'registrar-rol' && <RegistrarRol onVolver={() => setOpcionSeleccionada(null)} />}
             {opcionSeleccionada === 'participacion-incidente' && <ParticipacionIncidente datosPrevios={datosFinalizados} onFinalizar={() => setOpcionSeleccionada('vehiculo-involucrado')} onVolver={() => setOpcionSeleccionada(null)} />}
             {opcionSeleccionada === 'vehiculo-involucrado' && <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />}
+            
+            {opcionSeleccionada === 'accidente-transito' && <AccidenteTransito datosPrevios={{ id: 999 }} onFinalizar={() => setOpcionSeleccionada(null)} />}
+
+
           </div>
         )}
       </div>

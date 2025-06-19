@@ -193,4 +193,33 @@ export class MySQLBomberoRepository {
       throw new Error(`Error al obtener bomberos del plan: ${error.message}`)
     }
   }
+
+  async actualizarIdUsuarioPorDni(dni, idUsuario) {
+    const query = `
+      UPDATE ${this.tableName}
+      SET idUsuario = ?
+      WHERE DNI = ?
+    `
+    
+    const connection = getConnection()
+    
+    try {
+      const [result] = await connection.execute(query, [idUsuario, dni])
+      logger.debug('Actualización de idUsuario en bombero', {
+        dni,
+        idUsuario,
+        filasAfectadas: result.affectedRows
+      })
+      return result.affectedRows > 0
+    } catch (error) {
+      logger.error('Error al actualizar idUsuario del bombero', {
+        dni,
+        idUsuario,
+        error: error.message,
+        code: error.code
+      })
+      throw new Error(`Error al actualizar idUsuario del bombero: ${error.message}`)
+    }
+  }
+
 } 

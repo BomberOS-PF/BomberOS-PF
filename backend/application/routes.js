@@ -27,7 +27,7 @@ export function setupRoutes(app, container) {
   })
 
   // Handlers del container
-  const { bomberoHandler, usuarioHandler, incidenteHandler, rolHandler } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, rolHandler, causaAccidenteHandler, accidenteTransitoHandler } = container
 
   // BOMBEROS
   app.get('/api/bomberos/plan', async (req, res) => {
@@ -148,7 +148,7 @@ export function setupRoutes(app, container) {
     }
   })
 
-    // ROLES
+  // ROLES
   app.get('/api/roles', async (req, res) => {
     try {
       await rolHandler.getAllRoles(req, res)
@@ -204,6 +204,26 @@ export function setupRoutes(app, container) {
     }
   })
 
+  // CAUSAS DE ACCIDENTE
+  app.get('/api/causas-accidente', async (req, res) => {
+    try {
+      await causaAccidenteHandler.getTodas(req, res)
+    } catch (error) {
+      logger.error('Error en ruta causas accidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // ACCIDENTES DE TRANSITO
+  app.post('/api/accidentes', async (req, res) => {
+    try {
+      await container.accidenteTransitoHandler.registrar(req, res)
+    } catch (error) {
+      logger.error('Error en ruta registrar accidente de tránsito:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
   // 404 handler
   app.use((req, res) => {
     logger.warn('Ruta no encontrada', { 
@@ -236,7 +256,8 @@ export function setupRoutes(app, container) {
         'POST /api/incidentes',
         'GET /api/incidentes/:id',
         'PUT /api/incidentes/:id',
-        'DELETE /api/incidentes/:id'
+        'DELETE /api/incidentes/:id',
+        'POST /api/accidentes'
       ]
     })
   })
