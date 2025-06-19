@@ -1,18 +1,16 @@
 import { logger } from '../internal/platform/logger/logger.js'
 
-
- // Configuración central de rutas
-
+// Configuración central de rutas
 export function setupRoutes(app, container) {
   logger.info('🛣️ Configurando rutas...')
 
-  // Health check routes
+  // Health check
   app.get('/health', (req, res) => {
     logger.info('Health check solicitado', {
       ip: req.ip,
       userAgent: req.get('User-Agent')
     })
-    
+
     res.json({
       status: 'OK',
       message: 'BomberOS - ABMC Bomberos con Clean Architecture',
@@ -28,10 +26,10 @@ export function setupRoutes(app, container) {
     res.redirect('/health')
   })
 
-  // Bomberos routes
-  const { bomberoHandler, usuarioHandler } = container
+  // Handlers del container
+  const { bomberoHandler, usuarioHandler, incidenteHandler } = container
 
-  // Rutas específicas primero
+  // BOMBEROS
   app.get('/api/bomberos/plan', async (req, res) => {
     try {
       await bomberoHandler.getBomberosDelPlan(req, res)
@@ -41,7 +39,6 @@ export function setupRoutes(app, container) {
     }
   })
 
-  // Rutas CRUD básicas
   app.get('/api/bomberos', async (req, res) => {
     try {
       await bomberoHandler.getAllBomberos(req, res)
@@ -87,8 +84,7 @@ export function setupRoutes(app, container) {
     }
   })
 
-  // Usuarios routes
-  // Rutas específicas primero
+  // USUARIOS
   app.get('/api/usuarios/rol/:rol', async (req, res) => {
     try {
       await usuarioHandler.getUsuariosByRol(req, res)
@@ -107,7 +103,6 @@ export function setupRoutes(app, container) {
     }
   })
 
-  // Rutas CRUD básicas para usuarios
   app.get('/api/usuarios', async (req, res) => {
     try {
       await usuarioHandler.getAllUsuarios(req, res)
@@ -153,7 +148,53 @@ export function setupRoutes(app, container) {
     }
   })
 
-  // 404 handler - SOLUCIONADO: usar función middleware sin patrón problemático
+  // INCIDENTES
+  app.get('/api/incidentes', async (req, res) => {
+    try {
+      await incidenteHandler.listar(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listar incidentes:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/incidentes/:id', async (req, res) => {
+    try {
+      await incidenteHandler.obtenerPorId(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtener incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.post('/api/incidentes', async (req, res) => {
+    try {
+      await incidenteHandler.crear(req, res)
+    } catch (error) {
+      logger.error('Error en ruta crear incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.put('/api/incidentes/:id', async (req, res) => {
+    try {
+      await incidenteHandler.actualizar(req, res)
+    } catch (error) {
+      logger.error('Error en ruta actualizar incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.delete('/api/incidentes/:id', async (req, res) => {
+    try {
+      await incidenteHandler.eliminar(req, res)
+    } catch (error) {
+      logger.error('Error en ruta eliminar incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // 404 handler
   app.use((req, res) => {
     logger.warn('Ruta no encontrada', { 
       method: req.method, 
@@ -179,10 +220,15 @@ export function setupRoutes(app, container) {
         'PUT /api/usuarios/:id',
         'DELETE /api/usuarios/:id',
         'GET /api/usuarios/rol/:rol',
-        'POST /api/usuarios/auth'
+        'POST /api/usuarios/auth',
+        'GET /api/incidentes',
+        'POST /api/incidentes',
+        'GET /api/incidentes/:id',
+        'PUT /api/incidentes/:id',
+        'DELETE /api/incidentes/:id'
       ]
     })
   })
 
   logger.info('✅ Rutas configuradas exitosamente')
-} 
+}

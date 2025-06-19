@@ -56,6 +56,15 @@ export class MySQLUsuarioRepository {
     }
   }
 
+  async findBomberoByIdUsuario(idUsuario) {
+    const connection = getConnection()
+    const [rows] = await connection.execute(
+      'SELECT nombreCompleto FROM bombero WHERE idUsuario = ?',
+      [idUsuario]
+    )
+    return rows[0] || null
+  }
+
   async findByUsername(username) {
     const query = `
       SELECT idUsuario, usuario, contrasena, email, idRol

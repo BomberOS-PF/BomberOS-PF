@@ -38,4 +38,30 @@ export class BomberoRepositoryInterface {
   }
 }
 
- 
+export class IncidenteRepositoryInterface {
+  constructor() {
+    if (this.constructor === IncidenteRepositoryInterface) {
+      throw new Error('Cannot instantiate abstract class IncidenteRepositoryInterface')
+    }
+  }
+
+  async guardar(incidente) {
+    throw new Error('Method guardar must be implemented')
+  }
+
+  async obtenerPorId(id) {
+    throw new Error('Method obtenerPorId must be implemented')
+  }
+
+  async obtenerTodos() {
+    throw new Error('Method obtenerTodos must be implemented')
+  }
+
+  async actualizar(id, datosActualizados) {
+    throw new Error('Method actualizar must be implemented')
+  }
+
+  async eliminar(id) {
+    throw new Error('Method eliminar must be implemented')
+  }
+}
