@@ -43,6 +43,7 @@ const Login = ({ setUser, user }) => {
         const sesion = {
           id: data.user.id,
           usuario: data.user.usuario,
+          dni: data.user.dni,
           rol: data.user.rol,
           nombre: data.user.nombre,
           apellido: data.user.apellido,

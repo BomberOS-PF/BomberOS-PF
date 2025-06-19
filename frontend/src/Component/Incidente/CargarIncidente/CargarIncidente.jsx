@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './CargarIncidente.css'
 
-const CargarIncidente = ({ onVolver, onNotificar}) => {
+const CargarIncidente = ({ onVolver, onNotificar }) => {
   const now = new Date()
   const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
     .toISOString()
@@ -43,19 +43,24 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
       }
 
       const payload = {
-        idUsuario: usuario?.id,
+        dni: usuario?.dni,
         idTipoIncidente: tipoMap[formData.tipoSiniestro],
         fecha: formData.fechaHora,
         idLocalizacion: localizacionMap[formData.localizacion] || 99,
         descripcion: formData.lugar
       }
 
-      // Agrega datos del denunciante solo si se completaron
-      if (formData.nombreDenunciante || formData.apellidoDenunciante || formData.telefonoDenunciante || formData.dniDenunciante) {
-        payload.nombreDenunciante = formData.nombreDenunciante
-        payload.apellidoDenunciante = formData.apellidoDenunciante
-        payload.telefonoDenunciante = formData.telefonoDenunciante
-        payload.dniDenunciante = formData.dniDenunciante
+      const hayDenunciante =
+        formData.nombreDenunciante || formData.apellidoDenunciante ||
+        formData.telefonoDenunciante || formData.dniDenunciante
+
+      if (hayDenunciante) {
+        payload.denunciante = {
+          nombre: formData.nombreDenunciante || null,
+          apellido: formData.apellidoDenunciante || null,
+          telefono: formData.telefonoDenunciante || null,
+          dni: formData.dniDenunciante || null
+        }
       }
 
       const response = await fetch('http://localhost:3000/api/incidentes', {

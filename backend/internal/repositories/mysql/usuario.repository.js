@@ -59,7 +59,7 @@ export class MySQLUsuarioRepository {
   async findBomberoByIdUsuario(idUsuario) {
     const connection = getConnection()
     const [rows] = await connection.execute(
-      'SELECT nombreCompleto FROM bombero WHERE idUsuario = ?',
+      'SELECT nombreCompleto, DNI AS dni FROM bombero WHERE idUsuario = ?',
       [idUsuario]
     )
     return rows[0] || null

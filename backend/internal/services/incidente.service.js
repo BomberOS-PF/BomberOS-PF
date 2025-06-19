@@ -11,18 +11,22 @@ export class IncidenteService extends IncidenteServiceInterface {
   async crearIncidente(data) {
     let idDenunciante = null
 
-    const hayDatosDenunciante =
-      data.nombreDenunciante || data.apellidoDenunciante || data.telefonoDenunciante || data.dniDenunciante
+    // Si se proporciona el objeto 'denunciante' en el payload
+    if (data.denunciante) {
+      const { nombre, apellido, telefono, dni } = data.denunciante
 
-    if (hayDatosDenunciante) {
-      const denunciante = {
-        nombre: data.nombreDenunciante || null,
-        apellido: data.apellidoDenunciante || null,
-        telefono: data.telefonoDenunciante || null,
-        dni: data.dniDenunciante || null
+      const hayDatosDenunciante = nombre || apellido || telefono || dni
+
+      if (hayDatosDenunciante) {
+        const denunciante = {
+          nombre: nombre || null,
+          apellido: apellido || null,
+          telefono: telefono || null,
+          dni: dni || null
+        }
+
+        idDenunciante = await this.denuncianteRepository.crear(denunciante)
       }
-
-      idDenunciante = await this.denuncianteRepository.crear(denunciante)
     }
 
     const nuevoIncidente = new Incidente({
@@ -31,7 +35,7 @@ export class IncidenteService extends IncidenteServiceInterface {
       fecha: data.fecha,
       idLocalizacion: data.idLocalizacion,
       descripcion: data.descripcion,
-      idDenunciante // puede ser null
+      idDenunciante // puede ser null si no se cargó denunciante
     })
 
     return await this.incidenteRepository.create(nuevoIncidente)

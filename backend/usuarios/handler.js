@@ -271,6 +271,7 @@ export class UsuarioHandler {
         user: {
         id: usuarioAutenticado.id,
         usuario: usuarioAutenticado.usuario,
+        dni: usuarioAutenticado.dni,
         email: usuarioAutenticado.email,
         rol: usuarioAutenticado.rol,
         nombre: usuarioAutenticado.nombre,

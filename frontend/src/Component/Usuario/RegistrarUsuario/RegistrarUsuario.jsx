@@ -21,7 +21,7 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
         username: usuario.username || '',
         password: '',
         email: usuario.email || '',
-        rol: usuario.rol || ''
+        idRol: usuario.idRol?.toString() || ''
       })
     }
   }, [usuario])
@@ -39,45 +39,25 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
       isValid: false
     }
 
-    // Longitud mínima
     if (password.length < 6) {
       result.errors.push('Debe tener al menos 6 caracteres')
     } else if (password.length >= 8) {
       result.score += 1
     }
 
-    // Contiene números
-    if (/\d/.test(password)) {
-      result.score += 1
-    } else {
-      result.suggestions.push('Incluye al menos un número')
-    }
+    if (/\d/.test(password)) result.score += 1
+    else result.suggestions.push('Incluye al menos un número')
 
-    // Contiene letras minúsculas
-    if (/[a-z]/.test(password)) {
-      result.score += 1
-    } else {
-      result.suggestions.push('Incluye al menos una letra minúscula')
-    }
+    if (/[a-z]/.test(password)) result.score += 1
+    else result.suggestions.push('Incluye al menos una letra minúscula')
 
-    // Contiene letras mayúsculas
-    if (/[A-Z]/.test(password)) {
-      result.score += 1
-    } else {
-      result.suggestions.push('Incluye al menos una letra mayúscula')
-    }
+    if (/[A-Z]/.test(password)) result.score += 1
+    else result.suggestions.push('Incluye al menos una letra mayúscula')
 
-    // Contiene caracteres especiales
-    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-      result.score += 1
-    } else {
-      result.suggestions.push('Incluye al menos un carácter especial')
-    }
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) result.score += 1
+    else result.suggestions.push('Incluye al menos un carácter especial')
 
-    // No contiene espacios
-    if (/\s/.test(password)) {
-      result.errors.push('No debe contener espacios')
-    }
+    if (/\s/.test(password)) result.errors.push('No debe contener espacios')
 
     result.isValid = result.errors.length === 0 && result.score >= 2
     setPasswordStrength(result)
@@ -85,15 +65,9 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
 
   const handleChange = (e) => {
     const { id, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [id]: value
-    }))
+    setFormData(prev => ({ ...prev, [id]: value }))
 
-    // Validar fortaleza de contraseña en tiempo real
-    if (id === 'password') {
-      validatePasswordStrength(value)
-    }
+    if (id === 'password') validatePasswordStrength(value)
   }
 
   const handleSubmit = async (e) => {
@@ -105,15 +79,12 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
       console.log('📝 Enviando datos de usuario:', formData)
 
       if (usuario) {
-        // Actualizar usuario existente
         const updateData = {
           email: formData.email,
           idRol: parseInt(formData.idRol),
           ...(formData.password && { password: formData.password })
         }
 
-        console.log('🔄 Actualizando usuario:', { id: usuario.id, data: updateData })
-        
         const response = await apiRequest(API_URLS.usuarios.update(usuario.id), {
           method: 'PUT',
           body: JSON.stringify(updateData)
@@ -122,24 +93,19 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
         if (response.success) {
           setMessage('✅ Usuario actualizado correctamente. Volviendo al listado...')
           setMessageType('success')
-          
-          setTimeout(() => {
-            if (onVolver) onVolver()
-          }, 1500)
+          setTimeout(() => onVolver?.(), 1500)
         } else {
           throw new Error(response.message || 'Error al actualizar usuario')
         }
+
       } else {
-        // Crear nuevo usuario
         const newUserData = {
           username: formData.username,
           password: formData.password,
           email: formData.email,
-          idRol: parseInt(formData.rol, 10)
+          idRol: parseInt(formData.idRol, 10)
         }
 
-        console.log('➕ Creando nuevo usuario:', newUserData)
-        
         const response = await apiRequest(API_URLS.usuarios.create, {
           method: 'POST',
           body: JSON.stringify(newUserData)
@@ -148,23 +114,17 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
         if (response.success) {
           setMessage('✅ Usuario registrado correctamente!')
           setMessageType('success')
-          
-          // Limpiar formulario
           setFormData({
             username: '',
             password: '',
             email: '',
-            rol: ''
+            idRol: ''
           })
-
-          setTimeout(() => {
-            if (onVolver) onVolver()
-          }, 1500)
+          setTimeout(() => onVolver?.(), 1500)
         } else {
           throw new Error(response.message || 'Error al crear usuario')
         }
       }
-
     } catch (error) {
       console.error('❌ Error al procesar usuario:', error)
       setMessage(`Error: ${error.message}`)
@@ -188,7 +148,6 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* Usuario - Contraseña - Email */}
           <div className="row mb-3">
             <div className="col-md-4">
               <label htmlFor="username" className="form-label">Nombre de usuario</label>
@@ -214,14 +173,12 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
                 disabled={loading}
                 placeholder={usuario ? 'Dejar en blanco para no cambiar' : ''}
               />
-              
-              {/* Indicador de fortaleza de contraseña */}
               {passwordStrength && formData.password && (
                 <div className="mt-2">
                   <div className="d-flex align-items-center mb-1">
                     <small className="text-white me-2">Fortaleza:</small>
                     <div className="progress flex-grow-1" style={{ height: '6px' }}>
-                      <div 
+                      <div
                         className={`progress-bar ${
                           passwordStrength.score <= 1 ? 'bg-danger' :
                           passwordStrength.score <= 3 ? 'bg-warning' : 'bg-success'
@@ -237,13 +194,11 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
                        passwordStrength.score <= 3 ? 'Media' : 'Fuerte'}
                     </small>
                   </div>
-                  
                   {passwordStrength.errors.length > 0 && (
                     <div className="text-danger">
                       <small>❌ {passwordStrength.errors.join(', ')}</small>
                     </div>
                   )}
-                  
                   {passwordStrength.suggestions.length > 0 && passwordStrength.errors.length === 0 && (
                     <div className="text-warning">
                       <small>💡 {passwordStrength.suggestions.join(', ')}</small>
@@ -266,13 +221,12 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
             </div>
           </div>
 
-          {/* Rol */}
           <div className="mb-4">
-            <label htmlFor="rol" className="form-label">Rol</label>
+            <label htmlFor="idRol" className="form-label">Rol</label>
             <select
               className="form-select"
-              id="rol"
-              value={formData.rol}
+              id="idRol"
+              value={formData.idRol}
               required
               disabled={loading}
               onChange={handleChange}

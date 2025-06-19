@@ -175,7 +175,10 @@ export class UsuarioService {
   async autenticarUsuario(username, password) {
     try {
       logger.debug('Servicio: Autenticar usuario', { username })
-      if (!username || !password) throw new Error('Username y contraseña son requeridos')
+
+      if (!username || !password) {
+        throw new Error('Username y contraseña son requeridos')
+      }
 
       const usuario = await this.usuarioRepository.authenticate(username, password)
       if (!usuario) throw new Error('Credenciales inválidas')
@@ -199,6 +202,7 @@ export class UsuarioService {
       const datosSesion = {
         id: usuario.id,
         usuario: usuario.username || usuario.usuario,
+        dni: bombero?.dni || null,
         email: usuario.email,
         rol: usuario.rol || usuario.idRol,
         nombre,
