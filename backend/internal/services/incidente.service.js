@@ -42,11 +42,16 @@ export class IncidenteService extends IncidenteServiceInterface {
   }
 
   async listarIncidentes() {
-    return await this.incidenteRepository.obtenerTodos()
+    try {
+      const incidentes = await this.incidenteRepository.findAll()
+      return incidentes
+    } catch (error) {
+      throw new Error(`Error al listar incidentes: ${error.message}`)
+    }
   }
 
   async obtenerIncidentePorId(id) {
-    return await this.incidenteRepository.obtenerPorId(id)
+    return await this.incidenteRepository.findById(id)
   }
 
   async actualizarIncidente(id, data) {
