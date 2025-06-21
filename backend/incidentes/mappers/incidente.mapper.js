@@ -1,7 +1,7 @@
 export function mapToIncidenteResponse(incidente) {
   return {
     idIncidente: incidente.idIncidente,
-    dni: incidente.DNI,
+    DNI: incidente.DNI,
     idTipoIncidente: incidente.idTipoIncidente,
     fecha: incidente.fecha,
     idDenunciante: incidente.idDenunciante,

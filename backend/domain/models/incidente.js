@@ -1,5 +1,5 @@
 export class Incidente {
-  constructor({ idIncidente, dni, idTipoIncidente, fecha, idDenunciante, idLocalizacion, descripcion, bomberoNombre }) {
+  constructor({ idIncidente, dni, idTipoIncidente, fecha, idDenunciante, idLocalizacion, descripcion}) {
     this.idIncidente = idIncidente
     this.dni = dni
     this.idTipoIncidente = idTipoIncidente
@@ -7,7 +7,6 @@ export class Incidente {
     this.idDenunciante = idDenunciante
     this.idLocalizacion = idLocalizacion
     this.descripcion = descripcion
-    this.bomberoNombre = bomberoNombre
   }
 
   toPlainObject() {
@@ -19,7 +18,6 @@ export class Incidente {
       idDenunciante: this.idDenunciante,
       idLocalizacion: this.idLocalizacion,
       descripcion: this.descripcion,
-      bomberoNombre: this.bomberoNombre
     }
   }
 }

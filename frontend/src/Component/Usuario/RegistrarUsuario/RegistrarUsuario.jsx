@@ -5,55 +5,173 @@ import '../../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
   const [formData, setFormData] = useState({
-    usuario: '',
-    contrasena: '',
+    username: '',
+    password: '',
     email: '',
-    idRol: '',
-    dni: ''
+    idRol: ''
   })
 
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [messageType, setMessageType] = useState('')
+  const [passwordStrength, setPasswordStrength] = useState(null)
+
   useEffect(() => {
-    const fetchBomberos = async () => {
-      try {
-        const res = await fetch(API_URLS.bomberos.getAll)
-        const data = await res.json()
-        setBomberos(data.data)
-      } catch (error) {
-        console.error('Error al obtener bomberos:', error)
-      }
+    if (usuario) {
+      setFormData({
+        username: usuario.username || '',
+        password: '',
+        email: usuario.email || '',
+        rol: usuario.rol || ''
+      })
+    }
+  }, [usuario])
+
+  const validatePasswordStrength = (password) => {
+    if (!password) {
+      setPasswordStrength(null)
+      return
     }
 
-    const fetchRoles = async () => {
-      try {
-        const res = await fetch(API_URLS.roles.getAll)
-        const data = await res.json()
-        setRoles(data.data)
-      } catch (error) {
-        console.error('Error al obtener roles:', error)
-      }
+    const result = {
+      score: 0,
+      errors: [],
+      suggestions: [],
+      isValid: false
     }
 
-    fetchBomberos()
-    fetchRoles()
-  }, [])
+    // Longitud mínima
+    if (password.length < 6) {
+      result.errors.push('Debe tener al menos 6 caracteres')
+    } else if (password.length >= 8) {
+      result.score += 1
+    }
 
-  const handleChange = e => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    // Contiene números
+    if (/\d/.test(password)) {
+      result.score += 1
+    } else {
+      result.suggestions.push('Incluye al menos un número')
+    }
+
+    // Contiene letras minúsculas
+    if (/[a-z]/.test(password)) {
+      result.score += 1
+    } else {
+      result.suggestions.push('Incluye al menos una letra minúscula')
+    }
+
+    // Contiene letras mayúsculas
+    if (/[A-Z]/.test(password)) {
+      result.score += 1
+    } else {
+      result.suggestions.push('Incluye al menos una letra mayúscula')
+    }
+
+    // Contiene caracteres especiales
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      result.score += 1
+    } else {
+      result.suggestions.push('Incluye al menos un carácter especial')
+    }
+
+    // No contiene espacios
+    if (/\s/.test(password)) {
+      result.errors.push('No debe contener espacios')
+    }
+
+    result.isValid = result.errors.length === 0 && result.score >= 2
+    setPasswordStrength(result)
   }
 
-  const handleSubmit = async e => {
+  const handleChange = (e) => {
+    const { id, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }))
+
+    // Validar fortaleza de contraseña en tiempo real
+    if (id === 'password') {
+      validatePasswordStrength(value)
+    }
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setLoading(true)
+    setMessage('')
+
     try {
-      await apiRequest(API_URLS.usuarios.create, {
-        method: 'POST',
-        body: JSON.stringify(formData)
-      })
-      alert('Usuario registrado correctamente')
-      onVolver()
+      console.log('📝 Enviando datos de usuario:', formData)
+
+      if (usuario) {
+        // Actualizar usuario existente
+        const updateData = {
+          email: formData.email,
+          idRol: parseInt(formData.idRol),
+          ...(formData.password && { password: formData.password })
+        }
+
+        console.log('🔄 Actualizando usuario:', { id: usuario.id, data: updateData })
+        
+        const response = await apiRequest(API_URLS.usuarios.update(usuario.id), {
+          method: 'PUT',
+          body: JSON.stringify(updateData)
+        })
+
+        if (response.success) {
+          setMessage('✅ Usuario actualizado correctamente. Volviendo al listado...')
+          setMessageType('success')
+          
+          setTimeout(() => {
+            if (onVolver) onVolver()
+          }, 1500)
+        } else {
+          throw new Error(response.message || 'Error al actualizar usuario')
+        }
+      } else {
+        // Crear nuevo usuario
+        const newUserData = {
+          username: formData.username,
+          password: formData.password,
+          email: formData.email,
+          idRol: parseInt(formData.rol, 10)
+        }
+
+        console.log('➕ Creando nuevo usuario:', newUserData)
+        
+        const response = await apiRequest(API_URLS.usuarios.create, {
+          method: 'POST',
+          body: JSON.stringify(newUserData)
+        })
+
+        if (response.success) {
+          setMessage('✅ Usuario registrado correctamente!')
+          setMessageType('success')
+          
+          // Limpiar formulario
+          setFormData({
+            username: '',
+            password: '',
+            email: '',
+            rol: ''
+          })
+
+          setTimeout(() => {
+            if (onVolver) onVolver()
+          }, 1500)
+        } else {
+          throw new Error(response.message || 'Error al crear usuario')
+        }
+      }
+
     } catch (error) {
-      alert('Error al registrar usuario')
-      console.error(error)
+      console.error('❌ Error al procesar usuario:', error)
+      setMessage(`Error: ${error.message}`)
+      setMessageType('error')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -188,69 +306,6 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
             <strong>Nota:</strong> Los usuarios se guardan en la base de datos del servidor.
             Las contraseñas se almacenan de forma segura usando encriptación bcrypt.
           </small>
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">Usuario:</label>
-          <input
-            type="text"
-            className="form-control"
-            name="usuario"
-            value={formData.usuario}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">Contraseña:</label>
-          <input
-            type="password"
-            className="form-control"
-            name="contrasena"
-            value={formData.contrasena}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">Email:</label>
-          <input
-            type="email"
-            className="form-control"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="form-label">Rol:</label>
-          <select
-            className="form-select"
-            name="idRol"
-            value={formData.idRol}
-            onChange={handleChange}
-            required
-          >
-            <option value="">-- Selecciona un rol --</option>
-            {roles.map(r => (
-              <option key={r.id} value={r.id}>
-                {r.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="d-flex justify-content-between">
-          <button type="submit" className="btn btn-danger">
-            Registrar
-          </button>
-          <button type="button" className="btn btn-secondary" onClick={onVolver}>
-            Volver
-          </button>
         </div>
       </div>
     </div>
