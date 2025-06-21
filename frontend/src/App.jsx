@@ -7,7 +7,9 @@ import Menu from './Component/Menu/Menu.jsx'
 import RegistrarBombero from './Component/Bombero/RegistrarBombero/RegistrarBombero.jsx'
 import RegistrarUsuario from './Component/Usuario/RegistrarUsuario/RegistrarUsuario.jsx'
 import CargarIncidente from './Component/Incidente/CargarIncidente/CargarIncidente.jsx'
-import RegistrarRol from './Component/RegistrarRol/RegistrarRol.jsx'
+import RegistrarRol from './Component/Rol/RegistrarRol.jsx'
+import ConsultarRol from './Component/Rol/ConsultarRol.jsx'
+import ModificarRol from './Component/Rol/ModificarRol.jsx'
 import AccidenteTransito from './Component/Incidente/TipoIncidente/AccidenteTransito/AccidenteTransito.jsx'
 import FactorClimatico from './Component/Incidente/TipoIncidente/FactorClimatico/FactorClimatico.jsx'
 import IncendioEstructural from './Component/Incidente/TipoIncidente/IncendioEstructural/IncendioEstructural.jsx'
@@ -15,7 +17,7 @@ import IncendioForestal from './Component/Incidente/TipoIncidente/IncendioForest
 import MaterialPeligroso from './Component/Incidente/TipoIncidente/MaterialPeligroso/MaterialPeligroso.jsx'
 import Rescate from './Component/Incidente/TipoIncidente/Rescate/Rescate.jsx'
 import ParticipacionIncidente from './Component/Incidente/ParticipacionIncidente/ParticipacionIncidente.jsx'
-import VehiculoInvolucrado from './Component/VehiculoInvolucrado/VehiculoInvolucrado'
+import VehiculoInvolucrado from './Component/VehiculoInvolucrado/VehiculoInvolucrado.jsx'
 
 const App = () => {
   const [user, setUser] = useState(() => {
@@ -25,14 +27,16 @@ const App = () => {
   
   return (
     <Routes>
-      <Route path="/login" element={<Login setUser={setUser} user={user}/>} />
+      <Route path="/login" element={<Login setUser={setUser} user={user} />} />
       <Route path="/recuperar-clave" element={<RecuperarClave />} />
-      <Route path="/"element={<RutaPrivada user={user}><Menu user={user} setUser={setUser} /></RutaPrivada>} />
-      <Route path="/registrar-bombero" element={<RutaPrivada user={user}> <RegistrarBombero /></RutaPrivada>} />
-      <Route path="/cargar-incidente"element={<RutaPrivada user={user}><CargarIncidente /></RutaPrivada>} />
-      <Route path="/registrar-rol" element={<RutaPrivada user={user}><RegistrarRol /></RutaPrivada>} />
+      <Route path="/" element={<RutaPrivada user={user}><Menu user={user} setUser={setUser} /></RutaPrivada>} />
+      <Route path="/registrar-bombero" element={<RutaPrivada user={user}><RegistrarBombero /></RutaPrivada>} />
+      <Route path="/cargar-incidente" element={<RutaPrivada user={user}><CargarIncidente /></RutaPrivada>} />
       <Route path="/registrar-usuario" element={<RutaPrivada user={user}><RegistrarUsuario /></RutaPrivada>} />
-      <Route path="/accidente-transito" element={<RutaPrivada user={user}><AccidenteTransito /></RutaPrivada> } />
+      <Route path="/registrar-rol" element={<RutaPrivada user={user}><RegistrarRol /></RutaPrivada>} />
+      <Route path="/consultar-rol" element={<RutaPrivada user={user}><ConsultarRol /></RutaPrivada>} />
+      <Route path="/modificar-rol/:id" element={<RutaPrivada user={user}><ModificarRol /></RutaPrivada>} />
+      <Route path="/accidente-transito" element={<RutaPrivada user={user}><AccidenteTransito /></RutaPrivada>} />
       <Route path="/factor-climatico" element={<RutaPrivada user={user}><FactorClimatico /></RutaPrivada>} />
       <Route path="/incendio-estructural" element={<RutaPrivada user={user}><IncendioEstructural /></RutaPrivada>} />
       <Route path="/incendio-forestal" element={<RutaPrivada user={user}><IncendioForestal /></RutaPrivada>} />

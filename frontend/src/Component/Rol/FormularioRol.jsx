@@ -1,11 +1,16 @@
-import { useState } from 'react'
-import './RegistrarRol.css'
+import { useState, useEffect } from 'react'
 
-const RegistrarRol = ({ onVolver }) => {
+const FormularioRol = ({ modo, datosIniciales = {}, onSubmit, onVolver }) => {
   const [formData, setFormData] = useState({
     nombreRol: '',
-    descripcionRol: ''
+    descripcion: ''
   })
+
+  useEffect(() => {
+    if (modo !== 'alta') {
+      setFormData(datosIniciales)
+    }
+  }, [datosIniciales, modo])
 
   const handleChange = (e) => {
     const { id, value } = e.target
@@ -17,16 +22,18 @@ const RegistrarRol = ({ onVolver }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    console.log('Rol enviado:', formData) // Preparado para backend
+    onSubmit(formData)
   }
 
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100">
       <div className="form-rol p-4 shadow rounded w-100" style={{ maxWidth: '500px' }}>
-        <h2 className="text-center mb-4">Registrar Nuevo Rol</h2>
+        <h2 className="text-center mb-4">
+          {modo === 'consulta' ? 'Ver Rol' : modo === 'edicion' ? 'Editar Rol' : 'Registrar Nuevo Rol'}
+        </h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
-            <label htmlFor="nombreRol" className="form-label">Nombre del Rol</label>
+            <label htmlFor="nombreRol" className="form-label text-white">Nombre del Rol</label>
             <input
               type="text"
               className="form-control"
@@ -34,19 +41,25 @@ const RegistrarRol = ({ onVolver }) => {
               required
               value={formData.nombreRol}
               onChange={handleChange}
+              disabled={modo === 'consulta'}
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="descripcionRol" className="form-label">Descripción (opcional)</label>
+            <label htmlFor="descripcion" className="form-label text-white">Descripción (opcional)</label>
             <textarea
               className="form-control"
-              id="descripcionRol"
+              id="descripcion"
               rows="3"
-              value={formData.descripcionRol}
+              value={formData.descripcion}
               onChange={handleChange}
+              disabled={modo === 'consulta'}
             />
           </div>
-          <button type="submit" className="btn btn-danger w-100 mb-3">Registrar Rol</button>
+          {modo !== 'consulta' && (
+            <button type="submit" className="btn btn-danger w-100 mb-3">
+              {modo === 'edicion' ? 'Guardar Cambios' : 'Registrar Rol'}
+            </button>
+          )}
           <button type="button" className="btn btn-secondary w-100" onClick={onVolver}>Volver</button>
         </form>
       </div>
@@ -54,4 +67,4 @@ const RegistrarRol = ({ onVolver }) => {
   )
 }
 
-export default RegistrarRol
+export default FormularioRol

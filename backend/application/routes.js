@@ -1,10 +1,10 @@
 import { logger } from '../internal/platform/logger/logger.js'
 
-
- // Configuración central de rutas
-
+// Configuración central de rutas
 export function setupRoutes(app, container) {
   logger.info('🛣️ Configurando rutas...')
+
+  const { bomberoHandler, usuarioHandler, rolesHandler } = container
 
   // Health check routes
   app.get('/health', (req, res) => {
@@ -12,7 +12,7 @@ export function setupRoutes(app, container) {
       ip: req.ip,
       userAgent: req.get('User-Agent')
     })
-    
+
     res.json({
       status: 'OK',
       message: 'BomberOS - ABMC Bomberos con Clean Architecture',
@@ -29,9 +29,6 @@ export function setupRoutes(app, container) {
   })
 
   // Bomberos routes
-  const { bomberoHandler, usuarioHandler } = container
-
-  // Rutas específicas primero
   app.get('/api/bomberos/plan', async (req, res) => {
     try {
       await bomberoHandler.getBomberosDelPlan(req, res)
@@ -41,7 +38,6 @@ export function setupRoutes(app, container) {
     }
   })
 
-  // Rutas CRUD básicas
   app.get('/api/bomberos', async (req, res) => {
     try {
       await bomberoHandler.getAllBomberos(req, res)
@@ -88,7 +84,6 @@ export function setupRoutes(app, container) {
   })
 
   // Usuarios routes
-  // Rutas específicas primero
   app.get('/api/usuarios/rol/:rol', async (req, res) => {
     try {
       await usuarioHandler.getUsuariosByRol(req, res)
@@ -107,7 +102,6 @@ export function setupRoutes(app, container) {
     }
   })
 
-  // Rutas CRUD básicas para usuarios
   app.get('/api/usuarios', async (req, res) => {
     try {
       await usuarioHandler.getAllUsuarios(req, res)
@@ -153,13 +147,59 @@ export function setupRoutes(app, container) {
     }
   })
 
-  // 404 handler - SOLUCIONADO: usar función middleware sin patrón problemático
+  // Roles routes
+  app.get('/api/roles', async (req, res) => {
+    try {
+      await rolesHandler.obtenerTodosRoles(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtenerTodosRoles:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.post('/api/roles', async (req, res) => {
+    try {
+      await rolesHandler.registrarRol(req, res)
+    } catch (error) {
+      logger.error('Error en ruta registrarRol:', error)
+      res.status(400).json({ error: error.message })
+    }
+  })
+
+  app.get('/api/roles/:id', async (req, res) => {
+    try {
+      await rolesHandler.obtenerRolPorId(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtenerRolPorId:', error)
+      res.status(404).json({ error: error.message })
+    }
+  })
+
+  app.put('/api/roles/:id', async (req, res) => {
+    try {
+      await rolesHandler.actualizarRol(req, res)
+    } catch (error) {
+      logger.error('Error en ruta actualizarRol:', error)
+      res.status(400).json({ error: error.message })
+    }
+  })
+
+  app.delete('/api/roles/:id', async (req, res) => {
+    try {
+      await rolesHandler.eliminarRol(req, res)
+    } catch (error) {
+      logger.error('Error en ruta eliminarRol:', error)
+      res.status(400).json({ error: error.message })
+    }
+  })
+
+  // 404 handler
   app.use((req, res) => {
-    logger.warn('Ruta no encontrada', { 
-      method: req.method, 
-      url: req.originalUrl 
+    logger.warn('Ruta no encontrada', {
+      method: req.method,
+      url: req.originalUrl
     })
-    
+
     res.status(404).json({
       success: false,
       message: 'Endpoint no encontrado',
@@ -179,10 +219,15 @@ export function setupRoutes(app, container) {
         'PUT /api/usuarios/:id',
         'DELETE /api/usuarios/:id',
         'GET /api/usuarios/rol/:rol',
-        'POST /api/usuarios/auth'
+        'POST /api/usuarios/auth',
+        'GET /api/roles',
+        'POST /api/roles',
+        'GET /api/roles/:id',
+        'PUT /api/roles/:id',
+        'DELETE /api/roles/:id'
       ]
     })
   })
 
   logger.info('✅ Rutas configuradas exitosamente')
-} 
+}

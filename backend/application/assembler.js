@@ -2,37 +2,43 @@ import express from 'express'
 import { BomberoService } from '../internal/services/bombero.service.js'
 import { MySQLBomberoRepository } from '../internal/repositories/mysql/bombero.repository.js'
 import { BomberoHandler } from '../bomberos/handler.js'
+
 import { UsuarioService } from '../internal/services/usuario.service.js'
 import { MySQLUsuarioRepository } from '../internal/repositories/mysql/usuario.repository.js'
 import { UsuarioHandler } from '../usuarios/handler.js'
+
+import { RolesService } from '../internal/services/roles.service.js'
+import { RolesRepositoryMySQL } from '../internal/repositories/mysql/roles.repository.js'
+import * as rolesHandler from '../roles/handler.js'
+
 import { createConnection } from '../internal/platform/database/connection.js'
 import { logger } from '../internal/platform/logger/logger.js'
-
 
 export async function createServer(config) {
   try {
     logger.info('🏗️ Iniciando assembler de dependencias...')
 
     const app = express()
-    
     logger.debug('📊 Configurando conexión de base de datos...')
     const dbConnection = await createConnection(config.database)
-    
+
     logger.debug('🗄️ Inicializando repositorios...')
     const bomberoRepository = new MySQLBomberoRepository()
     const usuarioRepository = new MySQLUsuarioRepository()
-    
+    const rolesRepository = new RolesRepositoryMySQL()
+
     logger.debug('⚙️ Inicializando servicios...')
     const bomberoService = new BomberoService(bomberoRepository)
     const usuarioService = new UsuarioService(usuarioRepository)
+    const rolesService = new RolesService(rolesRepository)
 
     logger.debug('🎯 Inicializando handlers...')
     const bomberoHandler = new BomberoHandler(bomberoService)
     const usuarioHandler = new UsuarioHandler(usuarioService)
-    
+
     logger.level = config.logging.level
     logger.format = config.logging.format
-    
+
     const container = {
       bomberoService,
       bomberoRepository,
@@ -40,21 +46,23 @@ export async function createServer(config) {
       usuarioService,
       usuarioRepository,
       usuarioHandler,
+      rolesService,
+      rolesRepository,
+      rolesHandler,
       dbConnection,
       config
     }
 
     await validateDependencies(container)
-    
+
     logger.info('✅ Assembler completado exitosamente', {
-      services: ['bomberoService', 'usuarioService'],
-      repositories: ['bomberoRepository', 'usuarioRepository'],
-      handlers: ['bomberoHandler', 'usuarioHandler'],
+      services: ['bomberoService', 'usuarioService', 'rolesService'],
+      repositories: ['bomberoRepository', 'usuarioRepository', 'rolesRepository'],
+      handlers: ['bomberoHandler', 'usuarioHandler', 'rolesHandler'],
       infrastructure: ['dbConnection']
     })
 
     return { app, container }
-    
   } catch (error) {
     logger.error('❌ Error en assembler:', {
       error: error.message,
@@ -64,40 +72,23 @@ export async function createServer(config) {
   }
 }
 
-/**
- * @private
- */
 async function validateDependencies(container) {
   logger.debug('🔍 Validando dependencias...')
-  
+
   try {
-    if (!container.bomberoService) {
-      throw new Error('BomberoService no inicializado')
-    }
+    if (!container.bomberoService) throw new Error('BomberoService no inicializado')
+    if (!container.bomberoRepository) throw new Error('BomberoRepository no inicializado')
+    if (!container.bomberoHandler) throw new Error('BomberoHandler no inicializado')
 
-    if (!container.bomberoRepository) {
-      throw new Error('BomberoRepository no inicializado')
-    }
+    if (!container.usuarioService) throw new Error('UsuarioService no inicializado')
+    if (!container.usuarioRepository) throw new Error('UsuarioRepository no inicializado')
+    if (!container.usuarioHandler) throw new Error('UsuarioHandler no inicializado')
 
-    if (!container.bomberoHandler) {
-      throw new Error('BomberoHandler no inicializado')
-    }
+    if (!container.rolesService) throw new Error('RolesService no inicializado')
+    if (!container.rolesRepository) throw new Error('RolesRepository no inicializado')
+    if (!container.rolesHandler) throw new Error('RolesHandler no inicializado')
 
-    if (!container.usuarioService) {
-      throw new Error('UsuarioService no inicializado')
-    }
-
-    if (!container.usuarioRepository) {
-      throw new Error('UsuarioRepository no inicializado')
-    }
-
-    if (!container.usuarioHandler) {
-      throw new Error('UsuarioHandler no inicializado')
-    }
-
-    if (!container.dbConnection) {
-      throw new Error('Database connection no inicializada')
-    }
+    if (!container.dbConnection) throw new Error('Database connection no inicializada')
 
     const testConnection = await container.dbConnection.getConnection()
     await testConnection.ping()
@@ -105,20 +96,21 @@ async function validateDependencies(container) {
 
     validateServiceInterface(container.bomberoService)
     validateRepositoryInterface(container.bomberoRepository)
+
     validateUsuarioServiceInterface(container.usuarioService)
     validateUsuarioRepositoryInterface(container.usuarioRepository)
 
+    validateRolesServiceInterface(container.rolesService)
+    validateRolesRepositoryInterface(container.rolesRepository)
+
     logger.debug('✅ Todas las dependencias validadas correctamente')
-    
+
   } catch (error) {
     logger.error('❌ Error en validación de dependencias:', error)
     throw error
   }
 }
 
-/**
- * @private
- */
 function validateServiceInterface(service) {
   const requiredMethods = [
     'listarBomberos',
@@ -136,9 +128,6 @@ function validateServiceInterface(service) {
   }
 }
 
-/**
- * @private
- */
 function validateRepositoryInterface(repository) {
   const requiredMethods = [
     'findAll',
@@ -157,9 +146,6 @@ function validateRepositoryInterface(repository) {
   }
 }
 
-/**
- * @private
- */
 function validateUsuarioServiceInterface(service) {
   const requiredMethods = [
     'listarUsuarios',
@@ -179,9 +165,6 @@ function validateUsuarioServiceInterface(service) {
   }
 }
 
-/**
- * @private
- */
 function validateUsuarioRepositoryInterface(repository) {
   const requiredMethods = [
     'findAll',
@@ -201,11 +184,43 @@ function validateUsuarioRepositoryInterface(repository) {
   }
 }
 
+// 🆕 Validadores para roles
+function validateRolesServiceInterface(service) {
+  const requiredMethods = [
+    'registrarRol',
+    'obtenerTodosRoles',
+    'obtenerRolPorId',
+    'actualizarRol',
+    'eliminarRol',
+    'obtenerRolPorNombre'
+  ]
+
+  for (const method of requiredMethods) {
+    if (typeof service[method] !== 'function') {
+      throw new Error(`RolesService debe implementar el método: ${method}`)
+    }
+  }
+}
+
+function validateRolesRepositoryInterface(repository) {
+  const requiredMethods = [
+    'guardar',
+    'obtenerTodos',
+    'obtenerPorId',
+    'actualizar',
+    'eliminar',
+    'obtenerRolPorNombre'
+  ]
+
+  for (const method of requiredMethods) {
+    if (typeof repository[method] !== 'function') {
+      throw new Error(`RolesRepository debe implementar el método: ${method}`)
+    }
+  }
+}
 
 export function getService(container, serviceName) {
-  if (!container) {
-    throw new Error('Container no inicializado')
-  }
+  if (!container) throw new Error('Container no inicializado')
 
   const service = container[serviceName]
   if (!service) {
@@ -215,11 +230,8 @@ export function getService(container, serviceName) {
   return service
 }
 
-
 export async function destroyContainer(container) {
-  if (!container) {
-    return
-  }
+  if (!container) return
 
   try {
     logger.info('🧹 Limpiando recursos del container...')
@@ -229,14 +241,12 @@ export async function destroyContainer(container) {
       logger.debug('📊 Conexión de BD cerrada')
     }
 
-    Object.keys(container).forEach(key => {
-      delete container[key]
-    })
+    Object.keys(container).forEach(key => delete container[key])
 
     logger.info('✅ Container destruido exitosamente')
-    
+
   } catch (error) {
     logger.error('❌ Error al destruir container:', error)
     throw error
   }
-} 
+}
