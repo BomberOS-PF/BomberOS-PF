@@ -1,7 +1,6 @@
 import { logger } from '../platform/logger/logger.js'
 import { Usuario } from '../../domain/models/usuario.js'
 import { PasswordUtils } from '../utils/password.utils.js'
-import { getConnection } from '../platform/database/connection.js'
 
 export class UsuarioService {
   constructor(usuarioRepository, bomberoRepository = null) {
@@ -32,42 +31,45 @@ export class UsuarioService {
     }
   }
 
-  async obtenerUsuarioPorUsername(usuario) {
+  async obtenerUsuarioPorUsername(username) {
     try {
-      logger.debug('Servicio: Obtener usuario por nombre', { usuario })
-      if (!usuario) throw new Error('Usuario es requerido')
-      const result = await this.usuarioRepository.findByUsername(usuario)
-      if (!result) throw new Error(`Usuario "${usuario}" no encontrado`)
-      return result
+      logger.debug('Servicio: Obtener usuario por username', { username })
+      if (!username) throw new Error('Username es requerido')
+      const usuario = await this.usuarioRepository.findByUsername(username)
+      if (!usuario) throw new Error(`Usuario "${username}" no encontrado`)
+      return usuario
     } catch (error) {
-      logger.error('Error al obtener usuario por nombre', { usuario, error: error.message })
+      logger.error('Error al obtener usuario por username', { username, error: error.message })
       throw error
     }
   }
 
   async crearUsuario(datosUsuario) {
     try {
-      const nombreUsuario = datosUsuario.usuario
-      const password = datosUsuario.contrasena
-
-      logger.debug('Servicio: Crear nuevo usuario', { usuario: nombreUsuario })
+      logger.debug('Servicio: Crear nuevo usuario', { username: datosUsuario.username })
       console.log('📦 Datos recibidos en crearUsuario():', datosUsuario)
 
-      if (password) {
-        const passwordValidation = PasswordUtils.validatePasswordStrength(password)
+      if (datosUsuario.password) {
+        const passwordValidation = PasswordUtils.validatePasswordStrength(datosUsuario.password)
         if (!passwordValidation.isValid) {
           throw new Error(`Contraseña no válida: ${passwordValidation.errors.join(', ')}`)
         }
+        if (passwordValidation.suggestions.length > 0) {
+          logger.info('Sugerencias para mejorar contraseña', {
+            username: datosUsuario.username,
+            suggestions: passwordValidation.suggestions
+          })
+        }
       }
 
-      const usuarioExistente = await this.usuarioRepository.findByUsername(nombreUsuario)
+      const usuarioExistente = await this.usuarioRepository.findByUsername(datosUsuario.username)
       if (usuarioExistente) {
-        throw new Error(`Ya existe un usuario con el nombre "${nombreUsuario}"`)
+        throw new Error(`Ya existe un usuario con el nombre "${datosUsuario.username}"`)
       }
 
       const nuevoUsuario = Usuario.create({
-        username: nombreUsuario,
-        password,
+        username: datosUsuario.username,
+        password: datosUsuario.password,
         email: datosUsuario.email,
         idRol: datosUsuario.idRol,
         createdAt: new Date(),
@@ -75,17 +77,6 @@ export class UsuarioService {
       })
 
       const usuarioCreado = await this.usuarioRepository.create(nuevoUsuario)
-
-      // 🔁 Vincular con bombero si viene un DNI
-      if (datosUsuario.dni) {
-        const connection = getConnection()
-        const updateQuery = 'UPDATE bombero SET idUsuario = ? WHERE DNI = ?'
-        await connection.execute(updateQuery, [usuarioCreado.id, datosUsuario.dni])
-        logger.info('✅ Bombero vinculado con nuevo usuario', {
-          dni: datosUsuario.dni,
-          idUsuario: usuarioCreado.id
-        })
-      }
 
       logger.info('Usuario creado exitosamente', {
         id: usuarioCreado.id,
@@ -95,7 +86,7 @@ export class UsuarioService {
       return usuarioCreado
     } catch (error) {
       logger.error('Error al crear usuario', {
-        usuario: datosUsuario?.usuario,
+        username: datosUsuario?.username,
         error: error.message
       })
       throw error
@@ -110,17 +101,23 @@ export class UsuarioService {
         throw new Error(`Usuario con ID ${id} no encontrado`)
       }
 
-      if (datosActualizacion.contrasena) {
-        const passwordValidation = PasswordUtils.validatePasswordStrength(datosActualizacion.contrasena)
+      if (datosActualizacion.password) {
+        const passwordValidation = PasswordUtils.validatePasswordStrength(datosActualizacion.password)
         if (!passwordValidation.isValid) {
           throw new Error(`Nueva contraseña no válida: ${passwordValidation.errors.join(', ')}`)
+        }
+        if (passwordValidation.suggestions.length > 0) {
+          logger.info('Sugerencias para mejorar nueva contraseña', {
+            id,
+            suggestions: passwordValidation.suggestions
+          })
         }
       }
 
       const datosCompletos = {
         id: usuarioExistente.id,
         username: usuarioExistente.username,
-        password: datosActualizacion.contrasena || usuarioExistente.password,
+        password: datosActualizacion.password || usuarioExistente.password,
         email: datosActualizacion.email || usuarioExistente.email,
         rol: datosActualizacion.rol || usuarioExistente.rol,
         activo: datosActualizacion.activo !== undefined ? datosActualizacion.activo : usuarioExistente.activo,
@@ -212,19 +209,16 @@ export class UsuarioService {
     }
   }
 
-  async autenticarUsuario(usuario, contrasena) {
+  async autenticarUsuario(username, password) {
     try {
-      logger.debug('Servicio: Autenticar usuario', { usuario })
+      logger.debug('Servicio: Autenticar usuario', { username })
+      if (!username || !password) throw new Error('Username y contraseña son requeridos')
 
-      if (!usuario || !contrasena) {
-        throw new Error('Usuario y contraseña son requeridos')
-      }
+      const usuario = await this.usuarioRepository.authenticate(username, password)
+      if (!usuario) throw new Error('Credenciales inválidas')
+      if (!usuario.activo) throw new Error('Usuario desactivado')
 
-      const result = await this.usuarioRepository.authenticate(usuario, contrasena)
-      if (!result) throw new Error('Credenciales inválidas')
-      if (!result.activo) throw new Error('Usuario desactivado')
-
-      const bombero = await this.usuarioRepository.findBomberoByIdUsuario(result.id)
+      const bombero = await this.usuarioRepository.findBomberoByIdUsuario(usuario.id)
       logger.debug('🧪 Bombero encontrado:', bombero)
 
       // Si el rol es bombero (idRol === 2) y no está vinculado lanzar error
@@ -264,7 +258,7 @@ export class UsuarioService {
       logger.info('🎯 Datos enviados al frontend:', datosSesion)
       return datosSesion
     } catch (error) {
-      logger.error('Error en autenticación', { usuario, error: error.message })
+      logger.error('Error en autenticación', { username, error: error.message })
       throw error
     }
   }
