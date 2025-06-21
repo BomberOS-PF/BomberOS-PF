@@ -72,7 +72,7 @@
 
 .sidebar-container {
   display: flex;
-  height: 100vh;
+  height: auto;
   width: 100%;
   font-family: 'Segoe UI', sans-serif;
 }
