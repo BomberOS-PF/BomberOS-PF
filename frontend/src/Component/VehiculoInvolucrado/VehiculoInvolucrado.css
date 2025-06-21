@@ -38,3 +38,21 @@ body {
 .btn-secondary:hover {
   background-color: #5a6268;
 }
+
+.form-check-input:checked {
+  background-color: #d52b1e;
+  border-color: #d52b1e;
+}
+
+.form-check-input:focus {
+  border-color: #d52b1e;
+  box-shadow: 0 0 0 0.2rem rgba(213, 43, 30, 0.25);
+}
+
+.form-check-input {
+  cursor: pointer;
+}
+.form-check-input:not(:checked) {
+  background-color: #444;
+  border-color: #666;
+}

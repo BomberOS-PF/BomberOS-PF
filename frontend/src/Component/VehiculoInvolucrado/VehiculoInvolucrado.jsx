@@ -137,13 +137,13 @@ const VehiculoInvolucrado = ({ onVolver }) => {
                 bomberos.map((bombero) => (
                   <div className="form-check text-black ms-2" key={bombero.dni || bombero.DNI}>
                     <input 
-                      className="form-check-input" 
+                      className="text-black form-check-input" 
                       type="checkbox" 
                       id={`bombero-${bombero.dni || bombero.DNI}`}
                       checked={formData.dotacionSeleccionada.includes(bombero.dni || bombero.DNI)}
                       onChange={(e) => handleDotacionChange(bombero.dni || bombero.DNI, e.target.checked)}
                     />
-                    <label className="form-check-label" htmlFor={`bombero-${bombero.dni || bombero.DNI}`}>
+                    <label className="text-black form-check-label" htmlFor={`bombero-${bombero.dni || bombero.DNI}`}>
                       {bombero.nombreCompleto}
                     </label>
                   </div>

@@ -1,6 +1,6 @@
 body {
   background-color: #fff;
-  font-family: "Work Sans", "Noto Sans", sans-serif;
+  font-family: 'Segoe UI', sans-serif;
   margin: 0;
   padding: 0;
 }
@@ -34,7 +34,7 @@ body {
 .form-control:focus,
 .form-select:focus {
   background-color: #fff;
-  border-color: red;
+  border-color: #d52b1e;
   box-shadow: 0 0 0 0.2rem rgba(213, 43, 30, 0.25);
   color: #000;
 }
@@ -358,4 +358,22 @@ body {
 .formulario-consistente .badge {
   font-size: 0.85em;
   padding: 0.5em 0.75em;
+}
+
+.form-check-input:checked {
+  background-color: #d52b1e;
+  border-color: #d52b1e;
+}
+
+.form-check-input:focus {
+  border-color: #d52b1e;
+  box-shadow: 0 0 0 0.2rem rgba(213, 43, 30, 0.25);
+}
+
+.form-check-input {
+  cursor: pointer;
+}
+.form-check-input:not(:checked) {
+  background-color: #ff0000;
+  border-color: #000000;
 }

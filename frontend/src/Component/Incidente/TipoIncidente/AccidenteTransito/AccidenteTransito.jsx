@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import './AccidenteTransito.css'
+import '../../../DisenioFormulario/DisenioFormulario.css'
 
 const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
   const incidenteId = datosPrevios.id || 'temp'
@@ -69,11 +70,11 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
 
   return (
     <div className="container d-flex justify-content-center align-items-center">
-      <div className="form-accidente p-4 shadow rounded">
-        <h2 className="text-white text-center mb-4">Accidente de Tránsito</h2>
+      <div className="formulario-consistente">
+        <h2 className="text-black text-center mb-4">Accidente de Tránsito</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
-            <label htmlFor="causaAccidente" className="form-label">Causa del accidente</label>
+            <label htmlFor="causaAccidente" className="text-black form-label">Causa del accidente</label>
             <select className="form-select" id="causaAccidente" onChange={handleChange} value={formData.causaAccidente || ''}>
               <option disabled value="">Seleccione causa</option>
               <option>Desperfecto mecánico</option>
@@ -83,35 +84,35 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
             </select>
           </div>
 
-          <h5 className="text-white mt-3 mb-2">Vehículos involucrados</h5>
+          <h5 className="text-black mt-3 mb-2">Vehículos involucrados</h5>
           {formData.vehiculos.map((vehiculo, index) => (
             <div className="row mb-2 align-items-center" key={index}>
               <div className="col">
-                <label className="form-label">Tipo</label>
+                <label className="text-black form-label">Tipo</label>
                 <input type="text" className="form-control form-control-sm" value={vehiculo.tipo} onChange={(e) => handleVehiculoChange(index, 'tipo', e.target.value)} />
               </div>
               <div className="col">
-                <label className="form-label">Dominio</label>
+                <label className="text-black form-label">Dominio</label>
                 <input type="text" className="form-control form-control-sm" value={vehiculo.dominio} onChange={(e) => handleVehiculoChange(index, 'dominio', e.target.value)} />
               </div>
               <div className="col">
-                <label className="form-label">Cantidad</label>
+                <label className="text-black form-label">Cantidad</label>
                 <input type="number" className="form-control form-control-sm" value={vehiculo.cantidad} onChange={(e) => handleVehiculoChange(index, 'cantidad', e.target.value)} />
               </div>
               <div className="col">
-                <label className="form-label">Modelo</label>
+                <label className="text-black form-label">Modelo</label>
                 <input type="text" className="form-control form-control-sm" value={vehiculo.modelo} onChange={(e) => handleVehiculoChange(index, 'modelo', e.target.value)} />
               </div>
               <div className="col">
-                <label className="form-label">Año</label>
+                <label className="text-black form-label">Año</label>
                 <input type="number" className="form-control form-control-sm" value={vehiculo.anio} onChange={(e) => handleVehiculoChange(index, 'anio', e.target.value)} />
               </div>
               <div className="col">
-                <label className="form-label">Aseguradora</label>
+                <label className="text-black form-label">Aseguradora</label>
                 <input type="text" className="form-control form-control-sm" value={vehiculo.aseguradora} onChange={(e) => handleVehiculoChange(index, 'aseguradora', e.target.value)} />
               </div>
               <div className="col">
-                <label className="form-label">Póliza</label>
+                <label className="text-black form-label">Póliza</label>
                 <input type="text" className="form-control form-control-sm" value={vehiculo.poliza} onChange={(e) => handleVehiculoChange(index, 'poliza', e.target.value)} />
               </div>
               <div className="col-auto d-flex align-items-center pt-4">
@@ -133,41 +134,41 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
           </div>
 
           <div className="mb-3">
-            <label className="form-label">Detalle de lo sucedido</label>
+            <label className="text-black form-label">Detalle de lo sucedido</label>
             <textarea className="form-control" rows="3" id="detalle" value={formData.detalle || ''} onChange={handleChange}></textarea>
           </div>
 
-          <h5 className="text-white mt-4">Personas damnificadas</h5>
+          <h5 className="text-black mt-4">Personas damnificadas</h5>
           <div className="row mb-3">
             <div className="col">
-              <label className="form-label">Nombre</label>
+              <label className="text-black form-label">Nombre</label>
               <input type="text" className="form-control" id="nombreDamnificado" value={formData.nombreDamnificado || ''} onChange={handleChange} />
             </div>
             <div className="col">
-              <label className="form-label">Apellido</label>
+              <label className="text-black form-label">Apellido</label>
               <input type="text" className="form-control" id="apellidoDamnificado" value={formData.apellidoDamnificado || ''} onChange={handleChange} />
             </div>
           </div>
 
           <div className="mb-3">
-            <label className="form-label">Domicilio</label>
+            <label className="text-black form-label">Domicilio</label>
             <input type="text" className="form-control" id="domicilioDamnificado" value={formData.domicilioDamnificado || ''} onChange={handleChange} />
           </div>
 
           <div className="row mb-3">
             <div className="col">
-              <label className="form-label">Teléfono</label>
+              <label className="text-black form-label">Teléfono</label>
               <input type="tel" className="form-control" id="telefonoDamnificado" value={formData.telefonoDamnificado || ''} onChange={handleChange} />
             </div>
             <div className="col">
-              <label className="form-label">DNI</label>
+              <label className="text-black form-label">DNI</label>
               <input type="text" className="form-control" id="dniDamnificado" value={formData.dniDamnificado || ''} onChange={handleChange} />
             </div>
           </div>
 
           <div className="mb-3 form-check">
             <input type="checkbox" className="form-check-input" id="fallecio" checked={formData.fallecio || false} onChange={handleChange} />
-            <label className="form-check-label" htmlFor="fallecio">¿Falleció?</label>
+            <label className="text-black form-check-label" htmlFor="fallecio">¿Falleció?</label>
           </div>
 
           <button type="submit" className="btn btn-danger w-100 mt-3" onClick={(e) => {
