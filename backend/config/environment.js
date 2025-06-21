@@ -22,6 +22,13 @@ export function loadConfig() {
       timeout: parseInt(process.env.DB_TIMEOUT) || 60000
     },
     
+    twilio: {
+      accountSid: process.env.TWILIO_ACCOUNT_SID,
+      authToken: process.env.TWILIO_AUTH_TOKEN,
+      whatsappNumber: process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886', // Sandbox por defecto
+      enabled: process.env.TWILIO_ENABLED === 'true' || false
+    },
+    
     cors: {
       origin: process.env.CORS_ORIGIN?.split(',') || function(origin, callback) {
         // Permitir requests sin origin (como Postman) o desde localhost en desarrollo

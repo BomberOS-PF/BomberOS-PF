@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Menu.css'
+import logoBomberos from '/img/logo-bomberos.png'
 import CargarIncidente from '../Incidente/CargarIncidente/CargarIncidente'
 import RegistrarBombero from '../Bombero/RegistrarBombero/RegistrarBombero'
 import RegistrarUsuario from '../Usuario/RegistrarUsuario/RegistrarUsuario'
@@ -17,6 +18,7 @@ import Rescate from '../Incidente/TipoIncidente/Rescate/Rescate'
 import ParticipacionIncidente from '../Incidente/ParticipacionIncidente/ParticipacionIncidente'
 import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
 import ConsultarBombero from '../Bombero/ConsultarBombero/ConsultarBombero'
+import ConsultarIncidente from '../Incidente/ConsultarIncidente/ConsultarIncidente'
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
@@ -91,7 +93,8 @@ const Menu = ({ user, setUser }) => {
     administrador: [
       'cargar-incidente', 'registrar-bombero', 'consultar-bombero',
       'registrar-usuario', 'consultar-usuario',
-      'registrar-rol', 'participacion-incidente', 'vehiculo-involucrado', 'accidente-transito'
+      'registrar-rol', 'participacion-incidente', 'vehiculo-involucrado', 
+      'accidente-transito', 'consultar-incidente'
     ],
     bombero: [
       'cargar-incidente', 'consultar-bombero',
@@ -101,14 +104,14 @@ const Menu = ({ user, setUser }) => {
 
   const items = [
     { key: 'cargar-incidente', label: 'Cargar Incidente' },
-    { key: 'registrar-bombero', label: 'Registrar Bombero' },
+    { key: 'registrar-bombero', label: 'Nuevo Bombero' },
     { key: 'consultar-bombero', label: 'Consultar Bombero' },
-    { key: 'registrar-usuario', label: 'Registrar Usuario' },
-    { key: 'consultar-usuario', label: 'Consultar Usuario' },
+    { key: 'registrar-usuario', label: 'Nuevo Administrador' },
+    { key: 'consultar-usuario', label: 'Consultar Usuarios' },
     { key: 'registrar-rol', label: 'Registrar Rol' },
     { key: 'participacion-incidente', label: 'Participación del Incidente' },
     { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' },
-
+    
     { key: 'accidente-transito', label: 'Accidente de Tránsito' }
   ]
 
@@ -120,7 +123,7 @@ const Menu = ({ user, setUser }) => {
 
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header d-flex justify-content-between align-items-center">
-          <span>Menú</span>
+          <img src={logoBomberos} alt="Logo Bomberos" style={{ height: '40px' }} />
           <button className="close-btn d-lg-none" onClick={closeSidebar}>×</button>
         </div>
 
@@ -150,6 +153,7 @@ const Menu = ({ user, setUser }) => {
         ) : (
           <div className="form-wrapper">
             {opcionSeleccionada === 'cargar-incidente' && <CargarIncidente onVolver={() => setOpcionSeleccionada(null)} onNotificar={agregarBurbuja} />}
+            {opcionSeleccionada === 'consultar-incidente' && <ConsultarIncidente onVolver={() => setOpcionSeleccionada(null)} />} 
             {opcionSeleccionada === 'registrar-bombero' && <RegistrarBombero onVolver={() => setOpcionSeleccionada(null)} />}
             {opcionSeleccionada === 'consultar-bombero' && <ConsultarBombero onVolver={() => setOpcionSeleccionada(null)} />}
             {opcionSeleccionada === 'registrar-usuario' && <RegistrarUsuario onVolver={() => setOpcionSeleccionada(null)} />}

@@ -84,6 +84,15 @@ export function setupRoutes(app, container) {
     }
   })
 
+  app.post('/api/bomberos/full', async (req, res) => {
+    try {
+      await bomberoHandler.createBomberoConUsuario(req, res)
+    } catch (error) {
+      logger.error('Error en ruta createBomberoConUsuario:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
   // USUARIOS
   app.get('/api/usuarios/rol/:rol', async (req, res) => {
     try {
@@ -148,12 +157,11 @@ export function setupRoutes(app, container) {
     }
   })
 
-  // ROLES
-  app.get('/api/roles', async (req, res) => {
+  app.get('/api/usuarios/bomberos/libres', async (req, res) => {
     try {
-      await rolHandler.getAllRoles(req, res)
+      await usuarioHandler.getUsuariosBomberoLibres(req, res)
     } catch (error) {
-      logger.error('Error en ruta getAllRoles:', error)
+      logger.error('Error en ruta getUsuariosBomberoLibres:', error)
       res.status(500).json({ error: 'Error interno' })
     }
   })
@@ -204,25 +212,16 @@ export function setupRoutes(app, container) {
     }
   })
 
-  // CAUSAS DE ACCIDENTE
-  app.get('/api/causas-accidente', async (req, res) => {
+  // Notificar bomberos sobre un incidente
+  app.post('/api/incidentes/:id/notificar', async (req, res) => {
     try {
-      await causaAccidenteHandler.getTodas(req, res)
+      await incidenteHandler.notificarBomberos(req, res)
     } catch (error) {
-      logger.error('Error en ruta causas accidente:', error)
+      logger.error('Error en ruta notificar bomberos:', error)
       res.status(500).json({ error: 'Error interno' })
     }
   })
 
-  // ACCIDENTES DE TRANSITO
-  app.post('/api/accidentes', async (req, res) => {
-    try {
-      await container.accidenteTransitoHandler.registrar(req, res)
-    } catch (error) {
-      logger.error('Error en ruta registrar accidente de tránsito:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
 
   // 404 handler
   app.use((req, res) => {
@@ -257,7 +256,7 @@ export function setupRoutes(app, container) {
         'GET /api/incidentes/:id',
         'PUT /api/incidentes/:id',
         'DELETE /api/incidentes/:id',
-        'POST /api/accidentes'
+        'POST /api/incidentes/:id/notificar'
       ]
     })
   })

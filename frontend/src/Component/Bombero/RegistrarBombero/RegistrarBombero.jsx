@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { API_URLS } from '../../../config/api'
 import './RegistrarBombero.css'
+import '../../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarBombero = ({ onVolver }) => {
   const [formData, setFormData] = useState({
@@ -12,12 +13,16 @@ const RegistrarBombero = ({ onVolver }) => {
     telefono: '',
     legajo: '',
     antiguedad: '',
-    rango: '',
+    rango: 'Bombero',
     esPlan: false,
     fichaMedica: null,
-    fechaFicha: '',
-    aptoPsico: false,
-    grupoSanguineo: ''
+    fechaFicha: new Date().toISOString().split('T')[0],
+    aptoPsico: true,
+    grupoSanguineo: '',
+    username: '',
+    password: '',
+    emailUsuario: '',
+    rolUsuario: '2'
   })
 
   const [loading, setLoading] = useState(false)
@@ -26,10 +31,33 @@ const RegistrarBombero = ({ onVolver }) => {
 
   const handleChange = (e) => {
     const { id, value, type, checked, files } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [id]: type === 'checkbox' ? checked : type === 'file' ? files[0] : value
-    }))
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [id]: type === 'checkbox' ? checked : type === 'file' ? files[0] : value
+      }
+
+      if (id === 'nombre' || id === 'apellido') {
+        const nombre = id === 'nombre' ? value : prev.nombre
+        const apellido = id === 'apellido' ? value : prev.apellido
+        if (nombre && apellido) {
+          newData.username = `${nombre.toLowerCase()}.${apellido.toLowerCase()}`.replace(/\s+/g, '')
+        }
+      }
+
+      if (id === 'email') {
+        // Siempre sincronizar el email del usuario con el del bombero
+        newData.emailUsuario = value
+      }
+
+      if (id === 'dni') {
+        if (!prev.legajo && value) {
+          newData.legajo = `LEG-${value}`
+        }
+      }
+
+      return newData
+    })
   }
 
   const handleSubmit = async (e) => {
@@ -38,7 +66,6 @@ const RegistrarBombero = ({ onVolver }) => {
     setMessage('')
 
     try {
-      // Validaciones adicionales
       if (!formData.dni || !formData.nombre || !formData.apellido || !formData.email || !formData.telefono || !formData.domicilio || !formData.rango || !formData.grupoSanguineo) {
         setMessage('Por favor, complete todos los campos obligatorios')
         setMessageType('error')
@@ -47,26 +74,34 @@ const RegistrarBombero = ({ onVolver }) => {
       }
 
       const dataToSend = {
-        DNI: formData.dni,
-        nombreCompleto: `${formData.nombre} ${formData.apellido}`.trim(),
-        correo: formData.email,
-        telefono: formData.telefono,
-        domicilio: formData.domicilio,
-        legajo: formData.legajo || null,
-        antiguedad: formData.antiguedad ? parseInt(formData.antiguedad) : 0,
-        idRango: getRangoId(formData.rango),
-        esDelPlan: formData.esPlan,
-        aptoPsicologico: formData.aptoPsico,
-        grupoSanguineo: formData.grupoSanguineo,
-        fichaMedica: formData.fichaMedica ? 1 : null, // Campo booleano/entero
-        fichaMedicaArchivo: formData.fichaMedica ? formData.fichaMedica.name : null, // Nombre del archivo
-        fechaFichaMedica: formData.fechaFicha || null
+        usuario: {
+          username: formData.username,
+          password: formData.password,
+          email: formData.emailUsuario,
+          idRol: parseInt(formData.rolUsuario, 10)
+        },
+        bombero: {
+          DNI: formData.dni,
+          nombreCompleto: `${formData.nombre} ${formData.apellido}`.trim(),
+          correo: formData.email,
+          telefono: formData.telefono,
+          domicilio: formData.domicilio,
+          legajo: formData.legajo || null,
+          antiguedad: formData.antiguedad ? parseInt(formData.antiguedad) : 0,
+          idRango: getRangoId(formData.rango),
+          esDelPlan: formData.esPlan,
+          aptoPsicologico: formData.aptoPsico,
+          grupoSanguineo: formData.grupoSanguineo,
+          fichaMedica: formData.fichaMedica ? 1 : null,
+          fichaMedicaArchivo: formData.fichaMedica ? formData.fichaMedica.name : null,
+          fechaFichaMedica: formData.fechaFicha || null
+        }
       }
 
       console.log('🚀 Enviando datos al backend:', dataToSend)
-              console.log('📡 URL de la API:', API_URLS.bomberos.create)
-        
-        const response = await fetch(API_URLS.bomberos.create, {
+      console.log('📡 URL de la API:', API_URLS.bomberos.createFull)
+      
+      const response = await fetch(API_URLS.bomberos.createFull, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dataToSend)
@@ -90,12 +125,16 @@ const RegistrarBombero = ({ onVolver }) => {
           telefono: '',
           legajo: '',
           antiguedad: '',
-          rango: '',
+          rango: 'Bombero',
           esPlan: false,
           fichaMedica: null,
-          fechaFicha: '',
-          aptoPsico: false,
-          grupoSanguineo: ''
+          fechaFicha: new Date().toISOString().split('T')[0],
+          aptoPsico: true,
+          grupoSanguineo: '',
+          username: '',
+          password: '',
+          emailUsuario: '',
+          rolUsuario: '2'
         })
 
         setTimeout(() => {
@@ -143,7 +182,7 @@ const RegistrarBombero = ({ onVolver }) => {
 
   return (
     <div className="container d-flex justify-content-center align-items-center">
-      <div className="form-incidente p-4 shadow rounded">
+      <div className="formulario-consistente">
         <h2 className="text-white text-center mb-4">Alta de Bombero</h2>
 
         {message && (
@@ -153,7 +192,6 @@ const RegistrarBombero = ({ onVolver }) => {
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* Nombre - Apellido - DNI */}
           <div className="row mb-3">
             <div className="col-md-4">
               <label htmlFor="nombre" className="form-label">Nombre</label>
@@ -195,7 +233,6 @@ const RegistrarBombero = ({ onVolver }) => {
             </div>
           </div>
 
-          {/* Domicilio - Teléfono - Email */}
           <div className="row mb-3">
             <div className="col-md-4">
               <label htmlFor="domicilio" className="form-label">Domicilio</label>
@@ -237,7 +274,6 @@ const RegistrarBombero = ({ onVolver }) => {
             </div>
           </div>
 
-          {/* Legajo - Antigüedad - Rango */}
           <div className="row mb-3">
             <div className="col-md-4">
               <label htmlFor="legajo" className="form-label">Legajo (opcional)</label>
@@ -292,7 +328,6 @@ const RegistrarBombero = ({ onVolver }) => {
             </div>
           </div>
 
-          {/* Es del Plan */}
           <div className="form-check form-switch mb-3">
             <input 
               className="form-check-input" 
@@ -307,7 +342,6 @@ const RegistrarBombero = ({ onVolver }) => {
             </label>
           </div>
 
-          {/* Ficha Médica - Fecha - Grupo Sanguíneo */}
           <div className="row mb-3">
             <div className="col-md-4">
               <label htmlFor="fichaMedica" className="form-label">Ficha médica (PDF)</label>
@@ -356,7 +390,6 @@ const RegistrarBombero = ({ onVolver }) => {
             </div>
           </div>
 
-          {/* Apto Psicológico */}
           <div className="form-check form-switch mb-3">
             <input 
               className="form-check-input" 
@@ -371,20 +404,45 @@ const RegistrarBombero = ({ onVolver }) => {
             </label>
           </div>
 
-          <button type="submit" className="btn btn-danger w-100" disabled={loading}>
-            {loading ? 'Registrando...' : 'Registrar bombero'}
-          </button>
+          <h5 className="text-white mb-3">Credenciales de Usuario</h5>
+          <div className="row mb-3">
+            <div className="col-md-3">
+              <label htmlFor="username" className="form-label">Username</label>
+              <input type="text" id="username" className="form-control" value={formData.username} required disabled={loading} onChange={handleChange} />
+            </div>
+            <div className="col-md-3">
+              <label htmlFor="password" className="form-label">Contraseña</label>
+              <input type="password" id="password" className="form-control" value={formData.password} required disabled={loading} onChange={handleChange} />
+            </div>
+            <div className="col-md-3">
+              <label htmlFor="emailUsuario" className="form-label">Email usuario</label>
+              <input type="email" id="emailUsuario" className="form-control" value={formData.emailUsuario} disabled={loading} onChange={handleChange} />
+            </div>
+            <div className="col-md-3">
+              <label htmlFor="rolUsuario" className="form-label">Rol usuario</label>
+              <select id="rolUsuario" className="form-select" value={formData.rolUsuario} disabled={loading} onChange={handleChange}>
+                <option value="1">Administrador</option>
+                <option value="2">Bombero</option>
+              </select>
+            </div>
+          </div>
 
-          {onVolver && (
-            <button 
-              type="button" 
-              className="btn btn-secondary w-100 mt-2" 
-              onClick={onVolver} 
-              disabled={loading}
-            >
-              Volver
+          <div className="botones-accion">
+            <button type="submit" className="btn btn-danger" disabled={loading}>
+              {loading ? 'Registrando...' : 'Registrar bombero'}
             </button>
-          )}
+
+            {onVolver && (
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={onVolver} 
+                disabled={loading}
+              >
+                Volver
+              </button>
+            )}
+          </div>
         </form>
       </div>
     </div>

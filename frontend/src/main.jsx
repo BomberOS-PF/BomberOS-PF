@@ -6,6 +6,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 
 import './index.css'
+import './Component/DisenioFormulario/DisenioFormulario.css'
 import App from './App.jsx'
 
 import Header from './Component/Header/Header.jsx'

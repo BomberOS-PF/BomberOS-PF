@@ -1,0 +1,10 @@
+.btn-limpiar {
+  padding: 0.2rem 0.4rem;
+  font-size: 0.85rem;
+  width: auto;
+  white-space: nowrap;
+}
+
+.buscador-dni {
+  max-width: 250px;
+}

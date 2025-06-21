@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './RegistrarRol.css'
+import '../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarRol = ({ onVolver }) => {
   const [formData, setFormData] = useState({
@@ -22,7 +23,7 @@ const RegistrarRol = ({ onVolver }) => {
 
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="form-rol p-4 shadow rounded w-100" style={{ maxWidth: '500px' }}>
+      <div className="formulario-consistente" style={{ maxWidth: '500px' }}>
         <h2 className="text-center mb-4">Registrar Nuevo Rol</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
@@ -46,8 +47,10 @@ const RegistrarRol = ({ onVolver }) => {
               onChange={handleChange}
             />
           </div>
-          <button type="submit" className="btn btn-danger w-100 mb-3">Registrar Rol</button>
-          <button type="button" className="btn btn-secondary w-100" onClick={onVolver}>Volver</button>
+          <div className="botones-accion">
+            <button type="submit" className="btn btn-danger">Registrar Rol</button>
+            <button type="button" className="btn btn-secondary" onClick={onVolver}>Volver</button>
+          </div>
         </form>
       </div>
     </div>

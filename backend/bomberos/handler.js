@@ -235,4 +235,20 @@ export class BomberoHandler {
       })
     }
   }
+
+  /**
+   * Crear bombero + usuario (endpoint compuesto)
+   */
+  async createBomberoConUsuario(req, res) {
+    try {
+      logger.info('Solicitud: Crear bombero + usuario', {
+        method: req.method, url: req.url, ip: req.ip
+      })
+      const resultado = await this.bomberoService.crearBomberoConUsuario(req.body)
+      res.status(201).json({ success: true, message: 'Bombero y usuario creados', data: resultado })
+    } catch (error) {
+      logger.error('Error al crear bombero + usuario', { error: error.message })
+      res.status(500).json({ success: false, message: error.message })
+    }
+  }
 } 

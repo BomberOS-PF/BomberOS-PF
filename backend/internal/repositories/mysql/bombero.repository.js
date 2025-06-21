@@ -194,32 +194,25 @@ export class MySQLBomberoRepository {
     }
   }
 
-  async actualizarIdUsuarioPorDni(dni, idUsuario) {
+  async findByIdUsuario(idUsuario) {
     const query = `
-      UPDATE ${this.tableName}
-      SET idUsuario = ?
-      WHERE DNI = ?
+      SELECT DNI, nombreCompleto, legajo, antiguedad, idRango, correo, telefono,
+             esDelPlan, fichaMedica, fichaMedicaArchivo, fechaFichaMedica,
+             aptoPsicologico, domicilio, grupoSanguineo, idUsuario
+      FROM ${this.tableName}
+      WHERE idUsuario = ?
     `
-    
     const connection = getConnection()
-    
     try {
-      const [result] = await connection.execute(query, [idUsuario, dni])
-      logger.debug('Actualización de idUsuario en bombero', {
-        dni,
-        idUsuario,
-        filasAfectadas: result.affectedRows
-      })
-      return result.affectedRows > 0
+      const [rows] = await connection.execute(query, [idUsuario])
+      return rows.length > 0 ? Bombero.create(rows[0]) : null
     } catch (error) {
-      logger.error('Error al actualizar idUsuario del bombero', {
-        dni,
+      logger.error('Error al buscar bombero por idUsuario', {
         idUsuario,
         error: error.message,
         code: error.code
       })
-      throw new Error(`Error al actualizar idUsuario del bombero: ${error.message}`)
+      throw new Error(`Error al buscar bombero por idUsuario: ${error.message}`)
     }
   }
-
 } 

@@ -1,70 +1,158 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { API_URLS } from '../../../config/api'
 import './ParticipacionIncidente.css'
+import '../../DisenioFormulario/DisenioFormulario.css'
 
-const ParticipacionIncidente = ({ onVolver, onFinalizar, datosPrevios = {} }) => {
-  const [sirena, setSirena] = useState(false)
-  const navigate = useNavigate()
+const ParticipacionIncidente = ({ datosPrevios, onFinalizar, onVolver }) => {
+  const [bomberos, setBomberos] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    fechaHoraArribo: '',
+    fechaHoraSalida: '',
+    personaAlerta: '',
+    personaCargo: ''
+  })
+
+  // Cargar bomberos y establecer fecha/hora actual al montar el componente
+  useEffect(() => {
+    cargarBomberos()
+    
+    // Precargar fecha y hora actual
+    const now = new Date()
+    const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16)
+    
+    setFormData(prev => ({
+      ...prev,
+      fechaHoraArribo: localDateTime,
+      fechaHoraSalida: localDateTime
+    }))
+  }, [])
+
+  const cargarBomberos = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch(API_URLS.bomberos.getAll)
+      const data = await response.json()
+      if (response.ok && data.success) {
+        setBomberos(data.data || [])
+      } else {
+        console.error('Error al cargar bomberos:', data.message)
+      }
+    } catch (error) {
+      console.error('Error al cargar bomberos:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleChange = (e) => {
+    const { id, value } = e.target
+    setFormData(prev => ({ ...prev, [id]: value }))
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (onFinalizar) onFinalizar()
+    
+    const datosCompletos = {
+      ...datosPrevios,
+      participacion: formData
+    }
+    
+    console.log('Datos completos del incidente:', datosCompletos)
+    
+    if (onFinalizar) {
+      onFinalizar(datosCompletos)
+    }
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="form-abm p-4 shadow rounded w-100" style={{ maxWidth: '700px' }}>
-        <h2 className="text-white text-center mb-4">Formulario de Participación</h2>
+    <div className="container d-flex justify-content-center align-items-center">
+      <div className="formulario-consistente">
+        <h2 className="text-white text-center mb-4">Participación del Incidente</h2>
+
         <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label htmlFor="fechaLlamado" className="form-label">Fecha y hora que se recibió el llamado de emergencia</label>
-            <input type="datetime-local" id="fechaLlamado" className="form-control" required />
-          </div>
-
-          <div className="mb-3 form-check">
-            <input type="checkbox" className="form-check-input" id="sirenaTocada" checked={sirena} onChange={() => setSirena(!sirena)} />
-            <label className="form-check-label" htmlFor="sirenaTocada">Se tocó la sirena</label>
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="horaSirena" className="form-label">Hora del toque de sirena</label>
-            <input type="time" id="horaSirena" className="form-control" disabled={!sirena} />
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="horaArribo" className="form-label">Hora de arribo al siniestro</label>
-            <input type="time" id="horaArribo" className="form-control" required />
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="horaRetorno" className="form-label">Hora de retorno del siniestro</label>
-            <input type="time" id="horaRetorno" className="form-control" required />
+          <div className="row mb-3">
+            <div className="col-md-6">
+              <label htmlFor="fechaHoraArribo" className="form-label">Fecha y hora de arribo</label>
+              <input 
+                type="datetime-local" 
+                id="fechaHoraArribo" 
+                className="form-control" 
+                value={formData.fechaHoraArribo}
+                onChange={handleChange}
+                required 
+              />
+            </div>
+            <div className="col-md-6">
+              <label htmlFor="fechaHoraSalida" className="form-label">Fecha y hora de salida</label>
+              <input 
+                type="datetime-local" 
+                id="fechaHoraSalida" 
+                className="form-control" 
+                value={formData.fechaHoraSalida}
+                onChange={handleChange}
+                required 
+              />
+            </div>
           </div>
 
           <div className="mb-3">
             <label htmlFor="personaAlerta" className="form-label">Persona que emitió la alerta</label>
-            <select id="personaAlerta" className="form-select" required>
-              <option selected disabled>Seleccione persona</option>
-              <option>Juan Pérez</option>
-              <option>María Gómez</option>
-              <option>Carlos López</option>
-              <option>Ana Martínez</option>
+            <select 
+              id="personaAlerta" 
+              className="form-select" 
+              value={formData.personaAlerta}
+              onChange={handleChange}
+              required
+              disabled={loading}
+            >
+              <option value="">Seleccione persona</option>
+              {bomberos.map((bombero) => (
+                <option key={bombero.dni || bombero.DNI} value={bombero.dni || bombero.DNI}>
+                  {bombero.nombreCompleto}
+                </option>
+              ))}
             </select>
           </div>
 
           <div className="mb-3">
             <label htmlFor="personaCargo" className="form-label">Persona a cargo del siniestro</label>
-            <select id="personaCargo" className="form-select" required>
-              <option selected disabled>Seleccione persona</option>
-              <option>Juan Pérez</option>
-              <option>María Gómez</option>
-              <option>Carlos López</option>
-              <option>Ana Martínez</option>
+            <select 
+              id="personaCargo" 
+              className="form-select" 
+              value={formData.personaCargo}
+              onChange={handleChange}
+              required
+              disabled={loading}
+            >
+              <option value="">Seleccione persona</option>
+              {bomberos.map((bombero) => (
+                <option key={bombero.dni || bombero.DNI} value={bombero.dni || bombero.DNI}>
+                  {bombero.nombreCompleto}
+                </option>
+              ))}
             </select>
           </div>
 
-          <button type="submit" className="btn btn-danger w-100 mt-3">Finalizar carga</button>
-          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={onVolver}>Volver al menú</button>
+          {loading && (
+            <div className="alert alert-info">
+              Cargando bomberos disponibles...
+            </div>
+          )}
+
+          <div className="botones-accion">
+            <button type="submit" className="btn btn-danger" disabled={loading}>
+              Finalizar carga
+            </button>
+            
+            {onVolver && (
+              <button type="button" className="btn btn-secondary" onClick={onVolver}>
+                Volver al menú
+              </button>
+            )}
+          </div>
         </form>
       </div>
     </div>

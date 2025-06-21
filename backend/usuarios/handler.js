@@ -275,7 +275,8 @@ export class UsuarioHandler {
         email: usuarioAutenticado.email,
         rol: usuarioAutenticado.rol,
         nombre: usuarioAutenticado.nombre,
-        apellido: usuarioAutenticado.apellido        
+        apellido: usuarioAutenticado.apellido,
+        dni: usuarioAutenticado.dni        
       }
     })
     
@@ -297,6 +298,20 @@ export class UsuarioHandler {
         message: error.message,
         error: error.message
       })
+    }
+  }
+
+  /**
+   * GET /api/usuarios/bomberos/libres
+   * Obtener usuarios rol bombero sin bombero asociado
+   */
+  async getUsuariosBomberoLibres(req, res) {
+    try {
+      const usuarios = await this.usuarioService.listarUsuariosBomberoLibres()
+      res.status(200).json({ success: true, data: usuarios.map(u => u.toJSON()) })
+    } catch (error) {
+      logger.error('Error al obtener usuarios bombero libres', { error: error.message })
+      res.status(500).json({ success: false, message: error.message })
     }
   }
 } 
