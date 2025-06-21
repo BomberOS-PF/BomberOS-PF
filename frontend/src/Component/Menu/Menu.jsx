@@ -104,7 +104,7 @@ const Menu = ({ user, setUser }) => {
     { key: 'cargar-incidente', label: 'Cargar Incidente' },
     { key: 'registrar-bombero', label: 'Nuevo Bombero' },
     { key: 'consultar-bombero', label: 'Consultar Bombero' },
-    { key: 'registrar-usuario', label: 'Nuevo Administrador' },
+    { key: 'registrar-usuario', label: 'Nuevo Usuario' },
     { key: 'consultar-usuario', label: 'Consultar Usuarios' },
     { key: 'registrar-rol', label: 'Registrar Rol' },
     { key: 'participacion-incidente', label: 'Participación del Incidente' },

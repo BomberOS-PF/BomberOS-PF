@@ -62,7 +62,7 @@ const VehiculoInvolucrado = ({ onVolver }) => {
   return (
     <div className="container d-flex justify-content-center align-items-center">
       <div className="formulario-consistente">
-        <h2 className="text-white text-center mb-4">Vehículo involucrado</h2>
+        <h2 className="text-black text-center mb-4">Vehículo involucrado</h2>
 
         <form onSubmit={handleSubmit}>
           <div className="form-check form-switch mb-3">
@@ -73,14 +73,14 @@ const VehiculoInvolucrado = ({ onVolver }) => {
               checked={participa}
               onChange={(e) => setParticipa(e.target.checked)}
             />
-            <label className="form-check-label text-white" htmlFor="participaVehiculo">
+            <label className="form-check-label text-black" htmlFor="participaVehiculo">
               ¿Participó vehículo del cuartel?
             </label>
           </div>
 
           <fieldset disabled={!participa}>
             <div className="mb-3">
-              <label htmlFor="choferMovil" className="form-label text-white">Chofer del móvil</label>
+              <label htmlFor="choferMovil" className="form-label text-black">Chofer del móvil</label>
               <select 
                 id="choferMovil" 
                 className="form-select" 
@@ -99,7 +99,7 @@ const VehiculoInvolucrado = ({ onVolver }) => {
             </div>
 
             <div className="mb-3">
-              <label htmlFor="aCargoMovil" className="form-label text-white">Persona a cargo del móvil</label>
+              <label htmlFor="aCargoMovil" className="form-label text-black">Persona a cargo del móvil</label>
               <select 
                 id="aCargoMovil" 
                 className="form-select" 
@@ -118,7 +118,7 @@ const VehiculoInvolucrado = ({ onVolver }) => {
             </div>
 
             <div className="mb-3">
-              <label htmlFor="retornoMovil" className="form-label text-white">Fecha y hora de retorno del móvil</label>
+              <label htmlFor="retornoMovil" className="form-label text-black">Fecha y hora de retorno del móvil</label>
               <input 
                 type="datetime-local" 
                 id="retornoMovil" 
@@ -130,20 +130,20 @@ const VehiculoInvolucrado = ({ onVolver }) => {
             </div>
 
             <div className="mb-3">
-              <label className="form-label text-white">Dotación de bomberos</label>
+              <label className="form-label text-black">Dotación de bomberos</label>
               {loading ? (
-                <p className="text-white">Cargando bomberos...</p>
+                <p className="text-black">Cargando bomberos...</p>
               ) : (
                 bomberos.map((bombero) => (
-                  <div className="form-check text-white ms-2" key={bombero.dni || bombero.DNI}>
+                  <div className="form-check text-black ms-2" key={bombero.dni || bombero.DNI}>
                     <input 
-                      className="form-check-input" 
+                      className="text-black form-check-input" 
                       type="checkbox" 
                       id={`bombero-${bombero.dni || bombero.DNI}`}
                       checked={formData.dotacionSeleccionada.includes(bombero.dni || bombero.DNI)}
                       onChange={(e) => handleDotacionChange(bombero.dni || bombero.DNI, e.target.checked)}
                     />
-                    <label className="form-check-label" htmlFor={`bombero-${bombero.dni || bombero.DNI}`}>
+                    <label className="text-black form-check-label" htmlFor={`bombero-${bombero.dni || bombero.DNI}`}>
                       {bombero.nombreCompleto}
                     </label>
                   </div>

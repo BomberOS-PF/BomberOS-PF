@@ -70,12 +70,12 @@ const ParticipacionIncidente = ({ datosPrevios, onFinalizar, onVolver }) => {
   return (
     <div className="container d-flex justify-content-center align-items-center">
       <div className="formulario-consistente">
-        <h2 className="text-white text-center mb-4">Participación del Incidente</h2>
+        <h2 className="text-black text-center mb-4">Participación del Incidente</h2>
 
         <form onSubmit={handleSubmit}>
           <div className="row mb-3">
             <div className="col-md-6">
-              <label htmlFor="fechaHoraArribo" className="form-label">Fecha y hora de arribo</label>
+              <label htmlFor="fechaHoraArribo" className="text-black form-label">Fecha y hora de arribo</label>
               <input 
                 type="datetime-local" 
                 id="fechaHoraArribo" 
@@ -86,7 +86,7 @@ const ParticipacionIncidente = ({ datosPrevios, onFinalizar, onVolver }) => {
               />
             </div>
             <div className="col-md-6">
-              <label htmlFor="fechaHoraSalida" className="form-label">Fecha y hora de salida</label>
+              <label htmlFor="fechaHoraSalida" className="text-black form-label">Fecha y hora de salida</label>
               <input 
                 type="datetime-local" 
                 id="fechaHoraSalida" 
@@ -99,7 +99,7 @@ const ParticipacionIncidente = ({ datosPrevios, onFinalizar, onVolver }) => {
           </div>
 
           <div className="mb-3">
-            <label htmlFor="personaAlerta" className="form-label">Persona que emitió la alerta</label>
+            <label htmlFor="personaAlerta" className="text-black form-label">Persona que emitió la alerta</label>
             <select 
               id="personaAlerta" 
               className="form-select" 
@@ -118,7 +118,7 @@ const ParticipacionIncidente = ({ datosPrevios, onFinalizar, onVolver }) => {
           </div>
 
           <div className="mb-3">
-            <label htmlFor="personaCargo" className="form-label">Persona a cargo del siniestro</label>
+            <label htmlFor="personaCargo" className="text-black form-label">Persona a cargo del siniestro</label>
             <select 
               id="personaCargo" 
               className="form-select" 

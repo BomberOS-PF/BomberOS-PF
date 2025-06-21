@@ -95,12 +95,12 @@ body {
 
 /* Contenedor principal del formulario */
 .formulario-consistente {
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: white;
   border-radius: 10px;
   padding: 2rem;
   margin: 1rem auto;
   max-width: 1200px;
-  border: 1px solid #dc3545;
+  border: 2px solid black;
 }
 
 /* Títulos de formularios */
@@ -151,7 +151,7 @@ body {
 .formulario-consistente .form-control[readonly],
 .formulario-consistente .form-select[readonly] {
   background-color: #f8f9fa;
-  color: #6c757d !important;
+  color: #6c757d;
   opacity: 0.8;
   border-color: #dee2e6;
 }
@@ -358,4 +358,22 @@ body {
 .formulario-consistente .badge {
   font-size: 0.85em;
   padding: 0.5em 0.75em;
+}
+
+.form-check-input:checked {
+  background-color: #d52b1e;
+  border-color: #d52b1e;
+}
+
+.form-check-input:focus {
+  border-color: #d52b1e;
+  box-shadow: 0 0 0 0.2rem rgba(213, 43, 30, 0.25);
+}
+
+.form-check-input {
+  cursor: pointer;
+}
+.form-check-input:not(:checked) {
+  background-color: #ff0000;
+  border-color: #000000;
 }

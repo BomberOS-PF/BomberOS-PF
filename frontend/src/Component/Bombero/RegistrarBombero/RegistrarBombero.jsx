@@ -183,7 +183,7 @@ const RegistrarBombero = ({ onVolver }) => {
   return (
     <div className="container d-flex justify-content-center align-items-center">
       <div className="formulario-consistente">
-        <h2 className="text-white text-center mb-4">Alta de Bombero</h2>
+        <h2 className="text-black text-center mb-4">Alta de Bombero</h2>
 
         {message && (
           <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'} mt-3`}>
@@ -194,7 +194,7 @@ const RegistrarBombero = ({ onVolver }) => {
         <form onSubmit={handleSubmit}>
           <div className="row mb-3">
             <div className="col-md-4">
-              <label htmlFor="nombre" className="form-label">Nombre</label>
+              <label htmlFor="nombre" className="text-black form-label">Nombre</label>
               <input 
                 type="text" 
                 className="form-control" 
@@ -206,7 +206,7 @@ const RegistrarBombero = ({ onVolver }) => {
               />
             </div>
             <div className="col-md-4">
-              <label htmlFor="apellido" className="form-label">Apellido</label>
+              <label htmlFor="apellido" className="text-black form-label">Apellido</label>
               <input 
                 type="text" 
                 className="form-control" 
@@ -218,7 +218,7 @@ const RegistrarBombero = ({ onVolver }) => {
               />
             </div>
             <div className="col-md-4">
-              <label htmlFor="dni" className="form-label">DNI</label>
+              <label htmlFor="dni" className="text-black form-label">DNI</label>
               <input 
                 type="text" 
                 className="form-control" 
@@ -235,7 +235,7 @@ const RegistrarBombero = ({ onVolver }) => {
 
           <div className="row mb-3">
             <div className="col-md-4">
-              <label htmlFor="domicilio" className="form-label">Domicilio</label>
+              <label htmlFor="domicilio" className="text-black form-label">Domicilio</label>
               <input 
                 type="text" 
                 className="form-control" 
@@ -247,7 +247,7 @@ const RegistrarBombero = ({ onVolver }) => {
               />
             </div>
             <div className="col-md-4">
-              <label htmlFor="telefono" className="form-label">Teléfono</label>
+              <label htmlFor="telefono" className="text-black form-label">Teléfono</label>
               <input 
                 type="tel" 
                 className="form-control" 
@@ -261,7 +261,7 @@ const RegistrarBombero = ({ onVolver }) => {
               />
             </div>
             <div className="col-md-4">
-              <label htmlFor="email" className="form-label">Correo electrónico</label>
+              <label htmlFor="email" className="text-black form-label">Correo electrónico</label>
               <input 
                 type="email" 
                 className="form-control" 
@@ -276,7 +276,7 @@ const RegistrarBombero = ({ onVolver }) => {
 
           <div className="row mb-3">
             <div className="col-md-4">
-              <label htmlFor="legajo" className="form-label">Legajo (opcional)</label>
+              <label htmlFor="legajo" className="text-black form-label">Legajo (opcional)</label>
               <input 
                 type="text" 
                 className="form-control" 
@@ -287,7 +287,7 @@ const RegistrarBombero = ({ onVolver }) => {
               />
             </div>
             <div className="col-md-4">
-              <label htmlFor="antiguedad" className="form-label">Antigüedad (años)</label>
+              <label htmlFor="antiguedad" className="text-black form-label">Antigüedad (años)</label>
               <input 
                 type="number" 
                 className="form-control" 
@@ -300,7 +300,7 @@ const RegistrarBombero = ({ onVolver }) => {
               />
             </div>
             <div className="col-md-4">
-              <label htmlFor="rango" className="form-label">Rango</label>
+              <label htmlFor="rango" className="text-black form-label">Rango</label>
               <select 
                 className="form-select" 
                 id="rango" 
@@ -337,14 +337,14 @@ const RegistrarBombero = ({ onVolver }) => {
               disabled={loading}
               onChange={handleChange} 
             />
-            <label className="form-check-label" htmlFor="esPlan">
+            <label className="text-black form-check-label" htmlFor="esPlan">
               Es del plan (guardias pagas)
             </label>
           </div>
 
           <div className="row mb-3">
             <div className="col-md-4">
-              <label htmlFor="fichaMedica" className="form-label">Ficha médica (PDF)</label>
+              <label htmlFor="fichaMedica" className="text-black form-label">Ficha médica (PDF)</label>
               <input
                 className="form-control"
                 type="file"
@@ -356,7 +356,7 @@ const RegistrarBombero = ({ onVolver }) => {
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="fechaFicha" className="form-label">Fecha de carga</label>
+              <label htmlFor="fechaFicha" className="text-black form-label">Fecha de carga</label>
               <input
                 className="form-control"
                 type="date"
@@ -368,7 +368,7 @@ const RegistrarBombero = ({ onVolver }) => {
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="grupoSanguineo" className="form-label">Grupo sanguíneo</label>
+              <label htmlFor="grupoSanguineo" className="text-black form-label">Grupo sanguíneo</label>
               <select
                 className="form-select"
                 id="grupoSanguineo"
@@ -399,27 +399,27 @@ const RegistrarBombero = ({ onVolver }) => {
               disabled={loading}
               onChange={handleChange} 
             />
-            <label className="form-check-label" htmlFor="aptoPsico">
+            <label className="text-black form-check-label" htmlFor="aptoPsico">
               Apto psicológico
             </label>
           </div>
 
-          <h5 className="text-white mb-3">Credenciales de Usuario</h5>
+          <h5 className="text-black mb-3">Credenciales de Usuario</h5>
           <div className="row mb-3">
             <div className="col-md-3">
-              <label htmlFor="username" className="form-label">Username</label>
+              <label htmlFor="username" className="text-black form-label">Username</label>
               <input type="text" id="username" className="form-control" value={formData.username} required disabled={loading} onChange={handleChange} />
             </div>
             <div className="col-md-3">
-              <label htmlFor="password" className="form-label">Contraseña</label>
+              <label htmlFor="password" className="text-black form-label">Contraseña</label>
               <input type="password" id="password" className="form-control" value={formData.password} required disabled={loading} onChange={handleChange} />
             </div>
             <div className="col-md-3">
-              <label htmlFor="emailUsuario" className="form-label">Email usuario</label>
+              <label htmlFor="emailUsuario" className="text-black form-label">Email usuario</label>
               <input type="email" id="emailUsuario" className="form-control" value={formData.emailUsuario} disabled={loading} onChange={handleChange} />
             </div>
             <div className="col-md-3">
-              <label htmlFor="rolUsuario" className="form-label">Rol usuario</label>
+              <label htmlFor="rolUsuario" className="text-black form-label">Rol usuario</label>
               <select id="rolUsuario" className="form-select" value={formData.rolUsuario} disabled={loading} onChange={handleChange}>
                 <option value="1">Administrador</option>
                 <option value="2">Bombero</option>

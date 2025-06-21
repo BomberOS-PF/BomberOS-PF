@@ -24,10 +24,10 @@ const RegistrarRol = ({ onVolver }) => {
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100">
       <div className="formulario-consistente" style={{ maxWidth: '500px' }}>
-        <h2 className="text-center mb-4">Registrar Nuevo Rol</h2>
+        <h2 className="text-black text-center mb-4">Registrar Nuevo Rol</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
-            <label htmlFor="nombreRol" className="form-label">Nombre del Rol</label>
+            <label htmlFor="nombreRol" className="text-black form-label">Nombre del Rol</label>
             <input
               type="text"
               className="form-control"
@@ -38,7 +38,7 @@ const RegistrarRol = ({ onVolver }) => {
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="descripcionRol" className="form-label">Descripción (opcional)</label>
+            <label htmlFor="descripcionRol" className="text-black form-label">Descripción (opcional)</label>
             <textarea
               className="form-control"
               id="descripcionRol"
