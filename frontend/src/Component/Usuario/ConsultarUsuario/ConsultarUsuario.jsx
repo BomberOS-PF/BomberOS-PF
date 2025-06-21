@@ -106,7 +106,7 @@ const ConsultarUsuario = ({ onVolver }) => {
 
   return (
     <div className="container mt-4 formulario-consistente">
-      <h2 className="text-white mb-3">Consultar Usuarios</h2>
+      <h2 className="text-black mb-3">Consultar Usuarios</h2>
 
       {mensaje && (
         <div className={`alert ${mensaje.includes('Error') ? 'alert-danger' : 'alert-info'}`}>
@@ -175,7 +175,7 @@ const ConsultarUsuario = ({ onVolver }) => {
               </table>
             </div>
           ) : (
-            <div className="text-center text-white">
+            <div className="text-center text-black">
               <p>No se encontraron usuarios que coincidan con la búsqueda.</p>
             </div>
           )}
@@ -185,7 +185,7 @@ const ConsultarUsuario = ({ onVolver }) => {
       {usuarioSeleccionado && (
         <div className="formulario-consistente detalle-usuario">
           <div className="d-flex justify-content-between align-items-center mb-4">
-            <h3 className="text-white mb-0">
+            <h3 className="text-black mb-0">
               {modoEdicion ? (
                 <>✏️ Editando: {usuarioSeleccionado.username}</>
               ) : (
@@ -219,9 +219,9 @@ const ConsultarUsuario = ({ onVolver }) => {
           ) : (
             <div className="row">
               <div className="col-md-6">
-                <p className="text-white"><strong>Usuario:</strong> {usuarioSeleccionado.username}</p>
-                <p className="text-white"><strong>Email:</strong> {usuarioSeleccionado.email}</p>
-                <p className="text-white"><strong>Rol:</strong> 
+                <p className="text-black"><strong>Usuario:</strong> {usuarioSeleccionado.username}</p>
+                <p className="text-black"><strong>Email:</strong> {usuarioSeleccionado.email}</p>
+                <p className="text-black"><strong>Rol:</strong> 
                   <span className={`badge ms-2 ${
                     usuarioSeleccionado.rol === 'administrador' ? 'bg-danger' :
                     usuarioSeleccionado.rol === 'jefe_cuartel' ? 'bg-warning' : 'bg-info'
@@ -231,9 +231,9 @@ const ConsultarUsuario = ({ onVolver }) => {
                 </p>
               </div>
               <div className="col-md-6">
-                <p className="text-white"><strong>Creado:</strong> {formatearFecha(usuarioSeleccionado.createdAt)}</p>
-                <p className="text-white"><strong>Última actualización:</strong> {formatearFecha(usuarioSeleccionado.updatedAt)}</p>
-                <p className="text-white"><strong>ID:</strong> {usuarioSeleccionado.id}</p>
+                <p className="text-black"><strong>Creado:</strong> {formatearFecha(usuarioSeleccionado.createdAt)}</p>
+                <p className="text-black"><strong>Última actualización:</strong> {formatearFecha(usuarioSeleccionado.updatedAt)}</p>
+                <p className="text-black"><strong>ID:</strong> {usuarioSeleccionado.id}</p>
               </div>
             </div>
           )}

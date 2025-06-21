@@ -173,11 +173,11 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
   return (
     <div className="container d-flex justify-content-center align-items-center">
       <div className="formulario-consistente">
-        <h2 className="text-white text-center mb-4">Cargar Incidente</h2>
+        <h2 className="text-black text-center mb-4">Cargar Incidente</h2>
         <form onSubmit={handleSubmit}>
           <div className="row mb-3">
             <div className="col-md-6">
-              <label className="form-label">Persona que carga</label>
+              <label className="text-black form-label">Persona que carga</label>
               <input
                 type="text"
                 className="form-control"
@@ -187,7 +187,7 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
               />
             </div>
             <div className="col-md-6">
-              <label htmlFor="tipoSiniestro" className="form-label">Tipo de Siniestro</label>
+              <label htmlFor="tipoSiniestro" className="text-black form-label">Tipo de Siniestro</label>
               <select className="form-select" id="tipoSiniestro" required onChange={handleChange} defaultValue="">
                 <option disabled value="">Seleccione tipo</option>
                 <option>Accidente</option>
@@ -202,7 +202,7 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
 
           <div className="row mb-3">
             <div className="col-md-4">
-              <label htmlFor="fechaHora" className="form-label">Fecha y Hora</label>
+              <label htmlFor="fechaHora" className="text-black form-label">Fecha y Hora</label>
               <input
                 type="datetime-local"
                 className="form-control estrecho"
@@ -214,32 +214,32 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
             </div>
           </div>
 
-          <h5 className="text-white mb-3">Datos del denunciante (opcional)</h5>
+          <h5 className="text-black mb-3">Datos del denunciante (opcional)</h5>
           <div className="row mb-3">
             <div className="col">
-              <label htmlFor="nombreDenunciante" className="form-label">Nombre</label>
+              <label htmlFor="nombreDenunciante" className="text-black form-label">Nombre</label>
               <input type="text" className="form-control" id="nombreDenunciante" onChange={handleChange} />
             </div>
             <div className="col">
-              <label htmlFor="apellidoDenunciante" className="form-label">Apellido</label>
+              <label htmlFor="apellidoDenunciante" className="text-black form-label">Apellido</label>
               <input type="text" className="form-control" id="apellidoDenunciante" onChange={handleChange} />
             </div>
           </div>
 
           <div className="row mb-3">
             <div className="col">
-              <label htmlFor="telefonoDenunciante" className="form-label">Teléfono</label>
+              <label htmlFor="telefonoDenunciante" className="text-black form-label">Teléfono</label>
               <input type="tel" className="form-control" id="telefonoDenunciante" onChange={handleChange} />
             </div>
             <div className="col">
-              <label htmlFor="dniDenunciante" className="form-label">DNI</label>
+              <label htmlFor="dniDenunciante" className="text-black form-label">DNI</label>
               <input type="text" className="form-control" id="dniDenunciante" onChange={handleChange} />
             </div>
           </div>
 
           <div className="row mb-3">
             <div className="col-md-6">
-              <label htmlFor="localizacion" className="form-label">Localización</label>
+              <label htmlFor="localizacion" className="text-black form-label">Localización</label>
               <select className="form-select" id="localizacion" required onChange={handleChange} defaultValue="">
                 <option disabled value="">Seleccione localización</option>
                 <option>Despeñaderos</option>
@@ -252,7 +252,7 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
             </div>
 
             <div className="col-md-6">
-              <label htmlFor="lugar" className="form-label">Calle y/o Kilometraje o Lugar</label>
+              <label htmlFor="lugar" className="text-black form-label">Calle y/o Kilometraje o Lugar</label>
               <input
                 type="text"
                 className="form-control"

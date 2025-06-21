@@ -179,7 +179,7 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
     <div className="container d-flex justify-content-center align-items-center min-vh-100">
       <div className="formulario-consistente">
         {!ocultarTitulo && (
-          <h2 className="text-white text-center mb-4">
+          <h2 className="text-black text-center mb-4">
             {usuario ? 'Editar Usuario' : 'Registrar Usuario'}
           </h2>
         )}
@@ -194,7 +194,7 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
           {/* Usuario - Contraseña - Email */}
           <div className="row mb-3">
             <div className="col-md-4">
-              <label htmlFor="username" className="form-label">Nombre de usuario</label>
+              <label htmlFor="username" className="text-black form-label">Nombre de usuario</label>
               <input
                 type="text"
                 className="form-control"
@@ -206,7 +206,7 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
               />
             </div>
             <div className="col-md-4">
-              <label htmlFor="password" className="form-label">Contraseña {usuario && '(nueva)'}</label>
+              <label htmlFor="password" className="text-black form-label">Contraseña {usuario && '(nueva)'}</label>
               <input
                 type="password"
                 className="form-control"
@@ -222,7 +222,7 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
               {passwordStrength && formData.password && (
                 <div className="mt-2">
                   <div className="d-flex align-items-center mb-1">
-                    <small className="text-white me-2">Fortaleza:</small>
+                    <small className="text-black me-2">Fortaleza:</small>
                     <div className="progress flex-grow-1" style={{ height: '6px' }}>
                       <div 
                         className={`progress-bar ${
@@ -256,7 +256,7 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
               )}
             </div>
             <div className="col-md-4">
-              <label htmlFor="email" className="form-label">Correo electrónico</label>
+              <label htmlFor="email" className="text-black form-label">Correo electrónico</label>
               <input
                 type="email"
                 className="form-control"
@@ -271,7 +271,7 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
 
           {/* Rol */}
           <div className="mb-4">
-            <label htmlFor="rol" className="form-label">Rol</label>
+            <label htmlFor="rol" className="text-black form-label">Rol</label>
             <select
               className="form-select"
               id="rol"
