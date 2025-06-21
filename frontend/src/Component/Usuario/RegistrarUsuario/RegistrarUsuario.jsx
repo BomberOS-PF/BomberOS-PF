@@ -59,7 +59,7 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
 
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <form className="formulario-consistente">
+      <div className="formulario-consistente">
         {!ocultarTitulo && (
           <h2 className="text-white text-center mb-4">
             {usuario ? 'Editar Usuario' : 'Registrar Usuario'}
@@ -252,7 +252,7 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
             Volver
           </button>
         </div>
-      </form>
+      </div>
     </div>
   )
 }

@@ -223,23 +223,6 @@ export function setupRoutes(app, container) {
   })
 
 
-  app.get('/api/accidente/:id', async (req, res) => {
-    try {
-      await container.accidenteTransitoHandler.obtenerPorIncidente(req, res)
-    } catch (error) {
-      logger.error('Error en ruta obtener accidente de tránsito:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.get('/api/accidentes', async (req, res) => {
-    try {
-      await container.accidenteTransitoHandler.listarTodos(req, res)
-    } catch (error) {
-      logger.error('Error en ruta listar accidentes de tránsito:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
 
   // 404 handler
   app.use((req, res) => {
