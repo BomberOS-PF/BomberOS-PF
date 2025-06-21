@@ -1,13 +1,15 @@
 import { logger } from '../platform/logger/logger.js'
 import { Bombero } from '../../domain/models/bombero.js'
+import { Usuario } from '../../domain/models/usuario.js'
 
 /**
  * Servicio de Bomberos
  * Completamente limpio, aplicando principios SOLID y KISS
  */
 export class BomberoService {
-  constructor(bomberoRepository) {
+  constructor(bomberoRepository, usuarioRepository) {
     this.bomberoRepository = bomberoRepository
+    this.usuarioRepository = usuarioRepository
   }
 
   async listarBomberos() {
@@ -46,7 +48,7 @@ export class BomberoService {
       logger.debug('Servicio: Crear nuevo bombero')
       
       // Validación básica
-      this._validarDatosBombero(datosBombero)
+      this._validarDatosBombero(datosBombero, true)
       
       // Verificar si ya existe un bombero con el mismo DNI
       const existente = await this.bomberoRepository.findById(datosBombero.dni || datosBombero.DNI)
@@ -60,6 +62,23 @@ export class BomberoService {
         if (existenteLegajo) {
           throw new Error('Ya existe un bombero con ese legajo')
         }
+      }
+
+      // Validar asociación a usuario
+      if (!datosBombero.idUsuario) {
+        throw new Error('idUsuario es requerido para asociar el bombero a un usuario')
+      }
+
+      if (this.usuarioRepository) {
+        const usuario = await this.usuarioRepository.findById(datosBombero.idUsuario)
+        if (!usuario) {
+          throw new Error('El idUsuario proporcionado no corresponde a un usuario existente')
+        }
+      }
+
+      const existenteUsuario = await this.bomberoRepository.findByIdUsuario(datosBombero.idUsuario)
+      if (existenteUsuario) {
+        throw new Error('Ese usuario ya tiene un bombero asociado')
       }
 
       // Crear bombero - Los Value Objects se encargan de las validaciones
@@ -86,8 +105,8 @@ export class BomberoService {
         throw new Error('Bombero no encontrado')
       }
 
-      // Validar datos
-      this._validarDatosBombero(datosBombero)
+      // Validar datos (no es creación, por lo que idUsuario es opcional)
+      this._validarDatosBombero(datosBombero, false)
       
       // Verificar legajo duplicado (si se está cambiando)
       if (datosBombero.legajo && datosBombero.legajo !== bomberoExistente.legajo) {
@@ -100,7 +119,8 @@ export class BomberoService {
       // Crear bombero actualizado - Los Value Objects se encargan de las validaciones
       const bomberoActualizado = Bombero.create({
         ...datosBombero,
-        dni: id // Mantener el DNI original
+        dni: id, // Mantener el DNI original
+        idUsuario: datosBombero.idUsuario || bomberoExistente.idUsuario // Preservar idUsuario existente si no se proporciona
       })
 
       return await this.bomberoRepository.update(id, bomberoActualizado)
@@ -141,8 +161,48 @@ export class BomberoService {
     }
   }
 
+  async crearBomberoConUsuario(datosCombinados) {
+    const { usuario: usuarioData, bombero: bomberoData } = datosCombinados
+
+    if (!usuarioData || !bomberoData) {
+      throw new Error('Se requieren datos de usuario y de bombero')
+    }
+
+    // Si no se envía idRol, usar 2 (bombero) como valor por defecto
+    usuarioData.idRol = usuarioData.idRol ? parseInt(usuarioData.idRol, 10) : 2
+
+    // Paso 1: crear usuario
+    const nuevoUsuario = await this.usuarioRepository.create(
+      Usuario.create({
+        username: usuarioData.username,
+        password: usuarioData.password,
+        email: usuarioData.email,
+        idRol: usuarioData.idRol
+      })
+    )
+
+    try {
+      // Paso 2: crear bombero con el id del usuario recién creado
+      const bomberoPayload = {
+        ...bomberoData,
+        idUsuario: nuevoUsuario.id
+      }
+      const nuevoBombero = await this.crearBombero(bomberoPayload)
+
+      return { usuario: nuevoUsuario.toJSON(), bombero: nuevoBombero }
+    } catch (error) {
+      // Si falla bombero, eliminamos el usuario para no dejar huérfanos
+      try {
+        await this.usuarioRepository.delete(nuevoUsuario.id)
+      } catch (e) {
+        logger.error('Error rollback usuario tras fallo de bombero', { e: e.message })
+      }
+      throw error
+    }
+  }
+
   // Validación básica de datos - Solo campos requeridos
-  _validarDatosBombero(datos) {
+  _validarDatosBombero(datos, esCreacion = false) {
     if (!datos.dni && !datos.DNI) {
       throw new Error('DNI es requerido')
     }
@@ -151,6 +211,11 @@ export class BomberoService {
       throw new Error('Nombre completo es requerido')
     }
     
+    // idUsuario solo es requerido para creaciones, no para actualizaciones
+    if (esCreacion && !datos.idUsuario) {
+      throw new Error('idUsuario es requerido')
+    }
+
     // Los Value Objects se encargan del resto de validaciones
   }
 } 

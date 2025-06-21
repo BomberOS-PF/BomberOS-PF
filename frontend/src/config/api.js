@@ -7,6 +7,7 @@ export const API_URLS = {
     getAll: `${API_BASE_URL}/bomberos`,
     getById: (id) => `${API_BASE_URL}/bomberos/${id}`,
     create: `${API_BASE_URL}/bomberos`,
+    createFull: `${API_BASE_URL}/bomberos/full`,
     update: (id) => `${API_BASE_URL}/bomberos/${id}`,
     delete: (id) => `${API_BASE_URL}/bomberos/${id}`,
     getPlan: `${API_BASE_URL}/bomberos/plan`
@@ -20,7 +21,8 @@ export const API_URLS = {
     update: (id) => `${API_BASE_URL}/usuarios/${id}`,
     delete: (id) => `${API_BASE_URL}/usuarios/${id}`,
     getByRol: (rol) => `${API_BASE_URL}/usuarios/rol/${rol}`,
-    authenticate: `${API_BASE_URL}/usuarios/auth`
+    authenticate: `${API_BASE_URL}/usuarios/auth`,
+    libresBombero: `${API_BASE_URL}/usuarios/bomberos/libres`
   },
   
   // Health check

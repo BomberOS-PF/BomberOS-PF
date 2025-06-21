@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './CargarIncidente.css'
+import '../../DisenioFormulario/DisenioFormulario.css'
 
 const CargarIncidente = ({ onVolver, onNotificar}) => {
   const now = new Date()
@@ -9,20 +10,32 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
 
   const usuario = JSON.parse(localStorage.getItem('usuario'))
   console.log('🧾 Usuario cargado desde localStorage:', usuario)
-  const nombreCompleto = `${usuario?.nombre || ''} ${usuario?.apellido || ''}`.trim()
+  
+  // Construir nombre completo con fallbacks
+  const nombreCompleto = usuario ? 
+    `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim() || 
+    usuario.usuario || 
+    'Usuario no identificado' 
+    : 'Usuario no logueado'
 
   const [formData, setFormData] = useState({
     fechaHora: localDateTime
   })
+
+  const [incidenteCreado, setIncidenteCreado] = useState(null)
+  const [notificandoBomberos, setNotificandoBomberos] = useState(false)
 
   const handleChange = (e) => {
     const { id, value } = e.target
     setFormData(prev => ({ ...prev, [id]: value }))
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  // Función para verificar si los datos esenciales están completos
+  const datosEsencialesCompletos = () => {
+    return formData.tipoSiniestro && formData.localizacion && formData.lugar
+  }
 
+  const guardarIncidente = async () => {
     try {
       const tipoMap = {
         'Accidente': 1,
@@ -43,7 +56,7 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
       }
 
       const payload = {
-        idUsuario: usuario?.id,
+        DNI: usuario?.dni,
         idTipoIncidente: tipoMap[formData.tipoSiniestro],
         fecha: formData.fechaHora,
         idLocalizacion: localizacionMap[formData.localizacion] || 99,
@@ -70,25 +83,96 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
         throw new Error(data.error || 'Error al guardar el incidente')
       }
 
+      return data
+    } catch (error) {
+      console.error('❌ Error al guardar incidente:', error)
+      throw error
+    }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    try {
+      const incidenteGuardado = await guardarIncidente()
       alert('✅ Incidente guardado correctamente')
+      
+      // Guardar el incidente creado para referencia
+      setIncidenteCreado(incidenteGuardado)
 
       if (onNotificar) {
-        onNotificar(formData.tipoSiniestro, data)
-      }
-
-      if (onVolver) {
-        onVolver()
+        onNotificar(formData.tipoSiniestro, incidenteGuardado)
       }
 
     } catch (error) {
-      console.error('❌ Error al guardar incidente:', error)
       alert(`Error: ${error.message}`)
+    }
+  }
+
+  const notificarBomberos = async () => {
+    if (!datosEsencialesCompletos()) {
+      alert('❌ Debe completar al menos el tipo de siniestro, localización y lugar del incidente')
+      return
+    }
+
+    setNotificandoBomberos(true)
+
+    try {
+      // Primero guardar el incidente automáticamente
+      let incidente = incidenteCreado
+      if (!incidente) {
+        console.log('💾 Guardando incidente automáticamente antes de notificar...')
+        incidente = await guardarIncidente()
+        setIncidenteCreado(incidente)
+        console.log('✅ Incidente guardado:', incidente)
+      }
+
+      console.log('📱 Notificando bomberos para incidente:', incidente)
+      
+      const response = await fetch(`http://localhost:3000/api/incidentes/${incidente.idIncidente}/notificar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = data.data
+        
+        let mensaje = `🚨 ALERTA ENVIADA A BOMBEROS:\n\n`
+        mensaje += `📍 Tipo: ${formData.tipoSiniestro}\n`
+        mensaje += `📍 Ubicación: ${formData.localizacion} - ${formData.lugar}\n`
+        mensaje += `📍 Fecha/Hora: ${formData.fechaHora}\n\n`
+        mensaje += `📱 Total bomberos contactados: ${totalBomberos}\n`
+        mensaje += `✅ Notificaciones exitosas: ${notificacionesExitosas}\n`
+        
+        if (notificacionesFallidas > 0) {
+          mensaje += `❌ Notificaciones fallidas: ${notificacionesFallidas}\n`
+        }
+        
+        mensaje += `\n✅ Incidente registrado y bomberos notificados correctamente.`
+        
+        alert(mensaje)
+
+        // Callback para manejar el flujo posterior
+        if (onNotificar) {
+          onNotificar(formData.tipoSiniestro, incidente)
+        }
+      } else {
+        throw new Error(data.message || 'Error en la notificación')
+      }
+
+    } catch (error) {
+      console.error('❌ Error al notificar bomberos:', error)
+      alert(`❌ Error al notificar bomberos: ${error.message}`)
+    } finally {
+      setNotificandoBomberos(false)
     }
   }
 
   return (
     <div className="container d-flex justify-content-center align-items-center">
-      <div className="form-incidente p-4 shadow rounded">
+      <div className="formulario-consistente">
         <h2 className="text-white text-center mb-4">Cargar Incidente</h2>
         <form onSubmit={handleSubmit}>
           <div className="row mb-3">
@@ -99,6 +183,7 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
                 className="form-control"
                 value={nombreCompleto || 'Desconocido'}
                 disabled
+                readOnly
               />
             </div>
             <div className="col-md-6">
@@ -179,8 +264,52 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
             </div>
           </div>
 
-          <button type="submit" className="btn btn-danger w-100">Notificar</button>
-          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={onVolver}>Volver</button>
+          <div className="botones-accion">
+            {/* Botón de Notificar - Aparece cuando los datos esenciales están completos */}
+            {datosEsencialesCompletos() && (
+              <button 
+                type="button" 
+                className="btn btn-warning btn-lg" 
+                onClick={notificarBomberos}
+                disabled={notificandoBomberos}
+                style={{ 
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  marginBottom: '10px',
+                  width: '100%'
+                }}
+              >
+                {notificandoBomberos ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    🚨 Enviando alerta a bomberos...
+                  </>
+                ) : (
+                  <>
+                    🚨 NOTIFICAR EMERGENCIA A BOMBEROS
+                  </>
+                )}
+              </button>
+            )}
+            
+            {/* Botón de guardar incidente - Solo aparece si no se ha notificado */}
+            {!incidenteCreado && (
+              <button type="submit" className="btn btn-danger">
+                Guardar Incidente (Sin Notificar)
+              </button>
+            )}
+            
+            {/* Información del estado */}
+            {incidenteCreado && (
+              <div className="alert alert-success mt-2">
+                ✅ Incidente registrado y bomberos notificados
+              </div>
+            )}
+            
+            <button type="button" className="btn btn-secondary" onClick={onVolver}>
+              Volver
+            </button>
+          </div>
         </form>
       </div>
     </div>

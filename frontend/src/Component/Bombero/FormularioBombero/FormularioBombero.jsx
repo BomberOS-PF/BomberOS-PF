@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import './FormularioBombero.css'
+import '../../../Component/DisenioFormulario/DisenioFormulario.css'
 
-const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVolver, loading = false }) => {
+const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVolver, loading = false, ocultarTitulo = false }) => {
   const [formData, setFormData] = useState({
     DNI: '',
     nombreCompleto: '',
@@ -12,11 +13,12 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
     antiguedad: 0,
     idRango: 1,
     esDelPlan: false,
-    aptoPsicologico: false,
+    aptoPsicologico: true,
     grupoSanguineo: '',
     fichaMedica: null,
     fichaMedicaArchivo: null,
-    fechaFichaMedica: ''
+    fechaFichaMedica: new Date().toISOString().split('T')[0],
+    idUsuario: null
   })
 
   useEffect(() => {
@@ -42,11 +44,12 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
         idRango: datosIniciales.idRango || datosIniciales.id_rango || 1,
         rango: getRangoNombre(datosIniciales.idRango || datosIniciales.id_rango || 1),
         esDelPlan: datosIniciales.esDelPlan || datosIniciales.es_del_plan || false,
-        aptoPsicologico: datosIniciales.aptoPsicologico || datosIniciales.apto_psicologico || false,
+        aptoPsicologico: datosIniciales.aptoPsicologico !== undefined ? datosIniciales.aptoPsicologico : true,
         grupoSanguineo: datosIniciales.grupoSanguineo || datosIniciales.grupo_sanguineo || '',
         fichaMedica: datosIniciales.fichaMedicaArchivo || datosIniciales.ficha_medica_archivo || null,
         fichaMedicaArchivo: datosIniciales.fichaMedicaArchivo || datosIniciales.ficha_medica_archivo || null,
-        fechaFichaMedica: datosIniciales.fechaFichaMedica || datosIniciales.fecha_ficha_medica || ''
+        fechaFichaMedica: datosIniciales.fechaFichaMedica || datosIniciales.fecha_ficha_medica || new Date().toISOString().split('T')[0],
+        idUsuario: datosIniciales.idUsuario || datosIniciales.id_usuario || null
       }
       
       console.log('✅ Datos formateados para el formulario:', datosFormateados)
@@ -101,7 +104,8 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
       grupoSanguineo: formData.grupoSanguineo,
       fichaMedica: formData.fichaMedica ? 1 : null, // Campo booleano/entero
       fichaMedicaArchivo: formData.fichaMedica ? (typeof formData.fichaMedica === 'string' ? formData.fichaMedica : formData.fichaMedica.name) : null, // Nombre del archivo
-      fechaFichaMedica: formData.fechaFichaMedica || null
+      fechaFichaMedica: formData.fechaFichaMedica || null,
+      idUsuario: formData.idUsuario || null // Incluir idUsuario para ediciones
     }
     
     console.log('🚀 Datos preparados para enviar:', dataToSend)
@@ -154,12 +158,24 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
 
   return (
     <div className="container d-flex justify-content-center align-items-center">
-      <div className={`formulario-bombero ${soloLectura ? 'modo-consulta' : ''}`}>
-        <h2>
-          {modo === 'alta' ? 'Alta de Bombero' : modo === 'edicion' ? 'Editar Bombero' : 'Consulta de Bombero'}
-        </h2>
+      <div className={`formulario-consistente ${soloLectura ? 'modo-consulta' : ''}`}>
+        {!ocultarTitulo && (
+          <h2>
+            {modo === 'alta' ? 'Alta de Bombero' : modo === 'edicion' ? 'Editar Bombero' : 'Consulta de Bombero'}
+          </h2>
+        )}
 
         <form onSubmit={handleSubmit}>
+          {/* Campo oculto para idUsuario - necesario para ediciones */}
+          {modo === 'edicion' && formData.idUsuario && (
+            <input 
+              type="hidden" 
+              id="idUsuario" 
+              value={formData.idUsuario} 
+              onChange={handleChange}
+            />
+          )}
+          
           {/* DNI - Nombre Completo */}
           <div className="row mb-3">
             <div className="col-md-4">
@@ -384,25 +400,23 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           </div>
 
           {/* Botones */}
-          <div className="row">
-            <div className="col-12">
-              {!soloLectura && (
-                <button type="submit" className="btn btn-danger w-100 mb-2" disabled={loading}>
-                  {loading ? 'Procesando...' : modo === 'alta' ? 'Registrar Bombero' : 'Guardar Cambios'}
-                </button>
-              )}
+          <div className="botones-accion">
+            {!soloLectura && (
+              <button type="submit" className="btn btn-danger" disabled={loading}>
+                {loading ? 'Procesando...' : modo === 'alta' ? 'Registrar Bombero' : 'Guardar Cambios'}
+              </button>
+            )}
 
-              {onVolver && (
-                <button 
-                  type="button" 
-                  className="btn btn-secondary w-100" 
-                  onClick={onVolver}
-                  disabled={loading}
-                >
-                  Volver
-                </button>
-              )}
-            </div>
+            {onVolver && (
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={onVolver}
+                disabled={loading}
+              >
+                Volver
+              </button>
+            )}
           </div>
         </form>
       </div>

@@ -84,6 +84,15 @@ export function setupRoutes(app, container) {
     }
   })
 
+  app.post('/api/bomberos/full', async (req, res) => {
+    try {
+      await bomberoHandler.createBomberoConUsuario(req, res)
+    } catch (error) {
+      logger.error('Error en ruta createBomberoConUsuario:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
   // USUARIOS
   app.get('/api/usuarios/rol/:rol', async (req, res) => {
     try {
@@ -148,6 +157,15 @@ export function setupRoutes(app, container) {
     }
   })
 
+  app.get('/api/usuarios/bomberos/libres', async (req, res) => {
+    try {
+      await usuarioHandler.getUsuariosBomberoLibres(req, res)
+    } catch (error) {
+      logger.error('Error en ruta getUsuariosBomberoLibres:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
   // INCIDENTES
   app.get('/api/incidentes', async (req, res) => {
     try {
@@ -194,6 +212,18 @@ export function setupRoutes(app, container) {
     }
   })
 
+  // Notificar bomberos sobre un incidente
+  app.post('/api/incidentes/:id/notificar', async (req, res) => {
+    try {
+      await incidenteHandler.notificarBomberos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta notificar bomberos:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+
+
   // 404 handler
   app.use((req, res) => {
     logger.warn('Ruta no encontrada', { 
@@ -225,7 +255,8 @@ export function setupRoutes(app, container) {
         'POST /api/incidentes',
         'GET /api/incidentes/:id',
         'PUT /api/incidentes/:id',
-        'DELETE /api/incidentes/:id'
+        'DELETE /api/incidentes/:id',
+        'POST /api/incidentes/:id/notificar'
       ]
     })
   })

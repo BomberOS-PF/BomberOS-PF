@@ -147,14 +147,18 @@ export class Bombero {
   // Serialización para API (usando getters públicos)
   toJSON() {
     return {
+      DNI: this.dni,
       dni: this.dni,
       nombreCompleto: this.nombreCompleto?.toString(),
       legajo: this.legajo,
       antiguedad: this.antiguedad,
       rango: this.rango?.toString(),
+      idRango: this._rango?.id,
       email: this.email?.toString(),
+      correo: this.email?.toString(),
       telefono: this.telefono?.toString(),
       esPlan: this.esPlan,
+      esDelPlan: this.esPlan,
       fichaMedica: this.fichaMedica,
       fichaMedicaArchivo: this.fichaMedicaArchivo,
       fechaFichaMedica: this.fechaFichaMedica,

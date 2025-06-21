@@ -3,8 +3,9 @@ import { Usuario } from '../../domain/models/usuario.js'
 import { PasswordUtils } from '../utils/password.utils.js'
 
 export class UsuarioService {
-  constructor(usuarioRepository) {
+  constructor(usuarioRepository, bomberoRepository = null) {
     this.usuarioRepository = usuarioRepository
+    this.bomberoRepository = bomberoRepository
   }
 
   async listarUsuarios() {
@@ -148,11 +149,36 @@ export class UsuarioService {
       if (!usuarioExistente) {
         throw new Error(`Usuario con ID ${id} no encontrado`)
       }
+
+      // Verificar si el usuario tiene un bombero asociado
+      const bomberoAsociado = await this.usuarioRepository.findBomberoByIdUsuario(id)
+      
+      if (bomberoAsociado) {
+        logger.debug('Usuario tiene bombero asociado, eliminando bombero primero', {
+          userId: id,
+          bomberoDNI: bomberoAsociado.DNI
+        })
+        
+        // Eliminar el bombero primero para evitar violación de clave foránea
+        const eliminacionBombero = await this.bomberoRepository.delete(bomberoAsociado.DNI)
+        if (!eliminacionBombero) {
+          throw new Error(`No se pudo eliminar el bombero asociado con DNI ${bomberoAsociado.DNI}`)
+        }
+        
+        logger.info('Bombero asociado eliminado exitosamente', {
+          userId: id,
+          bomberoDNI: bomberoAsociado.DNI
+        })
+      }
+
+      // Ahora eliminar el usuario
       const eliminado = await this.usuarioRepository.delete(id)
       if (!eliminado) throw new Error(`No se pudo eliminar el usuario con ID ${id}`)
+      
       logger.info('Usuario eliminado exitosamente', {
         id,
-        username: usuarioExistente.username
+        username: usuarioExistente.username,
+        teniaBombero: !!bomberoAsociado
       })
       return true
     } catch (error) {
@@ -161,13 +187,24 @@ export class UsuarioService {
     }
   }
 
-  async listarUsuariosPorRol(rol) {
+  async listarUsuariosPorRol(rolParam) {
     try {
-      logger.debug('Servicio: Listar usuarios por rol', { rol })
-      if (!rol) throw new Error('Rol es requerido')
-      return await this.usuarioRepository.findByRol(rol)
+      logger.debug('Servicio: Listar usuarios por rol', { rol: rolParam })
+
+      if (!rolParam) throw new Error('Rol es requerido')
+
+      // Permitir que se pase id numérico o nombre del rol
+      let idRol = rolParam
+      if (isNaN(Number(rolParam))) {
+        idRol = this._mapRolToId(rolParam.toLowerCase())
+        if (!idRol) {
+          throw new Error(`Rol "${rolParam}" desconocido`)
+        }
+      }
+
+      return await this.usuarioRepository.findByRol(idRol)
     } catch (error) {
-      logger.error('Error al obtener usuarios por rol', { rol, error: error.message })
+      logger.error('Error al obtener usuarios por rol', { rol: rolParam, error: error.message })
       throw new Error(`Error al obtener usuarios por rol: ${error.message}`)
     }
   }
@@ -184,15 +221,27 @@ export class UsuarioService {
       const bombero = await this.usuarioRepository.findBomberoByIdUsuario(usuario.id)
       logger.debug('🧪 Bombero encontrado:', bombero)
 
+      // Si el rol es bombero (idRol === 2) y no está vinculado lanzar error
+      const rol = usuario.rol || this._mapIdToRol(usuario.idRol)
+      if (rol === 'bombero' && !bombero) {
+        throw new Error('El usuario no está vinculado a un bombero asignado')
+      }
+
       let nombre = 'Desconocido'
       let apellido = ''
-      if (bombero?.nombreCompleto) {
-        const partes = bombero.nombreCompleto.trim().split(' ')
-        if (partes.length === 1) {
-          nombre = partes[0]
-        } else {
-          apellido = partes.pop()
-          nombre = partes.join(' ')
+      let dni = null
+
+      if (bombero) {
+        dni = bombero.DNI || bombero.dni || null
+
+        if (bombero.nombreCompleto) {
+          const partes = bombero.nombreCompleto.trim().split(' ')
+          if (partes.length === 1) {
+            nombre = partes[0]
+          } else {
+            apellido = partes.pop()
+            nombre = partes.join(' ')
+          }
         }
       }
 
@@ -200,9 +249,10 @@ export class UsuarioService {
         id: usuario.id,
         usuario: usuario.username || usuario.usuario,
         email: usuario.email,
-        rol: usuario.rol || usuario.idRol,
+        rol,
         nombre,
-        apellido
+        apellido,
+        dni
       }
 
       logger.info('🎯 Datos enviados al frontend:', datosSesion)
@@ -219,5 +269,23 @@ export class UsuarioService {
       2: 'bombero'
     }
     return roles[idRol] || 'desconocido'
+  }
+
+  _mapRolToId(rol) {
+    const roles = {
+      'administrador': 1,
+      'bombero': 2
+    }
+    return roles[rol] || null
+  }
+
+  async listarUsuariosBomberoLibres() {
+    try {
+      logger.debug('Servicio: Listar usuarios bombero sin bombero asociado')
+      return await this.usuarioRepository.findUsuariosSinBombero()
+    } catch (error) {
+      logger.error('Error al obtener usuarios bombero libres', { error: error.message })
+      throw new Error(`Error al obtener usuarios disponibles: ${error.message}`)
+    }
   }
 }

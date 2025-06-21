@@ -13,6 +13,8 @@ import { construirIncidenteHandler } from '../incidentes/handler.js'
 
 import { MySQLDenuncianteRepository } from '../internal/repositories/mysql/denunciante.repository.js'
 
+import { WhatsAppService } from '../internal/services/whatsapp.service.js'
+
 import { createConnection } from '../internal/platform/database/connection.js'
 import { logger } from '../internal/platform/logger/logger.js'
 
@@ -28,9 +30,11 @@ export async function createServer(config) {
     const incidenteRepository = new MySQLIncidenteRepository()
     const denuncianteRepository = new MySQLDenuncianteRepository()
 
-    const bomberoService = new BomberoService(bomberoRepository)
-    const usuarioService = new UsuarioService(usuarioRepository)
-    const incidenteService = new IncidenteService(incidenteRepository, denuncianteRepository)
+    const whatsappService = new WhatsAppService(config)
+
+    const bomberoService = new BomberoService(bomberoRepository, usuarioRepository)
+    const usuarioService = new UsuarioService(usuarioRepository, bomberoRepository)
+    const incidenteService = new IncidenteService(incidenteRepository, denuncianteRepository, bomberoService, whatsappService)
 
     const bomberoHandler = new BomberoHandler(bomberoService)
     const usuarioHandler = new UsuarioHandler(usuarioService)
@@ -50,6 +54,7 @@ export async function createServer(config) {
       incidenteRepository,
       incidenteHandler,
       denuncianteRepository,
+      whatsappService,
       dbConnection,
       config
     }
@@ -57,7 +62,7 @@ export async function createServer(config) {
     await validateDependencies(container)
 
     logger.info('✅ Assembler completado exitosamente', {
-      services: ['bomberoService', 'usuarioService', 'incidenteService'],
+      services: ['bomberoService', 'usuarioService', 'incidenteService', 'whatsappService'],
       repositories: ['bomberoRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository'],
       handlers: ['bomberoHandler', 'usuarioHandler', 'incidenteHandler'],
       infrastructure: ['dbConnection']
@@ -92,6 +97,8 @@ async function validateDependencies(container) {
     if (!container.incidenteHandler) throw new Error('IncidenteHandler no inicializado')
 
     if (!container.denuncianteRepository) throw new Error('DenuncianteRepository no inicializado')
+
+    if (!container.whatsappService) throw new Error('WhatsAppService no inicializado')
 
     if (!container.dbConnection) throw new Error('Database connection no inicializada')
 

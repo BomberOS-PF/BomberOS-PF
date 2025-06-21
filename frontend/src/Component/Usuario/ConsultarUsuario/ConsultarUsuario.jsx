@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
 import './ConsultarUsuario.css'
+import '../../DisenioFormulario/DisenioFormulario.css'
 import RegistrarUsuario from '../RegistrarUsuario/RegistrarUsuario'
 
 const ConsultarUsuario = ({ onVolver }) => {
@@ -104,7 +105,7 @@ const ConsultarUsuario = ({ onVolver }) => {
   }
 
   return (
-    <div className="container mt-4">
+    <div className="container mt-4 formulario-consistente">
       <h2 className="text-white mb-3">Consultar Usuarios</h2>
 
       {mensaje && (
@@ -182,48 +183,60 @@ const ConsultarUsuario = ({ onVolver }) => {
       )}
 
       {usuarioSeleccionado && (
-        <div className="card bg-dark text-white">
-          <div className="card-header d-flex justify-content-between align-items-center">
-            <h5>Detalles del Usuario</h5>
-            <div>
+        <div className="formulario-consistente detalle-usuario">
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h3 className="text-white mb-0">
+              {modoEdicion ? (
+                <>✏️ Editando: {usuarioSeleccionado.username}</>
+              ) : (
+                <>👤 Detalles: {usuarioSeleccionado.username}</>
+              )}
+            </h3>
+            <div className="d-flex gap-2">
               {!modoEdicion && (
-                <button className="btn btn-warning btn-sm me-2" onClick={activarEdicion}>
-                  Editar
+                <button 
+                  className="btn btn-warning btn-sm" 
+                  onClick={activarEdicion}
+                >
+                  ✏️ Editar
                 </button>
               )}
-              <button className="btn btn-secondary btn-sm" onClick={volverListado}>
-                Volver
+              <button 
+                className="btn btn-secondary btn-sm" 
+                onClick={volverListado}
+              >
+                ← Volver al listado
               </button>
             </div>
           </div>
-          <div className="card-body">
-            {modoEdicion ? (
-              <RegistrarUsuario 
-                usuario={usuarioSeleccionado} 
-                onVolver={volverListado}
-              />
-            ) : (
-              <div className="row">
-                <div className="col-md-6">
-                  <p><strong>Usuario:</strong> {usuarioSeleccionado.username}</p>
-                  <p><strong>Email:</strong> {usuarioSeleccionado.email}</p>
-                  <p><strong>Rol:</strong> 
-                    <span className={`badge ms-2 ${
-                      usuarioSeleccionado.rol === 'administrador' ? 'bg-danger' :
-                      usuarioSeleccionado.rol === 'jefe_cuartel' ? 'bg-warning' : 'bg-info'
-                    }`}>
-                      {usuarioSeleccionado.rol}
-                    </span>
-                  </p>
-                </div>
-                <div className="col-md-6">
-                  <p><strong>Creado:</strong> {formatearFecha(usuarioSeleccionado.createdAt)}</p>
-                  <p><strong>Última actualización:</strong> {formatearFecha(usuarioSeleccionado.updatedAt)}</p>
-                  <p><strong>ID:</strong> {usuarioSeleccionado.id}</p>
-                </div>
+
+          {modoEdicion ? (
+            <RegistrarUsuario 
+              usuario={usuarioSeleccionado} 
+              onVolver={volverListado}
+              ocultarTitulo={true}
+            />
+          ) : (
+            <div className="row">
+              <div className="col-md-6">
+                <p className="text-white"><strong>Usuario:</strong> {usuarioSeleccionado.username}</p>
+                <p className="text-white"><strong>Email:</strong> {usuarioSeleccionado.email}</p>
+                <p className="text-white"><strong>Rol:</strong> 
+                  <span className={`badge ms-2 ${
+                    usuarioSeleccionado.rol === 'administrador' ? 'bg-danger' :
+                    usuarioSeleccionado.rol === 'jefe_cuartel' ? 'bg-warning' : 'bg-info'
+                  }`}>
+                    {usuarioSeleccionado.rol}
+                  </span>
+                </p>
               </div>
-            )}
-          </div>
+              <div className="col-md-6">
+                <p className="text-white"><strong>Creado:</strong> {formatearFecha(usuarioSeleccionado.createdAt)}</p>
+                <p className="text-white"><strong>Última actualización:</strong> {formatearFecha(usuarioSeleccionado.updatedAt)}</p>
+                <p className="text-white"><strong>ID:</strong> {usuarioSeleccionado.id}</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

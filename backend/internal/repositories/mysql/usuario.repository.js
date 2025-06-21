@@ -59,7 +59,7 @@ export class MySQLUsuarioRepository {
   async findBomberoByIdUsuario(idUsuario) {
     const connection = getConnection()
     const [rows] = await connection.execute(
-      'SELECT nombreCompleto FROM bombero WHERE idUsuario = ?',
+      'SELECT DNI, nombreCompleto FROM bombero WHERE idUsuario = ?',
       [idUsuario]
     )
     return rows[0] || null
@@ -241,6 +241,30 @@ export class MySQLUsuarioRepository {
         code: error.code
       })
       throw new Error(`Error en autenticación: ${error.message}`)
+    }
+  }
+
+  async findUsuariosSinBombero(rolId = null) {
+    const connection = getConnection()
+    const baseQuery = `
+      SELECT u.idUsuario, u.usuario, u.email, u.idRol
+      FROM usuario u
+      LEFT JOIN bombero b ON b.idUsuario = u.idUsuario
+      WHERE b.idUsuario IS NULL` // solo los que no tengan bombero
+
+    const query = rolId ? `${baseQuery} AND u.idRol = ? ORDER BY u.usuario ASC` : `${baseQuery} ORDER BY u.usuario ASC`
+
+    try {
+      const [rows] = rolId ? await connection.execute(query, [rolId]) : await connection.execute(query)
+      logger.debug('Usuarios sin bombero obtenidos', { rolId, count: rows.length })
+      return rows.map(row => Usuario.create(row))
+    } catch (error) {
+      logger.error('Error al obtener usuarios sin bombero', {
+        rolId,
+        error: error.message,
+        code: error.code
+      })
+      throw new Error(`Error al obtener usuarios sin bombero: ${error.message}`)
     }
   }
 } 

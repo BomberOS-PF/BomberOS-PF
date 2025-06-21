@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import RecuperarClave from '../RecuperarClave/RecuperarClave'
 import './Login.css'
+import '../DisenioFormulario/DisenioFormulario.css'
 
 const Login = ({ setUser, user }) => {
   const [usuario, setUsuario] = useState('')
@@ -46,6 +47,7 @@ const Login = ({ setUser, user }) => {
           rol: data.user.rol,
           nombre: data.user.nombre,
           apellido: data.user.apellido,
+          dni: data.user.dni,
           email: data.user.email,
           timestamp: new Date().toISOString()
         }
