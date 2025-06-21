@@ -79,13 +79,7 @@ export class MySQLIncidenteRepository {
 
   }
 
-  async obtenerPorId(id) {
-    return this.findById(id)
-  }
 
-  async obtenerTodos() {
-    return this.findAll()
-  }
 
   async create(incidente) {
     const query = `

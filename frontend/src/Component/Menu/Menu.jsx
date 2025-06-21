@@ -104,7 +104,8 @@ const Menu = ({ user, setUser }) => {
 
   const items = [
     { key: 'cargar-incidente', label: 'Cargar Incidente' },
-    { key: 'registrar-bombero', label: 'Nuevo Bombero' },
+    { key: 'consultar-incidente', label: 'Consultar Incidente' },
+    { key: 'registrar-bombero', label: 'Registrar Bombero' },
     { key: 'consultar-bombero', label: 'Consultar Bombero' },
     { key: 'registrar-usuario', label: 'Nuevo Administrador' },
     { key: 'consultar-usuario', label: 'Consultar Usuarios' },
