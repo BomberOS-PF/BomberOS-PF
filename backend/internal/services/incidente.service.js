@@ -14,22 +14,18 @@ export class IncidenteService extends IncidenteServiceInterface {
   async crearIncidente(data) {
     let idDenunciante = null
 
-    // Si se proporciona el objeto 'denunciante' en el payload
-    if (data.denunciante) {
-      const { nombre, apellido, telefono, dni } = data.denunciante
+    const hayDatosDenunciante =
+      data.nombreDenunciante || data.apellidoDenunciante || data.telefonoDenunciante || data.dniDenunciante
 
-      const hayDatosDenunciante = nombre || apellido || telefono || dni
-
-      if (hayDatosDenunciante) {
-        const denunciante = {
-          nombre: nombre || null,
-          apellido: apellido || null,
-          telefono: telefono || null,
-          dni: dni || null
-        }
-
-        idDenunciante = await this.denuncianteRepository.crear(denunciante)
+    if (hayDatosDenunciante) {
+      const denunciante = {
+        nombre: data.nombreDenunciante || null,
+        apellido: data.apellidoDenunciante || null,
+        telefono: data.telefonoDenunciante || null,
+        dni: data.dniDenunciante || null
       }
+
+      idDenunciante = await this.denuncianteRepository.crear(denunciante)
     }
 
     const nuevoIncidente = new Incidente({
@@ -38,7 +34,7 @@ export class IncidenteService extends IncidenteServiceInterface {
       fecha: data.fecha,
       idLocalizacion: data.idLocalizacion,
       descripcion: data.descripcion,
-      idDenunciante // puede ser null si no se cargó denunciante
+      idDenunciante // puede ser null
     })
 
     const incidenteCreado = await this.incidenteRepository.create(nuevoIncidente)
@@ -161,16 +157,11 @@ export class IncidenteService extends IncidenteServiceInterface {
   }
 
   async listarIncidentes() {
-    try {
-      const incidentes = await this.incidenteRepository.findAll()
-      return incidentes
-    } catch (error) {
-      throw new Error(`Error al listar incidentes: ${error.message}`)
-    }
+    return await this.incidenteRepository.obtenerTodos()
   }
 
   async obtenerIncidentePorId(id) {
-    return await this.incidenteRepository.findById(id)
+    return await this.incidenteRepository.obtenerPorId(id)
   }
 
   async actualizarIncidente(id, data) {
