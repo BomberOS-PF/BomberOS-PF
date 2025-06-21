@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import { createServer } from '../../application/assembler.js'
 import { setupRoutes } from '../../application/routes.js'
-import { errorHandler } from '../../application/middleware/error.js'
+import { errorHandler } from '../../internal/middleware/error.js'
 import { logger } from '../../internal/platform/logger/logger.js'
 import { loadConfig } from '../../config/environment.js'
 

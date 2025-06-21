@@ -85,6 +85,55 @@ export const construirIncidenteHandler = (incidenteService) => {
         logger.error('❌ Error al eliminar incidente', { error: error.message })
         next(error)
       }
+    },
+
+    notificarBomberos: async (req, res, next) => {
+      try {
+        const { id } = req.params
+        logger.info('📱 Notificación de bomberos solicitada', { incidenteId: id })
+
+        const resultado = await incidenteService.notificarBomberosIncidente(id)
+
+        if (resultado.success) {
+          logger.info('✅ Notificación de bomberos completada', { 
+            incidenteId: id,
+            exitosos: resultado.exitosos,
+            total: resultado.total
+          })
+          res.status(200).json({
+            success: true,
+            message: resultado.message,
+            data: {
+              incidenteId: id,
+              totalBomberos: resultado.total,
+              notificacionesExitosas: resultado.exitosos,
+              notificacionesFallidas: resultado.fallidos,
+              detalles: resultado.resultados
+            }
+          })
+        } else {
+          logger.warn('⚠️ Notificación de bomberos falló', { 
+            incidenteId: id,
+            message: resultado.message
+          })
+          res.status(400).json({
+            success: false,
+            message: resultado.message,
+            data: {
+              incidenteId: id,
+              totalBomberos: resultado.total,
+              notificacionesExitosas: resultado.exitosos,
+              notificacionesFallidas: resultado.fallidos
+            }
+          })
+        }
+      } catch (error) {
+        logger.error('❌ Error al notificar bomberos', { 
+          incidenteId: req.params.id,
+          error: error.message 
+        })
+        next(error)
+      }
     }
   }
 }

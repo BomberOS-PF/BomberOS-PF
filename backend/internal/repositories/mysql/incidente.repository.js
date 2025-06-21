@@ -34,6 +34,14 @@ export class MySQLIncidenteRepository {
     }
   }
 
+  async obtenerPorId(id) {
+    return this.findById(id)
+  }
+
+  async obtenerTodos() {
+    return this.findAll()
+  }
+
   async create(incidente) {
     const query = `
       INSERT INTO ${this.tableName} 
@@ -94,6 +102,10 @@ export class MySQLIncidenteRepository {
     }
   }
 
+  async actualizar(id, data) {
+    return this.update(id, data)
+  }
+
   async delete(id) {
     const query = `DELETE FROM ${this.tableName} WHERE idIncidente = ?`
     const connection = getConnection()
@@ -106,5 +118,9 @@ export class MySQLIncidenteRepository {
       logger.error('Error al eliminar incidente', { id, error: error.message })
       throw new Error(`Error al eliminar incidente: ${error.message}`)
     }
+  }
+
+  async eliminar(id) {
+    return this.delete(id)
   }
 }

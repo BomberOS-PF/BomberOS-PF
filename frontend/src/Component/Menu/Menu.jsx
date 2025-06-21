@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Menu.css'
+import logoBomberos from '/img/logo-bomberos.png'
 import CargarIncidente from '../Incidente/CargarIncidente/CargarIncidente'
 import RegistrarBombero from '../Bombero/RegistrarBombero/RegistrarBombero'
 import RegistrarUsuario from '../Usuario/RegistrarUsuario/RegistrarUsuario'
@@ -101,10 +102,10 @@ const Menu = ({ user, setUser }) => {
 
   const items = [
     { key: 'cargar-incidente', label: 'Cargar Incidente' },
-    { key: 'registrar-bombero', label: 'Registrar Bombero' },
+    { key: 'registrar-bombero', label: 'Nuevo Bombero' },
     { key: 'consultar-bombero', label: 'Consultar Bombero' },
-    { key: 'registrar-usuario', label: 'Registrar Usuario' },
-    { key: 'consultar-usuario', label: 'Consultar Usuario' },
+    { key: 'registrar-usuario', label: 'Nuevo Administrador' },
+    { key: 'consultar-usuario', label: 'Consultar Usuarios' },
     { key: 'registrar-rol', label: 'Registrar Rol' },
     { key: 'participacion-incidente', label: 'Participación del Incidente' },
     { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' }
@@ -118,7 +119,7 @@ const Menu = ({ user, setUser }) => {
 
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header d-flex justify-content-between align-items-center">
-          <span>Menú</span>
+          <img src={logoBomberos} alt="Logo Bomberos" style={{ height: '40px' }} />
           <button className="close-btn d-lg-none" onClick={closeSidebar}>×</button>
         </div>
 

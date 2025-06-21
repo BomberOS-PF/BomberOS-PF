@@ -193,4 +193,26 @@ export class MySQLBomberoRepository {
       throw new Error(`Error al obtener bomberos del plan: ${error.message}`)
     }
   }
+
+  async findByIdUsuario(idUsuario) {
+    const query = `
+      SELECT DNI, nombreCompleto, legajo, antiguedad, idRango, correo, telefono,
+             esDelPlan, fichaMedica, fichaMedicaArchivo, fechaFichaMedica,
+             aptoPsicologico, domicilio, grupoSanguineo, idUsuario
+      FROM ${this.tableName}
+      WHERE idUsuario = ?
+    `
+    const connection = getConnection()
+    try {
+      const [rows] = await connection.execute(query, [idUsuario])
+      return rows.length > 0 ? Bombero.create(rows[0]) : null
+    } catch (error) {
+      logger.error('Error al buscar bombero por idUsuario', {
+        idUsuario,
+        error: error.message,
+        code: error.code
+      })
+      throw new Error(`Error al buscar bombero por idUsuario: ${error.message}`)
+    }
+  }
 } 

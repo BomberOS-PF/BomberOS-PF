@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { API_URLS } from '../../../config/api'
 import FormularioBombero from '../FormularioBombero/FormularioBombero'
 import '../ConsultarBombero/ConsultarBombero.css'
+import '../../DisenioFormulario/DisenioFormulario.css'
 
 const ConsultarBombero = ({ onVolver }) => {
   const [bomberos, setBomberos] = useState([])
@@ -195,7 +196,7 @@ const ConsultarBombero = ({ onVolver }) => {
 
   return (
     <>
-      <div className="container mt-4">
+      <div className="container mt-4 formulario-consistente">
         <h2 className="text-white mb-3">Consultar Bomberos</h2>
 
         {mensaje && (
@@ -307,26 +308,44 @@ const ConsultarBombero = ({ onVolver }) => {
         )}
 
         {bomberoSeleccionado && (
-          <>
+          <div className="detalle-bombero">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h3 className="text-white mb-0">
+                {modoEdicion ? (
+                  <>✏️ Editando: {bomberoSeleccionado.nombreCompleto || `${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}`}</>
+                ) : (
+                  <>👤 Detalles: {bomberoSeleccionado.nombreCompleto || `${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}`}</>
+                )}
+              </h3>
+              <div className="d-flex gap-2">
+                {!modoEdicion && (
+                  <button 
+                    className="btn btn-warning btn-sm" 
+                    onClick={activarEdicion}
+                    disabled={loading}
+                  >
+                    ✏️ Editar
+                  </button>
+                )}
+                <button 
+                  className="btn btn-secondary btn-sm" 
+                  onClick={volverListado}
+                  disabled={loading}
+                >
+                  ← Volver al listado
+                </button>
+              </div>
+            </div>
+            
             <FormularioBombero
               modo={modoEdicion ? 'edicion' : 'consulta'}
               datosIniciales={bomberoSeleccionado}
               onSubmit={guardarCambios}
               onVolver={volverListado}
               loading={loading}
+              ocultarTitulo={true}
             />
-            {!modoEdicion && (
-              <div className="text-center mt-2">
-                <button 
-                  className="btn btn-warning" 
-                  onClick={activarEdicion}
-                  disabled={loading}
-                >
-                  Editar datos
-                </button>
-              </div>
-            )}
-          </>
+          </div>
         )}
       </div>
 

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
 import './RegistrarUsuario.css'
+import '../../DisenioFormulario/DisenioFormulario.css'
 
-const RegistrarUsuario = ({ onVolver, usuario }) => {
+const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -176,10 +177,12 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
 
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="form-incidente p-4 shadow rounded">
-        <h2 className="text-white text-center mb-4">
-          {usuario ? 'Editar Usuario' : 'Registrar Usuario'}
-        </h2>
+      <div className="formulario-consistente">
+        {!ocultarTitulo && (
+          <h2 className="text-white text-center mb-4">
+            {usuario ? 'Editar Usuario' : 'Registrar Usuario'}
+          </h2>
+        )}
 
         {message && (
           <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'} mt-3`}>
@@ -283,17 +286,19 @@ const RegistrarUsuario = ({ onVolver, usuario }) => {
             </select>
           </div>
 
-          <button type="submit" className="btn btn-danger w-100" disabled={loading}>
-            {loading
-              ? usuario ? 'Actualizando...' : 'Registrando...'
-              : usuario ? 'Actualizar Usuario' : 'Registrar Usuario'}
-          </button>
-
-          {onVolver && (
-            <button type="button" className="btn btn-secondary w-100 mt-2" onClick={onVolver} disabled={loading}>
-              Volver
+          <div className="botones-accion">
+            <button type="submit" className="btn btn-danger" disabled={loading}>
+              {loading
+                ? usuario ? 'Actualizando...' : 'Registrando...'
+                : usuario ? 'Actualizar Usuario' : 'Registrar Usuario'}
             </button>
-          )}
+
+            {onVolver && (
+              <button type="button" className="btn btn-secondary" onClick={onVolver} disabled={loading}>
+                Volver
+              </button>
+            )}
+          </div>
         </form>
 
         <div className="mt-3 text-muted">
