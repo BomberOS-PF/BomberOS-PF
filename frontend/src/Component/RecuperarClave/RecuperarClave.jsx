@@ -1,24 +1,24 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import './RecuperarClave.css'
+import '../Login/Login.css'
+import '../DisenioFormulario/DisenioFormulario.css'
 
-const RecuperarClave = () => {
+const RecuperarClave = ({ onVolver }) => {
   const [email, setEmail] = useState('')
-  const navigate = useNavigate()
 
   const handleSubmit = (e) => {
     e.preventDefault()
     alert(`Se envió un correo a: ${email}`)
   }
 
+  const handleVolver = () => {
+    setEmail('')
+    onVolver()
+  }
+
   return (
-    <div className="recuperar-container">
-      <div className="recuperar-form text-center">
-        <img
-          src="/img/logo-bomberos.png"
-          alt="Logo BomberOS"
-          className="logo-bomberos mb-3"
-        />
+    <div className="container-fluid d-flex justify-content-center align-items-center min-vh-100 login-bg">
+      <div className="formulario-consistente text-center">
+        <img src="/img/logo-bomberos.png" alt="Logo BomberOS" className="logo-bomberos mb-3" />
         <h2 className="text-black mb-4">Recuperar Contraseña</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3 text-start">
@@ -37,8 +37,9 @@ const RecuperarClave = () => {
           <div className="mt-3 text-center">
             <button
               type="button"
-              onClick={() => navigate('/login')}
-              className="recuperar-link btn btn-link">
+              className="btn btn-secondary"
+              onClick={handleVolver}
+            >
               Volver
             </button>
           </div>
