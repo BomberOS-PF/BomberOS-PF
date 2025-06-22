@@ -76,10 +76,12 @@ const Login = ({ setUser, user }) => {
 
   if (mostrarRecuperar) {
     return (
-      <RecuperarClave volver={() => {
-        resetForm()
-        setMostrarRecuperar(false)
-      }} />
+      <RecuperarClave
+        onVolver={() => {
+          resetForm()
+          setMostrarRecuperar(false)
+        }}
+      />
     )
   }
 
