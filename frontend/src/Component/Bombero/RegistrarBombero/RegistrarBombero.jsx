@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { API_URLS } from '../../../config/api'
-import './RegistrarBombero.css'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarBombero = ({ onVolver }) => {

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
-import './RegistrarUsuario.css'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
@@ -176,7 +175,7 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center min-vh-100">
+    <div className="container d-flex justify-content-center align-items-center">
       <div className="formulario-consistente">
         {!ocultarTitulo && (
           <h2 className="text-black text-center mb-4">

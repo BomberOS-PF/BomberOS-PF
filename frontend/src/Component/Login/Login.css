@@ -1,5 +1,6 @@
 .form-login {
   background-color: white;
+  border: 2px solid black;
   border-top: 5px solid #d52b1e;
   border-radius: 10px;
   padding: 3.5rem; /* más espacio interno */
@@ -10,21 +11,30 @@
 }
 
 .form-label {
-  font-weight: 600;
-  font-size: 1rem; /* fuente más grande */
+  font-weight: 500;
+  color: #fff;
 }
 
-.form-control {
-  background-color: #fff;
+.form-control,
+.form-select {
+  background-color: white;
   border: 1px solid #444;
-  color: #000;
-  font-size: 1rem;
-  height: 50px; /* altura más cómoda */
-  padding: 0.75rem;
+  color: #fff;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
 }
 
 .form-control::placeholder {
   color: #aaa;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: white;
+  border-color: #d52b1e;
+  outline: none;
+  box-shadow: 0 0 8px #d52b1e;
+  color: black;
 }
 
 .btn-danger {
@@ -58,3 +68,5 @@
   color: #cd2f1a;
   text-decoration: underline;
 }
+
+

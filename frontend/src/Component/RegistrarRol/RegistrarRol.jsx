@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import './RegistrarRol.css'
 import '../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarRol = ({ onVolver }) => {
@@ -22,8 +21,8 @@ const RegistrarRol = ({ onVolver }) => {
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="formulario-consistente" style={{ maxWidth: '500px' }}>
+    <div className="container d-flex justify-content-center align-items-center">
+      <div className="formulario-consistente">
         <h2 className="text-black text-center mb-4">Registrar Nuevo Rol</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">

@@ -5,14 +5,14 @@ body {
   padding: 0;
 }
 
-.form-abm {
+/* .form-abm {
   background-color: #fff !important;
   border-top: 5px solid #d52b1e;
   padding: 2rem 2.5rem;
   border-radius: 8px;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
   color: #000;
-}
+} */
 
 .form-label,
 .form-check-label {
@@ -86,9 +86,9 @@ body {
 
 .container {
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+  max-width: 100%;
+  /* margin: 0 auto; */
+  /* padding: 2rem; */
 }
 
 /* Estilos globales para formularios de BomberOS */
@@ -98,8 +98,9 @@ body {
   background-color: white;
   border-radius: 10px;
   padding: 2rem;
-  margin: 1rem auto;
-  max-width: 1200px;
+  margin-top: 2rem;
+  /* margin: 1rem auto; */
+  max-width: 100%;
   border: 2px solid black;
 }
 

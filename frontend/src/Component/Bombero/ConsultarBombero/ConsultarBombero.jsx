@@ -350,7 +350,7 @@ const ConsultarBombero = ({ onVolver }) => {
       </div>
 
       <div className="text-center mt-4">
-        <button className="btn btn-light" onClick={onVolver} disabled={loading}>
+        <button className="btn-volver btn-secondary" onClick={onVolver} disabled={loading}>
           Volver
         </button>
       </div>

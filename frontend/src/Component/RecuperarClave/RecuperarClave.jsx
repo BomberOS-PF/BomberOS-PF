@@ -39,7 +39,7 @@ const RecuperarClave = () => {
               type="button"
               onClick={() => navigate('/login')}
               className="recuperar-link btn btn-link">
-              Volver al login
+              Volver
             </button>
           </div>
         </form>
