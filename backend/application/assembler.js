@@ -55,6 +55,9 @@ export async function createServer(config) {
     const incidenteHandler = construirIncidenteHandler(incidenteService)
 
     const causaAccidenteRepository = new MySQLCausaAccidenteRepository()
+    const causaAccidenteService = new CausaAccidenteService(causaAccidenteRepository)
+    const causaAccidenteHandler = new CausaAccidenteHandler(causaAccidenteService)
+
     const accidenteTransitoService = new AccidenteTransitoService({
       accidenteRepository: new MySQLAccidenteTransitoRepository(),
       vehiculoRepository: new MySQLVehiculoInvolucradoRepository(),
@@ -62,10 +65,18 @@ export async function createServer(config) {
       accidenteVehiculoRepository: new MySQLAccidenteVehiculoRepository(),
       accidenteDamnificadoRepository: new MySQLAccidenteDamnificadoRepository()
     })
-
-    const causaAccidenteHandler = new CausaAccidenteHandler(causaAccidenteService)
+        
     const accidenteTransitoHandler = new AccidenteTransitoHandler(accidenteTransitoService)
+    const accidenteTransitoRepository = new MySQLAccidenteTransitoRepository()
 
+    const vehiculoInvolucradoRepository = new MySQLVehiculoInvolucradoRepository()
+
+    const damnificadoRepository = new MySQLDamnificadoRepository()
+
+    const accidenteVehiculoRepository = new MySQLAccidenteVehiculoRepository()
+
+    const accidenteDamnificadoRepository = new MySQLAccidenteDamnificadoRepository()
+    
     logger.level = config.logging.level
     logger.format = config.logging.format
 
@@ -98,9 +109,13 @@ export async function createServer(config) {
     await validateDependencies(container)
 
     logger.info('✅ Assembler completado exitosamente', {
-      services: ['bomberoService', 'usuarioService', 'incidenteService', 'whatsappService'],
-      repositories: ['bomberoRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository'],
-      handlers: ['bomberoHandler', 'usuarioHandler', 'incidenteHandler'],
+      services: ['bomberoService', 'usuarioService', 'incidenteService', 'whatsappService', 
+        'causaAccidenteService', 'accidenteTransitoService'],
+      repositories: ['bomberoRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository', 
+        'causaAccidenteRepository', 'accidenteTransitoRepository', 'vehiculoInvolucradoRepository', 'damnificadoRepository', 
+        'accidenteVehiculoRepository', 'accidenteDamnificadoRepository'],
+      handlers: ['bomberoHandler', 'usuarioHandler', 'incidenteHandler', 'causaAccidenteHandler', 
+        'accidenteTransitoHandler'],
       infrastructure: ['dbConnection']
     })
 
@@ -135,6 +150,22 @@ async function validateDependencies(container) {
     if (!container.denuncianteRepository) throw new Error('DenuncianteRepository no inicializado')
 
     if (!container.whatsappService) throw new Error('WhatsAppService no inicializado')
+    
+    if (!container.causaAccidenteService) throw new Error('CausaAccidenteService no inicializado')
+    if (!container.causaAccidenteRepository) throw new Error('CausaAccidenteRepository no inicializado')
+    if (!container.causaAccidenteHandler) throw new Error('CausaAccidenteHandler no inicializado')
+    
+    if (!container.accidenteTransitoService) throw new Error('AccidenteTransitoService no inicializado')
+    if (!container.accidenteTransitoRepository) throw new Error('AccidenteTransitoRepository no inicializado')
+    if (!container.accidenteTransitoHandler) throw new Error('AccidenteTransitoHandler no inicializado')
+
+    if (!container.vehiculoInvolucradoRepository) throw new Error('VehiculoInvolucradoRepository no inicializado')
+
+    if (!container.damnificadoRepository) throw new Error('DamnificadoRepository no inicializado')
+    
+    if (!container.accidenteVehiculoRepository) throw new Error('AccidenteVehiculoRepository no inicializado')
+
+    if (!container.accidenteDamnificadoRepository) throw new Error('AccidenteDamnificadoRepository no inicializado')
 
     if (!container.dbConnection) throw new Error('Database connection no inicializada')
 
