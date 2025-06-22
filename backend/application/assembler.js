@@ -15,6 +15,20 @@ import { MySQLDenuncianteRepository } from '../internal/repositories/mysql/denun
 
 import { WhatsAppService } from '../internal/services/whatsapp.service.js'
 
+import { MySQLCausaAccidenteRepository } from '../internal/repositories/mysql/causaAccidente.repository.js'
+import { CausaAccidenteService } from '../internal/services/causaAccidente.service.js'
+import { CausaAccidenteHandler } from '../causaAccidente/handler.js'
+
+import { MySQLAccidenteTransitoRepository } from '../internal/repositories/mysql/accidenteTransito.repository.js'
+import { AccidenteTransitoService } from '../internal/services/accidenteTransito.service.js'
+import { AccidenteTransitoHandler } from '../accidenteTransito/handler.js'
+
+
+import { MySQLVehiculoInvolucradoRepository } from '../internal/repositories/mysql/vehiculoInvolucrado.repository.js'
+import { MySQLDamnificadoRepository } from '../internal/repositories/mysql/damnificado.repository.js'
+import { MySQLAccidenteVehiculoRepository } from '../internal/repositories/mysql/accidenteVehiculo.repository.js'
+import { MySQLAccidenteDamnificadoRepository } from '../internal/repositories/mysql/accidenteDamnificado.repository.js'
+
 import { createConnection } from '../internal/platform/database/connection.js'
 import { logger } from '../internal/platform/logger/logger.js'
 
@@ -40,6 +54,18 @@ export async function createServer(config) {
     const usuarioHandler = new UsuarioHandler(usuarioService)
     const incidenteHandler = construirIncidenteHandler(incidenteService)
 
+    const causaAccidenteRepository = new MySQLCausaAccidenteRepository()
+    const accidenteTransitoService = new AccidenteTransitoService({
+      accidenteRepository: new MySQLAccidenteTransitoRepository(),
+      vehiculoRepository: new MySQLVehiculoInvolucradoRepository(),
+      damnificadoRepository: new MySQLDamnificadoRepository(),
+      accidenteVehiculoRepository: new MySQLAccidenteVehiculoRepository(),
+      accidenteDamnificadoRepository: new MySQLAccidenteDamnificadoRepository()
+    })
+
+    const causaAccidenteHandler = new CausaAccidenteHandler(causaAccidenteService)
+    const accidenteTransitoHandler = new AccidenteTransitoHandler(accidenteTransitoService)
+
     logger.level = config.logging.level
     logger.format = config.logging.format
 
@@ -55,6 +81,16 @@ export async function createServer(config) {
       incidenteHandler,
       denuncianteRepository,
       whatsappService,
+      causaAccidenteRepository,
+      causaAccidenteHandler,
+      causaAccidenteService,
+      accidenteTransitoRepository,
+      accidenteTransitoService,
+      accidenteTransitoHandler,
+      vehiculoInvolucradoRepository,
+      damnificadoRepository,
+      accidenteVehiculoRepository,
+      accidenteDamnificadoRepository,
       dbConnection,
       config
     }
