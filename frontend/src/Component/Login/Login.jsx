@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import RecuperarClave from '../RecuperarClave/RecuperarClave'
 import './Login.css'
-import '../DisenioFormulario/DisenioFormulario.css'
+// import '../DisenioFormulario/DisenioFormulario.css'
 
 const Login = ({ setUser, user }) => {
   const [usuario, setUsuario] = useState('')
