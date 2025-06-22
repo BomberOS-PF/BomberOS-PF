@@ -11,7 +11,7 @@ html, body, #root {
 main {
   padding: 0;
   margin: 0;
-  background-color: #a0a0a0;
+  background-color: #a0a0a0; /* Color del fondo */
   min-height: 100vh;
   width: 100%;
   max-width: 100%; /*cambie esto y se agrando el contenedor, pero quiero que se adapte al tamaño de la pantalla de forma automatica*/

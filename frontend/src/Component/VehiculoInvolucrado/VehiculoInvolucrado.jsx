@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { API_URLS } from '../../config/api'
-import './VehiculoInvolucrado.css'
+// import './VehiculoInvolucrado.css'
 import '../DisenioFormulario/DisenioFormulario.css'
 
 const VehiculoInvolucrado = ({ onVolver }) => {
@@ -159,7 +159,7 @@ const VehiculoInvolucrado = ({ onVolver }) => {
             
             {onVolver && (
               <button type="button" className="btn btn-secondary" onClick={onVolver}>
-                Volver al menú
+                Volver
               </button>
             )}
           </div>

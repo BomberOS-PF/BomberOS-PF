@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
-import './ConsultarUsuario.css'
+// import './ConsultarUsuario.css'
 import '../../DisenioFormulario/DisenioFormulario.css'
 import RegistrarUsuario from '../RegistrarUsuario/RegistrarUsuario'
 
@@ -241,8 +241,8 @@ const ConsultarUsuario = ({ onVolver }) => {
       )}
 
       <div className="text-center mt-4">
-        <button className="btn btn-light" onClick={onVolver}>
-          Volver al Menú
+        <button className="btn-volver btn-secondary" onClick={onVolver}>
+          Volver
         </button>
       </div>
     </div>

@@ -149,7 +149,7 @@ const ParticipacionIncidente = ({ datosPrevios, onFinalizar, onVolver }) => {
             
             {onVolver && (
               <button type="button" className="btn btn-secondary" onClick={onVolver}>
-                Volver al menú
+                Volver
               </button>
             )}
           </div>
