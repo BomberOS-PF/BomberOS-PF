@@ -2,29 +2,32 @@ import { useEffect, useState } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
-const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-    email: '',
-    idRol: ''
-  })
 
+
+const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
+  const [formData, setFormData] = useState({ username: '', password: '', email: '', idRol: '' })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('')
   const [passwordStrength, setPasswordStrength] = useState(null)
 
+
   useEffect(() => {
     if (usuario) {
-      setFormData({
-        username: usuario.username || '',
-        password: '',
-        email: usuario.email || '',
-        rol: usuario.rol || ''
-      })
+      setFormData({ username: usuario.username || '', password: '', email: usuario.email || '', rol: usuario.rol || '' })
     }
   }, [usuario])
+
+  useEffect(() => {
+    if (messageType === 'error') {
+      const timer = setTimeout(() => setMessage(''), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [message, messageType])
+
+  
+
+
 
   const validatePasswordStrength = (password) => {
     if (!password) {
@@ -83,12 +86,11 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
     setPasswordStrength(result)
   }
 
-  const handleChange = (e) => {
+   const handleChange = (e) => {
     const { id, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [id]: value
-    }))
+    setFormData(prev => ({ ...prev, [id]: value }))
+    if (id === 'username' && messageType === 'error') setMessage('')
+    if (id === 'password') validatePasswordStrength(value)
 
     // Validar fortaleza de contraseña en tiempo real
     if (id === 'password') {

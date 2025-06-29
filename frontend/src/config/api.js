@@ -45,16 +45,19 @@ export const apiRequest = async (url, options = {}) => {
   try {
     console.log(`🌐 API Request: ${config.method || 'GET'} ${url}`)
     const response = await fetch(url, config)
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-    
     const data = await response.json()
+
+    if (!response.ok) {
+      const error = new Error(data.message || 'Error en la solicitud')
+      error.status = response.status
+      error.response = data
+      throw error
+    }
+
     console.log(`✅ API Response:`, data)
     return data
   } catch (error) {
     console.error(`❌ API Error:`, error)
     throw error
   }
-} 
+}
