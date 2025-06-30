@@ -1,0 +1,380 @@
+body {
+  background-color: #fff;
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* .form-abm {
+  background-color: #fff !important;
+  border-top: 5px solid #d52b1e;
+  padding: 2rem 2.5rem;
+  border-radius: 8px;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+  color: #000;
+} */
+
+.form-label,
+.form-check-label {
+  font-weight: 600;
+  color: #000;
+}
+
+.form-control,
+.form-select {
+  background-color: #f8f9fa;
+  border: 1px solid #ccc;
+  color: #000;
+}
+
+.form-control::placeholder {
+  color: #888;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: #fff;
+  border-color: #d52b1e;
+  box-shadow: 0 0 0 0.2rem rgba(213, 43, 30, 0.25);
+  color: #000;
+}
+
+.btn-danger {
+  background-color: #c95f58;
+  border-color: #d52b1e;
+}
+
+.btn-danger:hover {
+  background-color: #b02118;
+  border-color: #a11c15;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: #fff;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #545b62;
+}
+
+.form-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: #1d1d1d;
+  padding: 1rem 1.5rem;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  border-bottom: 4px solid #d52b1e;
+  margin-bottom: 1rem;
+}
+
+.form-header img {
+  height: 40px;
+  margin-right: 1rem;
+}
+
+.form-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.container {
+  width: 100%;
+  max-width: 100%;
+  /* margin: 0 auto; */
+  /* padding: 2rem; */
+}
+
+/* Estilos globales para formularios de BomberOS */
+
+/* Contenedor principal del formulario */
+.formulario-consistente {
+  background-color: white;
+  border-radius: 10px;
+  padding: 2rem;
+  margin-top: 2rem;
+  /* margin: 1rem auto; */
+  max-width: 100%;
+  border: 2px solid black;
+}
+
+/* Títulos de formularios */
+.formulario-consistente h2,
+.formulario-consistente h3,
+.formulario-consistente h4,
+.formulario-consistente h5 {
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-weight: 700;
+}
+
+/* Labels */
+.formulario-consistente .form-label {
+  color: #ffffff;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.formulario-consistente .form-check-label {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* Campos de entrada - Estado normal */
+.formulario-consistente .form-control,
+.formulario-consistente .form-select {
+  background-color: #ffffff;
+  border: 1px solid #ced4da;
+  color: #212529 !important;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+/* Campos de entrada - Estado focus */
+.formulario-consistente .form-control:focus,
+.formulario-consistente .form-select:focus {
+  background-color: #ffffff;
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+  color: #212529 !important;
+}
+
+/* Campos de entrada - Estado disabled/readonly */
+.formulario-consistente .form-control:disabled,
+.formulario-consistente .form-select:disabled,
+.formulario-consistente .form-control[readonly],
+.formulario-consistente .form-select[readonly] {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  opacity: 0.8;
+  border-color: #dee2e6;
+}
+
+/* Modo consulta específico */
+.formulario-consistente.modo-consulta .form-control,
+.formulario-consistente.modo-consulta .form-select {
+  background-color: #f8f9fa;
+  color: #495057 !important;
+  border-color: #dee2e6;
+}
+
+/* Botones - Estilos base */
+.formulario-consistente .btn {
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+/* Botón principal (Guardar/Crear) */
+.formulario-consistente .btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: #ffffff;
+}
+
+.formulario-consistente .btn-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+  transform: translateY(-1px);
+  color: #ffffff;
+}
+
+/* Botón secundario (Volver/Cancelar) */
+.formulario-consistente .btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: #ffffff;
+}
+
+.formulario-consistente .btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #545b62;
+  transform: translateY(-1px);
+  color: #ffffff;
+}
+
+/* Botón de edición */
+.formulario-consistente .btn-warning {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #212529;
+}
+
+.formulario-consistente .btn-warning:hover {
+  background-color: #e0a800;
+  border-color: #d39e00;
+  color: #212529;
+  transform: translateY(-1px);
+}
+
+/* Botón de información */
+.formulario-consistente .btn-info {
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+  color: #ffffff;
+}
+
+.formulario-consistente .btn-info:hover {
+  background-color: #138496;
+  border-color: #117a8b;
+  transform: translateY(-1px);
+  color: #ffffff;
+}
+
+/* Contenedor de botones */
+.formulario-consistente .botones-accion {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.formulario-consistente .botones-accion .btn {
+  min-width: 140px;
+}
+
+/* Encabezado de detalles */
+.detalle-usuario .d-flex.justify-content-between,
+.detalle-bombero .d-flex.justify-content-between {
+  border-bottom: 2px solid #dc3545;
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+
+.detalle-usuario h3,
+.detalle-bombero h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* Botones en el encabezado */
+.detalle-usuario .btn-sm,
+.detalle-bombero .btn-sm {
+  font-size: 0.875rem;
+  padding: 0.375rem 0.75rem;
+  font-weight: 500;
+}
+
+/* Botones en modo consulta/detalle */
+.detalle-usuario .botones-detalle,
+.detalle-bombero .botones-detalle {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.detalle-usuario .botones-detalle .btn,
+.detalle-bombero .botones-detalle .btn {
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+  border: none;
+  min-width: 120px;
+}
+
+/* Separación visual para formularios anidados */
+.detalle-usuario .formulario-consistente,
+.detalle-bombero .formulario-consistente {
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(220, 53, 69, 0.5);
+  margin-top: 0;
+}
+
+/* Alertas y mensajes */
+.formulario-consistente .text-muted {
+  color: #adb5bd !important;
+}
+
+/* Elementos de búsqueda */
+.formulario-consistente .buscador-dni {
+  background-color: #ffffff;
+  border: 1px solid #ced4da;
+  color: #212529;
+}
+
+.formulario-consistente .buscador-dni:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+/* Tablas */
+.formulario-consistente .table-dark {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .formulario-consistente {
+    padding: 1rem;
+    margin: 0.5rem;
+  }
+  
+  .formulario-consistente h2 {
+    font-size: 1.5rem;
+  }
+  
+  .botones-accion {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .botones-accion .btn {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .detalle-usuario .botones-detalle,
+  .detalle-bombero .botones-detalle {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .detalle-usuario .botones-detalle .btn,
+  .detalle-bombero .botones-detalle .btn {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+/* Estados especiales */
+.formulario-consistente .spinner-border {
+  color: #dc3545;
+}
+
+/* Badges consistentes */
+.formulario-consistente .badge {
+  font-size: 0.85em;
+  padding: 0.5em 0.75em;
+}
+
+.form-check-input:checked {
+  background-color: #d52b1e;
+  border-color: #d52b1e;
+}
+
+.form-check-input:focus {
+  border-color: #d52b1e;
+  box-shadow: 0 0 0 0.2rem rgba(213, 43, 30, 0.25);
+}
+
+.form-check-input {
+  cursor: pointer;
+}
+.form-check-input:not(:checked) {
+  background-color: #ff0000;
+  border-color: #000000;
+}

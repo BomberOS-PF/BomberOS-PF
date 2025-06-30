@@ -1,35 +1,40 @@
 import { useState } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import Login from './Component/Login/Login.jsx'
 import RecuperarClave from './Component/RecuperarClave/RecuperarClave.jsx'
 import RutaPrivada from './Component/RutaPrivada/RutaPrivada.jsx'
 import Menu from './Component/Menu/Menu.jsx'
-import RegistrarBombero from './Component/RegistrarBombero/RegistrarBombero.jsx'
-import CargarIncidente from './Component/CargarIncidente/CargarIncidente.jsx'
+import RegistrarBombero from './Component/Bombero/RegistrarBombero/RegistrarBombero.jsx'
+import RegistrarUsuario from './Component/Usuario/RegistrarUsuario/RegistrarUsuario.jsx'
+import CargarIncidente from './Component/Incidente/CargarIncidente/CargarIncidente.jsx'
 import RegistrarRol from './Component/RegistrarRol/RegistrarRol.jsx'
-import RegistrarUsuario from './Component/RegistrarUsuario/RegistrarUsuario.jsx'
-import AccidenteTransito from './Component/AccidenteTransito/AccidenteTransito.jsx'
-import FactorClimatico from './Component/FactorClimatico/FactorClimatico.jsx'
-import IncendioEstructural from './Component/IncendioEstructural/IncendioEstructural.jsx'
-import IncendioForestal from './Component/IncendioForestal/IncendioForestal'
-import MaterialPeligroso from './Component/MaterialPeligroso/MaterialPeligroso.jsx'
-import Rescate from './Component/Rescate/Rescate.jsx'
-import ParticipacionIncidente from './Component/ParticipacionIncidente/ParticipacionIncidente.jsx'
-import VehiculoInvolucrado from './Component/VehiculoInvolucrado/VehiculoInvolucrado'
+import AccidenteTransito from './Component/Incidente/TipoIncidente/AccidenteTransito/AccidenteTransito.jsx'
+import FactorClimatico from './Component/Incidente/TipoIncidente/FactorClimatico/FactorClimatico.jsx'
+import IncendioEstructural from './Component/Incidente/TipoIncidente/IncendioEstructural/IncendioEstructural.jsx'
+import IncendioForestal from './Component/Incidente/TipoIncidente/IncendioForestal/IncendioForestal.jsx'
+import MaterialPeligroso from './Component/Incidente/TipoIncidente/MaterialPeligroso/MaterialPeligroso.jsx'
+import Rescate from './Component/Incidente/TipoIncidente/Rescate/Rescate.jsx'
+import ParticipacionIncidente from './Component/Incidente/ParticipacionIncidente/ParticipacionIncidente.jsx'
+import VehiculoInvolucrado from './Component/VehiculoInvolucrado/VehiculoInvolucrado.jsx'
 
 const App = () => {
-  const [user, setUser] = useState('')
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('usuario')
+    return saved ? JSON.parse(saved) : null
+  })
+
+  const navigate = useNavigate()
 
   return (
     <Routes>
-      <Route path="/login" element={<Login setUser={setUser} user={user}/>} />
-      <Route path="/recuperar-clave" element={<RecuperarClave />} />
-      <Route path="/"element={<RutaPrivada user={user}><Menu user={user} setUser={setUser} /></RutaPrivada>} />
-      <Route path="/registrar-bombero" element={<RutaPrivada user={user}> <RegistrarBombero /></RutaPrivada>} />
-      <Route path="/cargar-incidente"element={<RutaPrivada user={user}><CargarIncidente /></RutaPrivada>} />
+      <Route path="/login" element={<Login setUser={setUser} user={user} />} />
+      <Route path="/recuperar-clave" element={<RecuperarClave onVolver={() => navigate('/login')} />} />
+      <Route path="/" element={<RutaPrivada user={user}><Menu user={user} setUser={setUser} /></RutaPrivada>} />
+      <Route path="/registrar-bombero" element={<RutaPrivada user={user}><RegistrarBombero /></RutaPrivada>} />
+      <Route path="/cargar-incidente" element={<RutaPrivada user={user}><CargarIncidente /></RutaPrivada>} />
       <Route path="/registrar-rol" element={<RutaPrivada user={user}><RegistrarRol /></RutaPrivada>} />
       <Route path="/registrar-usuario" element={<RutaPrivada user={user}><RegistrarUsuario /></RutaPrivada>} />
-      <Route path="/accidente-transito" element={<RutaPrivada user={user}><AccidenteTransito /></RutaPrivada> } />
+      <Route path="/accidente-transito" element={<RutaPrivada user={user}><AccidenteTransito /></RutaPrivada>} />
       <Route path="/factor-climatico" element={<RutaPrivada user={user}><FactorClimatico /></RutaPrivada>} />
       <Route path="/incendio-estructural" element={<RutaPrivada user={user}><IncendioEstructural /></RutaPrivada>} />
       <Route path="/incendio-forestal" element={<RutaPrivada user={user}><IncendioForestal /></RutaPrivada>} />

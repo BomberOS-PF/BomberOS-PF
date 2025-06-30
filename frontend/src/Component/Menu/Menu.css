@@ -1,0 +1,199 @@
+.menu-container {
+  background-color: white;
+  color: black;
+  font-family: 'Segoe UI', sans-serif;
+  width: 600px; /* antes era 100% */
+  margin: 3rem auto;
+  border-top: 5px solid #d52b1e;
+  border-radius: 6px;
+  text-align: center;
+  padding: 2rem 1.5rem;
+}
+
+.menu-container h1 {
+  margin-bottom: 0.5rem;
+}
+
+.menu-container h2 {
+  margin-bottom: 2rem;
+  color: #d52b1e;
+}
+
+.menu-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.menu-buttons .btn {
+  background-color: #b02118;
+  border: none;
+  color: #fff;
+  padding: 0.6rem 1.3rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  min-width: 170px;
+  text-align: center;
+}
+
+.menu-buttons .btn:hover {
+  background-color: #cd2f1a;
+}
+
+.menu-content {
+  background-color: #222;
+  padding: 1.5rem;
+  border-radius: 6px;
+  min-height: 150px;
+  font-size: 1.1rem;
+  color: #ddd;
+}
+
+.btn-danger.mt-3 {
+  margin-top: 1.5rem !important;
+  background-color: #b02118;
+  border: none;
+  padding: 0.6rem 1.3rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-danger.mt-3:hover {
+  background-color: #cd2f1a;
+}
+
+/* ------------------- SIDEBAR ------------------- */
+
+.sidebar-container {
+  display: flex;
+  height: auto;
+  width: 100%;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.sidebar {
+  width: 220px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  transition: transform 0.3s ease-in-out;
+}
+
+.sidebar-header {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  padding-bottom: 0.5rem;
+}
+
+.sidebar-button {
+  background: none;
+  border: none;
+  color: white;
+  text-align: left;
+  padding: 0.5rem 0;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: color 0.3s;
+  width: 100%;
+}
+
+.sidebar-button:hover {
+  color: #d52b1e;
+}
+
+.logout {
+  margin-top: auto;
+  font-weight: bold;
+  color: #f88;
+}
+
+.menu-content-wrapper {
+  margin-left: 240px;
+  padding: 3rem 2rem;
+  width: 100%;
+}
+
+/* ------------------- HAMBURGUESA & RESPONSIVE ------------------- */
+
+.hamburger-btn {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  background-color: #b02118;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 1.3rem;
+  z-index: 1100;
+  border-radius: 4px;
+  display: none;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: white;
+  cursor: pointer;
+}
+
+/* Responsive: sidebar deslizable y botón visible */
+@media (max-width: 991px) {
+  .hamburger-btn {
+    display: block;
+  }
+
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .menu-content-wrapper {
+    margin-left: 0;
+    padding-top: 5rem;
+  }
+}
+
+.formulario-expandido {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 400px;
+  height: 600px;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  z-index: 9999;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.formulario-expandido-body {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.usuario-logueado {
+  color: #d52b1e;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
