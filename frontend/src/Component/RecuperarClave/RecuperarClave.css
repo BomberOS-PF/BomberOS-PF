@@ -1,0 +1,61 @@
+.recuperar-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background-color: #111;
+}
+
+.recuperar-form {
+  background-color: #fff;
+  border-top: 5px solid #d52b1e;
+  padding: 2rem 2.5rem;
+  border-radius: 8px;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+}
+
+.recuperar-link {
+  color: #d52b1e;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.recuperar-link:hover {
+  text-decoration: underline;
+  color: #a11c15;
+}
+
+.logo-bomberos {
+  width: 60px;
+  height: auto;
+  display: block;
+  margin: 0 auto 1rem;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #000;
+}
+
+.form-control {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  color: #000;
+}
+
+.form-control::placeholder {
+  color: #888;
+}
+
+.btn-danger {
+  background-color: #d52b1e;
+  border-color: #d52b1e;
+}
+
+.btn-danger:hover {
+  background-color: #b02118;
+  border-color: #a11c15;
+}
