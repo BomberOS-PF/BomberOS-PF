@@ -27,7 +27,8 @@ export function setupRoutes(app, container) {
   })
 
   // Handlers del container
-  const { bomberoHandler, usuarioHandler, incidenteHandler } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler } = container
+  
 
   // BOMBEROS
   app.get('/api/bomberos/plan', async (req, res) => {
@@ -222,6 +223,35 @@ export function setupRoutes(app, container) {
     }
   })
 
+  // GRUPOS DE GUARDIA
+app.post('/api/grupos', async (req, res) => {
+  try {
+    await grupoGuardiaHandler.crearGrupo(req, res)
+  } catch (error) {
+    logger.error('Error en ruta crearGrupo:', error)
+    res.status(500).json({ error: 'Error interno' })
+  }
+})
+
+app.get('/api/grupos', async (req, res) => {
+  try {
+    await grupoGuardiaHandler.listarGrupos(req, res)
+  } catch (error) {
+    logger.error('Error en ruta listarGrupos:', error)
+    res.status(500).json({ error: 'Error interno' })
+  }
+})
+
+app.get('/api/grupos/:id/bomberos', async (req, res) => {
+  try {
+    await grupoGuardiaHandler.obtenerBomberosDelGrupo(req, res)
+  } catch (error) {
+    logger.error('Error en ruta obtenerBomberosDelGrupo:', error)
+    res.status(500).json({ error: 'Error interno' })
+  }
+})
+
+
 
 
   // 404 handler
@@ -256,7 +286,10 @@ export function setupRoutes(app, container) {
         'GET /api/incidentes/:id',
         'PUT /api/incidentes/:id',
         'DELETE /api/incidentes/:id',
-        'POST /api/incidentes/:id/notificar'
+        'POST /api/incidentes/:id/notificar',
+        'POST /api/grupos',
+        'GET /api/grupos',
+        'GET /api/grupos/:id/bomberos',
       ]
     })
   })

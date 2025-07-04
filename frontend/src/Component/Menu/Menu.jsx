@@ -18,6 +18,7 @@ import Rescate from '../Incidente/TipoIncidente/Rescate/Rescate'
 import ParticipacionIncidente from '../Incidente/ParticipacionIncidente/ParticipacionIncidente'
 import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
 import ConsultarBombero from '../Bombero/ConsultarBombero/ConsultarBombero'
+import RegistrarGuardia from '../Guardia/RegistrarGuardia/RegistrarGuardia'
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
@@ -92,7 +93,7 @@ const Menu = ({ user, setUser }) => {
     administrador: [
       'cargar-incidente', 'registrar-bombero', 'consultar-bombero',
       'registrar-usuario', 'consultar-usuario',
-      'registrar-rol', 'participacion-incidente', 'vehiculo-involucrado'
+      'registrar-rol', 'participacion-incidente', 'vehiculo-involucrado', 'registrar-guardia'
     ],
     bombero: [
       'cargar-incidente', 'consultar-bombero',
@@ -108,7 +109,8 @@ const Menu = ({ user, setUser }) => {
     { key: 'consultar-usuario', label: 'Consultar Usuarios' },
     { key: 'registrar-rol', label: 'Registrar Rol' },
     { key: 'participacion-incidente', label: 'Participación del Incidente' },
-    { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' }
+    { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' },
+    { key: 'registrar-guardia', label: 'Registrar Guardia' },
   ]
 
   const puedeVer = (key) => permisos[rol]?.includes(key)
@@ -156,6 +158,7 @@ const Menu = ({ user, setUser }) => {
             {opcionSeleccionada === 'registrar-rol' && <RegistrarRol onVolver={() => setOpcionSeleccionada(null)} />}
             {opcionSeleccionada === 'participacion-incidente' && <ParticipacionIncidente datosPrevios={datosFinalizados} onFinalizar={() => setOpcionSeleccionada('vehiculo-involucrado')} onVolver={() => setOpcionSeleccionada(null)} />}
             {opcionSeleccionada === 'vehiculo-involucrado' && <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />}
+            {opcionSeleccionada === 'registrar-guardia' && <RegistrarGuardia onVolver={() => setOpcionSeleccionada(null)} />}
           </div>
         )}
       </div>

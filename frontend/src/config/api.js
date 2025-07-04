@@ -24,6 +24,10 @@ export const API_URLS = {
     authenticate: `${API_BASE_URL}/usuarios/auth`,
     libresBombero: `${API_BASE_URL}/usuarios/bomberos/libres`
   },
+  grupos: {
+    create: `${API_BASE_URL}/grupos`
+    
+  },
   
   // Health check
   health: 'http://localhost:3000/health'
