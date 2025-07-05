@@ -25,6 +25,9 @@ export const API_URLS = {
     libresBombero: `${API_BASE_URL}/usuarios/bomberos/libres`
   },
   
+  roles:{
+    registrarRol: `${API_BASE_URL}/roles`,
+  },
   // Health check
   health: 'http://localhost:3000/health'
 }

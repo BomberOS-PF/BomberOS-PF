@@ -7,7 +7,6 @@ import Menu from './Component/Menu/Menu.jsx'
 import RegistrarBombero from './Component/Bombero/RegistrarBombero/RegistrarBombero.jsx'
 import RegistrarUsuario from './Component/Usuario/RegistrarUsuario/RegistrarUsuario.jsx'
 import CargarIncidente from './Component/Incidente/CargarIncidente/CargarIncidente.jsx'
-import RegistrarRol from './Component/RegistrarRol/RegistrarRol.jsx'
 import AccidenteTransito from './Component/Incidente/TipoIncidente/AccidenteTransito/AccidenteTransito.jsx'
 import FactorClimatico from './Component/Incidente/TipoIncidente/FactorClimatico/FactorClimatico.jsx'
 import IncendioEstructural from './Component/Incidente/TipoIncidente/IncendioEstructural/IncendioEstructural.jsx'
@@ -16,6 +15,9 @@ import MaterialPeligroso from './Component/Incidente/TipoIncidente/MaterialPelig
 import Rescate from './Component/Incidente/TipoIncidente/Rescate/Rescate.jsx'
 import ParticipacionIncidente from './Component/Incidente/ParticipacionIncidente/ParticipacionIncidente.jsx'
 import VehiculoInvolucrado from './Component/VehiculoInvolucrado/VehiculoInvolucrado.jsx'
+import ConsultarRol from './Component/Rol/ConsultarRol.jsx'
+import RegistrarRol from './Component/Rol/RegistrarRol.jsx'
+
 
 const App = () => {
   const [user, setUser] = useState(() => {
@@ -33,6 +35,7 @@ const App = () => {
       <Route path="/registrar-bombero" element={<RutaPrivada user={user}><RegistrarBombero /></RutaPrivada>} />
       <Route path="/cargar-incidente" element={<RutaPrivada user={user}><CargarIncidente /></RutaPrivada>} />
       <Route path="/registrar-rol" element={<RutaPrivada user={user}><RegistrarRol /></RutaPrivada>} />
+      <Route path="/consultar-rol" element={<RutaPrivada user={user}><ConsultarRol /></RutaPrivada>} />
       <Route path="/registrar-usuario" element={<RutaPrivada user={user}><RegistrarUsuario /></RutaPrivada>} />
       <Route path="/accidente-transito" element={<RutaPrivada user={user}><AccidenteTransito /></RutaPrivada>} />
       <Route path="/factor-climatico" element={<RutaPrivada user={user}><FactorClimatico /></RutaPrivada>} />

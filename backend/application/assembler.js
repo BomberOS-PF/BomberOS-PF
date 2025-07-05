@@ -18,6 +18,11 @@ import { WhatsAppService } from '../internal/services/whatsapp.service.js'
 import { createConnection } from '../internal/platform/database/connection.js'
 import { logger } from '../internal/platform/logger/logger.js'
 
+// Importar el servicio y adaptador de roles
+import { RolService } from '../internal/services/rol.service.js'
+import { MySQLRolRepository } from '../internal/repositories/mysql/rol.repository.js'
+import { RestApiRolesAdapter } from '../roles/handler.js'
+
 export async function createServer(config) {
   try {
     logger.info('🏗️ Iniciando assembler de dependencias...')
@@ -25,24 +30,30 @@ export async function createServer(config) {
     const app = express()
     const dbConnection = await createConnection(config.database)
 
+    // Inicializar repositorios
     const bomberoRepository = new MySQLBomberoRepository()
     const usuarioRepository = new MySQLUsuarioRepository()
     const incidenteRepository = new MySQLIncidenteRepository()
     const denuncianteRepository = new MySQLDenuncianteRepository()
+    const rolRepository = new MySQLRolRepository()  // Repositorio de roles
 
-    const whatsappService = new WhatsAppService(config)
-
+    // Inicializar servicios
     const bomberoService = new BomberoService(bomberoRepository, usuarioRepository)
     const usuarioService = new UsuarioService(usuarioRepository, bomberoRepository)
-    const incidenteService = new IncidenteService(incidenteRepository, denuncianteRepository, bomberoService, whatsappService)
+    const incidenteService = new IncidenteService(incidenteRepository, denuncianteRepository, bomberoService, new WhatsAppService(config))
+    const rolService = new RolService(rolRepository)  // Servicio de roles
 
+    // Inicializar handlers
     const bomberoHandler = new BomberoHandler(bomberoService)
     const usuarioHandler = new UsuarioHandler(usuarioService)
     const incidenteHandler = construirIncidenteHandler(incidenteService)
+    const rolesAdapter = RestApiRolesAdapter(rolService)  // Adaptador de roles
 
+    // Configurar logger
     logger.level = config.logging.level
     logger.format = config.logging.format
 
+    // Contenedor de dependencias
     const container = {
       bomberoService,
       bomberoRepository,
@@ -54,19 +65,45 @@ export async function createServer(config) {
       incidenteRepository,
       incidenteHandler,
       denuncianteRepository,
-      whatsappService,
+      whatsappService: new WhatsAppService(config),
+      rolService,  // Agregar el servicio de roles
+      rolRepository, // Agregar el repositorio de roles
+      rolesAdapter, // Agregar el adaptador de roles
       dbConnection,
       config
     }
 
+    // Validar dependencias
     await validateDependencies(container)
 
     logger.info('✅ Assembler completado exitosamente', {
-      services: ['bomberoService', 'usuarioService', 'incidenteService', 'whatsappService'],
-      repositories: ['bomberoRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository'],
+      services: ['bomberoService', 'usuarioService', 'incidenteService', 'whatsappService', 'rolService'],
+      repositories: ['bomberoRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository', 'rolRepository'],
       handlers: ['bomberoHandler', 'usuarioHandler', 'incidenteHandler'],
       infrastructure: ['dbConnection']
     })
+
+    // Rutas de roles
+    app.post('/api/roles', async (req, res) => {
+      try {
+        await rolesAdapter.registrarRol(req, res)  // Aquí el adaptador maneja la solicitud
+      } catch (error) {
+        logger.error('Error en ruta registrar rol:', error)
+        res.status(500).json({ error: 'Error interno' })
+      }
+    })
+
+    app.get('/api/roles', async (req, res) => {
+      try {
+        await rolesAdapter.obtenerRoles(req, res)  // Aquí el adaptador maneja la solicitud
+      } catch (error) {
+        logger.error('Error en ruta obtener roles:', error)
+        res.status(500).json({ error: 'Error interno' })
+      }
+    })
+
+    // Rutas de otros servicios (bombero, usuario, incidente, etc.)
+    // ... Asegúrate de que las rutas para Bombero, Usuario, Incidente, etc., también estén configuradas.
 
     return { app, container }
 

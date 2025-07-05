@@ -7,7 +7,8 @@ import CargarIncidente from '../Incidente/CargarIncidente/CargarIncidente'
 import RegistrarBombero from '../Bombero/RegistrarBombero/RegistrarBombero'
 import RegistrarUsuario from '../Usuario/RegistrarUsuario/RegistrarUsuario'
 import ConsultarUsuario from '../Usuario/ConsultarUsuario/ConsultarUsuario'
-import RegistrarRol from '../RegistrarRol/RegistrarRol'
+import RegistrarRol from '../Rol/RegistrarRol'
+import ConsultarRol from '../Rol/ConsultarRol'
 import BurbujaFormulario from '../BurbujaFormulario/BurbujaFormulario'
 import AccidenteTransito from '../Incidente/TipoIncidente/AccidenteTransito/AccidenteTransito'
 import FactorClimatico from '../Incidente/TipoIncidente/FactorClimatico/FactorClimatico'
@@ -88,17 +89,20 @@ const Menu = ({ user, setUser }) => {
     }
   }
 
-  const permisos = {
-    administrador: [
-      'cargar-incidente', 'registrar-bombero', 'consultar-bombero',
-      'registrar-usuario', 'consultar-usuario',
-      'registrar-rol', 'participacion-incidente', 'vehiculo-involucrado'
-    ],
-    bombero: [
-      'cargar-incidente', 'consultar-bombero',
-      'participacion-incidente'
-    ]
-  }
+const permisos = {
+  administrador: [
+    'cargar-incidente',
+    'registrar-bombero', 'consultar-bombero',
+    'registrar-usuario', 'consultar-usuario',
+    'registrar-rol', 'consultar-rol', // ✅ ← esta línea
+    'participacion-incidente', 'vehiculo-involucrado'
+  ],
+  bombero: [
+    'cargar-incidente', 'consultar-bombero',
+    'participacion-incidente'
+  ]
+}
+
 
   const items = [
     { key: 'cargar-incidente', label: 'Cargar Incidente' },
@@ -107,6 +111,7 @@ const Menu = ({ user, setUser }) => {
     { key: 'registrar-usuario', label: 'Nuevo Usuario' },
     { key: 'consultar-usuario', label: 'Consultar Usuarios' },
     { key: 'registrar-rol', label: 'Registrar Rol' },
+    { key: 'consultar-rol', label: 'Consultar Rol' },
     { key: 'participacion-incidente', label: 'Participación del Incidente' },
     { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' }
   ]
@@ -154,6 +159,7 @@ const Menu = ({ user, setUser }) => {
             {opcionSeleccionada === 'registrar-usuario' && <RegistrarUsuario onVolver={() => setOpcionSeleccionada(null)} />}
             {opcionSeleccionada === 'consultar-usuario' && <ConsultarUsuario onVolver={() => setOpcionSeleccionada(null)} />}
             {opcionSeleccionada === 'registrar-rol' && <RegistrarRol onVolver={() => setOpcionSeleccionada(null)} />}
+            {opcionSeleccionada === 'consultar-rol' && (<ConsultarRol onVolver={() => setOpcionSeleccionada(null)} />)}
             {opcionSeleccionada === 'participacion-incidente' && <ParticipacionIncidente datosPrevios={datosFinalizados} onFinalizar={() => setOpcionSeleccionada('vehiculo-involucrado')} onVolver={() => setOpcionSeleccionada(null)} />}
             {opcionSeleccionada === 'vehiculo-involucrado' && <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />}
           </div>

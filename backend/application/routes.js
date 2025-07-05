@@ -27,7 +27,26 @@ export function setupRoutes(app, container) {
   })
 
   // Handlers del container
-  const { bomberoHandler, usuarioHandler, incidenteHandler } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, rolesAdapter } = container
+
+
+app.post('/api/roles', async (req, res) => {
+  try {
+    await rolesAdapter.registrarRol(req, res);
+  } catch (error) {
+    logger.error('Error en ruta registrar rol:', error);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+app.get('/api/roles', async (req, res) => {
+  try {
+    await rolesAdapter.obtenerRoles(req, res);
+  } catch (error) {
+    logger.error('Error en ruta obtener roles:', error);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
 
   // BOMBEROS
   app.get('/api/bomberos/plan', async (req, res) => {
@@ -84,15 +103,6 @@ export function setupRoutes(app, container) {
     }
   })
 
-  app.post('/api/bomberos/full', async (req, res) => {
-    try {
-      await bomberoHandler.createBomberoConUsuario(req, res)
-    } catch (error) {
-      logger.error('Error en ruta createBomberoConUsuario:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
   // USUARIOS
   app.get('/api/usuarios/rol/:rol', async (req, res) => {
     try {
@@ -102,127 +112,6 @@ export function setupRoutes(app, container) {
       res.status(500).json({ error: 'Error interno' })
     }
   })
-
-  app.post('/api/usuarios/auth', async (req, res) => {
-    try {
-      await usuarioHandler.authenticateUsuario(req, res)
-    } catch (error) {
-      logger.error('Error en ruta authenticateUsuario:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.get('/api/usuarios', async (req, res) => {
-    try {
-      await usuarioHandler.getAllUsuarios(req, res)
-    } catch (error) {
-      logger.error('Error en ruta getAllUsuarios:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.post('/api/usuarios', async (req, res) => {
-    try {
-      await usuarioHandler.createUsuario(req, res)
-    } catch (error) {
-      logger.error('Error en ruta createUsuario:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.get('/api/usuarios/:id', async (req, res) => {
-    try {
-      await usuarioHandler.getUsuarioById(req, res)
-    } catch (error) {
-      logger.error('Error en ruta getUsuarioById:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.put('/api/usuarios/:id', async (req, res) => {
-    try {
-      await usuarioHandler.updateUsuario(req, res)
-    } catch (error) {
-      logger.error('Error en ruta updateUsuario:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.delete('/api/usuarios/:id', async (req, res) => {
-    try {
-      await usuarioHandler.deleteUsuario(req, res)
-    } catch (error) {
-      logger.error('Error en ruta deleteUsuario:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.get('/api/usuarios/bomberos/libres', async (req, res) => {
-    try {
-      await usuarioHandler.getUsuariosBomberoLibres(req, res)
-    } catch (error) {
-      logger.error('Error en ruta getUsuariosBomberoLibres:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  // INCIDENTES
-  app.get('/api/incidentes', async (req, res) => {
-    try {
-      await incidenteHandler.listar(req, res)
-    } catch (error) {
-      logger.error('Error en ruta listar incidentes:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.get('/api/incidentes/:id', async (req, res) => {
-    try {
-      await incidenteHandler.obtenerPorId(req, res)
-    } catch (error) {
-      logger.error('Error en ruta obtener incidente:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.post('/api/incidentes', async (req, res) => {
-    try {
-      await incidenteHandler.crear(req, res)
-    } catch (error) {
-      logger.error('Error en ruta crear incidente:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.put('/api/incidentes/:id', async (req, res) => {
-    try {
-      await incidenteHandler.actualizar(req, res)
-    } catch (error) {
-      logger.error('Error en ruta actualizar incidente:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.delete('/api/incidentes/:id', async (req, res) => {
-    try {
-      await incidenteHandler.eliminar(req, res)
-    } catch (error) {
-      logger.error('Error en ruta eliminar incidente:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  // Notificar bomberos sobre un incidente
-  app.post('/api/incidentes/:id/notificar', async (req, res) => {
-    try {
-      await incidenteHandler.notificarBomberos(req, res)
-    } catch (error) {
-      logger.error('Error en ruta notificar bomberos:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-
 
   // 404 handler
   app.use((req, res) => {
@@ -243,20 +132,8 @@ export function setupRoutes(app, container) {
         'GET /api/bomberos/:id',
         'PUT /api/bomberos/:id',
         'DELETE /api/bomberos/:id',
-        'GET /api/bomberos/plan',
-        'GET /api/usuarios',
-        'POST /api/usuarios',
-        'GET /api/usuarios/:id',
-        'PUT /api/usuarios/:id',
-        'DELETE /api/usuarios/:id',
-        'GET /api/usuarios/rol/:rol',
-        'POST /api/usuarios/auth',
-        'GET /api/incidentes',
-        'POST /api/incidentes',
-        'GET /api/incidentes/:id',
-        'PUT /api/incidentes/:id',
-        'DELETE /api/incidentes/:id',
-        'POST /api/incidentes/:id/notificar'
+        'GET /api/roles',
+        'POST /api/roles', // Ahora está disponible
       ]
     })
   })
