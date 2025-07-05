@@ -1,112 +1,126 @@
-import React, { useEffect, useState } from 'react'
-import { API_URLS } from '../../../config/api'
-import './RegistrarGuardia.css'
-import '../../DisenioFormulario/DisenioFormulario.css'
+import React, { useEffect, useState } from 'react';
+import { API_URLS } from '../../../config/api';
+import './RegistrarGuardia.css';
+import '../../DisenioFormulario/DisenioFormulario.css';
 
 const RegistrarGuardia = ({ onVolver }) => {
-  const [nombreGrupo, setNombreGrupo] = useState('')
-  const [busqueda, setBusqueda] = useState('')
-  const [paginaActual, setPaginaActual] = useState(1)
-  const [limite] = useState(10)
-  const [total, setTotal] = useState(0)
-  const [bomberos, setBomberos] = useState([])
-  const [grupo, setGrupo] = useState([])
-  const [mensaje, setMensaje] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [nombreGrupo, setNombreGrupo] = useState('');
+  const [busqueda, setBusqueda] = useState('');
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [limite] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [bomberos, setBomberos] = useState([]);
+  const [grupo, setGrupo] = useState([]);
+  const [mensaje, setMensaje] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    fetchBomberos()
-  }, [paginaActual, busqueda])
+    fetchBomberos();
+  }, [paginaActual, busqueda]);
 
   const fetchBomberos = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const res = await fetch(
         `${API_URLS.bomberos.buscar}?pagina=${paginaActual}&limite=${limite}&busqueda=${busqueda}`
-      )
-      const data = await res.json()
+      );
+      const data = await res.json();
 
       if (res.ok && data.success) {
         const bomberosAgrupados = data.data.reduce((acc, bombero) => {
-          const grupo = bombero.grupoGuardia && bombero.grupoGuardia.length > 0 ? bombero.grupoGuardia.join(', ') : 'No asignado'
+          const grupo =
+            bombero.grupoGuardia && bombero.grupoGuardia.length > 0
+              ? bombero.grupoGuardia.join(', ')
+              : 'No asignado';
 
           if (!acc[bombero.dni]) {
             acc[bombero.dni] = {
               ...bombero,
               grupos: grupo, // Aquí guardamos los grupos en una sola cadena
-            }
+            };
           } else {
-            acc[bombero.dni].grupos += `, ${grupo}` // Si ya existe, agregamos el nuevo grupo
+            acc[bombero.dni].grupos += `, ${grupo}`; // Si ya existe, agregamos el nuevo grupo
           }
 
-          return acc
-        }, {})
+          return acc;
+        }, {});
 
-        setBomberos(Object.values(bomberosAgrupados))
-        setTotal(data.total)
+        setBomberos(Object.values(bomberosAgrupados));
+        setTotal(data.total);
       } else {
-        setMensaje(data.message || 'Error al cargar bomberos')
-        setBomberos([])
+        setMensaje(data.message || 'Error al cargar bomberos');
+        setBomberos([]);
       }
     } catch (error) {
-      setMensaje('Error de conexión. Verifique que el servidor esté funcionando.')
-      setBomberos([])
+      setMensaje('Error de conexión. Verifique que el servidor esté funcionando.');
+      setBomberos([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleBusqueda = (e) => {
-    setBusqueda(e.target.value)
-    setPaginaActual(1)
-  }
+    setBusqueda(e.target.value);
+    setPaginaActual(1);
+  };
 
   const agregarAlGrupo = (bombero) => {
     if (!grupo.find((b) => b.dni === bombero.dni)) {
-      setGrupo([...grupo, bombero])
-      setMensaje('')
+      setGrupo([...grupo, bombero]);
+      setMensaje('');
     }
-  }
+  };
 
   const quitarDelGrupo = (dni) => {
-    setGrupo(grupo.filter((b) => b.dni !== dni))
-  }
+    setGrupo(grupo.filter((b) => b.dni !== dni));
+  };
 
   const guardarGrupo = async () => {
     if (!nombreGrupo.trim()) {
-      setMensaje('Debes ingresar un nombre para el grupo.')
-      return
+      setMensaje('Debes ingresar un nombre para el grupo.');
+      return;
     }
 
     if (grupo.length === 0) {
-      setMensaje('Debes seleccionar al menos un bombero para el grupo.')
-      return
+      setMensaje('Debes seleccionar al menos un bombero para el grupo.');
+      return;
     }
+
+    setLoading(true); // Inicia el loading
 
     try {
       const res = await fetch(API_URLS.grupos.create, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombreGrupo, bomberos: grupo.map((b) => b.dni) }),
-      })
-      const data = await res.json()
+      });
+      const data = await res.json();
+
       if (res.ok && data.success) {
-        alert(`Grupo "${data.data.nombre}" guardado con éxito`)
-        setNombreGrupo('')
-        setGrupo([])
-        setMensaje('')
+        setSuccessMessage(`Grupo "${data.data.nombre}" guardado con éxito`);
+        setTimeout(() => setSuccessMessage(''), 5000); // El mensaje desaparece después de 5 segundos
+        setNombreGrupo('');
+        setGrupo([]);
+        setMensaje('');
+
+        // Actualizamos la lista de bomberos tras guardar el grupo
+        fetchBomberos(); // Recarga los bomberos
       } else {
-        setMensaje(data.message || 'Error al guardar el grupo')
+        setMensaje(data.message || 'Error al guardar el grupo');
       }
     } catch (error) {
-      setMensaje('Error de conexión al guardar grupo')
+      setMensaje('Error de conexión al guardar grupo');
+    } finally {
+      setLoading(false); // Termina el loading
     }
-  }
+  };
 
   return (
     <div className="container mt-4 formulario-consistente">
       <h2 className="text-black mb-3">Crear Grupo de Guardia</h2>
       {mensaje && <div className="alert alert-warning">{mensaje}</div>}
+      {successMessage && <div className="alert alert-success">{successMessage}</div>}
 
       <input
         type="text"
@@ -114,8 +128,8 @@ const RegistrarGuardia = ({ onVolver }) => {
         placeholder="Nombre del grupo"
         value={nombreGrupo}
         onChange={(e) => {
-          setNombreGrupo(e.target.value)
-          setMensaje('')
+          setNombreGrupo(e.target.value);
+          setMensaje('');
         }}
       />
 
@@ -152,7 +166,9 @@ const RegistrarGuardia = ({ onVolver }) => {
                       ➕
                     </button>
                     {b.grupos !== 'No asignado' && (
-                      <div className="tooltip">{`Pertenece a: ${b.grupos}`}</div>
+                      <div className="tooltip">
+                        Pertenece a: {b.grupos}
+                      </div>
                     )}
                   </div>
                 </td>
@@ -220,14 +236,14 @@ const RegistrarGuardia = ({ onVolver }) => {
 
       <div className="botones-accion mx-auto" style={{ width: '25%' }}>
         <button className="btn btn-danger me-3 w-100" onClick={guardarGrupo} disabled={loading}>
-          Guardar Grupo
+          {loading ? 'Espere...' : 'Guardar Grupo'}
         </button>
         <button className="btn btn-secondary me-3 w-100" onClick={onVolver} disabled={loading}>
           Volver
         </button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default RegistrarGuardia
+export default RegistrarGuardia;
