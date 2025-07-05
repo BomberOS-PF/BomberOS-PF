@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { API_URLS } from '../../../config/api'
 import './RegistrarGuardia.css'
-import '../../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarGuardia = ({ onVolver }) => {
   const [nombreGrupo, setNombreGrupo] = useState('')
@@ -21,7 +20,7 @@ const RegistrarGuardia = ({ onVolver }) => {
   const fetchBomberos = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`${API_URLS.bomberos.getAll}?pagina=${paginaActual}&limite=${limite}&busqueda=${busqueda}`)
+      const res = await fetch(`${API_URLS.bomberos.buscar}?pagina=${paginaActual}&limite=${limite}&busqueda=${busqueda}`)
       const data = await res.json()
       if (res.ok && data.success) {
         setBomberos(data.data)
@@ -44,44 +43,56 @@ const RegistrarGuardia = ({ onVolver }) => {
   }
 
   const agregarAlGrupo = (bombero) => {
-    if (!grupo.find(b => b.dni === bombero.dni)) {
-      setGrupo([...grupo, bombero])
-    }
+  if (!grupo.find(b => b.dni === bombero.dni)) {
+    setGrupo([...grupo, bombero])
+    setMensaje('')
   }
+}
 
   const quitarDelGrupo = (dni) => {
     setGrupo(grupo.filter(b => b.dni !== dni))
   }
 
   const guardarGrupo = async () => {
-    try {
-      console.log('→ Ejecutando guardarGrupo...')
-
-      const res = await fetch(API_URLS.grupos.create, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombreGrupo, bomberos: grupo.map(b => b.dni) })
-      })
-      const data = await res.json()
-      console.log('Respuesta del backend:', data)
-      if (res.ok && data.success) {
-        alert(`Grupo "${data.data.nombre}" guardado con éxito con ${data.data.bomberos.length} bomberos`)
-        setNombreGrupo('')
-        setGrupo([])
-      } else {
-        console.warn('Error esperado del backend:', data.message)
-        setMensaje(data.message || 'Error al guardar el grupo')
-      }
-    } catch (error) {
-      console.error('Error inesperado al guardar grupo:', error)
-      
-      setMensaje('Error de conexión al guardar grupo')
-    }
+  if (!nombreGrupo.trim()) {
+    setMensaje('Debes ingresar un nombre para el grupo.')
+    return
   }
+
+  if (grupo.length === 0) {
+    setMensaje('Debes seleccionar al menos un bombero para el grupo.')
+    return
+  }
+
+  try {
+    console.log('→ Ejecutando guardarGrupo...')
+
+    const res = await fetch(API_URLS.grupos.create, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombreGrupo, bomberos: grupo.map(b => b.dni) })
+    })
+    const data = await res.json()
+    console.log('Respuesta del backend:', data)
+    if (res.ok && data.success) {
+      alert(`Grupo "${data.data.nombre}" guardado con éxito con ${data.data.bomberos.length} bomberos`)
+      setNombreGrupo('')
+      setGrupo([])
+      setMensaje('') // Limpiamos mensaje tras éxito
+    } else {
+      console.warn('Error esperado del backend:', data.message)
+      setMensaje(data.message || 'Error al guardar el grupo')
+    }
+  } catch (error) {
+    console.error('Error inesperado al guardar grupo:', error)
+    setMensaje('Error de conexión al guardar grupo')
+  }
+}
+
 
   return (
     <div className="container mt-4 formulario-consistente">
-      <h2 className="text-white mb-3">Crear Grupo de Guardia</h2>
+      <h2 className="text-black mb-3">Crear Grupo de Guardia</h2>
 
       {mensaje && <div className="alert alert-warning">{mensaje}</div>}
 
@@ -90,7 +101,10 @@ const RegistrarGuardia = ({ onVolver }) => {
         className="form-control"
         placeholder="Nombre del grupo"
         value={nombreGrupo}
-        onChange={(e) => setNombreGrupo(e.target.value)}
+        onChange={(e) => {
+          setNombreGrupo(e.target.value)
+          setMensaje('')
+        }}
       />
 
       <input
@@ -101,7 +115,7 @@ const RegistrarGuardia = ({ onVolver }) => {
         onChange={handleBusqueda}
       />
 
-      <table className="table table-dark mt-3">
+      <table className="tabla-bomberos mt-3">
         <thead>
           <tr>
             <th>Seleccionar</th>
@@ -128,20 +142,20 @@ const RegistrarGuardia = ({ onVolver }) => {
       </table>
 
       <div className="pagination mb-3">
-        {Array.from({ length: Math.ceil(total / limite) }, (_, i) => (
-          <button
-            key={i}
-            className={`btn btn-sm me-1 ${paginaActual === i + 1 ? 'btn-primary' : 'btn-outline-primary'}`}
-            onClick={() => setPaginaActual(i + 1)}
-          >
-            {i + 1}
-          </button>
-        ))}
-      </div>
+  {Array.from({ length: Math.ceil(total / limite) }, (_, i) => (
+    <button
+      key={i}
+      className={`btn btn-sm me-1 ${paginaActual === i + 1 ? 'btn-secondary' : 'btn-outline-secondary'}`}
+      onClick={() => setPaginaActual(i + 1)}
+    >
+      {i + 1}
+    </button>
+  ))}
+</div>
 
       <div className="mt-4">
-        <h4 className="text-white">Bomberos en el grupo:</h4>
-        <table className="table table-secondary">
+        <h4 className="text-black">Bomberos en el grupo</h4>
+        <table className="tabla-bomberos">
           <thead>
             <tr>
               <th>DNI</th>

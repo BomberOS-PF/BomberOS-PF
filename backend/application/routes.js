@@ -49,6 +49,15 @@ export function setupRoutes(app, container) {
     }
   })
 
+  app.get('/api/bomberos/buscar', async (req, res) => {
+  try {
+    await bomberoHandler.buscarBomberos(req, res)
+  } catch (error) {
+    logger.error('Error en ruta buscarBomberos:', error)
+    res.status(500).json({ error: 'Error interno' })
+  }
+})
+
   app.post('/api/bomberos', async (req, res) => {
     try {
       await bomberoHandler.createBombero(req, res)
@@ -269,6 +278,7 @@ app.get('/api/grupos/:id/bomberos', async (req, res) => {
       availableEndpoints: [
         'GET /health',
         'GET /api/bomberos',
+        'GET /api/bomberos/buscar',
         'POST /api/bomberos',
         'GET /api/bomberos/:id',
         'PUT /api/bomberos/:id',

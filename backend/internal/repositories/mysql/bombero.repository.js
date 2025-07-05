@@ -59,6 +59,58 @@ export class MySQLBomberoRepository {
     }
   }
 
+async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
+  const offset = (pagina - 1) * limite
+  const connection = getConnection()
+
+  let whereClause = ''
+  let valores = []
+  let countValores = []
+
+  if (busqueda && busqueda.trim() !== '') {
+    const valorLike = `%${busqueda.trim()}%`
+    whereClause = 'WHERE (DNI LIKE ? OR legajo LIKE ? OR nombreCompleto LIKE ?)'
+    valores = [valorLike, valorLike, valorLike]
+    countValores = [...valores]
+  }
+
+  try {
+    const query = `
+      SELECT DNI, nombreCompleto, legajo, antiguedad, idRango, correo, telefono, 
+             esDelPlan, fichaMedica, fichaMedicaArchivo, fechaFichaMedica, 
+             aptoPsicologico, domicilio, grupoSanguineo, idUsuario
+      FROM ${this.tableName}
+      ${whereClause}
+      ORDER BY nombreCompleto ASC
+      LIMIT ${limite} OFFSET ${offset}
+    `
+    const [rows] = await connection.execute(query, valores)
+
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM ${this.tableName}
+      ${whereClause}
+    `
+    const [countRows] = await connection.execute(countQuery, countValores)
+
+    return {
+      data: rows.map(row => Bombero.create(row)),
+      total: countRows[0].total
+    }
+
+  } catch (error) {
+    logger.error('Error al buscar bomberos con paginado', {
+      error: error.message
+    })
+    throw new Error('Error interno al buscar bomberos')
+  }
+}
+
+
+
+
+
+
   async create(bombero) {
     const data = bombero.toDatabase()
     const query = `

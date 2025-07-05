@@ -5,6 +5,7 @@ export const API_URLS = {
   // Bomberos
   bomberos: {
     getAll: `${API_BASE_URL}/bomberos`,
+    buscar: `${API_BASE_URL}/bomberos/buscar`,
     getById: (id) => `${API_BASE_URL}/bomberos/${id}`,
     create: `${API_BASE_URL}/bomberos`,
     createFull: `${API_BASE_URL}/bomberos/full`,
