@@ -59,42 +59,67 @@ export class MySQLBomberoRepository {
     }
   }
 
+
 async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
   const offset = (pagina - 1) * limite
   const connection = getConnection()
 
   let whereClause = ''
   let valores = []
-  let countValores = []
 
   if (busqueda && busqueda.trim() !== '') {
     const valorLike = `%${busqueda.trim()}%`
-    whereClause = 'WHERE (DNI LIKE ? OR legajo LIKE ? OR nombreCompleto LIKE ?)'
+    whereClause = `WHERE (b.DNI LIKE ? OR b.legajo LIKE ? OR b.nombreCompleto LIKE ?)`
     valores = [valorLike, valorLike, valorLike]
-    countValores = [...valores]
   }
+
+  const limitInt = parseInt(limite, 10)
+  const offsetInt = parseInt(offset, 10)
 
   try {
     const query = `
-      SELECT DNI, nombreCompleto, legajo, antiguedad, idRango, correo, telefono, 
-             esDelPlan, fichaMedica, fichaMedicaArchivo, fechaFichaMedica, 
-             aptoPsicologico, domicilio, grupoSanguineo, idUsuario
-      FROM ${this.tableName}
+      SELECT 
+        b.DNI, b.nombreCompleto, b.legajo, b.antiguedad, b.idRango, b.correo, b.telefono, 
+        b.esDelPlan, b.fichaMedica, b.fichaMedicaArchivo, b.fechaFichaMedica, 
+        b.aptoPsicologico, b.domicilio, b.grupoSanguineo, b.idUsuario,
+        GROUP_CONCAT(g.nombre SEPARATOR ', ') AS grupos
+      FROM ${this.tableName} b
+      LEFT JOIN bomberos_grupo bg ON bg.dniBombero = b.DNI
+      LEFT JOIN grupo_guardia g ON g.idGrupo = bg.idGrupo
       ${whereClause}
-      ORDER BY nombreCompleto ASC
-      LIMIT ${limite} OFFSET ${offset}
+      GROUP BY b.DNI
+      ORDER BY b.nombreCompleto ASC
+      LIMIT ${limitInt} OFFSET ${offsetInt}
     `
+
     const [rows] = await connection.execute(query, valores)
 
+    // Hacer un mapeo de los bomberos para acumular los grupos correctamente
+    const bomberos = rows.map(row => ({
+      dni: row.DNI,
+      nombreCompleto: row.nombreCompleto,
+      legajo: row.legajo,
+      antiguedad: row.antiguedad,
+      rango: row.idRango,
+      email: row.correo,  
+      telefono: row.telefono,
+      domicilio: row.domicilio,
+      grupoSanguineo: row.grupoSanguineo,
+      grupoGuardia: row.grupos ? row.grupos.split(', ') : [] // Separar los grupos por coma
+    }))
+
+    // Consulta para contar el total de bomberos
     const countQuery = `
-      SELECT COUNT(*) as total
-      FROM ${this.tableName}
+      SELECT COUNT(DISTINCT b.DNI) as total
+      FROM ${this.tableName} b
+      LEFT JOIN bomberos_grupo bg ON bg.dniBombero = b.DNI
+      LEFT JOIN grupo_guardia g ON g.idGrupo = bg.idGrupo
       ${whereClause}
     `
-    const [countRows] = await connection.execute(countQuery, countValores)
+    const [countRows] = await connection.execute(countQuery, valores)
 
     return {
-      data: rows.map(row => Bombero.create(row)),
+      data: bomberos,
       total: countRows[0].total
     }
 
@@ -105,6 +130,13 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
     throw new Error('Error interno al buscar bomberos')
   }
 }
+
+
+
+
+
+
+
 
 
 

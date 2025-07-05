@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { API_URLS } from '../../../config/api'
 import './RegistrarGuardia.css'
-
+import '../../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarGuardia = ({ onVolver }) => {
   const [nombreGrupo, setNombreGrupo] = useState('')
@@ -21,10 +21,28 @@ const RegistrarGuardia = ({ onVolver }) => {
   const fetchBomberos = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`${API_URLS.bomberos.buscar}?pagina=${paginaActual}&limite=${limite}&busqueda=${busqueda}`)
+      const res = await fetch(
+        `${API_URLS.bomberos.buscar}?pagina=${paginaActual}&limite=${limite}&busqueda=${busqueda}`
+      )
       const data = await res.json()
+
       if (res.ok && data.success) {
-        setBomberos(data.data)
+        const bomberosAgrupados = data.data.reduce((acc, bombero) => {
+          const grupo = bombero.grupoGuardia && bombero.grupoGuardia.length > 0 ? bombero.grupoGuardia.join(', ') : 'No asignado'
+
+          if (!acc[bombero.dni]) {
+            acc[bombero.dni] = {
+              ...bombero,
+              grupos: grupo, // Aquí guardamos los grupos en una sola cadena
+            }
+          } else {
+            acc[bombero.dni].grupos += `, ${grupo}` // Si ya existe, agregamos el nuevo grupo
+          }
+
+          return acc
+        }, {})
+
+        setBomberos(Object.values(bomberosAgrupados))
         setTotal(data.total)
       } else {
         setMensaje(data.message || 'Error al cargar bomberos')
@@ -44,57 +62,50 @@ const RegistrarGuardia = ({ onVolver }) => {
   }
 
   const agregarAlGrupo = (bombero) => {
-  if (!grupo.find(b => b.dni === bombero.dni)) {
-    setGrupo([...grupo, bombero])
-    setMensaje('')
+    if (!grupo.find((b) => b.dni === bombero.dni)) {
+      setGrupo([...grupo, bombero])
+      setMensaje('')
+    }
   }
-}
 
   const quitarDelGrupo = (dni) => {
-    setGrupo(grupo.filter(b => b.dni !== dni))
+    setGrupo(grupo.filter((b) => b.dni !== dni))
   }
 
   const guardarGrupo = async () => {
-  if (!nombreGrupo.trim()) {
-    setMensaje('Debes ingresar un nombre para el grupo.')
-    return
-  }
-
-  if (grupo.length === 0) {
-    setMensaje('Debes seleccionar al menos un bombero para el grupo.')
-    return
-  }
-
-  try {
-    console.log('→ Ejecutando guardarGrupo...')
-
-    const res = await fetch(API_URLS.grupos.create, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombreGrupo, bomberos: grupo.map(b => b.dni) })
-    })
-    const data = await res.json()
-    console.log('Respuesta del backend:', data)
-    if (res.ok && data.success) {
-      alert(`Grupo "${data.data.nombre}" guardado con éxito con ${data.data.bomberos.length} bomberos`)
-      setNombreGrupo('')
-      setGrupo([])
-      setMensaje('') // Limpiamos mensaje tras éxito
-    } else {
-      console.warn('Error esperado del backend:', data.message)
-      setMensaje(data.message || 'Error al guardar el grupo')
+    if (!nombreGrupo.trim()) {
+      setMensaje('Debes ingresar un nombre para el grupo.')
+      return
     }
-  } catch (error) {
-    console.error('Error inesperado al guardar grupo:', error)
-    setMensaje('Error de conexión al guardar grupo')
-  }
-}
 
+    if (grupo.length === 0) {
+      setMensaje('Debes seleccionar al menos un bombero para el grupo.')
+      return
+    }
+
+    try {
+      const res = await fetch(API_URLS.grupos.create, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombreGrupo, bomberos: grupo.map((b) => b.dni) }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        alert(`Grupo "${data.data.nombre}" guardado con éxito`)
+        setNombreGrupo('')
+        setGrupo([])
+        setMensaje('')
+      } else {
+        setMensaje(data.message || 'Error al guardar el grupo')
+      }
+    } catch (error) {
+      setMensaje('Error de conexión al guardar grupo')
+    }
+  }
 
   return (
     <div className="container mt-4 formulario-consistente">
       <h2 className="text-black mb-3">Crear Grupo de Guardia</h2>
-
       {mensaje && <div className="alert alert-warning">{mensaje}</div>}
 
       <input
@@ -115,6 +126,7 @@ const RegistrarGuardia = ({ onVolver }) => {
         value={busqueda}
         onChange={handleBusqueda}
       />
+
       <div className="table-responsive">
         <table className="tabla-bomberos mt-3">
           <thead>
@@ -125,35 +137,47 @@ const RegistrarGuardia = ({ onVolver }) => {
               <th>Nombre completo</th>
               <th>Teléfono</th>
               <th>Email</th>
-
             </tr>
           </thead>
           <tbody>
             {bomberos.map((b) => (
               <tr key={b.dni}>
-                <td><button onClick={() => agregarAlGrupo(b)}>➕</button></td>
+                <td>
+                  <div className="tooltip-container">
+                    <button
+                      onClick={() => agregarAlGrupo(b)}
+                      disabled={b.grupos !== 'No asignado'} // Deshabilitar solo si tiene grupos
+                      className={`btn btn-sm ${b.grupos !== 'No asignado' ? 'btn-secondary' : 'btn-success'}`}
+                    >
+                      ➕
+                    </button>
+                    {b.grupos !== 'No asignado' && (
+                      <div className="tooltip">{`Pertenece a: ${b.grupos}`}</div>
+                    )}
+                  </div>
+                </td>
                 <td>{b.dni}</td>
                 <td>{b.legajo}</td>
                 <td>{b.nombreCompleto}</td>
                 <td>{b.telefono}</td>
-                <td>{b.correo}</td>
+                <td>{b.email}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
       <div className="pagination mb-3">
-      
-  {Array.from({ length: Math.ceil(total / limite) }, (_, i) => (
-    <button
-      key={i}
-      className={`btn btn-sm me-1 ${paginaActual === i + 1 ? 'btn-secondary' : 'btn-outline-secondary'}`}
-      onClick={() => setPaginaActual(i + 1)}
-    >
-      {i + 1}
-    </button>
-  ))}
-</div>
+        {Array.from({ length: Math.ceil(total / limite) }, (_, i) => (
+          <button
+            key={i}
+            className={`btn btn-sm me-1 ${paginaActual === i + 1 ? 'btn-secondary' : 'btn-outline-secondary'}`}
+            onClick={() => setPaginaActual(i + 1)}
+          >
+            {i + 1}
+          </button>
+        ))}
+      </div>
 
       <div className="mt-4">
         <h4 className="text-black">Bomberos en el grupo</h4>
@@ -166,7 +190,6 @@ const RegistrarGuardia = ({ onVolver }) => {
                 <th>Nombre completo</th>
                 <th>Teléfono</th>
                 <th>Email</th>
-                
                 <th>Quitar</th>
               </tr>
             </thead>
@@ -177,12 +200,11 @@ const RegistrarGuardia = ({ onVolver }) => {
                   <td>{b.legajo}</td>
                   <td>{b.nombreCompleto}</td>
                   <td>{b.telefono}</td>
-                  <td>{b.correo}</td>
-                  
+                  <td>{b.email}</td>
                   <td>
-                    <button 
-                      className="btn btn-sm text-danger border-0 bg-transparent" 
-                      onClick={() => quitarDelGrupo(b.dni)} 
+                    <button
+                      className="btn btn-sm text-danger border-0 bg-transparent"
+                      onClick={() => quitarDelGrupo(b.dni)}
                       title="Quitar bombero"
                       style={{ lineHeight: '1', padding: '0 6px' }}
                     >
