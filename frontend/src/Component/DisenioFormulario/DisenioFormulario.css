@@ -378,3 +378,36 @@ body {
   background-color: #ff0000;
   border-color: #000000;
 }
+
+/* Estilo unificado para tablas */
+.tabla-bomberos {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  color: #000000;
+  background-color: #b3b1b1;
+  border: 1px solid #6b6b6b;
+  font-size: 0.9rem;
+}
+
+.tabla-bomberos thead {
+  background-color: #838383;
+}
+
+.tabla-bomberos th,
+.tabla-bomberos td {
+  padding: 8px 12px;
+  border: 1px solid #6b6b6b;
+  text-align: left;
+}
+
+.tabla-bomberos tr:hover {
+  background-color: #a1a0a0;
+}
+
+/* Botones dentro de la tabla */
+.tabla-bomberos .btn {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  line-height: 1;
+}

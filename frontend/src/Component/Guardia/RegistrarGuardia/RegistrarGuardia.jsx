@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { API_URLS } from '../../../config/api'
 import './RegistrarGuardia.css'
 
+
 const RegistrarGuardia = ({ onVolver }) => {
   const [nombreGrupo, setNombreGrupo] = useState('')
   const [busqueda, setBusqueda] = useState('')
@@ -114,34 +115,35 @@ const RegistrarGuardia = ({ onVolver }) => {
         value={busqueda}
         onChange={handleBusqueda}
       />
+      <div className="table-responsive">
+        <table className="tabla-bomberos mt-3">
+          <thead>
+            <tr>
+              <th>Seleccionar</th>
+              <th>DNI</th>
+              <th>Legajo</th>
+              <th>Nombre completo</th>
+              <th>Teléfono</th>
+              <th>Email</th>
 
-      <table className="tabla-bomberos mt-3">
-        <thead>
-          <tr>
-            <th>Seleccionar</th>
-            <th>DNI</th>
-            <th>Legajo</th>
-            <th>Nombre completo</th>
-            <th>Teléfono</th>
-            <th>Email</th>
-
-          </tr>
-        </thead>
-        <tbody>
-          {bomberos.map((b) => (
-            <tr key={b.dni}>
-              <td><button onClick={() => agregarAlGrupo(b)}>➕</button></td>
-              <td>{b.dni}</td>
-              <td>{b.legajo}</td>
-              <td>{b.nombreCompleto}</td>
-              <td>{b.telefono}</td>
-              <td>{b.correo}</td>
             </tr>
-          ))}
-        </tbody>
-      </table>
-
+          </thead>
+          <tbody>
+            {bomberos.map((b) => (
+              <tr key={b.dni}>
+                <td><button onClick={() => agregarAlGrupo(b)}>➕</button></td>
+                <td>{b.dni}</td>
+                <td>{b.legajo}</td>
+                <td>{b.nombreCompleto}</td>
+                <td>{b.telefono}</td>
+                <td>{b.correo}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <div className="pagination mb-3">
+      
   {Array.from({ length: Math.ceil(total / limite) }, (_, i) => (
     <button
       key={i}
@@ -155,41 +157,43 @@ const RegistrarGuardia = ({ onVolver }) => {
 
       <div className="mt-4">
         <h4 className="text-black">Bomberos en el grupo</h4>
-        <table className="tabla-bomberos">
-          <thead>
-            <tr>
-              <th>DNI</th>
-              <th>Legajo</th>
-              <th>Nombre completo</th>
-              <th>Teléfono</th>
-              <th>Email</th>
-              
-              <th>Quitar</th>
-            </tr>
-          </thead>
-          <tbody>
-            {grupo.map((b) => (
-              <tr key={b.dni}>
-                <td>{b.dni}</td>
-                <td>{b.legajo}</td>
-                <td>{b.nombreCompleto}</td>
-                <td>{b.telefono}</td>
-                <td>{b.correo}</td>
+        <div className="table-responsive">
+          <table className="tabla-bomberos">
+            <thead>
+              <tr>
+                <th>DNI</th>
+                <th>Legajo</th>
+                <th>Nombre completo</th>
+                <th>Teléfono</th>
+                <th>Email</th>
                 
-                <td>
-                  <button 
-                    className="btn btn-sm text-danger border-0 bg-transparent" 
-                    onClick={() => quitarDelGrupo(b.dni)} 
-                    title="Quitar bombero"
-                    style={{ lineHeight: '1', padding: '0 6px' }}
-                  >
-                    ❌
-                  </button>
-                </td>
+                <th>Quitar</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {grupo.map((b) => (
+                <tr key={b.dni}>
+                  <td>{b.dni}</td>
+                  <td>{b.legajo}</td>
+                  <td>{b.nombreCompleto}</td>
+                  <td>{b.telefono}</td>
+                  <td>{b.correo}</td>
+                  
+                  <td>
+                    <button 
+                      className="btn btn-sm text-danger border-0 bg-transparent" 
+                      onClick={() => quitarDelGrupo(b.dni)} 
+                      title="Quitar bombero"
+                      style={{ lineHeight: '1', padding: '0 6px' }}
+                    >
+                      ❌
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="botones-accion mx-auto" style={{ width: '25%' }}>
