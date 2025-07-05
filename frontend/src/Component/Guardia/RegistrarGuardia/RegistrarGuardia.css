@@ -52,29 +52,42 @@
 
 
 /* Tooltip */
+/* Contenedor del tooltip */
+/* Estilo para el contenedor del tooltip */
 .tooltip-container {
   position: relative;
   display: inline-block;
 }
 
+/* Tooltip oculto por defecto */
 .tooltip {
   visibility: hidden;
   position: absolute;
   top: 50%;
-  left: 100%;
-  transform: translateY(-50%);
+  left: 100%; /* Posicionar a la derecha del botón */
+  transform: translateY(-50%); /* Centrar verticalmente respecto al botón */
   background-color: rgba(0, 0, 0, 0.7);
   color: white;
   padding: 5px;
   border-radius: 5px;
   font-size: 12px;
-  z-index: 1;
+  z-index: 10;
   white-space: nowrap;
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
 }
 
+/* Mostrar el tooltip solo cuando el botón está deshabilitado y al pasar el mouse */
 .tooltip-container button:disabled:hover + .tooltip {
   visibility: visible;
   opacity: 1;
 }
+
+/* Cuando el contenedor está siendo hoverado, mostrar el tooltip */
+.tooltip-container:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+
+
