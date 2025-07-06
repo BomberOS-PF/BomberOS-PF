@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { API_URLS } from '../../../config/api'
 import FormularioBombero from '../FormularioBombero/FormularioBombero'
-import '../ConsultarBombero/ConsultarBombero.css'
+//import '../ConsultarBombero/ConsultarBombero.css'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
 const ConsultarBombero = ({ onVolver }) => {
@@ -247,7 +247,7 @@ const ConsultarBombero = ({ onVolver }) => {
 
             {resultadosFiltrados.length > 0 ? (
               <div className="table-responsive">
-                <table className="table table-dark table-hover table-bordered">
+                <table className="tabla-bomberos">
                   <thead>
                     <tr>
                       <th>Nombre completo</th>

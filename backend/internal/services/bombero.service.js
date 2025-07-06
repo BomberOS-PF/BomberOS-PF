@@ -151,6 +151,10 @@ export class BomberoService {
     }
   }
 
+  async listarBomberosPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
+  return await this.bomberoRepository.findConPaginado({ pagina, limite, busqueda })
+}
+
   async listarBomberosDelPlan() {
     try {
       logger.debug('Servicio: Listar bomberos del plan')
