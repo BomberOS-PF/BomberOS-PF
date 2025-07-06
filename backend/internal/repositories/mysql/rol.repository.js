@@ -14,8 +14,8 @@ export class MySQLRolRepository {
     try {
       const conn = getConnection()
       const [result] = await conn.execute(query, values)
-      logger.info('Rol insertado correctamente', { id: result.insertId })
-      return { id: result.insertId, ...rol }
+      logger.info('Rol insertado correctamente', { idRol: result.insertId })
+      return { idRol: result.insertId, ...rol }
     } catch (err) {
       logger.error('Error al insertar rol', { error: err.message })
       throw err
@@ -30,7 +30,7 @@ export class MySQLRolRepository {
   }
 
   async obtenerPorId(id) {
-    const query = `SELECT * FROM ${this.table} WHERE id = ?`
+    const query = `SELECT * FROM ${this.table} WHERE idRol = ?`
     const conn = getConnection()
     const [rows] = await conn.execute(query, [id])
     return rows[0] ? Rol.fromDatabase(rows[0]) : null
@@ -44,17 +44,17 @@ export class MySQLRolRepository {
   }
 
   async actualizarPorId(id, datos) {
-    const query = `UPDATE ${this.table} SET nombreRol = ?, descripcion = ? WHERE id = ?`
+    const query = `UPDATE ${this.table} SET nombreRol = ?, descripcion = ? WHERE idRol = ?`
     const values = [datos.nombreRol, datos.descripcion, id]
     const conn = getConnection()
     await conn.execute(query, values)
-    return { id, ...datos }
+    return { idRol: id, ...datos }
   }
 
   async eliminarPorId(id) {
-    const query = `DELETE FROM ${this.table} WHERE id = ?`
+    const query = `DELETE FROM ${this.table} WHERE idRol = ?`
     const conn = getConnection()
     await conn.execute(query, [id])
-    return { id }
+    return { idRol: id }
   }
 }

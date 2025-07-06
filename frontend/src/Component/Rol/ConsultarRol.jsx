@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import FormularioRol from './FormularioRol'
+import { apiRequest, API_URLS } from '../../config/api'
 import './ConsultarRol.css'
 
 const ConsultarRol = ({ onVolver }) => {
@@ -9,19 +10,34 @@ const ConsultarRol = ({ onVolver }) => {
   const [rolSeleccionado, setRolSeleccionado] = useState(null)
   const [modoEdicion, setModoEdicion] = useState(false)
   const [mensaje, setMensaje] = useState('')
+  const [tipoMensaje, setTipoMensaje] = useState('info')
+  const [loading, setLoading] = useState(false)
+  const [loadingRoles, setLoadingRoles] = useState(true)
 
   useEffect(() => {
     fetchRoles()
   }, [])
 
+  // Limpiar mensajes después de 5 segundos
+  useEffect(() => {
+    if (mensaje) {
+      const timer = setTimeout(() => setMensaje(''), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [mensaje])
+
   const fetchRoles = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/roles')
-      const data = await res.json()
+      setLoadingRoles(true)
+      const data = await apiRequest(API_URLS.roles.getAll)
       setRoles(data.data)
       setResultadosFiltrados(data.data)
     } catch (error) {
       console.error('Error al obtener roles:', error)
+      setMensaje('Error al cargar los roles. Por favor, intenta nuevamente.')
+      setTipoMensaje('danger')
+    } finally {
+      setLoadingRoles(false)
     }
   }
 
@@ -37,8 +53,10 @@ const ConsultarRol = ({ onVolver }) => {
 
     if (filtrados.length === 0) {
       setMensaje('No se encontró ningún rol con ese nombre.')
+      setTipoMensaje('warning')
     } else {
-      setMensaje('')
+      setMensaje(`Se encontraron ${filtrados.length} rol(es) que coinciden con la búsqueda.`)
+      setTipoMensaje('info')
     }
   }
 
@@ -60,42 +78,43 @@ const ConsultarRol = ({ onVolver }) => {
 
   const guardarCambios = async (datosActualizados) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/roles/${rolSeleccionado.id}`, {
+      setLoading(true)
+      await apiRequest(API_URLS.roles.update(rolSeleccionado.id), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datosActualizados)
       })
-      if (res.ok) {
-        setMensaje('Cambios guardados correctamente')
-        setModoEdicion(false)
-        fetchRoles()
-        setRolSeleccionado(null)
-      } else {
-        const error = await res.json()
-        setMensaje(error.error || 'Error al guardar los cambios')
-      }
+      setMensaje(`Rol "${datosActualizados.nombreRol}" actualizado correctamente`)
+      setTipoMensaje('success')
+      setModoEdicion(false)
+      await fetchRoles()
+      setRolSeleccionado(null)
     } catch (error) {
       console.error('Error al guardar cambios:', error)
-      setMensaje('Error de conexión')
+      setMensaje(`Error al actualizar el rol: ${error.message}`)
+      setTipoMensaje('danger')
+    } finally {
+      setLoading(false)
     }
   }
 
-  const eliminarRol = async (id) => {
-    if (!window.confirm('¿Estás seguro de eliminar este rol?')) return
+  const eliminarRol = async (rol) => {
+    const confirmMessage = `¿Estás seguro de que quieres eliminar el rol "${rol.nombreRol}"?\n\nEsta acción no se puede deshacer.`
+    if (!window.confirm(confirmMessage)) return
+    
     try {
-      const res = await fetch(`http://localhost:3000/api/roles/${id}`, {
+      setLoading(true)
+      await apiRequest(API_URLS.roles.delete(rol.id), {
         method: 'DELETE'
       })
-      if (res.ok) {
-        setMensaje('Rol eliminado correctamente')
-        fetchRoles()
-      } else {
-        const error = await res.json()
-        setMensaje(error.error || 'Error al eliminar el rol')
-      }
+      setMensaje(`Rol "${rol.nombreRol}" eliminado correctamente`)
+      setTipoMensaje('success')
+      await fetchRoles()
     } catch (error) {
       console.error('Error al eliminar rol:', error)
-      setMensaje('Error de conexión')
+      setMensaje(`Error al eliminar el rol: ${error.message}`)
+      setTipoMensaje('danger')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -105,11 +124,29 @@ const ConsultarRol = ({ onVolver }) => {
     setMensaje('')
   }
 
+  if (loadingRoles) {
+    return (
+      <div className="container mt-4">
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Cargando roles...</span>
+          </div>
+          <p className="mt-2 text-white">Cargando roles...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="container mt-4">
       <h2 className="text-white mb-3">Consultar Roles</h2>
 
-      {mensaje && <div className="alert alert-info">{mensaje}</div>}
+      {mensaje && (
+        <div className={`alert alert-${tipoMensaje} alert-dismissible fade show`} role="alert">
+          {mensaje}
+          <button type="button" className="btn-close" onClick={() => setMensaje('')}></button>
+        </div>
+      )}
 
       {!rolSeleccionado && (
         <>
@@ -117,40 +154,74 @@ const ConsultarRol = ({ onVolver }) => {
             <input
               type="text"
               className="form-control me-2"
-              placeholder="Buscar por nombre"
+              placeholder="Buscar rol por nombre..."
               value={nombreBusqueda}
               onChange={(e) => setNombreBusqueda(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') buscarPorNombre() }}
+              disabled={loading}
             />
-            <button className="btn btn-primary btn-sm me-2" onClick={buscarPorNombre}>Buscar</button>
-            <button className="btn btn-secondary btn-sm" onClick={limpiarBusqueda}>Limpiar</button>
+            <button 
+              className="btn btn-primary btn-sm me-2" 
+              onClick={buscarPorNombre}
+              disabled={loading}
+            >
+              Buscar
+            </button>
+            <button 
+              className="btn btn-secondary btn-sm" 
+              onClick={limpiarBusqueda}
+              disabled={loading}
+            >
+              Limpiar
+            </button>
           </div>
 
-          <table className="table table-dark table-hover table-bordered">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Descripción</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.isArray(resultadosFiltrados) && resultadosFiltrados.map((r) => (
-                <tr key={r.id}>
-                  <td>{r.nombreRol}</td>
-                  <td>{r.descripcion}</td>
-                  <td>
-                    <button className="btn btn-outline-light btn-sm me-2" onClick={() => seleccionarRol(r)}>
-                      Ver detalles
-                    </button>
-                    <button className="btn btn-outline-danger btn-sm" onClick={() => eliminarRol(r.id)}>
-                      ❌
-                    </button>
-                  </td>
+          <div className="table-responsive">
+            <table className="table table-dark table-hover table-bordered">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nombre</th>
+                  <th>Descripción</th>
+                  <th>Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {Array.isArray(resultadosFiltrados) && resultadosFiltrados.map((rol) => (
+                  <tr key={rol.id}>
+                    <td>{rol.id}</td>
+                    <td>{rol.nombreRol}</td>
+                    <td>{rol.descripcion || <em className="text-muted">Sin descripción</em>}</td>
+                    <td>
+                      <button 
+                        className="btn btn-outline-light btn-sm me-2" 
+                        onClick={() => seleccionarRol(rol)}
+                        disabled={loading}
+                        title="Ver y editar rol"
+                      >
+                        👁️ Ver
+                      </button>
+                      <button 
+                        className="btn btn-outline-danger btn-sm" 
+                        onClick={() => eliminarRol(rol)}
+                        disabled={loading}
+                        title={`Eliminar rol "${rol.nombreRol}"`}
+                      >
+                        {loading ? '⏳' : '🗑️'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {resultadosFiltrados.length === 0 && (
+                  <tr>
+                    <td colSpan="4" className="text-center text-muted">
+                      No hay roles para mostrar
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
 
@@ -161,17 +232,30 @@ const ConsultarRol = ({ onVolver }) => {
             datosIniciales={rolSeleccionado}
             onSubmit={guardarCambios}
             onVolver={volverListado}
+            loading={loading}
           />
           {!modoEdicion && (
             <div className="text-center mt-2">
-              <button className="btn btn-warning" onClick={activarEdicion}>Editar datos</button>
+              <button 
+                className="btn btn-warning me-2" 
+                onClick={activarEdicion}
+                disabled={loading}
+              >
+                ✏️ Editar datos
+              </button>
             </div>
           )}
         </>
       )}
 
       <div className="text-center mt-4">
-        <button className="btn btn-secondary" onClick={onVolver}>Volver al menú</button>
+        <button 
+          className="btn btn-secondary" 
+          onClick={onVolver}
+          disabled={loading}
+        >
+          Volver al menú
+        </button>
       </div>
     </div>
   )

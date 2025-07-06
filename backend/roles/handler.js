@@ -64,5 +64,22 @@ export const RestApiRolesAdapter = (rolService) => ({
         error: err.message || 'Error al eliminar el rol'
       })
     }
+  },
+
+  // Actualizar rol
+  actualizarRol: async (req, res) => {
+    try {
+      const rolActualizado = await rolService.actualizarRol(req.params.id, req.body)
+      res.status(200).json({
+        success: true,
+        rol: rolActualizado,
+        message: 'Rol actualizado correctamente'
+      })
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        error: err.message || 'Error al actualizar el rol'
+      })
+    }
   }
 })

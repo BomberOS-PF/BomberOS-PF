@@ -29,24 +29,50 @@ export function setupRoutes(app, container) {
   // Handlers del container
   const { bomberoHandler, usuarioHandler, incidenteHandler, rolesAdapter } = container
 
+  app.post('/api/roles', async (req, res) => {
+    try {
+      await rolesAdapter.registrarRol(req, res);
+    } catch (error) {
+      logger.error('Error en ruta registrar rol:', error);
+      res.status(500).json({ error: 'Error interno' });
+    }
+  });
 
-app.post('/api/roles', async (req, res) => {
-  try {
-    await rolesAdapter.registrarRol(req, res);
-  } catch (error) {
-    logger.error('Error en ruta registrar rol:', error);
-    res.status(500).json({ error: 'Error interno' });
-  }
-});
+  app.get('/api/roles', async (req, res) => {
+    try {
+      await rolesAdapter.obtenerRoles(req, res);
+    } catch (error) {
+      logger.error('Error en ruta obtener roles:', error);
+      res.status(500).json({ error: 'Error interno' });
+    }
+  });
 
-app.get('/api/roles', async (req, res) => {
-  try {
-    await rolesAdapter.obtenerRoles(req, res);
-  } catch (error) {
-    logger.error('Error en ruta obtener roles:', error);
-    res.status(500).json({ error: 'Error interno' });
-  }
-});
+  app.get('/api/roles/:id', async (req, res) => {
+    try {
+      await rolesAdapter.obtenerRolPorId(req, res);
+    } catch (error) {
+      logger.error('Error en ruta obtener rol por ID:', error);
+      res.status(500).json({ error: 'Error interno' });
+    }
+  });
+
+  app.put('/api/roles/:id', async (req, res) => {
+    try {
+      await rolesAdapter.actualizarRol(req, res);
+    } catch (error) {
+      logger.error('Error en ruta actualizar rol:', error);
+      res.status(500).json({ error: 'Error interno' });
+    }
+  });
+
+  app.delete('/api/roles/:id', async (req, res) => {
+    try {
+      await rolesAdapter.eliminarRol(req, res);
+    } catch (error) {
+      logger.error('Error en ruta eliminar rol:', error);
+      res.status(500).json({ error: 'Error interno' });
+    }
+  });
 
   // BOMBEROS
   app.get('/api/bomberos/plan', async (req, res) => {
@@ -133,7 +159,10 @@ app.get('/api/roles', async (req, res) => {
         'PUT /api/bomberos/:id',
         'DELETE /api/bomberos/:id',
         'GET /api/roles',
-        'POST /api/roles', // Ahora está disponible
+        'POST /api/roles',
+        'GET /api/roles/:id',
+        'PUT /api/roles/:id',
+        'DELETE /api/roles/:id',
       ]
     })
   })

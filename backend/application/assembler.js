@@ -83,28 +83,6 @@ export async function createServer(config) {
       infrastructure: ['dbConnection']
     })
 
-    // Rutas de roles
-    app.post('/api/roles', async (req, res) => {
-      try {
-        await rolesAdapter.registrarRol(req, res)  // Aquí el adaptador maneja la solicitud
-      } catch (error) {
-        logger.error('Error en ruta registrar rol:', error)
-        res.status(500).json({ error: 'Error interno' })
-      }
-    })
-
-    app.get('/api/roles', async (req, res) => {
-      try {
-        await rolesAdapter.obtenerRoles(req, res)  // Aquí el adaptador maneja la solicitud
-      } catch (error) {
-        logger.error('Error en ruta obtener roles:', error)
-        res.status(500).json({ error: 'Error interno' })
-      }
-    })
-
-    // Rutas de otros servicios (bombero, usuario, incidente, etc.)
-    // ... Asegúrate de que las rutas para Bombero, Usuario, Incidente, etc., también estén configuradas.
-
     return { app, container }
 
   } catch (error) {

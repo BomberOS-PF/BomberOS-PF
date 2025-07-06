@@ -25,8 +25,12 @@ export const API_URLS = {
     libresBombero: `${API_BASE_URL}/usuarios/bomberos/libres`
   },
   
-  roles:{
-    registrarRol: `${API_BASE_URL}/roles`,
+  roles: {
+    getAll: `${API_BASE_URL}/roles`,
+    getById: (id) => `${API_BASE_URL}/roles/${id}`,
+    create: `${API_BASE_URL}/roles`,
+    update: (id) => `${API_BASE_URL}/roles/${id}`,
+    delete: (id) => `${API_BASE_URL}/roles/${id}`
   },
   // Health check
   health: 'http://localhost:3000/health'

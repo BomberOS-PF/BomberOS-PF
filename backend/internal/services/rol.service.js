@@ -23,7 +23,7 @@ export class RolService {
     return await this.rolRepository.obtenerTodos();  // Verifica que este método esté implementado en tu repositorio
   }
 
-  async obtenerPorId(id) {
+  async obtenerRolPorId(id) {
     return await this.rolRepository.obtenerPorId(id);
   }
 

@@ -1,6 +1,6 @@
 export class Rol {
   constructor(data) {
-    this.id = data.id || null
+    this.id = data.id || data.idRol || null
     this.nombreRol = this.validateNombre(data.nombreRol)
     this.descripcion = this.validateDescripcion(data.descripcion)
   }
@@ -29,7 +29,7 @@ export class Rol {
 
   static fromDatabase(data) {
     return new Rol({
-      id: data.id,
+      id: data.idRol,
       nombreRol: data.nombreRol,
       descripcion: data.descripcion
     })
