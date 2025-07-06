@@ -1,6 +1,6 @@
 export class Rol {
   constructor(data) {
-    this.id = data.id || data.idRol || null
+    this.idRol = data.idRol || data.id || null
     this.nombreRol = this.validateNombre(data.nombreRol)
     this.descripcion = this.validateDescripcion(data.descripcion)
   }
@@ -21,15 +21,16 @@ export class Rol {
 
   toPlainObject() {
     return {
-      id: this.id,
+      idRol: this.idRol,
       nombreRol: this.nombreRol,
       descripcion: this.descripcion
     }
   }
 
   static fromDatabase(data) {
+    if (!data) throw new Error('No se puede crear Rol desde datos vacíos')
     return new Rol({
-      id: data.idRol,
+      idRol: data.idRol,
       nombreRol: data.nombreRol,
       descripcion: data.descripcion
     })
