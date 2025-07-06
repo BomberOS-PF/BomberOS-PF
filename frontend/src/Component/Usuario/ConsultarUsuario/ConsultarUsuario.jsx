@@ -128,7 +128,7 @@ const ConsultarUsuario = ({ onVolver }) => {
 
           {usuariosFiltrados.length > 0 ? (
             <div className="table-responsive">
-              <table className="table table-dark table-hover table-bordered">
+              <table className="tabla-bomberos">
                 <thead>
                   <tr>
                     <th>Usuario</th>

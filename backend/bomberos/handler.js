@@ -11,36 +11,39 @@ export class BomberoHandler {
   /**
    * Obtener todos los bomberos
    */
-  async getAllBomberos(req, res) {
-    try {
-      logger.info('Solicitud: Obtener bomberos', {
-        method: req.method,
-        url: req.url,
-        ip: req.ip
-      })
+  /**
+ * Obtener todos los bomberos con paginación y búsqueda
+ */
+async getAllBomberos(req, res) {
+  try {
+    logger.info('Solicitud: Obtener bomberos', {
+      method: req.method,
+      url: req.url,
+      ip: req.ip
+    })
 
-      const bomberos = await this.bomberoService.listarBomberos()
-      
-      res.status(200).json({
-        success: true,
-        message: `${bomberos.length} bomberos encontrados`,
-        data: bomberos
-      })
-    } catch (error) {
-      logger.error('Error al obtener bomberos', {
-        error: error.message,
-        method: req.method,
-        url: req.url,
-        responseTime: `${Date.now() - req.startTime}ms`
-      })
-      
-      res.status(500).json({
-        success: false,
-        message: 'Error interno del servidor',
-        error: error.message
-      })
-    }
+    const bomberos = await this.bomberoService.listarBomberos()
+
+    res.status(200).json({
+      success: true,
+      message: `${bomberos.length} bomberos encontrados`,
+      data: bomberos
+    })
+  } catch (error) {
+    logger.error('Error al obtener bomberos', {
+      error: error.message,
+      method: req.method,
+      url: req.url,
+      responseTime: `${Date.now() - req.startTime}ms`
+    })
+
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: error.message
+    })
   }
+}
 
   /**
    * Obtener bombero por ID
@@ -81,6 +84,31 @@ export class BomberoHandler {
       })
     }
   }
+  async buscarBomberos(req, res) {
+  try {
+    const { pagina = 1, limite = 10, busqueda = '' } = req.query
+
+    const resultado = await this.bomberoService.listarBomberosPaginado({
+      pagina: parseInt(pagina),
+      limite: parseInt(limite),
+      busqueda
+    })
+
+    res.status(200).json({
+      success: true,
+      total: resultado.total,
+      data: resultado.data
+    })
+  } catch (error) {
+    logger.error('Error al buscar bomberos con paginado', { error: error.message })
+    res.status(500).json({
+      success: false,
+      message: 'Error interno',
+      error: error.message
+    })
+  }
+}
+
 
   /**
    * Crear nuevo bombero
@@ -251,4 +279,5 @@ export class BomberoHandler {
       res.status(500).json({ success: false, message: error.message })
     }
   }
-} 
+}
+

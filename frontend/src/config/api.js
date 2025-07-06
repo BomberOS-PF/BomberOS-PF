@@ -5,6 +5,7 @@ export const API_URLS = {
   // Bomberos
   bomberos: {
     getAll: `${API_BASE_URL}/bomberos`,
+    buscar: `${API_BASE_URL}/bomberos/buscar`,
     getById: (id) => `${API_BASE_URL}/bomberos/${id}`,
     create: `${API_BASE_URL}/bomberos`,
     createFull: `${API_BASE_URL}/bomberos/full`,
@@ -23,6 +24,10 @@ export const API_URLS = {
     getByRol: (rol) => `${API_BASE_URL}/usuarios/rol/${rol}`,
     authenticate: `${API_BASE_URL}/usuarios/auth`,
     libresBombero: `${API_BASE_URL}/usuarios/bomberos/libres`
+  },
+  grupos: {
+    create: `${API_BASE_URL}/grupos`
+    
   },
   
   // Health check

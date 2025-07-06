@@ -11,6 +11,15 @@ import { IncidenteService } from '../internal/services/incidente.service.js'
 import { MySQLIncidenteRepository } from '../internal/repositories/mysql/incidente.repository.js'
 import { construirIncidenteHandler } from '../incidentes/handler.js'
 
+// Handler
+import { buildGrupoHandlers } from '../grupos/handler.js'
+// Servicio
+import { GrupoGuardiaService } from '../internal/services/grupo-guardia.service.js'
+// Repositorio
+import { MySQLGrupoGuardiaRepository } from '../internal/repositories/mysql/grupo-guardia.repository.js'
+
+
+
 import { MySQLDenuncianteRepository } from '../internal/repositories/mysql/denunciante.repository.js'
 
 import { WhatsAppService } from '../internal/services/whatsapp.service.js'
@@ -29,6 +38,15 @@ export async function createServer(config) {
     const usuarioRepository = new MySQLUsuarioRepository()
     const incidenteRepository = new MySQLIncidenteRepository()
     const denuncianteRepository = new MySQLDenuncianteRepository()
+
+    // Repositorio de GrupoGuardia
+    const grupoGuardiaRepository = new MySQLGrupoGuardiaRepository()
+
+// Servicio de GrupoGuardia
+    const grupoGuardiaService = new GrupoGuardiaService(grupoGuardiaRepository, bomberoRepository)
+
+// Handler de GrupoGuardia
+    const grupoGuardiaHandler = buildGrupoHandlers(grupoGuardiaService)
 
     const whatsappService = new WhatsAppService(config)
 
@@ -53,6 +71,9 @@ export async function createServer(config) {
       incidenteService,
       incidenteRepository,
       incidenteHandler,
+      grupoGuardiaRepository,
+      grupoGuardiaService,
+      grupoGuardiaHandler,
       denuncianteRepository,
       whatsappService,
       dbConnection,
@@ -62,9 +83,9 @@ export async function createServer(config) {
     await validateDependencies(container)
 
     logger.info('✅ Assembler completado exitosamente', {
-      services: ['bomberoService', 'usuarioService', 'incidenteService', 'whatsappService'],
-      repositories: ['bomberoRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository'],
-      handlers: ['bomberoHandler', 'usuarioHandler', 'incidenteHandler'],
+      services: ['bomberoService', 'usuarioService', 'incidenteService','grupoGuardiaService', 'whatsappService'],
+      repositories: ['bomberoRepository','grupoGuardiaRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository'],
+      handlers: ['bomberoHandler', 'usuarioHandler', 'incidenteHandler','grupoGuardiaHandler'],
       infrastructure: ['dbConnection']
     })
 
@@ -95,6 +116,10 @@ async function validateDependencies(container) {
     if (!container.incidenteService) throw new Error('IncidenteService no inicializado')
     if (!container.incidenteRepository) throw new Error('IncidenteRepository no inicializado')
     if (!container.incidenteHandler) throw new Error('IncidenteHandler no inicializado')
+
+    if (!container.grupoGuardiaRepository) throw new Error('GrupoGuardiaRepository no inicializado')
+    if (!container.grupoGuardiaService) throw new Error('GrupoGuardiaService no inicializado')
+    if (!container.grupoGuardiaHandler) throw new Error('GrupoGuardiaHandler no inicializado')
 
     if (!container.denuncianteRepository) throw new Error('DenuncianteRepository no inicializado')
 
