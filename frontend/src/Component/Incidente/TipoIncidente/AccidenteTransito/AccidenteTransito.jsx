@@ -161,7 +161,7 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
               <input type="tel" className="form-control" id="telefonoDamnificado" value={formData.telefonoDamnificado || ''} onChange={handleChange} />
             </div>
             <div className="col">
-              <label className="text-black form-label">DNI</label>
+              <label className="text-black form-label">dni</label>
               <input type="text" className="form-control" id="dniDamnificado" value={formData.dniDamnificado || ''} onChange={handleChange} />
             </div>
           </div>

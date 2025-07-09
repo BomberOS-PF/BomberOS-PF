@@ -23,7 +23,7 @@ export class GrupoGuardiaService {
       for (const dni of bomberos) {
         const bombero = await this.bomberoRepository.findById(dni)
         if (!bombero) {
-          throw new Error(`No existe un bombero con DNI: ${dni}`)
+          throw new Error(`No existe un bombero con dni: ${dni}`)
         }
       }
 

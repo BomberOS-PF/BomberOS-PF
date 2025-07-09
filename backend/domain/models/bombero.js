@@ -2,7 +2,6 @@ import { Email } from './value-objects/email.js'
 import { Telefono } from './value-objects/telefono.js'
 import { RangoBombero } from './value-objects/rango.js'
 import { GrupoSanguineo } from './value-objects/grupo-sanguineo.js'
-import { NombreCompleto } from './value-objects/nombre-completo.js'
 import { Domicilio } from './value-objects/domicilio.js'
 
 /**
@@ -11,8 +10,9 @@ import { Domicilio } from './value-objects/domicilio.js'
  */
 export class Bombero {
   constructor(data) {
-    this._dni = data.dni || data.DNI || null
-    this._nombreCompleto = this._createNombreCompleto(data.nombreCompleto)
+    this._dni = data.dni || data.dni || null
+    this._nombre = this._validateNombre(data.nombre)
+    this._apellido = this._validateApellido(data.apellido)
     this._legajo = data.legajo || null
     this._antiguedad = this._validateAntiguedad(data.antiguedad)
     this._rango = this._createRango(data.rango, data.idRango)
@@ -34,7 +34,8 @@ export class Bombero {
 
   // Getters
   get dni() { return this._dni }
-  get nombreCompleto() { return this._nombreCompleto }
+  get nombre() {return this._nombre}
+  get apellido() {return this._apellido}
   get legajo() { return this._legajo }
   get antiguedad() { return this._antiguedad }
   get rango() { return this._rango }
@@ -60,7 +61,7 @@ export class Bombero {
 
   puedeComandara(otroBombero) {
     return this._rango?.esIgualOMayor(otroBombero.rango) && 
-           this._antiguedad >= otroBombero.antiguedad
+          this._antiguedad >= otroBombero.antiguedad
   }
 
   estaEnPlan() {
@@ -75,10 +76,30 @@ export class Bombero {
     return this._fechaFichaMedica && this._aptoPsicologico
   }
 
-  // Métodos privados para construcción
-  _createNombreCompleto(nombreCompleto) {
-    return nombreCompleto ? new NombreCompleto(nombreCompleto) : null
+  _validateNombre() {
+    if (!nombre || typeof nombre !== 'string') {
+      throw new Error('El campo nombre requere cadena de caracteres')
+    }
+    const trimNombre = nombre.trim()
+    if (trimNombre.lenght = 0) {
+      throw new Error('El nombre no puede ser vacío')
+    }
+
+    return this._capitalize(trimNombre)
   }
+
+  _validateApellido() {
+    if (!apellido || typeof apellido !== 'string') {
+      throw new Error('El campo apellido requere cadena de caracteres')
+    }
+    const trimApellido = apellido.trim()
+    if (trimApellido.lenght = 0) {
+      throw new Error('El apellido no puede ser vacío')
+    }
+
+    return this._capitalize(trimApellido)
+  }
+
 
   _createDomicilio(domicilioValue) {
     return domicilioValue ? new Domicilio(domicilioValue) : null
@@ -126,8 +147,9 @@ export class Bombero {
   // Serialización para persistencia
   toDatabase() {
     return {
-      DNI: this._dni,
-      nombreCompleto: this._nombreCompleto?.toString(),
+      dni: this._dni,
+      nombre: this._nombre,
+      apellido: this._apellido,
       legajo: this._legajo,
       antiguedad: this._antiguedad,
       idRango: this._rango?.id,
@@ -147,9 +169,10 @@ export class Bombero {
   // Serialización para API (usando getters públicos)
   toJSON() {
     return {
-      DNI: this.dni,
       dni: this.dni,
-      nombreCompleto: this.nombreCompleto?.toString(),
+      dni: this.dni,
+      nombre: this.nombre,
+      apellido: this.apellido,
       legajo: this.legajo,
       antiguedad: this.antiguedad,
       rango: this.rango?.toString(),

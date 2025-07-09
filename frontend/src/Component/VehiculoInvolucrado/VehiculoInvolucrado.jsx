@@ -41,12 +41,12 @@ const VehiculoInvolucrado = ({ onVolver }) => {
     setFormData(prev => ({ ...prev, [id]: value }))
   }
 
-  const handleDotacionChange = (bomberoDNI, checked) => {
+  const handleDotacionChange = (bomberodni, checked) => {
     setFormData(prev => ({
       ...prev,
       dotacionSeleccionada: checked
-        ? [...prev.dotacionSeleccionada, bomberoDNI]
-        : prev.dotacionSeleccionada.filter(dni => dni !== bomberoDNI)
+        ? [...prev.dotacionSeleccionada, bomberodni]
+        : prev.dotacionSeleccionada.filter(dni => dni !== bomberodni)
     }))
   }
 
@@ -91,8 +91,8 @@ const VehiculoInvolucrado = ({ onVolver }) => {
               >
                 <option value="">Seleccione chofer</option>
                 {bomberos.map((bombero) => (
-                  <option key={bombero.dni || bombero.DNI} value={bombero.dni || bombero.DNI}>
-                    {bombero.nombreCompleto}
+                  <option key={bombero.dni} value={bombero.dni}>
+                    {bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : ''}
                   </option>
                 ))}
               </select>
@@ -110,8 +110,8 @@ const VehiculoInvolucrado = ({ onVolver }) => {
               >
                 <option value="">Seleccione responsable</option>
                 {bomberos.map((bombero) => (
-                  <option key={bombero.dni || bombero.DNI} value={bombero.dni || bombero.DNI}>
-                    {bombero.nombreCompleto}
+                  <option key={bombero.dni || bombero.dni} value={bombero.dni || bombero.dni}>
+                    {bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : ''}
                   </option>
                 ))}
               </select>
@@ -135,16 +135,16 @@ const VehiculoInvolucrado = ({ onVolver }) => {
                 <p className="text-black">Cargando bomberos...</p>
               ) : (
                 bomberos.map((bombero) => (
-                  <div className="form-check text-black ms-2" key={bombero.dni || bombero.DNI}>
+                  <div className="form-check text-black ms-2" key={bombero.dni || bombero.dni}>
                     <input 
                       className="text-black form-check-input" 
                       type="checkbox" 
-                      id={`bombero-${bombero.dni || bombero.DNI}`}
-                      checked={formData.dotacionSeleccionada.includes(bombero.dni || bombero.DNI)}
-                      onChange={(e) => handleDotacionChange(bombero.dni || bombero.DNI, e.target.checked)}
+                      id={`bombero-${bombero.dni || bombero.dni}`}
+                      checked={formData.dotacionSeleccionada.includes(bombero.dni || bombero.dni)}
+                      onChange={(e) => handleDotacionChange(bombero.dni || bombero.dni, e.target.checked)}
                     />
-                    <label className="text-black form-check-label" htmlFor={`bombero-${bombero.dni || bombero.DNI}`}>
-                      {bombero.nombreCompleto}
+                    <label className="text-black form-check-label" htmlFor={`bombero-${bombero.dni || bombero.dni}`}>
+                      {bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : ''}
                     </label>
                   </div>
                 ))

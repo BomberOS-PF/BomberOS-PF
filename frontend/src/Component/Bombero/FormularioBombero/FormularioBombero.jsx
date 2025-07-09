@@ -4,8 +4,9 @@ import '../../../Component/DisenioFormulario/DisenioFormulario.css'
 
 const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVolver, loading = false, ocultarTitulo = false }) => {
   const [formData, setFormData] = useState({
-    DNI: '',
-    nombreCompleto: '',
+    dni: '',
+    nombre: '',
+    apellido: '',
     correo: '',
     telefono: '',
     domicilio: '',
@@ -26,16 +27,11 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
       console.log('🔄 Cargando datos iniciales en FormularioBombero:', datosIniciales)
       console.log('🎯 Modo:', modo)
       
-      // Mapear los datos del backend al formato del formulario con flexibilidad
-      const nombreCompleto = datosIniciales.nombreCompleto || datosIniciales.nombre_completo || ''
-      const [nombre, ...apellidoParts] = nombreCompleto.split(' ')
-      const apellido = apellidoParts.join(' ')
       
       const datosFormateados = {
-        DNI: datosIniciales.DNI || datosIniciales.dni || '',
-        nombreCompleto: nombreCompleto,
-        nombre: nombre || '',
-        apellido: apellido || '',
+        dni: datosIniciales.dni || datosIniciales.dni || '',
+        nombre: datosIniciales.nombre || '',
+        apellido: datosIniciales.apellido || '',
         correo: datosIniciales.correo || datosIniciales.email || '',
         telefono: datosIniciales.telefono || datosIniciales.phone || '',
         domicilio: datosIniciales.domicilio || datosIniciales.direccion || '',
@@ -67,13 +63,6 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
         [id]: newValue
       }
       
-      // Si cambia nombre o apellido, actualizar nombreCompleto
-      if (id === 'nombre' || id === 'apellido') {
-        const nombre = id === 'nombre' ? newValue : prev.nombre || ''
-        const apellido = id === 'apellido' ? newValue : prev.apellido || ''
-        updated.nombreCompleto = `${nombre} ${apellido}`.trim()
-      }
-      
       // Si cambia el rango, actualizar idRango
       if (id === 'rango') {
         updated.idRango = getRangoId(newValue)
@@ -91,8 +80,9 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
     
     // Preparar datos para enviar al backend
     const dataToSend = {
-      DNI: formData.DNI,
-      nombreCompleto: formData.nombreCompleto,
+      dni: formData.dni,
+      nombre: formData.nombre,
+      apellido: formData.apellido,
       correo: formData.correo,
       telefono: formData.telefono,
       domicilio: formData.domicilio,
@@ -176,20 +166,20 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             />
           )}
           
-          {/* DNI - Nombre Completo */}
+          {/* dni - Nombre Completo */}
           <div className="row mb-3">
             <div className="col-md-4">
-              <label className="form-label">DNI</label>
+              <label className="form-label">dni</label>
               <input 
                 type="text" 
                 className="form-control" 
-                id="DNI" 
-                value={formData.DNI || ''} 
+                id="dni" 
+                value={formData.dni || ''} 
                 required={!soloLectura}
                 onChange={handleChange} 
                 disabled={soloLectura || loading || modo === 'edicion'} 
                 pattern="[0-9]{7,8}"
-                title="Ingrese un DNI válido (7-8 dígitos)"
+                title="Ingrese un dni válido (7-8 dígitos)"
               />
             </div>
             <div className="col-md-4">

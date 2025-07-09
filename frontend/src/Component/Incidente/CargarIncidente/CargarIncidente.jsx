@@ -56,7 +56,7 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
       }
 
       const payload = {
-        DNI: usuario?.dni,
+        dni: usuario?.dni,
         idTipoIncidente: tipoMap[formData.tipoSiniestro],
         fecha: formData.fechaHora,
         idLocalizacion: localizacionMap[formData.localizacion] || 99,
@@ -232,7 +232,7 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
               <input type="tel" className="form-control" id="telefonoDenunciante" onChange={handleChange} />
             </div>
             <div className="col">
-              <label htmlFor="dniDenunciante" className="text-black form-label">DNI</label>
+              <label htmlFor="dniDenunciante" className="text-black form-label">dni</label>
               <input type="text" className="form-control" id="dniDenunciante" onChange={handleChange} />
             </div>
           </div>

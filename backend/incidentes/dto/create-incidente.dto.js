@@ -1,10 +1,10 @@
 export function crearIncidenteDto(data) {
-  if (!data.DNI || !data.idTipoIncidente || !data.fecha || !data.idLocalizacion || !data.descripcion) {
+  if (!data.dni || !data.idTipoIncidente || !data.fecha || !data.idLocalizacion || !data.descripcion) {
     throw new Error('Faltan datos obligatorios para crear el incidente')
   }
 
   const dto = {
-    dni: data.DNI,
+    dni: data.dni,
     idTipoIncidente: data.idTipoIncidente,
     fecha: data.fecha,
     idLocalizacion: data.idLocalizacion,

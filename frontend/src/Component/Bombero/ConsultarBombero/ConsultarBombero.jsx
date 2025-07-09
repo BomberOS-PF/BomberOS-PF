@@ -6,7 +6,7 @@ import '../../DisenioFormulario/DisenioFormulario.css'
 
 const ConsultarBombero = ({ onVolver }) => {
   const [bomberos, setBomberos] = useState([])
-  const [dniBusqueda, setDniBusqueda] = useState('')
+  const [dniBusqueda, setdniBusqueda] = useState('')
   const [resultadosFiltrados, setResultadosFiltrados] = useState([])
   const [bomberoSeleccionado, setBomberoSeleccionado] = useState(null)
   const [modoEdicion, setModoEdicion] = useState(false)
@@ -49,8 +49,8 @@ const ConsultarBombero = ({ onVolver }) => {
     }
   }
 
-  const buscarPorDNI = () => {
-    console.log('🔍 Buscando DNI:', dniBusqueda)
+  const buscarPordni = () => {
+    console.log('🔍 Buscando dni:', dniBusqueda)
     console.log('📊 Bomberos disponibles:', bomberos)
     
     if (dniBusqueda.trim() === '') {
@@ -60,7 +60,7 @@ const ConsultarBombero = ({ onVolver }) => {
     }
 
     const filtrados = bomberos.filter(b => {
-      const dni = String(b.DNI || b.dni || '')
+      const dni = String(b.dni || b.dni || '')
       console.log('🔍 Comparando:', dni, 'con', dniBusqueda.trim())
       return dni.includes(dniBusqueda.trim())
     })
@@ -69,14 +69,14 @@ const ConsultarBombero = ({ onVolver }) => {
     setResultadosFiltrados(filtrados)
 
     if (filtrados.length === 0) {
-      setMensaje('No se encontró ningún bombero con ese DNI.')
+      setMensaje('No se encontró ningún bombero con ese dni.')
     } else {
       setMensaje('')
     }
   }
 
   const limpiarBusqueda = () => {
-    setDniBusqueda('')
+    setdniBusqueda('')
     setResultadosFiltrados(bomberos)
     setMensaje('')
   }
@@ -92,14 +92,14 @@ const ConsultarBombero = ({ onVolver }) => {
   }
 
   const guardarCambios = async (datosActualizados) => {
-    const dni = bomberoSeleccionado.DNI || bomberoSeleccionado.dni
+    const dni = bomberoSeleccionado.dni || bomberoSeleccionado.dni
     console.log('💾 Guardando cambios para bombero:', bomberoSeleccionado)
-    console.log('🆔 DNI del bombero:', dni)
+    console.log('🆔 dni del bombero:', dni)
     console.log('📝 Datos actualizados:', datosActualizados)
     
     if (!dni) {
-      console.error('❌ No se encontró DNI válido para actualizar')
-      setMensaje('Error: No se pudo identificar el DNI del bombero')
+      console.error('❌ No se encontró dni válido para actualizar')
+      setMensaje('Error: No se pudo identificar el dni del bombero')
       return
     }
     
@@ -142,17 +142,17 @@ const ConsultarBombero = ({ onVolver }) => {
   }
 
   const eliminarBombero = async (bombero) => {
-    const dni = bombero.DNI || bombero.dni
+    const dni = bombero.dni || bombero.dni
     console.log('🗑️ Intentando eliminar bombero:', bombero)
-    console.log('🆔 DNI a eliminar:', dni)
+    console.log('🆔 dni a eliminar:', dni)
     
     if (!dni) {
-      console.error('❌ No se encontró DNI válido:', bombero)
-      setMensaje('Error: No se pudo identificar el DNI del bombero')
+      console.error('❌ No se encontró dni válido:', bombero)
+      setMensaje('Error: No se pudo identificar el dni del bombero')
       return
     }
     
-    if (!window.confirm(`¿Estás seguro de que querés eliminar al bombero ${bombero.nombreCompleto || 'seleccionado'}?`)) return
+    if (!window.confirm(`¿Estás seguro de que querés eliminar al bombero ${bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}`: 'seleccionado'}?`)) return
 
     setLoading(true)
     try {
@@ -171,7 +171,7 @@ const ConsultarBombero = ({ onVolver }) => {
         fetchBomberos() // Recargar lista
         
         // Si el bombero eliminado estaba seleccionado, limpiar selección
-        if (bomberoSeleccionado && (bomberoSeleccionado.DNI === dni || bomberoSeleccionado.dni === dni)) {
+        if (bomberoSeleccionado && (bomberoSeleccionado.dni === dni || bomberoSeleccionado.dni === dni)) {
           setBomberoSeleccionado(null)
           setModoEdicion(false)
         }
@@ -223,15 +223,15 @@ const ConsultarBombero = ({ onVolver }) => {
               <input
                 type="text"
                 className="form-control me-2 buscador-dni"
-                placeholder="Buscar por DNI"
+                placeholder="Buscar por dni"
                 value={dniBusqueda}
-                onChange={(e) => setDniBusqueda(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') buscarPorDNI() }}
+                onChange={(e) => setdniBusqueda(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') buscarPordni() }}
                 disabled={loading}
               />
               <button 
                 className="btn btn-primary btn-sm me-2" 
-                onClick={buscarPorDNI}
+                onClick={buscarPordni}
                 disabled={loading}
               >
                 Buscar
@@ -251,7 +251,7 @@ const ConsultarBombero = ({ onVolver }) => {
                   <thead>
                     <tr>
                       <th>Nombre completo</th>
-                      <th>DNI</th>
+                      <th>dni</th>
                       <th>Teléfono</th>
                       <th>Email</th>
                       <th>Es del Plan</th>
@@ -262,9 +262,9 @@ const ConsultarBombero = ({ onVolver }) => {
                     {resultadosFiltrados.map((bombero, index) => {
                       console.log(`🔍 Renderizando bombero ${index}:`, bombero)
                       return (
-                        <tr key={bombero.DNI || bombero.dni || index}>
-                          <td>{bombero.nombreCompleto || bombero.nombre_completo || 'N/A'}</td>
-                          <td>{bombero.DNI || bombero.dni || 'N/A'}</td>
+                        <tr key={bombero.dni || bombero.dni || index}>
+                          <td>{bombero.nombre & bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : 'N/A'}</td>
+                          <td>{bombero.dni || bombero.dni || 'N/A'}</td>
                           <td>{bombero.telefono || bombero.phone || 'N/A'}</td>
                           <td>{bombero.correo || bombero.email || 'N/A'}</td>
                           <td>
@@ -312,9 +312,9 @@ const ConsultarBombero = ({ onVolver }) => {
             <div className="d-flex justify-content-between align-items-center mb-4">
               <h3 className="text-white mb-0">
                 {modoEdicion ? (
-                  <>✏️ Editando: {bomberoSeleccionado.nombreCompleto || `${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}`}</>
+                  <>✏️ Editando: {bomberoSeleccionado.nombre && bomberoSeleccionado.apellido ? `${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}` : 'Bombero'}</>
                 ) : (
-                  <>👤 Detalles: {bomberoSeleccionado.nombreCompleto || `${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}`}</>
+                  <>👤 Detalles: {bomberoSeleccionado.nombre && bomberoSeleccionado.apellido ? `${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}` : 'Bombero'}</>
                 )}
               </h3>
               <div className="d-flex gap-2">
