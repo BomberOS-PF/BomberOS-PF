@@ -6,7 +6,7 @@ import './Login.css'
 
 const Login = ({ setUser, user }) => {
   const [usuario, setUsuario] = useState('')
-  const [contrasena, setContrasena] = useState('')
+  const [password, setpassword] = useState('')
   const [mostrarRecuperar, setMostrarRecuperar] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -22,7 +22,7 @@ const Login = ({ setUser, user }) => {
 
   const resetForm = () => {
     setUsuario('')
-    setContrasena('')
+    setpassword('')
     setError('')
   }
 
@@ -34,7 +34,7 @@ const Login = ({ setUser, user }) => {
       const res = await fetch('http://localhost:3000/api/usuarios/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario, contrasena })
+        body: JSON.stringify({ usuario, password })
       })
 
       const data = await res.json()
@@ -116,15 +116,15 @@ const Login = ({ setUser, user }) => {
             />
           </div>
           <div className="mb-3 text-start">
-            <label htmlFor="contrasena" className="text-black form-label">Contraseña</label>
+            <label htmlFor="password" className="text-black form-label">Contraseña</label>
             <input
               type="password"
               className="form-control"
-              id="contrasena"
+              id="password"
               placeholder="Ingrese su contraseña"
               required
-              value={contrasena}
-              onChange={(e) => setContrasena(e.target.value)}
+              value={password}
+              onChange={(e) => setpassword(e.target.value)}
               disabled={loading}
             />
           </div>

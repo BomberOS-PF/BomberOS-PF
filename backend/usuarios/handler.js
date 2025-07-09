@@ -254,7 +254,7 @@ export class UsuarioHandler {
    */
   async authenticateUsuario(req, res) {
     try {
-      const { usuario, contrasena } = req.body
+      const { usuario, password } = req.body
       
       logger.info('Solicitud: Autenticar usuario', {
         usuario,
@@ -263,7 +263,7 @@ export class UsuarioHandler {
         ip: req.ip
       })
 
-      const usuarioAutenticado = await this.usuarioService.autenticarUsuario(usuario, contrasena)
+      const usuarioAutenticado = await this.usuarioService.autenticarUsuario(usuario, password)
       
       res.status(200).json({
         success: true,

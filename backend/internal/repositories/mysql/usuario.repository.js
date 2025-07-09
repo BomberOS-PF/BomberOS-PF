@@ -14,7 +14,7 @@ export class MySQLUsuarioRepository {
 
   async findAll() {
     const query = `
-      SELECT idUsuario, usuario, contrasena, email, idRol
+      SELECT idUsuario, usuario, password, email, idRol
       FROM ${this.tableName}
       ORDER BY usuario ASC
     `
@@ -36,7 +36,7 @@ export class MySQLUsuarioRepository {
 
   async findById(id) {
     const query = `
-      SELECT idUsuario, usuario, contrasena, email, idRol
+      SELECT idUsuario, usuario, password, email, idRol
       FROM ${this.tableName} 
       WHERE idUsuario = ?
     `
@@ -67,7 +67,7 @@ export class MySQLUsuarioRepository {
 
   async findByUsername(username) {
     const query = `
-      SELECT idUsuario, usuario, contrasena, email, idRol
+      SELECT idUsuario, usuario, password, email, idRol
       FROM ${this.tableName} 
       WHERE usuario = ?
     `
@@ -91,15 +91,15 @@ export class MySQLUsuarioRepository {
     const data = usuario.toDatabase()
     
     // Hashear la contraseña antes de guardarla
-    let hashedPassword = data.contrasena
-    if (data.contrasena && !PasswordUtils.isHashed(data.contrasena)) {
+    let hashedPassword = data.password
+    if (data.password && !PasswordUtils.isHashed(data.password)) {
       logger.debug('Hasheando contraseña para nuevo usuario', { usuario: data.usuario })
-      hashedPassword = await PasswordUtils.hashPassword(data.contrasena)
+      hashedPassword = await PasswordUtils.hashPassword(data.password)
     }
     
     const query = `
       INSERT INTO ${this.tableName} (
-        usuario, contrasena, email, idRol
+        usuario, password, email, idRol
       ) VALUES (?, ?, ?, ?)
     `
     
@@ -132,15 +132,15 @@ export class MySQLUsuarioRepository {
     const data = usuario.toDatabase()
     
     // Hashear la contraseña si se está actualizando y no está ya hasheada
-    let hashedPassword = data.contrasena
-    if (data.contrasena && !PasswordUtils.isHashed(data.contrasena)) {
+    let hashedPassword = data.password
+    if (data.password && !PasswordUtils.isHashed(data.password)) {
       logger.debug('Hasheando nueva contraseña para usuario', { id })
-      hashedPassword = await PasswordUtils.hashPassword(data.contrasena)
+      hashedPassword = await PasswordUtils.hashPassword(data.password)
     }
     
     const query = `
       UPDATE ${this.tableName} 
-      SET contrasena = ?, email = ?, idRol = ?
+      SET password = ?, email = ?, idRol = ?
       WHERE idUsuario = ?
     `
     
@@ -185,7 +185,7 @@ export class MySQLUsuarioRepository {
 
   async findByRol(idRol) {
     const query = `
-      SELECT idUsuario, usuario, contrasena, email, idRol
+      SELECT idUsuario, usuario, password, email, idRol
       FROM ${this.tableName} 
       WHERE idRol = ?
       ORDER BY usuario ASC
@@ -209,7 +209,7 @@ export class MySQLUsuarioRepository {
 
   async authenticate(username, password) {
     const query = `
-      SELECT idUsuario, usuario, contrasena, email, idRol
+      SELECT idUsuario, usuario, password, email, idRol
       FROM ${this.tableName} 
       WHERE usuario = ?
     `
@@ -224,8 +224,13 @@ export class MySQLUsuarioRepository {
       
       const usuario = Usuario.create(rows[0])
       
+      logger.info('🔑 Comparando contraseñas', {
+        passwordPlano: password,
+        passwordHash: usuario.password // o como se llame el campo que viene de la DB
+      })
+
       // Verificar contraseña usando bcrypt
-      const isPasswordValid = await PasswordUtils.verifyPassword(password, usuario.contrasena)
+      const isPasswordValid = await PasswordUtils.verifyPassword(password, usuario.password)
       
       if (isPasswordValid) {
         logger.debug('Autenticación exitosa', { username })
