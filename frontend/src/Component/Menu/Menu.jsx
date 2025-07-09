@@ -94,7 +94,7 @@ const Menu = ({ user, setUser }) => {
     administrador: [
       'cargar-incidente', 'registrar-bombero', 'consultar-bombero',
       'registrar-usuario', 'consultar-usuario',
-      'registrar-rol', 'participacion-incidente', 'vehiculo-involucrado', 'registrar-guardia'
+      'registrar-rol','consultar-rol', 'participacion-incidente', 'vehiculo-involucrado', 'registrar-guardia'
     ],
     bombero: [
       'cargar-incidente', 'consultar-bombero',

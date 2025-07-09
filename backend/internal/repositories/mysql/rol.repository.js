@@ -15,7 +15,7 @@ export class MySQLRolRepository {
       const conn = getConnection()
       const [result] = await conn.execute(query, values)
       logger.info('Rol insertado correctamente', { idRol: result.insertId })
-      return { idRol: result.insertId, ...rol }
+      return new Rol({ idRol: result.insertId, nombreRol: rol.nombreRol, descripcion: rol.descripcion })
     } catch (err) {
       logger.error('Error al insertar rol', { error: err.message })
       throw err
@@ -48,7 +48,7 @@ export class MySQLRolRepository {
     const values = [datos.nombreRol, datos.descripcion, id]
     const conn = getConnection()
     await conn.execute(query, values)
-    return { idRol: id, ...datos }
+    return new Rol({ idRol: id, nombreRol: datos.nombreRol, descripcion: datos.descripcion })
   }
 
   async eliminarPorId(id) {

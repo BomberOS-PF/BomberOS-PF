@@ -1,16 +1,15 @@
 // \backend\roles\handler.js
 
 export const RestApiRolesAdapter = (rolService) => ({
-  // Registrar un nuevo rol
+  // Crear un nuevo rol
   registrarRol: async (req, res) => {
     try {
       const rol = await rolService.registrarRol(req.body)
       res.status(201).json({
         success: true,
-        rol: rol // Aquí debería ser el rol que creamos
+        data: rol.toPlainObject()
       })
     } catch (err) {
-      // Enviar el error con un mensaje adecuado si algo falla
       res.status(400).json({
         success: false,
         error: err.message || 'Error al registrar rol'
@@ -21,10 +20,10 @@ export const RestApiRolesAdapter = (rolService) => ({
   // Obtener todos los roles
   obtenerRoles: async (req, res) => {
     try {
-      const roles = await rolService.obtenerTodos() // Asegúrate de que el servicio esté correcto
+      const roles = await rolService.obtenerTodos()
       res.status(200).json({
         success: true,
-        data: roles.map(r => r.toPlainObject()) // Convertir los roles en objetos planos para la respuesta
+        data: roles.map(r => r.toPlainObject())
       })
     } catch (err) {
       res.status(500).json({
@@ -40,17 +39,34 @@ export const RestApiRolesAdapter = (rolService) => ({
       const rol = await rolService.obtenerRolPorId(req.params.id)
       res.status(200).json({
         success: true,
-        rol
+        data: rol.toPlainObject()
       })
     } catch (err) {
-      res.status(500).json({
+      res.status(404).json({
         success: false,
-        error: err.message || 'Error al obtener el rol'
+        error: err.message || 'Rol no encontrado'
       })
     }
   },
 
-  // Eliminar rol
+  // Actualizar un rol existente
+  actualizarRol: async (req, res) => {
+    try {
+      const rolActualizado = await rolService.actualizarRol(req.params.id, req.body)
+      res.status(200).json({
+        success: true,
+        data: rolActualizado.toPlainObject(),
+        message: 'Rol actualizado correctamente'
+      })
+    } catch (err) {
+      res.status(400).json({
+        success: false,
+        error: err.message || 'Error al actualizar el rol'
+      })
+    }
+  },
+
+  // Eliminar un rol
   eliminarRol: async (req, res) => {
     try {
       await rolService.eliminarRol(req.params.id)
@@ -59,26 +75,9 @@ export const RestApiRolesAdapter = (rolService) => ({
         message: 'Rol eliminado correctamente'
       })
     } catch (err) {
-      res.status(500).json({
+      res.status(400).json({
         success: false,
         error: err.message || 'Error al eliminar el rol'
-      })
-    }
-  },
-
-  // Actualizar rol
-  actualizarRol: async (req, res) => {
-    try {
-      const rolActualizado = await rolService.actualizarRol(req.params.id, req.body)
-      res.status(200).json({
-        success: true,
-        rol: rolActualizado,
-        message: 'Rol actualizado correctamente'
-      })
-    } catch (err) {
-      res.status(500).json({
-        success: false,
-        error: err.message || 'Error al actualizar el rol'
       })
     }
   }

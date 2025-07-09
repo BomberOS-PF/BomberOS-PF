@@ -36,7 +36,7 @@ const FormularioRol = ({ modo, datosIniciales = {}, onSubmit, onVolver, loading 
         </h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
-            <label htmlFor="nombreRol" className="form-label text-white">
+            <label htmlFor="nombreRol" className="form-label text-black">
               Nombre del Rol <span className="text-danger">*</span>
             </label>
             <input
@@ -51,7 +51,7 @@ const FormularioRol = ({ modo, datosIniciales = {}, onSubmit, onVolver, loading 
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="descripcion" className="form-label text-white">
+            <label htmlFor="descripcion" className="form-label text-black">
               Descripción <span className="text-muted">(opcional)</span>
             </label>
             <textarea
