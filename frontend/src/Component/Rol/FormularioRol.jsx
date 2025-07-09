@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-
+import '../DisenioFormulario/DisenioFormulario.css'
 const FormularioRol = ({ modo, datosIniciales = {}, onSubmit, onVolver, loading = false }) => {
   const [formData, setFormData] = useState({
     nombreRol: '',

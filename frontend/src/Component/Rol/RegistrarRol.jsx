@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
 import { apiRequest, API_URLS } from '../../config/api'
-//import './DisenioFormulario.css'
-import FormularioRol from './FormularioRol.jsx'
+import '../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarRol = ({ onVolver }) => {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('')
+  const [formData, setFormData] = useState({
+    nombreRol: '',
+    descripcion: ''
+  })
 
-  // Limpiar el mensaje después de 3 segundos
   useEffect(() => {
     if (message) {
       const timer = setTimeout(() => setMessage(''), 3000)
@@ -16,7 +18,16 @@ const RegistrarRol = ({ onVolver }) => {
     }
   }, [message])
 
-  const handleSubmit = async (formData) => {
+  const handleChange = (e) => {
+    const { id, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
     setLoading(true)
     setMessage('')
 
@@ -48,9 +59,9 @@ const RegistrarRol = ({ onVolver }) => {
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center">
-      <div className="formulario-consistente" style={{ width: '100%', maxWidth: '500px' }}>
-        <h2 className="text-center mb-4">Registrar Rol</h2>
+    <div className="container d-flex justify-content-center align-items-center min-vh-100">
+      <div className="formulario-consistente p-4 shadow rounded w-100" style={{ maxWidth: '500px' }}>
+        <h2 className="text-black text-center mb-4">Registrar Nuevo Rol</h2>
 
         {message && (
           <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'} mb-3`}>
@@ -58,12 +69,61 @@ const RegistrarRol = ({ onVolver }) => {
           </div>
         )}
 
-        <FormularioRol
-          modo="alta"
-          onSubmit={handleSubmit}
-          onVolver={onVolver}
-          loading={loading}
-        />
+        <form onSubmit={handleSubmit}>
+          <div className="mb-3">
+            <label htmlFor="nombreRol" className="form-label text-black">
+              Nombre del Rol <span className="text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              className="form-control"
+              id="nombreRol"
+              required
+              value={formData.nombreRol}
+              onChange={handleChange}
+              disabled={loading}
+              placeholder="Ej: Bombero, Administrador, Instructor..."
+            />
+          </div>
+          <div className="mb-4">
+            <label htmlFor="descripcion" className="form-label text-black">
+              Descripción <span className="text-muted">(opcional)</span>
+            </label>
+            <textarea
+              className="form-control"
+              id="descripcion"
+              rows="3"
+              value={formData.descripcion}
+              onChange={handleChange}
+              disabled={loading}
+              placeholder="Describe las responsabilidades y funciones de este rol..."
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            className="btn btn-danger w-100 mb-3"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Registrando...
+              </>
+            ) : (
+              'Registrar Rol'
+            )}
+          </button>
+
+          <button 
+            type="button" 
+            className="btn btn-secondary w-100" 
+            onClick={onVolver}
+            disabled={loading}
+          >
+            Volver
+          </button>
+        </form>
       </div>
     </div>
   )
