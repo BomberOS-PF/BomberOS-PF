@@ -8,7 +8,7 @@ export class Usuario {
   constructor(data) {
     this._idUsuario = data.idUsuario || data.id || null
     this._usuario = this._validateUsername(data.usuario || data.username)
-    this._contrasena = data.contrasena || data.password || null
+    this._password = data.password || data.password || null
     this._email = this._createEmail(data.email)
     this._idRol = data.idRol || this._mapRolToId(data.rol) || null
     this._activo = Boolean(data.activo !== undefined ? data.activo : true)
@@ -26,8 +26,8 @@ export class Usuario {
   get idUsuario() { return this._idUsuario }
   get username() { return this._usuario }
   get usuario() { return this._usuario }
-  get password() { return this._contrasena }
-  get contrasena() { return this._contrasena }
+  get password() { return this._password }
+  get password() { return this._password }
   get email() { return this._email }
   get rol() { return this._mapIdToRol(this._idRol) }
   get idRol() { return this._idRol }
@@ -115,7 +115,7 @@ export class Usuario {
     return {
       idUsuario: this._idUsuario,
       usuario: this._usuario,
-      contrasena: this._contrasena,
+      password: this._password,
       email: this._email?.toString(),
       idRol: this._idRol
     }
@@ -139,7 +139,7 @@ export class Usuario {
     return {
       id: this.idUsuario,
       username: this.usuario,
-      password: this.contrasena,
+      password: this.password,
       email: this.email?.toString(),
       rol: this.rol,
       activo: this.activo,

@@ -60,6 +60,9 @@ async function main() {
           'GET /api/usuarios/rol/:rol',
           'POST /api/usuarios/auth'
         ],
+        roles: [
+          'RegistrarRol /api/roles'
+        ],
         health: ['GET /health']
       })
     })
