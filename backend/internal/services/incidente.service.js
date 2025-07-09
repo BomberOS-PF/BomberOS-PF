@@ -29,7 +29,6 @@ export class IncidenteService extends IncidenteServiceInterface {
     }
 
     const nuevoIncidente = new Incidente({
-      dni: data.dni,
       idTipoIncidente: data.idTipoIncidente,
       fecha: data.fecha,
       idLocalizacion: data.idLocalizacion,

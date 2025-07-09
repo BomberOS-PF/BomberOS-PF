@@ -45,15 +45,13 @@ export class MySQLIncidenteRepository {
   async create(incidente) {
     const query = `
       INSERT INTO ${this.tableName} 
-        (dni, idTipoIncidente, fecha, idDenunciante, idLocalizacion, descripcion)
-      VALUES (?, ?, ?, ?, ?, ?)
+        (idTipoIncidente, fecha, idLocalizacion, descripcion)
+      VALUES (?, ?, ?, ?)
     `
 
     const params = [
-      incidente.dni,
       incidente.idTipoIncidente,
       incidente.fecha,
-      incidente.idDenunciante ?? null, // 🔑 Asegura que sea null si es undefined
       incidente.idLocalizacion,
       incidente.descripcion
     ]
@@ -75,16 +73,14 @@ export class MySQLIncidenteRepository {
   async update(id, incidente) {
     const query = `
       UPDATE ${this.tableName} SET 
-        dni = ?, idTipoIncidente = ?, fecha = ?, 
-        idDenunciante = ?, idLocalizacion = ?, descripcion = ?
+        idTipoIncidente = ?, fecha = ?, 
+        idLocalizacion = ?, descripcion = ?
       WHERE idIncidente = ?
     `
 
-    const params = [
-      incidente.dni,
+    const params = [     
       incidente.idTipoIncidente,
       incidente.fecha,
-      incidente.idDenunciante ?? null,
       incidente.idLocalizacion,
       incidente.descripcion,
       id

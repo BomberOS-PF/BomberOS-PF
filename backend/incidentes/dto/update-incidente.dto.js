@@ -1,5 +1,5 @@
 export function updateIncidenteDto(data) {
-  const camposPermitidos = ['idTipoIncidente', 'fecha', 'idDenunciante', 'idLocalizacion', 'descripcion']
+  const camposPermitidos = ['idTipoIncidente', 'fecha', 'idLocalizacion', 'descripcion']
   const resultado = {}
 
   for (const campo of camposPermitidos) {

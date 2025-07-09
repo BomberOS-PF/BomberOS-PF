@@ -84,8 +84,8 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
         b.aptoPsicologico, b.domicilio, b.grupoSanguineo, b.idUsuario,
         GROUP_CONCAT(g.nombre SEPARATOR ', ') AS grupos
       FROM ${this.tableName} b
-      LEFT JOIN bomberos_grupo bg ON bg.dniBombero = b.dni
-      LEFT JOIN grupo_guardia g ON g.idGrupo = bg.idGrupo
+      LEFT JOIN bomberosGrupo bg ON bg.dni = b.dni
+      LEFT JOIN grupoGuardia g ON g.idGrupo = bg.idGrupo
       ${whereClause}
       GROUP BY b.dni
       ORDER BY b.apellido ASC, b.nombre ASC
@@ -113,8 +113,8 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
     const countQuery = `
       SELECT COUNT(DISTINCT b.dni) as total
       FROM ${this.tableName} b
-      LEFT JOIN bomberos_grupo bg ON bg.dniBombero = b.dni
-      LEFT JOIN grupo_guardia g ON g.idGrupo = bg.idGrupo
+      LEFT JOIN bomberosGrupo bg ON bg.dni = b.dni
+      LEFT JOIN grupoGuardia g ON g.idGrupo = bg.idGrupo
       ${whereClause}
     `
     const [countRows] = await connection.execute(countQuery, valores)

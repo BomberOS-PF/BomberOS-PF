@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import FormularioRol from './FormularioRol'
 import { apiRequest, API_URLS } from '../../config/api'
-import './ConsultarRol.css'
+import '../DisenioFormulario/DisenioFormulario.css'
 
 const ConsultarRol = ({ onVolver }) => {
   const [roles, setRoles] = useState([])
@@ -13,12 +12,10 @@ const ConsultarRol = ({ onVolver }) => {
   const [tipoMensaje, setTipoMensaje] = useState('info')
   const [loading, setLoading] = useState(false)
   const [loadingRoles, setLoadingRoles] = useState(true)
+  const [formData, setFormData] = useState({ nombreRol: '', descripcion: '' })
 
-  useEffect(() => {
-    fetchRoles()
-  }, [])
+  useEffect(() => { fetchRoles() }, [])
 
-  // Limpiar mensajes después de 5 segundos
   useEffect(() => {
     if (mensaje) {
       const timer = setTimeout(() => setMensaje(''), 5000)
@@ -33,7 +30,6 @@ const ConsultarRol = ({ onVolver }) => {
       setRoles(data.data)
       setResultadosFiltrados(data.data)
     } catch (error) {
-      console.error('Error al obtener roles:', error)
       setMensaje('Error al cargar los roles. Por favor, intenta nuevamente.')
       setTipoMensaje('danger')
     } finally {
@@ -47,17 +43,12 @@ const ConsultarRol = ({ onVolver }) => {
       setMensaje('')
       return
     }
-
     const filtrados = roles.filter(r => r.nombreRol.toLowerCase().includes(nombreBusqueda.toLowerCase()))
     setResultadosFiltrados(filtrados)
-
-    if (filtrados.length === 0) {
-      setMensaje('No se encontró ningún rol con ese nombre.')
-      setTipoMensaje('warning')
-    } else {
-      setMensaje(`Se encontraron ${filtrados.length} rol(es) que coinciden con la búsqueda.`)
-      setTipoMensaje('info')
-    }
+    setMensaje(filtrados.length === 0
+      ? 'No se encontró ningún rol con ese nombre.'
+      : `Se encontraron ${filtrados.length} rol(es) que coinciden con la búsqueda.`)
+    setTipoMensaje(filtrados.length === 0 ? 'warning' : 'info')
   }
 
   const limpiarBusqueda = () => {
@@ -68,13 +59,12 @@ const ConsultarRol = ({ onVolver }) => {
 
   const seleccionarRol = (rol) => {
     setRolSeleccionado(rol)
+    setFormData({ nombreRol: rol.nombreRol, descripcion: rol.descripcion || '' })
     setModoEdicion(false)
     setMensaje('')
   }
 
-  const activarEdicion = () => {
-    setModoEdicion(true)
-  }
+  const activarEdicion = () => setModoEdicion(true)
 
   const guardarCambios = async (datosActualizados) => {
     try {
@@ -89,7 +79,6 @@ const ConsultarRol = ({ onVolver }) => {
       await fetchRoles()
       setRolSeleccionado(null)
     } catch (error) {
-      console.error('Error al guardar cambios:', error)
       setMensaje(`Error al actualizar el rol: ${error.message}`)
       setTipoMensaje('danger')
     } finally {
@@ -98,19 +87,14 @@ const ConsultarRol = ({ onVolver }) => {
   }
 
   const eliminarRol = async (rol) => {
-    const confirmMessage = `¿Estás seguro de que quieres eliminar el rol "${rol.nombreRol}"?\n\nEsta acción no se puede deshacer.`
-    if (!window.confirm(confirmMessage)) return
-    
+    if (!window.confirm(`¿Estás seguro de eliminar el rol "${rol.nombreRol}"?`)) return
     try {
       setLoading(true)
-      await apiRequest(API_URLS.roles.delete(rol.id), {
-        method: 'DELETE'
-      })
+      await apiRequest(API_URLS.roles.delete(rol.id), { method: 'DELETE' })
       setMensaje(`Rol "${rol.nombreRol}" eliminado correctamente`)
       setTipoMensaje('success')
       await fetchRoles()
     } catch (error) {
-      console.error('Error al eliminar rol:', error)
       setMensaje(`Error al eliminar el rol: ${error.message}`)
       setTipoMensaje('danger')
     } finally {
@@ -124,17 +108,21 @@ const ConsultarRol = ({ onVolver }) => {
     setMensaje('')
   }
 
+  const handleChange = (e) => {
+    const { id, value } = e.target
+    setFormData(prev => ({ ...prev, [id]: value }))
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    guardarCambios(formData)
+  }
+
+  const isReadOnly = !modoEdicion
+  const submitText = 'Guardar Cambios'
+
   if (loadingRoles) {
-    return (
-      <div className="container mt-4">
-        <div className="text-center">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Cargando roles...</span>
-          </div>
-          <p className="mt-2 text-white">Cargando roles...</p>
-        </div>
-      </div>
-    )
+    return <div className="text-center text-white">Cargando roles...</div>
   }
 
   return (
@@ -142,10 +130,7 @@ const ConsultarRol = ({ onVolver }) => {
       <h2 className="text-white mb-3">Consultar Roles</h2>
 
       {mensaje && (
-        <div className={`alert alert-${tipoMensaje} alert-dismissible fade show`} role="alert">
-          {mensaje}
-          <button type="button" className="btn-close" onClick={() => setMensaje('')}></button>
-        </div>
+        <div className={`alert alert-${tipoMensaje}`} role="alert">{mensaje}</div>
       )}
 
       {!rolSeleccionado && (
@@ -160,102 +145,82 @@ const ConsultarRol = ({ onVolver }) => {
               onKeyDown={(e) => { if (e.key === 'Enter') buscarPorNombre() }}
               disabled={loading}
             />
-            <button 
-              className="btn btn-primary btn-sm me-2" 
-              onClick={buscarPorNombre}
-              disabled={loading}
-            >
-              Buscar
-            </button>
-            <button 
-              className="btn btn-secondary btn-sm" 
-              onClick={limpiarBusqueda}
-              disabled={loading}
-            >
-              Limpiar
-            </button>
+            <button className="btn btn-primary btn-sm me-2" onClick={buscarPorNombre}>Buscar</button>
+            <button className="btn btn-secondary btn-sm" onClick={limpiarBusqueda}>Limpiar</button>
           </div>
 
-          <div className="table-responsive">
-            <table className="table table-dark table-hover table-bordered">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>Descripción</th>
-                  <th>Acciones</th>
+          <table className="table table-dark table-hover table-bordered">
+            <thead>
+              <tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+              {resultadosFiltrados.map(rol => (
+                <tr key={rol.id}>
+                  <td>{rol.id}</td>
+                  <td>{rol.nombreRol}</td>
+                  <td>{rol.descripcion || <em className="text-muted">Sin descripción</em>}</td>
+                  <td>
+                    <button className="btn btn-outline-light btn-sm me-2" onClick={() => seleccionarRol(rol)}>👁️ Ver</button>
+                    <button className="btn btn-outline-danger btn-sm" onClick={() => eliminarRol(rol)}>🗑️</button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {Array.isArray(resultadosFiltrados) && resultadosFiltrados.map((rol) => (
-                  <tr key={rol.id}>
-                    <td>{rol.id}</td>
-                    <td>{rol.nombreRol}</td>
-                    <td>{rol.descripcion || <em className="text-muted">Sin descripción</em>}</td>
-                    <td>
-                      <button 
-                        className="btn btn-outline-light btn-sm me-2" 
-                        onClick={() => seleccionarRol(rol)}
-                        disabled={loading}
-                        title="Ver y editar rol"
-                      >
-                        👁️ Ver
-                      </button>
-                      <button 
-                        className="btn btn-outline-danger btn-sm" 
-                        onClick={() => eliminarRol(rol)}
-                        disabled={loading}
-                        title={`Eliminar rol "${rol.nombreRol}"`}
-                      >
-                        {loading ? '⏳' : '🗑️'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {resultadosFiltrados.length === 0 && (
-                  <tr>
-                    <td colSpan="4" className="text-center text-muted">
-                      No hay roles para mostrar
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+              ))}
+              {resultadosFiltrados.length === 0 && (
+                <tr><td colSpan="4" className="text-center">No hay roles para mostrar</td></tr>
+              )}
+            </tbody>
+          </table>
         </>
       )}
 
       {rolSeleccionado && (
-        <>
-          <FormularioRol
-            modo={modoEdicion ? 'edicion' : 'consulta'}
-            datosIniciales={rolSeleccionado}
-            onSubmit={guardarCambios}
-            onVolver={volverListado}
-            loading={loading}
-          />
+        <div className="form-rol p-4 shadow rounded w-100" style={{ maxWidth: '500px' }}>
+          <h2 className="text-center mb-4">
+            {modoEdicion ? 'Editar Rol' : 'Ver Rol'}
+          </h2>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label htmlFor="nombreRol" className="form-label text-black">Nombre del Rol *</label>
+              <input
+                type="text"
+                className="form-control"
+                id="nombreRol"
+                required
+                value={formData.nombreRol}
+                onChange={handleChange}
+                disabled={isReadOnly || loading}
+              />
+            </div>
+            <div className="mb-4">
+              <label htmlFor="descripcion" className="form-label text-black">Descripción</label>
+              <textarea
+                className="form-control"
+                id="descripcion"
+                rows="3"
+                value={formData.descripcion}
+                onChange={handleChange}
+                disabled={isReadOnly || loading}
+              />
+            </div>
+            {!isReadOnly && (
+              <button type="submit" className="btn btn-danger w-100 mb-3" disabled={loading}>
+                {loading ? 'Guardando...' : submitText}
+              </button>
+            )}
+            <button type="button" className="btn btn-secondary w-100" onClick={volverListado} disabled={loading}>
+              Volver
+            </button>
+          </form>
           {!modoEdicion && (
             <div className="text-center mt-2">
-              <button 
-                className="btn btn-warning me-2" 
-                onClick={activarEdicion}
-                disabled={loading}
-              >
-                ✏️ Editar datos
-              </button>
+              <button className="btn btn-warning" onClick={activarEdicion} disabled={loading}>✏️ Editar datos</button>
             </div>
           )}
-        </>
+        </div>
       )}
 
       <div className="text-center mt-4">
-        <button 
-          className="btn btn-secondary" 
-          onClick={onVolver}
-          disabled={loading}
-        >
-          Volver al menú
-        </button>
+        <button className="btn btn-secondary" onClick={onVolver}>Volver al menú</button>
       </div>
     </div>
   )
