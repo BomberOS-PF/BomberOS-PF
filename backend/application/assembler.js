@@ -43,6 +43,7 @@ export async function createServer(config) {
     const denuncianteRepository = new MySQLDenuncianteRepository()
     const grupoGuardiaRepository = new MySQLGrupoGuardiaRepository()
     const rolRepository = new MySQLRolRepository()
+    const causaAccidenteRepository = new MySQLCausaAccidenteRepository()
 
     // Servicios
     const whatsappService = new WhatsAppService(config)
@@ -51,6 +52,7 @@ export async function createServer(config) {
     const incidenteService = new IncidenteService(incidenteRepository, denuncianteRepository, bomberoService, whatsappService)
     const grupoGuardiaService = new GrupoGuardiaService(grupoGuardiaRepository, bomberoRepository)
     const rolService = new RolService(rolRepository)
+    const causaAccidenteService = new CausaAccidenteService (causaAccidenteRepository)
 
     // Handlers
     const bomberoHandler = new BomberoHandler(bomberoService)
