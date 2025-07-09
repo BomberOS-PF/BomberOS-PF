@@ -11,6 +11,8 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
     return guardado ? JSON.parse(guardado) : { vehiculos: [] }
   })
 
+  const [causasAccidente, setCausasAccidente] = useState([])
+
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
@@ -18,6 +20,32 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
       vehiculos: datosPrevios.vehiculos || prev.vehiculos || []
     }))
   }, [datosPrevios])
+
+  useEffect(() => {
+    const fetchCausas = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/api/causa-accidente')
+        const data = await res.json()
+        if (data.success) {
+          setCausasAccidente(data.data)
+        } else {
+          console.error('Error en la respuesta:', data.error)
+        }
+      } catch (err) {
+        console.error('Error al conectar con backend:', err)
+      }
+    }
+
+    fetchCausas()
+  }, [])
+
+  const handleChange = (e) => {
+    const { id, value, type, checked } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [id]: type === 'checkbox' ? checked : value
+    }))
+  }
 
   const handleVehiculoChange = (index, field, value) => {
     const nuevosVehiculos = [...formData.vehiculos]
@@ -30,14 +58,13 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
   }
 
   const agregarVehiculo = () => {
-    const nuevosVehiculos = [
-      ...(formData.vehiculos || []),
-      { tipo: '', dominio: '', cantidad: '', modelo: '', anio: '', aseguradora: '', poliza: '' }
-    ]
     setFormData(prev => ({
       ...prev,
-      vehiculos: nuevosVehiculos,
-      cantidadVehiculos: nuevosVehiculos.length
+      vehiculos: [
+        ...(prev.vehiculos || []),
+        { tipo: '', dominio: '', cantidad: '', modelo: '', anio: '', aseguradora: '', poliza: '' }
+      ],
+      cantidadVehiculos: (prev.vehiculos?.length || 0) + 1
     }))
   }
 
@@ -50,37 +77,34 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
     }))
   }
 
-  const handleChange = (e) => {
-    const { id, value, type, checked } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [id]: type === 'checkbox' ? checked : value
-    }))
-  }
-
   const guardarLocalmente = () => {
     localStorage.setItem(storageKey, JSON.stringify(formData))
     alert('Datos guardados localmente. Podés continuar después.')
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log('Datos enviados:', formData)
   }
 
   return (
     <div className="container d-flex justify-content-center align-items-center">
       <div className="formulario-consistente">
         <h2 className="text-black text-center mb-4">Accidente de Tránsito</h2>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => {
+          e.preventDefault()
+          console.log('Datos enviados:', formData)
+          if (onFinalizar) onFinalizar()
+        }}>
           <div className="mb-3">
-            <label htmlFor="causaAccidente" className="text-black form-label">Causa del accidente</label>
-            <select className="form-select" id="causaAccidente" onChange={handleChange} value={formData.causaAccidente || ''}>
+            <label htmlFor="idCausaAccidente" className="text-black form-label">Causa del accidente</label>
+            <select
+              className="form-select"
+              id="idCausaAccidente"
+              onChange={handleChange}
+              value={formData.idCausaAccidente || ''}
+            >
               <option disabled value="">Seleccione causa</option>
-              <option>Desperfecto mecánico</option>
-              <option>Imprudencia</option>
-              <option>Clima</option>
-              <option>Otro</option>
+              {causasAccidente.map((causa) => (
+                <option key={causa.idCausaAccidente} value={causa.idCausaAccidente}>
+                  {causa.descripcion}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -161,7 +185,7 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
               <input type="tel" className="form-control" id="telefonoDamnificado" value={formData.telefonoDamnificado || ''} onChange={handleChange} />
             </div>
             <div className="col">
-              <label className="text-black form-label">dni</label>
+              <label className="text-black form-label">DNI</label>
               <input type="text" className="form-control" id="dniDamnificado" value={formData.dniDamnificado || ''} onChange={handleChange} />
             </div>
           </div>
@@ -171,14 +195,13 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
             <label className="text-black form-check-label" htmlFor="fallecio">¿Falleció?</label>
           </div>
 
-          <button type="submit" className="btn btn-danger w-100 mt-3" onClick={(e) => {
-            e.preventDefault()
-            console.log('Datos enviados:', formData)
-            if (onFinalizar) onFinalizar()
-            }}>Finalizar carga
+          <button type="submit" className="btn btn-danger w-100 mt-3">
+            Finalizar carga
           </button>
 
-          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={guardarLocalmente}>Guardar y continuar después</button>
+          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={guardarLocalmente}>
+            Guardar y continuar después
+          </button>
         </form>
       </div>
     </div>

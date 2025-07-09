@@ -81,6 +81,9 @@ export async function createServer(config) {
       rolService,
       rolRepository,
       rolesAdapter,
+      causaAccidenteHandler,
+      causaAccidenteRepository,
+      causaAccidenteService,
       dbConnection,
       config
     }
@@ -88,9 +91,9 @@ export async function createServer(config) {
     await validateDependencies(container)
 
     logger.info('✅ Assembler completado exitosamente', {
-      services: ['bomberoService', 'usuarioService', 'incidenteService', 'grupoGuardiaService', 'whatsappService'],
-      repositories: ['bomberoRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository', 'grupoGuardiaRepository', 'rolRepository'],
-      handlers: ['bomberoHandler', 'usuarioHandler', 'incidenteHandler', 'grupoGuardiaHandler', 'rolesAdapter'],
+      services: ['bomberoService', 'usuarioService', 'incidenteService', 'grupoGuardiaService', 'whatsappService', 'rolService', 'causaAccidenteService'],
+      repositories: ['bomberoRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository', 'grupoGuardiaRepository', 'rolRepository', 'rolRepository', 'causaAccidenteRepository'],
+      handlers: ['bomberoHandler', 'usuarioHandler', 'incidenteHandler', 'grupoGuardiaHandler', 'rolesAdapter','causaAccidenteHandler'],
       infrastructure: ['dbConnection']
     })
 
@@ -131,6 +134,10 @@ async function validateDependencies(container) {
     if (!container.rolService) throw new Error('RolService no inicializado')
     if (!container.rolRepository) throw new Error('RolRepository no inicializado')
     if (!container.rolesAdapter) throw new Error('RolesAdapter no inicializado')
+
+    if (!container.causaAccidenteService) throw new Error('CausaAccidenteServicee no inicializado')
+    if (!container.causaAccidenteRepository) throw new Error('CausaAccidenteRepository no inicializado')
+    if (!container.causaAccidenteHandler) throw new Error('CausaAccidenteHandler no inicializado')
 
     if (!container.dbConnection) throw new Error('Database connection no inicializada')
 

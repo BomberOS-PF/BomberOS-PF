@@ -298,6 +298,16 @@ export function setupRoutes(app, container) {
     }
   })
 
+  // CAUSAS DE ACCIDENTE
+  app.get('/api/causa-accidente', async (req, res) => {
+    try {
+      await causaAccidenteHandler.getTodas(req, res)
+    } catch (error) {
+      logger.error('Error en ruta getTodas causasAccidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
   // 404 handler
   app.use((req, res) => {
     logger.warn('Ruta no encontrada', {
@@ -339,7 +349,8 @@ export function setupRoutes(app, container) {
         'POST /api/incidentes/:id/notificar',
         'POST /api/grupos',
         'GET /api/grupos',
-        'GET /api/grupos/:id/bomberos'
+        'GET /api/grupos/:id/bomberos',
+        'GET /api/causa-accidente'
       ]
     })
   })
