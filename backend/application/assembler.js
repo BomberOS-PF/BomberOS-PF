@@ -25,6 +25,10 @@ import { RolService } from '../internal/services/rol.service.js'
 import { MySQLRolRepository } from '../internal/repositories/mysql/rol.repository.js'
 import { RestApiRolesAdapter } from '../roles/handler.js'
 
+import { MySQLAccidenteTransitoRepository } from '../internal/repositories/mysql/accidenteTransito.repository.js'
+import { AccidenteTransitoService } from '../internal/services/accidenteTransito.service.js'
+import { AccidenteTransitoHandler } from '../accidenteTransito/handler.js'
+
 import { MySQLCausaAccidenteRepository } from '../internal/repositories/mysql/causaAccidente.repository.js'
 import { CausaAccidenteService } from '../internal/services/causaAccidente.service.js'
 import { CausaAccidenteHandler } from '../causaAccidente/handler.js'
@@ -44,6 +48,7 @@ export async function createServer(config) {
     const grupoGuardiaRepository = new MySQLGrupoGuardiaRepository()
     const rolRepository = new MySQLRolRepository()
     const causaAccidenteRepository = new MySQLCausaAccidenteRepository()
+    const accidenteTransitoRepository = new MySQLAccidenteTransitoRepository()
 
     // Servicios
     const whatsappService = new WhatsAppService(config)
@@ -53,6 +58,13 @@ export async function createServer(config) {
     const grupoGuardiaService = new GrupoGuardiaService(grupoGuardiaRepository, bomberoRepository)
     const rolService = new RolService(rolRepository)
     const causaAccidenteService = new CausaAccidenteService (causaAccidenteRepository)
+    const accidenteTransitoService = new AccidenteTransitoService({
+      accidenteRepository: accidenteTransitoRepository,
+      vehiculoRepository,
+      damnificadoRepository,
+      accidenteVehiculoRepository,
+      accidenteDamnificadoRepository
+    })
 
     // Handlers
     const bomberoHandler = new BomberoHandler(bomberoService)
@@ -61,6 +73,7 @@ export async function createServer(config) {
     const grupoGuardiaHandler = buildGrupoHandlers(grupoGuardiaService)
     const rolesAdapter = RestApiRolesAdapter(rolService)
     const causaAccidenteHandler = new CausaAccidenteHandler(causaAccidenteService)
+    const accidenteTransitoHandler = new AccidenteTransitoHandler(accidenteTransitoService)
 
     // Contenedor
     const container = {
@@ -81,6 +94,9 @@ export async function createServer(config) {
       rolService,
       rolRepository,
       rolesAdapter,
+      accidenteTransitoRepository,
+      accidenteTransitoService,
+      accidenteTransitoHandler,
       causaAccidenteHandler,
       causaAccidenteRepository,
       causaAccidenteService,
@@ -91,9 +107,9 @@ export async function createServer(config) {
     await validateDependencies(container)
 
     logger.info('✅ Assembler completado exitosamente', {
-      services: ['bomberoService', 'usuarioService', 'incidenteService', 'grupoGuardiaService', 'whatsappService', 'rolService', 'causaAccidenteService'],
-      repositories: ['bomberoRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository', 'grupoGuardiaRepository', 'rolRepository', 'rolRepository', 'causaAccidenteRepository'],
-      handlers: ['bomberoHandler', 'usuarioHandler', 'incidenteHandler', 'grupoGuardiaHandler', 'rolesAdapter','causaAccidenteHandler'],
+      services: ['bomberoService', 'usuarioService', 'incidenteService', 'grupoGuardiaService', 'whatsappService', 'rolService', 'accidenteTransitoService' ,'causaAccidenteService'],
+      repositories: ['bomberoRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository', 'grupoGuardiaRepository', 'rolRepository', 'rolRepository', 'accidenteTransitoRepository', 'causaAccidenteRepository'],
+      handlers: ['bomberoHandler', 'usuarioHandler', 'incidenteHandler', 'grupoGuardiaHandler', 'rolesAdapter','accidenteTransitoHandler' ,'causaAccidenteHandler'],
       infrastructure: ['dbConnection']
     })
 
@@ -134,6 +150,10 @@ async function validateDependencies(container) {
     if (!container.rolService) throw new Error('RolService no inicializado')
     if (!container.rolRepository) throw new Error('RolRepository no inicializado')
     if (!container.rolesAdapter) throw new Error('RolesAdapter no inicializado')
+
+    if (!container.accidenteTransitoService) throw new Error('AccidenteTransitoService no inicializado')
+    if (!container.accidenteTransitoHandler) throw new Error('AccidenteTransitoHandler no inicializado')
+    if (!container.accidenteTransitoRepository) throw new Error('AccidenteTransitoRepository no inicializado')
 
     if (!container.causaAccidenteService) throw new Error('CausaAccidenteServicee no inicializado')
     if (!container.causaAccidenteRepository) throw new Error('CausaAccidenteRepository no inicializado')
