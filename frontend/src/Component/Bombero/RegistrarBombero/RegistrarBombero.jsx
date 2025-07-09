@@ -80,8 +80,9 @@ const RegistrarBombero = ({ onVolver }) => {
           idRol: parseInt(formData.rolUsuario, 10)
         },
         bombero: {
-          DNI: formData.dni,
-          nombreCompleto: `${formData.nombre} ${formData.apellido}`.trim(),
+          dni: formData.dni,
+          nombre: formData.nombre,
+          apellido: formData.apellido,
           correo: formData.email,
           telefono: formData.telefono,
           domicilio: formData.domicilio,
@@ -217,7 +218,7 @@ const RegistrarBombero = ({ onVolver }) => {
               />
             </div>
             <div className="col-md-4">
-              <label htmlFor="dni" className="text-black form-label">DNI</label>
+              <label htmlFor="dni" className="text-black form-label">dni</label>
               <input 
                 type="text" 
                 className="form-control" 
@@ -226,7 +227,7 @@ const RegistrarBombero = ({ onVolver }) => {
                 required 
                 disabled={loading}
                 pattern="[0-9]{7,8}"
-                title="Ingrese un DNI válido (7-8 dígitos)"
+                title="Ingrese un dni válido (7-8 dígitos)"
                 onChange={handleChange} 
               />
             </div>

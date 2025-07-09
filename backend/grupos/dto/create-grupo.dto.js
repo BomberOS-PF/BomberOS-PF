@@ -2,7 +2,7 @@
 
 /**
  * DTO para crear un Grupo de Guardia
- * Espera un nombre y una lista de DNIs de bomberos
+ * Espera un nombre y una lista de dnis de bomberos
  */
 export class CreateGrupoDTO {
   constructor({ nombreGrupo, bomberos }) {
@@ -11,12 +11,12 @@ export class CreateGrupoDTO {
     }
 
     if (!Array.isArray(bomberos) || bomberos.length === 0) {
-      throw new Error('Debe proporcionarse una lista de DNIs de bomberos')
+      throw new Error('Debe proporcionarse una lista de dnis de bomberos')
     }
 
     bomberos.forEach(dni => {
       if (!Number.isInteger(dni)) {
-        throw new Error('Todos los DNIs deben ser números enteros')
+        throw new Error('Todos los dnis deben ser números enteros')
       }
     })
 

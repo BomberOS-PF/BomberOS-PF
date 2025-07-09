@@ -156,18 +156,18 @@ export class UsuarioService {
       if (bomberoAsociado) {
         logger.debug('Usuario tiene bombero asociado, eliminando bombero primero', {
           userId: id,
-          bomberoDNI: bomberoAsociado.DNI
+          bomberodni: bomberoAsociado.dni
         })
         
         // Eliminar el bombero primero para evitar violación de clave foránea
-        const eliminacionBombero = await this.bomberoRepository.delete(bomberoAsociado.DNI)
+        const eliminacionBombero = await this.bomberoRepository.delete(bomberoAsociado.dni)
         if (!eliminacionBombero) {
-          throw new Error(`No se pudo eliminar el bombero asociado con DNI ${bomberoAsociado.DNI}`)
+          throw new Error(`No se pudo eliminar el bombero asociado con dni ${bomberoAsociado.dni}`)
         }
         
         logger.info('Bombero asociado eliminado exitosamente', {
           userId: id,
-          bomberoDNI: bomberoAsociado.DNI
+          bomberodni: bomberoAsociado.dni
         })
       }
 
@@ -232,17 +232,10 @@ export class UsuarioService {
       let dni = null
 
       if (bombero) {
-        dni = bombero.DNI || bombero.dni || null
+        dni = bombero.dni || null
 
-        if (bombero.nombreCompleto) {
-          const partes = bombero.nombreCompleto.trim().split(' ')
-          if (partes.length === 1) {
-            nombre = partes[0]
-          } else {
-            apellido = partes.pop()
-            nombre = partes.join(' ')
-          }
-        }
+        nombre = bombero.nombre || 'Desconocido'
+        apellido = bombero.apellido || ''
       }
 
       const datosSesion = {

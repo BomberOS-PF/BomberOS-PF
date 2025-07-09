@@ -136,7 +136,7 @@ const RegistrarGuardia = ({ onVolver }) => {
       <input
         type="text"
         className="form-control mt-3"
-        placeholder="Buscar bombero por DNI, legajo, nombre o apellido"
+        placeholder="Buscar bombero por dni, legajo, nombre o apellido"
         value={busqueda}
         onChange={handleBusqueda}
       />
@@ -146,7 +146,7 @@ const RegistrarGuardia = ({ onVolver }) => {
           <thead>
             <tr>
               <th>Seleccionar</th>
-              <th>DNI</th>
+              <th>dni</th>
               <th>Legajo</th>
               <th>Nombre completo</th>
               <th>Teléfono</th>
@@ -174,7 +174,7 @@ const RegistrarGuardia = ({ onVolver }) => {
                 </td>
                 <td>{b.dni}</td>
                 <td>{b.legajo}</td>
-                <td>{b.nombreCompleto}</td>
+                <td>{b.nombre && b.apellido ? `${b.nombre} ${b.apellido}` : ''} </td>
                 <td>{b.telefono}</td>
                 <td>{b.email}</td>
               </tr>
@@ -201,7 +201,7 @@ const RegistrarGuardia = ({ onVolver }) => {
           <table className="tabla-bomberos">
             <thead>
               <tr>
-                <th>DNI</th>
+                <th>dni</th>
                 <th>Legajo</th>
                 <th>Nombre completo</th>
                 <th>Teléfono</th>
@@ -214,7 +214,7 @@ const RegistrarGuardia = ({ onVolver }) => {
                 <tr key={b.dni}>
                   <td>{b.dni}</td>
                   <td>{b.legajo}</td>
-                  <td>{b.nombreCompleto}</td>
+                  <td>{b.nombre && b.apellido ? `${b.nombre} ${b.apellido}` : ''}</td>
                   <td>{b.telefono}</td>
                   <td>{b.email}</td>
                   <td>

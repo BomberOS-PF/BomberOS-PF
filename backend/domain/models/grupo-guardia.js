@@ -66,7 +66,7 @@ export class GrupoGuardia {
     }
     for (const dni of bomberos) {
       if (typeof dni !== 'number') {
-        throw new Error('Cada bombero debe tener un DNI numérico')
+        throw new Error('Cada bombero debe tener un dni numérico')
       }
     }
     return bomberos
