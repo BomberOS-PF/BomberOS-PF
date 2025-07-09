@@ -60,6 +60,7 @@ export async function createServer(config) {
     const incidenteHandler = construirIncidenteHandler(incidenteService)
     const grupoGuardiaHandler = buildGrupoHandlers(grupoGuardiaService)
     const rolesAdapter = RestApiRolesAdapter(rolService)
+    const causaAccidenteHandler = new CausaAccidenteHandler(causaAccidenteService)
 
     // Contenedor
     const container = {
