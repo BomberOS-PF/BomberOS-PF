@@ -21,7 +21,7 @@ export function setupRoutes(app, container) {
 
   app.get('/', (req, res) => res.redirect('/health'))
 
-  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler,causaAccidenteHandler } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler,causaAccidenteHandler, vehiculoHandler } = container
 
   // ROLES
   app.get('/api/roles', async (req, res) => {
@@ -298,7 +298,7 @@ export function setupRoutes(app, container) {
     }
   })
 
-    // ACCIDENTES DE TRÁNSITO
+  // ACCIDENTES DE TRÁNSITO
   app.post('/api/accidentes', async (req, res) => {
     try {
       await accidenteTransitoHandler.registrar(req, res)
@@ -332,6 +332,16 @@ export function setupRoutes(app, container) {
       await causaAccidenteHandler.getTodas(req, res)
     } catch (error) {
       logger.error('Error en ruta getTodas causasAccidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // VEHICULOS
+  app.post('/api/vehiculos', async (req, res) => {
+    try {
+      await vehiculoHandler.registrar(req, res)
+    } catch (error) {
+      logger.error('Error en ruta registrar vehiculo:', error)
       res.status(500).json({ error: 'Error interno' })
     }
   })
@@ -381,7 +391,8 @@ export function setupRoutes(app, container) {
         'POST /api/accidentes',
         'GET /api/accidentes',
         'GET /api/accidentes/:id',        
-        'GET /api/causa-accidente'
+        'GET /api/causa-accidente',
+        'POST /api/vehiculos'
       ]
     })
   })
