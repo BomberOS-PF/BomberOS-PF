@@ -25,6 +25,10 @@ import { RolService } from '../internal/services/rol.service.js'
 import { MySQLRolRepository } from '../internal/repositories/mysql/rol.repository.js'
 import { RestApiRolesAdapter } from '../roles/handler.js'
 
+import { MySQLCausaAccidenteRepository } from '../internal/repositories/mysql/causaAccidente.repository.js'
+import { CausaAccidenteService } from '../internal/services/causaAccidente.service.js'
+import { CausaAccidenteHandler } from '../causaAccidente/handler.js'
+
 export async function createServer(config) {
   try {
     logger.info('🏗️ Iniciando assembler de dependencias...')

@@ -21,7 +21,7 @@ export function setupRoutes(app, container) {
 
   app.get('/', (req, res) => res.redirect('/health'))
 
-  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, causaAccidenteHandler } = container
 
   // ROLES
   app.get('/api/roles', async (req, res) => {
