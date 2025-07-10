@@ -9,20 +9,18 @@ export class MySQLDamnificadoRepository {
   async insertarDamnificado(damnificado) {
     const query = `
       INSERT INTO ${this.tableName} 
-        (nombre, apellido, edad, tipoDamnificado, dni, domicilio, telefono, fallecio, idIncidente)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (nombre, apellido, idIncidente, dni, domicilio, telefono, fallecio)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `
 
     const params = [
-      damnificado.nombre || null,
-      damnificado.apellido || null,
-      damnificado.edad || null,
-      damnificado.tipoDamnificado || null,
-      damnificado.dni || null,
-      damnificado.domicilio || null,
-      damnificado.telefono || null,
-      damnificado.fallecio === true ? 1 : 0,
-      damnificado.idIncidente
+      damnificado.nombre ?? null,
+      damnificado.apellido ?? null,
+      damnificado.idIncidente,
+      damnificado.dni ?? null,
+      damnificado.domicilio ?? null,
+      damnificado.telefono ?? null,
+      damnificado.fallecio === true ? 1 : 0
     ]
 
     const connection = getConnection()

@@ -3,12 +3,12 @@ import { logger } from '../../platform/logger/logger.js'
 
 export class MySQLAccidenteVehiculoRepository {
   constructor() {
-    this.tableName = 'accidenteVehiculoInvolucrado'
+    this.tableName = 'accidenteVehiculo'
   }
 
   async insertarRelacion(idAccidente, idVehiculo) {
     const query = `
-      INSERT INTO ${this.tableName} (idAccidente, idVehiculo)
+      INSERT INTO ${this.tableName} (idAccidenteTransito, idVehiculo)
       VALUES (?, ?)
     `
     const params = [idAccidente, idVehiculo]

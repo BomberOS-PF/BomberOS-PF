@@ -52,8 +52,7 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
     nuevosVehiculos[index][field] = value
     setFormData(prev => ({
       ...prev,
-      vehiculos: nuevosVehiculos,
-      cantidadVehiculos: nuevosVehiculos.length
+      vehiculos: nuevosVehiculos
     }))
   }
 
@@ -62,9 +61,8 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
       ...prev,
       vehiculos: [
         ...(prev.vehiculos || []),
-        { tipo: '', dominio: '', cantidad: '', modelo: '', anio: '', aseguradora: '', poliza: '' }
-      ],
-      cantidadVehiculos: (prev.vehiculos?.length || 0) + 1
+        { patente: '', modelo: '', marca: '', anio: '', aseguradora: '', poliza: '' }
+      ]
     }))
   }
 
@@ -72,8 +70,7 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
     const nuevosVehiculos = formData.vehiculos.filter((_, i) => i !== index)
     setFormData(prev => ({
       ...prev,
-      vehiculos: nuevosVehiculos,
-      cantidadVehiculos: nuevosVehiculos.length
+      vehiculos: nuevosVehiculos
     }))
   }
 
@@ -82,15 +79,52 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
     alert('Datos guardados localmente. Podés continuar después.')
   }
 
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    const payload = {
+      idIncidente: datosPrevios.idIncidente,
+      descripcion: formData.detalle,
+      idCausaAccidente: parseInt(formData.idCausaAccidente),
+      vehiculos: formData.vehiculos,
+      damnificados: [{
+        nombre: formData.nombreDamnificado || '',
+        apellido: formData.apellidoDamnificado || '',
+        domicilio: formData.domicilioDamnificado || '',
+        telefono: formData.telefonoDamnificado || '',
+        dni: formData.dniDamnificado || '',
+        fallecio: formData.fallecio || false
+      }]
+    }
+    
+    try {
+      const res = await fetch('http://localhost:3000/api/accidentes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      const data = await res.json()
+
+      if (data.success) {
+        alert('Accidente registrado exitosamente')
+        localStorage.removeItem(storageKey)
+        if (onFinalizar) onFinalizar({ id: datosPrevios.id })
+      } else {
+        alert('Error al registrar: ' + (data.message || ''))
+        console.error(data)
+      }
+    } catch (error) {
+      alert('Error al conectar con el backend')
+      console.error('Error al enviar:', error)
+    }
+  }
+
   return (
     <div className="container d-flex justify-content-center align-items-center">
       <div className="formulario-consistente">
         <h2 className="text-black text-center mb-4">Accidente de Tránsito</h2>
-        <form onSubmit={(e) => {
-          e.preventDefault()
-          console.log('Datos enviados:', formData)
-          if (onFinalizar) onFinalizar()
-        }}>
+        <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label htmlFor="idCausaAccidente" className="text-black form-label">Causa del accidente</label>
             <select
@@ -112,24 +146,20 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
           {formData.vehiculos.map((vehiculo, index) => (
             <div className="row mb-2 align-items-center" key={index}>
               <div className="col">
-                <label className="text-black form-label">Tipo</label>
-                <input type="text" className="form-control form-control-sm" value={vehiculo.tipo} onChange={(e) => handleVehiculoChange(index, 'tipo', e.target.value)} />
-              </div>
-              <div className="col">
-                <label className="text-black form-label">Dominio</label>
-                <input type="text" className="form-control form-control-sm" value={vehiculo.dominio} onChange={(e) => handleVehiculoChange(index, 'dominio', e.target.value)} />
-              </div>
-              <div className="col">
-                <label className="text-black form-label">Cantidad</label>
-                <input type="number" className="form-control form-control-sm" value={vehiculo.cantidad} onChange={(e) => handleVehiculoChange(index, 'cantidad', e.target.value)} />
+                <label className="text-black form-label">Patente</label>
+                <input type="text" className="form-control form-control-sm" value={vehiculo.patente} onChange={(e) => handleVehiculoChange(index, 'patente', e.target.value)} />
               </div>
               <div className="col">
                 <label className="text-black form-label">Modelo</label>
                 <input type="text" className="form-control form-control-sm" value={vehiculo.modelo} onChange={(e) => handleVehiculoChange(index, 'modelo', e.target.value)} />
               </div>
               <div className="col">
+                <label className="text-black form-label">Marca</label>
+                <input type="text" className="form-control form-control-sm" value={vehiculo.marca} onChange={(e) => handleVehiculoChange(index, 'marca', e.target.value)} />
+              </div>
+              <div className="col">
                 <label className="text-black form-label">Año</label>
-                <input type="number" className="form-control form-control-sm" value={vehiculo.anio} onChange={(e) => handleVehiculoChange(index, 'anio', e.target.value)} />
+                <input type="number" className="form-control form-control-sm" value={vehiculo.anio} onChange={(e) => handleVehiculoChange(index, 'anio', parseInt(e.target.value))} />
               </div>
               <div className="col">
                 <label className="text-black form-label">Aseguradora</label>
@@ -140,18 +170,12 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
                 <input type="text" className="form-control form-control-sm" value={vehiculo.poliza} onChange={(e) => handleVehiculoChange(index, 'poliza', e.target.value)} />
               </div>
               <div className="col-auto d-flex align-items-center pt-4">
-                <button
-                  type="button"
-                  className="btn btn-outline-danger btn-xs px-2 py-1"
-                  onClick={() => eliminarVehiculo(index)}
-                >
+                <button type="button" className="btn btn-outline-danger btn-xs px-2 py-1" onClick={() => eliminarVehiculo(index)}>
                   ❌
                 </button>
               </div>
             </div>
           ))}
-
-          <input type="hidden" id="cantidadVehiculos" value={formData.vehiculos.length} />
 
           <div className="d-flex justify-content-end mb-3">
             <button type="button" className="btn btn-sm btn-success" onClick={agregarVehiculo}>+ Agregar vehículo</button>

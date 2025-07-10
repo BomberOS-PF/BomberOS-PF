@@ -2,13 +2,13 @@ import { logger } from '../platform/logger/logger.js'
 
 export class AccidenteTransitoService {
   constructor({
-    accidenteRepository,
+    accidenteTransitoRepository,
     vehiculoRepository,
     damnificadoRepository,
     accidenteVehiculoRepository,
     accidenteDamnificadoRepository
   }) {
-    this.accidenteRepository = accidenteRepository
+    this.accidenteRepository = accidenteTransitoRepository
     this.vehiculoRepository = vehiculoRepository
     this.damnificadoRepository = damnificadoRepository
     this.accidenteVehiculoRepository = accidenteVehiculoRepository
@@ -40,8 +40,9 @@ export class AccidenteTransitoService {
 
       // 3. Insertar damnificados y asociarlos
       for (const damnificado of data.damnificados || []) {
+        damnificado.idIncidente = data.idIncidente
         const idDamnificado = await this.damnificadoRepository.insertarDamnificado(damnificado)
-        await this.accidenteDamnificadoRepository.insertarRelacion(idAccidente, idDamnificado)
+        await this.accidenteDamnificadoRepository.asociar(idAccidente, idDamnificado)
         logger.debug(`🧍 Damnificado asociado al accidente ${idAccidente}: Damnificado ${idDamnificado}`)
       }
 

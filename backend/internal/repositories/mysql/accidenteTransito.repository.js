@@ -37,11 +37,11 @@ export class MySQLAccidenteTransitoRepository {
 
     const accidente = accidenteRows[0]
 
-    // 2. Vehículos involucrados
+    // 2. Vehículos s
     const [vehiculos] = await connection.execute(`
       SELECT v.*
-      FROM vehiculoInvolucrado v
-      JOIN accidenteVehiculoInvolucrado av ON v.idVehiculo = av.idVehiculoInvolucrado
+      FROM vehiculo v
+      JOIN accidenteVehiculo av ON v.idVehiculo = av.idVehiculo
       WHERE av.idAccidenteTransito = ?
     `, [accidente.idAccidenteTransito])
 
@@ -73,8 +73,8 @@ export class MySQLAccidenteTransitoRepository {
     for (const acc of accidentes) {
       const [vehiculos] = await connection.execute(`
         SELECT v.*
-        FROM vehiculoInvolucrado v
-        JOIN accidenteVehiculoInvolucrado av ON v.idVehiculo = av.idVehiculoInvolucrado
+        FROM vehiculo v
+        JOIN accidenteVehiculo av ON v.idVehiculo = av.idVehiculo
         WHERE av.idAccidenteTransito = ?
       `, [acc.idAccidenteTransito])
 

@@ -25,7 +25,7 @@ import { RolService } from '../internal/services/rol.service.js'
 import { MySQLRolRepository } from '../internal/repositories/mysql/rol.repository.js'
 import { RestApiRolesAdapter } from '../roles/handler.js'
 
-
+import { MySQLDamnificadoRepository } from '../internal/repositories/mysql/damnificado.repository.js'
 import { DamnificadoService } from '../internal/services/damnificado.service.js'
 
 import { MySQLAccidenteTransitoRepository } from '../internal/repositories/mysql/accidenteTransito.repository.js'
@@ -40,9 +40,9 @@ import { MySQLVehiculoRepository } from '../internal/repositories/mysql/vehiculo
 import { VehiculoService } from '../internal/services/vehiculo.service.js'
 import { VehiculoHandler } from '../vehiculo/handler.js'
 
-import { MySQLAccidenteDamnificadoRepository } from '../internal/repositories/mysql/MySQLAccidenteDamnificadoRepository.js'
+import { MySQLAccidenteDamnificadoRepository } from '../internal/repositories/mysql/accidenteDamnificado.repository.js'
 
-import { MySQLAccidenteVehiculoRepository } from '../internal/repositories/mysql/MySQLAccidenteVehiculoRepository.js'
+import { MySQLAccidenteVehiculoRepository } from '../internal/repositories/mysql/accidenteVehiculo.repository.js'
 import { AccidenteVehiculoService } from '../internal/services/accidenteVehiculo.service.js'
 
 export async function createServer(config) {
@@ -59,6 +59,7 @@ export async function createServer(config) {
     const denuncianteRepository = new MySQLDenuncianteRepository()
     const grupoGuardiaRepository = new MySQLGrupoGuardiaRepository()
     const rolRepository = new MySQLRolRepository()
+    const damnificadoRepository = new MySQLDamnificadoRepository ()
     const accidenteTransitoRepository = new MySQLAccidenteTransitoRepository()
     const causaAccidenteRepository = new MySQLCausaAccidenteRepository()
     const vehiculoRepository = new MySQLVehiculoRepository()

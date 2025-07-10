@@ -34,11 +34,10 @@ export function crearAccidenteTransitoDto(data) {
     descripcion: data.descripcion,
     idCausaAccidente,
     vehiculos: data.vehiculos.map((v) => ({
-      tipo: v.tipo || null,
-      dominio: v.dominio || null,
-      cantidad: parseInt(v.cantidad) || 1,
+      patente: v.patente || null,
       modelo: v.modelo || null,
-      anio: v.anio || null,
+      marca: v.marca || null,
+      anio: v.anio ? parseInt(v.anio) : null,
       aseguradora: v.aseguradora || null,
       poliza: v.poliza || null
     })),
