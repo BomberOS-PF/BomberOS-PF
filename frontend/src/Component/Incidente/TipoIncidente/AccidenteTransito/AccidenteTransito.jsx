@@ -8,7 +8,7 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
 
   const [formData, setFormData] = useState(() => {
     const guardado = localStorage.getItem(storageKey)
-    return guardado ? JSON.parse(guardado) : { vehiculos: [] }
+    return guardado ? JSON.parse(guardado) : { vehiculos: [] , damnificados: []}
   })
 
   const [causasAccidente, setCausasAccidente] = useState([])
@@ -74,6 +74,27 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
     }))
   }
 
+  const handleDamnificadoChange = (index, field, value) => {
+    const nuevos = [...formData.damnificados]
+    nuevos[index][field] = value
+    setFormData(prev => ({ ...prev, damnificados: nuevos }))
+  }
+
+  const agregarDamnificado = () => {
+    setFormData(prev => ({
+      ...prev,
+      damnificados: [
+        ...(prev.damnificados || []),
+        { nombre: '', apellido: '', domicilio: '', telefono: '', dni: '', fallecio: false }
+      ]
+    }))
+  }
+
+  const eliminarDamnificado = (index) => {
+    const nuevos = formData.damnificados.filter((_, i) => i !== index)
+    setFormData(prev => ({ ...prev, damnificados: nuevos }))
+  }
+  
   const guardarLocalmente = () => {
     localStorage.setItem(storageKey, JSON.stringify(formData))
     alert('Datos guardados localmente. Podés continuar después.')
@@ -87,16 +108,9 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
       descripcion: formData.detalle,
       idCausaAccidente: parseInt(formData.idCausaAccidente),
       vehiculos: formData.vehiculos,
-      damnificados: [{
-        nombre: formData.nombreDamnificado || '',
-        apellido: formData.apellidoDamnificado || '',
-        domicilio: formData.domicilioDamnificado || '',
-        telefono: formData.telefonoDamnificado || '',
-        dni: formData.dniDamnificado || '',
-        fallecio: formData.fallecio || false
-      }]
+      damnificados: formData.damnificados
     }
-    
+
     try {
       const res = await fetch('http://localhost:3000/api/accidentes', {
         method: 'POST',
@@ -187,36 +201,42 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
           </div>
 
           <h5 className="text-black mt-4">Personas damnificadas</h5>
-          <div className="row mb-3">
-            <div className="col">
-              <label className="text-black form-label">Nombre</label>
-              <input type="text" className="form-control" id="nombreDamnificado" value={formData.nombreDamnificado || ''} onChange={handleChange} />
+          {formData.damnificados.map((d, index) => (
+            <div key={index} className="border rounded p-3 mb-3">
+              <div className="row mb-2">
+                <div className="col">
+                  <label className="text-black form-label">Nombre</label>
+                  <input type="text" className="form-control" value={d.nombre} onChange={(e) => handleDamnificadoChange(index, 'nombre', e.target.value)} />
+                </div>
+                <div className="col">
+                  <label className="text-black form-label">Apellido</label>
+                  <input type="text" className="form-control" value={d.apellido} onChange={(e) => handleDamnificadoChange(index, 'apellido', e.target.value)} />
+                </div>
+              </div>
+              <div className="mb-2">
+                <label className="text-black form-label">Domicilio</label>
+                <input type="text" className="form-control" value={d.domicilio} onChange={(e) => handleDamnificadoChange(index, 'domicilio', e.target.value)} />
+              </div>
+              <div className="row mb-2">
+                <div className="col">
+                  <label className="text-black form-label">Teléfono</label>
+                  <input type="tel" className="form-control" value={d.telefono} onChange={(e) => handleDamnificadoChange(index, 'telefono', e.target.value)} />
+                </div>
+                <div className="col">
+                  <label className="text-black form-label">DNI</label>
+                  <input type="text" className="form-control" value={d.dni} onChange={(e) => handleDamnificadoChange(index, 'dni', e.target.value)} />
+                </div>
+              </div>
+              <div className="form-check mb-2">
+                <input type="checkbox" className="form-check-input" checked={d.fallecio} onChange={(e) => handleDamnificadoChange(index, 'fallecio', e.target.checked)} />
+                <label className="form-check-label text-black">¿Falleció?</label>
+              </div>
+              <button type="button" className="btn btn-outline-danger btn-sm" onClick={() => eliminarDamnificado(index)}>❌ Eliminar damnificado</button>
             </div>
-            <div className="col">
-              <label className="text-black form-label">Apellido</label>
-              <input type="text" className="form-control" id="apellidoDamnificado" value={formData.apellidoDamnificado || ''} onChange={handleChange} />
-            </div>
-          </div>
+          ))}
 
-          <div className="mb-3">
-            <label className="text-black form-label">Domicilio</label>
-            <input type="text" className="form-control" id="domicilioDamnificado" value={formData.domicilioDamnificado || ''} onChange={handleChange} />
-          </div>
-
-          <div className="row mb-3">
-            <div className="col">
-              <label className="text-black form-label">Teléfono</label>
-              <input type="tel" className="form-control" id="telefonoDamnificado" value={formData.telefonoDamnificado || ''} onChange={handleChange} />
-            </div>
-            <div className="col">
-              <label className="text-black form-label">DNI</label>
-              <input type="text" className="form-control" id="dniDamnificado" value={formData.dniDamnificado || ''} onChange={handleChange} />
-            </div>
-          </div>
-
-          <div className="mb-3 form-check">
-            <input type="checkbox" className="form-check-input" id="fallecio" checked={formData.fallecio || false} onChange={handleChange} />
-            <label className="text-black form-check-label" htmlFor="fallecio">¿Falleció?</label>
+          <div className="d-flex justify-content-end mb-3">
+            <button type="button" className="btn btn-sm btn-success" onClick={agregarDamnificado}>+ Agregar damnificado</button>
           </div>
 
           <button type="submit" className="btn btn-danger w-100 mt-3">

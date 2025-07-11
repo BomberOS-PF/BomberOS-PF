@@ -6,7 +6,7 @@ export class MySQLAccidenteDamnificadoRepository {
     this.tableName = 'accidenteDamnificado'
   }
 
-  async asociar(idAccidenteTransito, idDamnificado) {
+  async insertarRelacion(idAccidenteTransito, idDamnificado) {
     const query = `
       INSERT INTO ${this.tableName} (idAccidenteTransito, idDamnificado)
       VALUES (?, ?)

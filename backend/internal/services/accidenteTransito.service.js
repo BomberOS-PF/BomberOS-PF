@@ -42,7 +42,7 @@ export class AccidenteTransitoService {
       for (const damnificado of data.damnificados || []) {
         damnificado.idIncidente = data.idIncidente
         const idDamnificado = await this.damnificadoRepository.insertarDamnificado(damnificado)
-        await this.accidenteDamnificadoRepository.asociar(idAccidente, idDamnificado)
+        await this.accidenteDamnificadoRepository.insertarRelacion(idAccidente, idDamnificado)
         logger.debug(`🧍 Damnificado asociado al accidente ${idAccidente}: Damnificado ${idDamnificado}`)
       }
 
