@@ -21,7 +21,7 @@ export function setupRoutes(app, container) {
 
   app.get('/', (req, res) => res.redirect('/health'))
 
-  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler,causaAccidenteHandler, vehiculoHandler } = container
 
   // ROLES
   app.get('/api/roles', async (req, res) => {
@@ -298,6 +298,54 @@ export function setupRoutes(app, container) {
     }
   })
 
+  // ACCIDENTES DE TRÁNSITO
+  app.post('/api/accidentes', async (req, res) => {
+    try {
+      await accidenteTransitoHandler.registrar(req, res)
+    } catch (error) {
+      logger.error('Error en ruta registrar accidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/accidentes', async (req, res) => {
+    try {
+      await accidenteTransitoHandler.listarTodos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listar accidentes:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/accidentes/:id', async (req, res) => {
+    try {
+      await accidenteTransitoHandler.obtenerPorIncidente(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtener accidente por incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // CAUSAS DE ACCIDENTE
+  app.get('/api/causa-accidente', async (req, res) => {
+    try {
+      await causaAccidenteHandler.getTodas(req, res)
+    } catch (error) {
+      logger.error('Error en ruta getTodas causasAccidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // VEHICULOS
+  app.post('/api/vehiculos', async (req, res) => {
+    try {
+      await vehiculoHandler.registrar(req, res)
+    } catch (error) {
+      logger.error('Error en ruta registrar vehiculo:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
   // 404 handler
   app.use((req, res) => {
     logger.warn('Ruta no encontrada', {
@@ -339,7 +387,12 @@ export function setupRoutes(app, container) {
         'POST /api/incidentes/:id/notificar',
         'POST /api/grupos',
         'GET /api/grupos',
-        'GET /api/grupos/:id/bomberos'
+        'GET /api/grupos/:id/bomberos',
+        'POST /api/accidentes',
+        'GET /api/accidentes',
+        'GET /api/accidentes/:id',        
+        'GET /api/causa-accidente',
+        'POST /api/vehiculos'
       ]
     })
   })

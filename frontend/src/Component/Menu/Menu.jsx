@@ -1,25 +1,28 @@
-// ✅ Menu.jsx completo con visualización de usuario y rol
+// Menu.jsx
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Menu.css'
 import logoBomberos from '/img/logo-bomberos.png'
+
 import CargarIncidente from '../Incidente/CargarIncidente/CargarIncidente'
 import RegistrarBombero from '../Bombero/RegistrarBombero/RegistrarBombero'
+import ConsultarBombero from '../Bombero/ConsultarBombero/ConsultarBombero'
 import RegistrarUsuario from '../Usuario/RegistrarUsuario/RegistrarUsuario'
 import ConsultarUsuario from '../Usuario/ConsultarUsuario/ConsultarUsuario'
 import RegistrarRol from '../Rol/RegistrarRol'
 import ConsultarRol from '../Rol/ConsultarRol'
-import BurbujaFormulario from '../BurbujaFormulario/BurbujaFormulario'
+import RegistrarGuardia from '../Guardia/RegistrarGuardia/RegistrarGuardia'
+
 import AccidenteTransito from '../Incidente/TipoIncidente/AccidenteTransito/AccidenteTransito'
 import FactorClimatico from '../Incidente/TipoIncidente/FactorClimatico/FactorClimatico'
 import IncendioEstructural from '../Incidente/TipoIncidente/IncendioEstructural/IncendioEstructural'
 import IncendioForestal from '../Incidente/TipoIncidente/IncendioForestal/IncendioForestal'
 import MaterialPeligroso from '../Incidente/TipoIncidente/MaterialPeligroso/MaterialPeligroso'
 import Rescate from '../Incidente/TipoIncidente/Rescate/Rescate'
+
 import ParticipacionIncidente from '../Incidente/ParticipacionIncidente/ParticipacionIncidente'
 import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
-import ConsultarBombero from '../Bombero/ConsultarBombero/ConsultarBombero'
-import RegistrarGuardia from '../Guardia/RegistrarGuardia/RegistrarGuardia'
+import BurbujaFormulario from '../BurbujaFormulario/BurbujaFormulario'
 
 const Menu = ({ user, setUser }) => {
   const navigate = useNavigate()
@@ -59,12 +62,10 @@ const Menu = ({ user, setUser }) => {
 
   const toggleMinimizada = (id) => {
     setBurbujas(prev => prev.map(b => {
-      if (b.id === id) {
-        const nuevaMin = !b.minimizada
-        setBurbujaExpandida(nuevaMin ? null : id)
-        return { ...b, minimizada: nuevaMin }
-      }
-      return { ...b, minimizada: true }
+      const activa = b.id === id
+      const minimizada = !b.minimizada
+      if (activa) setBurbujaExpandida(minimizada ? null : id)
+      return { ...b, minimizada: activa ? minimizada : true }
     }))
   }
 
@@ -77,7 +78,11 @@ const Menu = ({ user, setUser }) => {
   const renderFormularioExpandido = () => {
     const burbuja = burbujas.find(b => b.id === burbujaExpandida)
     if (!burbuja) return null
-    const props = { datosPrevios: burbuja.datosPrevios, onFinalizar: manejarFinalizarCarga }
+
+    const props = {
+      datosPrevios: burbuja.datosPrevios,
+      onFinalizar: manejarFinalizarCarga
+    }
 
     switch (burbuja.tipo) {
       case 'Accidente': return <AccidenteTransito {...props} />
@@ -94,12 +99,10 @@ const Menu = ({ user, setUser }) => {
     administrador: [
       'cargar-incidente', 'registrar-bombero', 'consultar-bombero',
       'registrar-usuario', 'consultar-usuario',
-      'registrar-rol','consultar-rol', 'participacion-incidente', 'vehiculo-involucrado', 'registrar-guardia'
+      'registrar-rol', 'consultar-rol',
+      'participacion-incidente', 'vehiculo-involucrado', 'registrar-guardia'
     ],
-    bombero: [
-      'cargar-incidente', 'consultar-bombero',
-      'participacion-incidente'
-    ]
+    bombero: ['cargar-incidente', 'consultar-bombero', 'participacion-incidente']
   }
 
   const items = [
@@ -112,7 +115,7 @@ const Menu = ({ user, setUser }) => {
     { key: 'consultar-rol', label: 'Consultar Rol' },
     { key: 'participacion-incidente', label: 'Participación del Incidente' },
     { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' },
-    { key: 'registrar-guardia', label: 'Registrar Guardia' },
+    { key: 'registrar-guardia', label: 'Registrar Guardia' }
   ]
 
   const puedeVer = (key) => permisos[rol]?.includes(key)
@@ -158,16 +161,22 @@ const Menu = ({ user, setUser }) => {
             {opcionSeleccionada === 'registrar-usuario' && <RegistrarUsuario onVolver={() => setOpcionSeleccionada(null)} />}
             {opcionSeleccionada === 'consultar-usuario' && <ConsultarUsuario onVolver={() => setOpcionSeleccionada(null)} />}
             {opcionSeleccionada === 'registrar-rol' && <RegistrarRol onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'consultar-rol' && (<ConsultarRol onVolver={() => setOpcionSeleccionada(null)} />)}
-            {opcionSeleccionada === 'participacion-incidente' && <ParticipacionIncidente datosPrevios={datosFinalizados} onFinalizar={() => setOpcionSeleccionada('vehiculo-involucrado')} onVolver={() => setOpcionSeleccionada(null)} />}
+            {opcionSeleccionada === 'consultar-rol' && <ConsultarRol onVolver={() => setOpcionSeleccionada(null)} />}
+            {opcionSeleccionada === 'participacion-incidente' && (
+              <ParticipacionIncidente
+                datosPrevios={datosFinalizados}
+                onFinalizar={() => setOpcionSeleccionada('vehiculo-involucrado')}
+                onVolver={() => setOpcionSeleccionada(null)}
+              />
+            )}
             {opcionSeleccionada === 'vehiculo-involucrado' && <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />}
             {opcionSeleccionada === 'registrar-guardia' && <RegistrarGuardia onVolver={() => setOpcionSeleccionada(null)} />}
           </div>
         )}
       </div>
 
-      {burbujas.map((b, index) => (
-        <div key={b.id} style={{ position: 'fixed', right: `${20 + index * 370}px`, bottom: '0', zIndex: 9999 }}>
+      {burbujas.map((b, i) => (
+        <div key={b.id} style={{ position: 'fixed', right: `${20 + i * 370}px`, bottom: 0, zIndex: 9999 }}>
           <BurbujaFormulario
             id={b.id}
             tipo={b.tipo}
