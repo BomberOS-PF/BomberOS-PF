@@ -29,7 +29,6 @@ export class IncidenteService extends IncidenteServiceInterface {
     }
 
     const nuevoIncidente = new Incidente({
-      dni: data.dni,
       idTipoIncidente: data.idTipoIncidente,
       fecha: data.fecha,
       idLocalizacion: data.idLocalizacion,
@@ -75,7 +74,7 @@ export class IncidenteService extends IncidenteServiceInterface {
       const bomberosActivos = bomberos.filter(bombero => {
         // Acceder correctamente a los value objects
         const telefono = bombero.telefono ? (bombero.telefono.toString() || bombero.telefono._value || '').trim() : ''
-        const nombre = bombero.nombreCompleto ? (bombero.nombreCompleto.toString() || bombero.nombreCompleto._value || '').trim() : ''
+        const nombre = bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}`.trim() : ''
         
         return telefono !== '' && nombre !== ''
       })
@@ -94,7 +93,7 @@ export class IncidenteService extends IncidenteServiceInterface {
       logger.info('📱 Bomberos encontrados para notificar', {
         total: bomberosActivos.length,
         bomberos: bomberosActivos.map(b => ({ 
-          nombre: b.nombreCompleto, 
+          nombre: b.nombre && b.apellido ? `${b.nombre} ${b.apellido}` : 'Sin nombre', 
           telefono: b.telefono 
         }))
       })

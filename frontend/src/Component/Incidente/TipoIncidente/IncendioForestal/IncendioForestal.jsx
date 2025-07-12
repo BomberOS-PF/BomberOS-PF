@@ -104,7 +104,7 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
               <input type="tel" className="form-control" id="telefono" value={formData.telefono || ''} onChange={handleChange} />
             </div>
             <div className="col">
-              <label className="text-black form-label">DNI</label>
+              <label className="text-black form-label">dni</label>
               <input type="text" className="form-control" id="dni" value={formData.dni || ''} onChange={handleChange} />
             </div>
           </div>

@@ -4,8 +4,8 @@ import { GrupoGuardia } from '../../../domain/models/grupo-guardia.js'
 
 export class MySQLGrupoGuardiaRepository {
   constructor() {
-    this.tableGrupos = 'grupo_guardia'
-    this.tableIntermedia = 'bomberos_grupo'
+    this.tableGrupos = 'grupoGuardia'
+    this.tableIntermedia = 'bomberosGrupo'
   }
 
   async create(grupo) {
@@ -17,17 +17,17 @@ export class MySQLGrupoGuardiaRepository {
     try {
       await connection.beginTransaction()
 
-      // Insertar en grupo_guardia
+      // Insertar en grupoGuardia
       const [result] = await connection.execute(
         `INSERT INTO ${this.tableGrupos} (nombre) VALUES (?)`,
         [data.nombreGrupo]
       )
       const nuevoId = result.insertId
 
-      // Insertar en bomberos_grupo
+      // Insertar en bomberosGrupo
       for (const dni of data.bomberos) {
         await connection.execute(
-          `INSERT INTO ${this.tableIntermedia} (idGrupo, dniBombero) VALUES (?, ?)`,
+          `INSERT INTO ${this.tableIntermedia} (idGrupo, dni) VALUES (?, ?)`,
           [nuevoId, dni]
         )
       }
@@ -60,11 +60,11 @@ export class MySQLGrupoGuardiaRepository {
       const grupo = rowsGrupo[0]
 
       const [rowsBomberos] = await connection.execute(
-        `SELECT dniBombero FROM ${this.tableIntermedia} WHERE idGrupo = ?`,
+        `SELECT dni FROM ${this.tableIntermedia} WHERE idGrupo = ?`,
         [id]
       )
 
-      const bomberos = rowsBomberos.map(row => row.dniBombero)
+      const bomberos = rowsBomberos.map(row => row.dni)
 
       return GrupoGuardia.create({
         idGrupo: grupo.idGrupo,
@@ -92,11 +92,11 @@ export class MySQLGrupoGuardiaRepository {
 
       for (const grupo of grupos) {
         const [rowsBomberos] = await connection.execute(
-          `SELECT dniBombero FROM ${this.tableIntermedia} WHERE idGrupo = ?`,
+          `SELECT dni FROM ${this.tableIntermedia} WHERE idGrupo = ?`,
           [grupo.idGrupo]
         )
 
-        const bomberos = rowsBomberos.map(row => row.dniBombero)
+        const bomberos = rowsBomberos.map(row => row.dni)
 
         resultados.push(
           GrupoGuardia.create({

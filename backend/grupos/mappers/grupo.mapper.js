@@ -10,7 +10,7 @@ export const GrupoMapper = {
     return GrupoGuardia.create({
       idGrupo: raw.idGrupo || raw.id,
       nombre: raw.nombre || raw.nombreGrupo,
-      bomberos: raw.bomberos || [] // Podría ser un array de DNIs si viene desde DTO
+      bomberos: raw.bomberos || [] // Podría ser un array de dnis si viene desde DTO
     })
   },
 

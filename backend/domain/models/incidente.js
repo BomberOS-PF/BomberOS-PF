@@ -1,10 +1,8 @@
 export class Incidente {
-  constructor({ idIncidente, dni, idTipoIncidente, fecha, idDenunciante, idLocalizacion, descripcion }) {
+  constructor({ idIncidente, idTipoIncidente, fecha, idLocalizacion, descripcion }) {
     this.idIncidente = idIncidente
-    this.dni = dni
     this.idTipoIncidente = idTipoIncidente
     this.fecha = fecha
-    this.idDenunciante = idDenunciante
     this.idLocalizacion = idLocalizacion
     this.descripcion = descripcion
   }
@@ -12,10 +10,8 @@ export class Incidente {
   toPlainObject() {
     return {
       idIncidente: this.idIncidente,
-      dni: this.dni,
       idTipoIncidente: this.idTipoIncidente,
       fecha: this.fecha,
-      idDenunciante: this.idDenunciante,
       idLocalizacion: this.idLocalizacion,
       descripcion: this.descripcion
     }
