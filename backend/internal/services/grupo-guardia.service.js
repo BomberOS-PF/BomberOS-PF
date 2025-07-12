@@ -69,7 +69,7 @@ export class GrupoGuardiaService {
     }
   }
 
-  async eliminar(id) {
+  async eliminarGrupo(id) {
     try {
       logger.debug('Servicio: Eliminar grupo', { id })
 
@@ -83,4 +83,19 @@ export class GrupoGuardiaService {
       throw error
     }
   }
+
+  async buscarConPaginado({ pagina, limite, busqueda }) {
+    try {
+      logger.debug('Servicio: Buscar grupos con paginado', { pagina, limite, busqueda })
+      
+      return await this.grupoRepository.findConPaginado({ pagina, limite, busqueda })
+    } catch (error) {
+      logger.error('Error al buscar grupos paginados', {
+        error: error.message,
+        stack: error.stack
+      })
+      throw error
+    }
+  }
+
 }

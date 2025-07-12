@@ -26,7 +26,9 @@ export const API_URLS = {
     libresBombero: `${API_BASE_URL}/usuarios/bomberos/libres`
   },
   grupos: {
-    create: `${API_BASE_URL}/grupos`
+    create: `${API_BASE_URL}/grupos`,
+    buscar: `${API_BASE_URL}/grupos/buscar`,
+    delete: (id) => `${API_BASE_URL}/grupos/${id}`
     
   },
   

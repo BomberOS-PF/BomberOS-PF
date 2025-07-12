@@ -143,4 +143,59 @@ export class MySQLGrupoGuardiaRepository {
       connection.release()
     }
   }
+
+async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
+  const offset = (pagina - 1) * limite
+  const connection = getConnection()
+
+  let whereClause = ''
+  let valores = []
+
+  if (busqueda && busqueda.trim() !== '') {
+    whereClause = 'WHERE nombre LIKE ?'
+    valores.push(`%${busqueda.trim()}%`)
+  }
+
+  const limitInt = parseInt(limite, 10)
+  const offsetInt = parseInt(offset, 10)
+
+  try {
+    const query = `
+      SELECT idGrupo, nombre
+      FROM ${this.tableGrupos}
+      ${whereClause}
+      ORDER BY idGrupo DESC
+      LIMIT ${limitInt} OFFSET ${offsetInt}
+    `
+
+    const [rows] = await connection.execute(query, valores)
+
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM ${this.tableGrupos}
+      ${whereClause}
+    `
+
+    const [countRows] = await connection.execute(countQuery, valores)
+
+    return {
+      data: rows.map(row =>
+        GrupoGuardia.create({
+          idGrupo: row.idGrupo,
+          nombreGrupo: row.nombre,
+          bomberos: [] // vacío, porque no querés traerlos
+        })
+      ),
+      total: countRows[0].total
+    }
+
+  } catch (error) {
+    logger.error('Error al buscar grupos con paginado', { error: error.message })
+    throw new Error(`Error en búsqueda paginada: ${error.message}`)
+  }
+}
+
+
+
+
 }

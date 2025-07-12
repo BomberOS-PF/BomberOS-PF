@@ -26,6 +26,7 @@ export const buildGrupoHandlers = (grupoService) => {
     console.error('Mensaje:', error.message)
     console.error('Stack:', error.stack)
     console.error('Body recibido:', req.body)
+    next(error)
 }
     },
 
@@ -72,6 +73,34 @@ export const buildGrupoHandlers = (grupoService) => {
       } catch (error) {
         next(error)
       }
-    }
+    },
+
+    /**
+ * GET /api/grupos/buscar
+ * Buscar grupos con paginado y búsqueda
+ */
+buscarGrupos: async (req, res, next) => {
+  try {
+    const { pagina = 1, limite = 10, busqueda = '' } = req.query
+
+    const resultado = await grupoService.buscarConPaginado({
+      pagina: parseInt(pagina),
+      limite: parseInt(limite),
+      busqueda: busqueda.trim()
+    })
+
+    res.json({
+      success: true,
+      data: resultado.data.map(g => GrupoMapper.toJSON(g)),
+      total: resultado.total
+    })
+  } catch (error) {
+    console.error('❌ Error en handler buscarGrupos:', error)
+    next(error)
+  }
+}
+
+
+    
   }
 }

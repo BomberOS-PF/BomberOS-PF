@@ -70,7 +70,7 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
   if (busqueda && busqueda.trim() !== '') {
     const valorLike = `%${busqueda.trim()}%`
     whereClause = `WHERE (b.dni LIKE ? OR b.legajo LIKE ? OR b.nombre LIKE ? OR b.apellido LIKE ? OR CONCAT(b.nombre, ' ', b.apellido) LIKE ?)`
-    valores = [valorLike, valorLike, valorLike]
+    valores = [valorLike, valorLike, valorLike, valorLike, valorLike]
   }
 
   const limitInt = parseInt(limite, 10)

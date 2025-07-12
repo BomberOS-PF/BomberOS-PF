@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { API_URLS } from '../../../config/api';
-import './RegistrarGuardia.css';
+import '../RegistrarGuardia.css';
 import '../../DisenioFormulario/DisenioFormulario.css';
 
 const RegistrarGuardia = ({ onVolver }) => {
@@ -146,7 +146,7 @@ const RegistrarGuardia = ({ onVolver }) => {
           <thead>
             <tr>
               <th>Seleccionar</th>
-              <th>dni</th>
+              <th>DNI</th>
               <th>Legajo</th>
               <th>Nombre completo</th>
               <th>Teléfono</th>
