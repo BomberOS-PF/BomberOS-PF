@@ -37,7 +37,7 @@ const FormularioRol = ({ modo, datosIniciales = {}, onSubmit, onVolver, loading 
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label htmlFor="nombreRol" className="form-label text-black">
-              Nombre del Rol <span className="text-danger">*</span>
+              Nombre del Rossssl <span className="text-danger">*</span>
             </label>
             <input
               type="text"

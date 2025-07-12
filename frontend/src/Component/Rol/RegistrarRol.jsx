@@ -3,13 +3,13 @@ import { apiRequest, API_URLS } from '../../config/api'
 import '../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarRol = ({ onVolver }) => {
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
-  const [messageType, setMessageType] = useState('')
   const [formData, setFormData] = useState({
     nombreRol: '',
     descripcion: ''
   })
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [messageType, setMessageType] = useState('')
 
   useEffect(() => {
     if (message) {

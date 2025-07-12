@@ -62,6 +62,7 @@ export const apiRequest = async (url, options = {}) => {
     if (!response.ok) {
       const error = new Error(data.message || 'Error en la solicitud')
       error.status = response.status
+      error.status = response.status
       error.response = data
       throw error
     }
