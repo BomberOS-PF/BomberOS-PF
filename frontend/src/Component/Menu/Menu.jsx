@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Menu.css'
+import * as bootstrap from 'bootstrap'
 import logoBomberos from '/img/logo-bomberos.png'
 
 import CargarIncidente from '../Incidente/CargarIncidente/CargarIncidente'
@@ -42,9 +43,27 @@ const Menu = ({ user, setUser }) => {
     navigate('/login')
   }
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen)
-  const closeSidebar = () => setSidebarOpen(false)
+  useEffect(() => {
+    const boton = document.getElementById('btnHamburguesa')
+    const sidebar = document.getElementById('sidebarMenu')
 
+    const handleOpen = () => boton.classList.add('abierto')
+    const handleClose = () => boton.classList.remove('abierto')
+
+    if (sidebar && boton) {
+      sidebar.addEventListener('shown.bs.offcanvas', handleOpen)
+      sidebar.addEventListener('hidden.bs.offcanvas', handleClose)
+    }
+
+    return () => {
+      if (sidebar && boton) {
+        sidebar.removeEventListener('shown.bs.offcanvas', handleOpen)
+        sidebar.removeEventListener('hidden.bs.offcanvas', handleClose)
+      }
+    }
+  }, [])
+
+  
   const agregarBurbuja = (tipo, datosPrevios) => {
     const id = datosPrevios?.id || Date.now()
     const yaExiste = burbujas.find(b => b.id === id)
@@ -73,6 +92,26 @@ const Menu = ({ user, setUser }) => {
     if (burbujaExpandida) cerrarBurbuja(burbujaExpandida)
     setDatosFinalizados(datos)
     setOpcionSeleccionada('participacion-incidente')
+  }
+
+  const cerrarMenuLateral = () => {
+    const sidebar = document.getElementById('sidebarMenu')
+    const Offcanvas = window.bootstrap?.Offcanvas || bootstrap?.Offcanvas
+
+    if (sidebar && Offcanvas) {
+      let instancia = Offcanvas.getInstance(sidebar)
+      if (!instancia) {
+        instancia = new Offcanvas(sidebar) // fuerza la instancia
+      }
+      instancia.hide()
+
+      const backdrop = document.querySelector('.offcanvas-backdrop')
+      if (backdrop) {
+        backdrop.classList.remove('show')
+        backdrop.remove()
+      }
+      document.body.classList.remove('offcanvas-backdrop', 'modal-open')
+    }
   }
 
   const renderFormularioExpandido = () => {
@@ -121,39 +160,69 @@ const Menu = ({ user, setUser }) => {
   const puedeVer = (key) => permisos[rol]?.includes(key)
 
   return (
-    <div className="sidebar-container">
-      <button className="hamburger-btn d-lg-none" onClick={toggleSidebar}>☰</button>
-
-      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-        <div className="sidebar-header d-flex justify-content-between align-items-center">
-          <img src={logoBomberos} alt="Logo Bomberos" style={{ height: '40px' }} />
-          <button className="close-btn d-lg-none" onClick={closeSidebar}>×</button>
-        </div>
-
-        {items.map(({ key, label }) => (
-          puedeVer(key) && (
-            <button key={key} className="sidebar-button" onClick={() => {
-              closeSidebar()
-              setOpcionSeleccionada(key)
-              setBurbujaExpandida(null)
-            }}>{label}</button>
-          )
-        ))}
-
-        <button className="sidebar-button logout" onClick={handleLogOut}>Cerrar sesión</button>
-      </aside>
-
-      <div className="menu-content-wrapper">
-        {burbujaExpandida ? (
-          <div className="form-wrapper">{renderFormularioExpandido()}</div>
-        ) : opcionSeleccionada === null ? (
-          <div className="menu-container">
-            <h2 className="usuario-logueado">
-              <strong>{rol?.toUpperCase()}</strong> - {nombreUsuario}
-            </h2>
-            <p>Seleccioná una opción desde el menú lateral izquierdo.</p>
+    <div>
+      <div className="offcanvas offcanvas-start bg-black text-white" tabIndex="-1" id="sidebarMenu">
+        <div className="offcanvas-header d-flex justify-content-between px-3 py-3 sidebar-header">
+          <div className="d-flex align-items-center">
+            <img src={logoBomberos} alt="Logo" style={{ height: 30 }} className="me-2" />
+            <span className="fs-5 fw-semibold text-white">BomberOS</span>
           </div>
-        ) : (
+          <button
+            id="btnCerrarSidebar"
+            className="btn btn-hamburguesa abierto d-flex flex-column justify-content-between align-items-center p-2"
+            type="button"
+            data-bs-dismiss="offcanvas"
+            aria-label="Cerrar menú"
+          >
+            <span className="linea linea-top"></span>
+            <span className="linea linea-middle"></span>
+            <span className="linea linea-bottom"></span>
+          </button>
+        </div>
+        <div className="offcanvas-body p-3 sidebar-body">
+          <nav className="nav flex-column">
+            {items.map(({ key, label }) => puedeVer(key) && (
+              <button
+                key={key}
+                className="btn btn-menu-option text-white text-start w-100 mb-2"
+                onClick={() => {
+                  setOpcionSeleccionada(key)
+                  cerrarMenuLateral()
+                }}
+              >
+                {label}
+              </button>
+            ))}
+            <hr />
+            <button className="btn btn-outline-danger w-100 mt-3" onClick={handleLogOut}>
+              <i className="bi bi-box-arrow-right me-2"></i> Cerrar sesión
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <header className="bg-dark border-bottom border-secondary p-3 d-flex justify-content-between align-items-center topbar">
+        <button
+          id='btnHamburguesa'
+          className="btn btn-hamburguesa d-flex flex-column justify-content-between align-items-center p-2"
+          type="button"
+          data-bs-toggle="offcanvas"
+          data-bs-target="#sidebarMenu"
+          aria-label="Menú"
+        >
+          <span className="linea linea-top"></span>
+          <span className="linea linea-middle"></span>
+          <span className="linea linea-bottom"></span>
+        </button>
+        <h1 className="h5 m-0">BomberOS - Panel Principal</h1>
+        <div className="text-end">
+          <span className="me-3">{nombreUsuario} - ({rol})</span>
+          <img src="https://i.pravatar.cc/30" className="rounded-circle" alt="user" />
+        </div>
+      </header>
+
+      <div className="p-4">
+        {burbujaExpandida ? renderFormularioExpandido() : opcionSeleccionada !== null && (
           <div className="form-wrapper">
             {opcionSeleccionada === 'cargar-incidente' && <CargarIncidente onVolver={() => setOpcionSeleccionada(null)} onNotificar={agregarBurbuja} />}
             {opcionSeleccionada === 'registrar-bombero' && <RegistrarBombero onVolver={() => setOpcionSeleccionada(null)} />}
@@ -177,14 +246,7 @@ const Menu = ({ user, setUser }) => {
 
       {burbujas.map((b, i) => (
         <div key={b.id} style={{ position: 'fixed', right: `${20 + i * 370}px`, bottom: 0, zIndex: 9999 }}>
-          <BurbujaFormulario
-            id={b.id}
-            tipo={b.tipo}
-            datosPrevios={b.datosPrevios}
-            minimizada={b.minimizada}
-            onCerrar={cerrarBurbuja}
-            onToggleMinimizada={toggleMinimizada}
-          />
+          <BurbujaFormulario {...b} onCerrar={cerrarBurbuja} onToggleMinimizada={toggleMinimizada} />
         </div>
       ))}
     </div>

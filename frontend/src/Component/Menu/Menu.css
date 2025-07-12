@@ -1,178 +1,126 @@
-.menu-container {
-  background-color: white;
-  color: black;
+body {
   font-family: 'Segoe UI', sans-serif;
-  width: 600px; /* antes era 100% */
-  margin: 3rem auto;
-  border-top: 5px solid #d52b1e;
-  border-radius: 6px;
-  text-align: center;
-  padding: 2rem 1.5rem;
+  margin: 0;
+  background-color: #2c2c2c;
+  color: white;
 }
 
-.menu-container h1 {
-  margin-bottom: 0.5rem;
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: url('fondo.svg') no-repeat center center;
+  background-size: cover;
 }
 
-.menu-container h2 {
-  margin-bottom: 2rem;
-  color: #d52b1e;
-}
+/* Contenedor de menú eliminado */
+/* .menu-container {...} */
+/* .usuario-logueado {...} */
 
-.menu-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.menu-buttons .btn {
-  background-color: #b02118;
-  border: none;
-  color: #fff;
-  padding: 0.6rem 1.3rem;
-  font-weight: 600;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  min-width: 170px;
-  text-align: center;
-}
-
-.menu-buttons .btn:hover {
-  background-color: #cd2f1a;
-}
-
-.menu-content {
+.form-wrapper {
   background-color: #222;
-  padding: 1.5rem;
+  padding: 2rem;
   border-radius: 6px;
-  min-height: 150px;
-  font-size: 1.1rem;
   color: #ddd;
 }
 
-.btn-danger.mt-3 {
-  margin-top: 1.5rem !important;
-  background-color: #b02118;
-  border: none;
-  padding: 0.6rem 1.3rem;
-  font-weight: 600;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.btn-danger.mt-3:hover {
-  background-color: #cd2f1a;
-}
-
-/* ------------------- SIDEBAR ------------------- */
-
-.sidebar-container {
-  display: flex;
-  height: auto;
-  width: 100%;
-  font-family: 'Segoe UI', sans-serif;
-}
-
-.sidebar {
-  width: 220px;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  display: flex;
-  flex-direction: column;
-  padding: 1.5rem 1rem;
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 1000;
-  transition: transform 0.3s ease-in-out;
+/* Sidebar moderno */
+.offcanvas-start.bg-black {
+  background: linear-gradient(to bottom, #121212, #1e1e1e);
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.6);
 }
 
 .sidebar-header {
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.sidebar-button {
-  background: none;
-  border: none;
-  color: white;
-  text-align: left;
-  padding: 0.5rem 0;
+.sidebar-body button.btn-menu-option {
   font-size: 1rem;
-  cursor: pointer;
-  transition: color 0.3s;
+  padding: 12px 16px;
+  border-radius: 8px;
+  text-align: left;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.sidebar-body button.btn-menu-option:hover {
+  background-color: #2a2a2a;
+  color: #c03323 !important;
+}
+
+/* Botón hamburguesa con animación de X */
+.btn-hamburguesa {
+  width: 32px;
+  height: 32px;
+  background-color: #2c2f34;
+  border: 1px solid #999;
+  border-radius: 8px;
+  position: relative;
+  z-index: 1051;
+  transition: all 0.3s ease-in-out;
+}
+
+.btn-hamburguesa .linea {
   width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  transition: all 0.3s ease;
 }
 
-.sidebar-button:hover {
-  color: #d52b1e;
+.btn-hamburguesa .linea-top {
+  background: linear-gradient(to right, orange, white);
 }
 
-.logout {
-  margin-top: auto;
-  font-weight: bold;
-  color: #f88;
+.btn-hamburguesa .linea-middle {
+  background: linear-gradient(to right, white, lightblue);
 }
 
-.menu-content-wrapper {
-  margin-left: 240px;
-  padding: 3rem 2rem;
-  width: 100%;
+.btn-hamburguesa .linea-bottom {
+  background: linear-gradient(to right, orange, lightblue);
 }
 
-/* ------------------- HAMBURGUESA & RESPONSIVE ------------------- */
+.btn-hamburguesa.abierto .linea-top {
+  transform: rotate(45deg) translate(4px, 4px);
+}
 
-.hamburger-btn {
-  position: fixed;
-  top: 1rem;
-  left: 1rem;
-  background-color: #b02118;
+.btn-hamburguesa.abierto .linea-middle {
+  opacity: 0;
+}
+
+.btn-hamburguesa.abierto .linea-bottom {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
+/* Topbar */
+.topbar .btn-outline-light:hover {
+  background-color: #ffffff22;
   color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  font-size: 1.3rem;
-  z-index: 1100;
-  border-radius: 4px;
-  display: none;
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
+/* Botones generales */
+.btn-outline-danger {
+  border-color: #c03323;
+  color: #c03323;
+}
+
+.btn-outline-danger:hover {
+  background-color: #c03323;
   color: white;
-  cursor: pointer;
 }
 
-/* Responsive: sidebar deslizable y botón visible */
-@media (max-width: 991px) {
-  .hamburger-btn {
-    display: block;
-  }
-
-  .sidebar {
-    transform: translateX(-100%);
-  }
-
-  .sidebar.open {
-    transform: translateX(0);
-  }
-
-  .menu-content-wrapper {
-    margin-left: 0;
-    padding-top: 5rem;
-  }
+.btn-danger {
+  background-color: #c53327;
+  border: none;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
 }
 
+.btn-danger:hover {
+  background-color: #a9291f;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+}
+
+/* Burbujas flotantes */
 .formulario-expandido {
   position: fixed;
   bottom: 0;
@@ -192,8 +140,65 @@
   flex: 1;
 }
 
-.usuario-logueado {
-  color: #d52b1e;
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+/* Tabla elegante */
+.table-elegante {
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+  width: 100%;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.table-elegante thead {
+  background-color: #1f1f1f;
+  font-weight: bold;
+  text-align: left;
+}
+
+.table-elegante tbody tr {
+  background-color: #c10000;
+  transition: background 0.2s ease;
+}
+
+.table-elegante tbody tr:hover {
+  background-color: #f40000;
+  cursor: pointer;
+}
+
+.table-elegante th,
+.table-elegante td {
+  padding: 0.75rem 1rem;
+  border: none;
+  vertical-align: middle;
+}
+
+.badge-estado {
+  padding: 0.3em 0.75em;
+  border-radius: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.estado-en-uso {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.estado-disponible {
+  background-color: #198754;
+  color: white;
+}
+
+.estado-mantenimiento {
+  background-color: #ffc107;
+  color: black;
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+  .menu-container {
+    width: 100%;
+    margin: 2rem auto;
+  }
 }
