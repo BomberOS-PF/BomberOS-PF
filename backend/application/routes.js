@@ -365,6 +365,7 @@ export function setupRoutes(app, container) {
       res.status(500).json({ error: 'Error interno' })
     }
   })
+  
 
   // 404 handler
   app.use((req, res) => {

@@ -98,7 +98,27 @@ buscarGrupos: async (req, res, next) => {
     console.error('❌ Error en handler buscarGrupos:', error)
     next(error)
   }
+},
+
+/**
+ * GET /api/grupos/:id/bomberos
+ * Obtener bomberos pertenecientes a un grupo
+ */
+obtenerBomberosDelGrupo: async (req, res, next) => {
+  try {
+    const idGrupo = parseInt(req.params.id)
+    const bomberos = await grupoService.obtenerBomberosDeGrupo(idGrupo)
+
+    res.json({
+      success: true,
+      data: bomberos
+    })
+  } catch (error) {
+    console.error('❌ Error en handler obtenerBomberosDelGrupo:', error)
+    next(error)
+  }
 }
+
 
 
     

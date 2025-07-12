@@ -1,57 +1,43 @@
-import React, { useEffect, useState } from 'react';
-import { API_URLS } from '../../../config/api';
-import '../RegistrarGuardia.css';
-import '../../DisenioFormulario/DisenioFormulario.css';
+import React, { useEffect, useState } from 'react'
+import { API_URLS } from '../../../config/api'
+import '../RegistrarGuardia.css'
+import '../../DisenioFormulario/DisenioFormulario.css'
+import ConsultarBomberosDelGrupo from './ConsultarBomberosDelGrupo'
 
 const ConsultarGrupoGuardia = ({ onVolver }) => {
-  const [nombreGrupo, setNombreGrupo] = useState('');
-  const [busqueda, setBusqueda] = useState('');
-  const [paginaActual, setPaginaActual] = useState(1);
-  const [limite] = useState(10);
-  const [total, setTotal] = useState(0);
-  const [bomberos, setBomberos] = useState([]);
-  const [grupo, setGrupo] = useState([]);
-  const [mensaje, setMensaje] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-
-  const [grupos, setGrupos] = useState([]);
+  const [busqueda, setBusqueda] = useState('')
+  const [paginaActual, setPaginaActual] = useState(1)
+  const [limite] = useState(10)
+  const [total, setTotal] = useState(0)
+  const [grupos, setGrupos] = useState([])
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null)
-
+  const [bomberosDelGrupo, setBomberosDelGrupo] = useState([])
+  const [mensaje, setMensaje] = useState('')
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    fetchGrupos();
-  }, [paginaActual, busqueda]);
+    fetchGrupos()
+  }, [paginaActual, busqueda])
 
   const fetchGrupos = async () => {
+    setLoading(true)
     try {
-      setLoading(true);
-      const res = await fetch(
-        `${API_URLS.grupos.buscar}?pagina=${paginaActual}&limite=${limite}&busqueda=${busqueda}`);
-        
-      const data = await res.json();
-
-      console.log('📡 Llamando a:', `${API_URLS.grupos.buscar}?pagina=${paginaActual}&limite=${limite}&busqueda=${busqueda}`)
-      console.log('📥 Respuesta:', data)
-
+      const res = await fetch(`${API_URLS.grupos.buscar}?pagina=${paginaActual}&limite=${limite}&busqueda=${busqueda}`)
+      const data = await res.json()
       if (res.ok && data.success) {
-      
         setGrupos(data.data || [])
-        console.log('📦 Grupos recibidos:', data.data)
         setTotal(data.total || 0)
         setMensaje('')
-
       } else {
-        setMensaje(data.message || 'Error al obtener grupos');
-        setBomberos([]);
+        setMensaje(data.message || 'Error al obtener grupos')
+        setGrupos([])
       }
     } catch (error) {
-      setMensaje('Error de conexión. Verifique que el servidor esté funcionando.');
-      setBomberos([]);
+      setMensaje('Error de conexión al obtener grupos')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const eliminarGrupo = async (grupo) => {
     if (!window.confirm(`¿Eliminar grupo "${grupo.nombre}"?`)) return
@@ -66,24 +52,61 @@ const ConsultarGrupoGuardia = ({ onVolver }) => {
         setMensaje(result.message || 'No se pudo eliminar el grupo')
       }
     } catch (error) {
-      setMensaje('Error de conexión al eliminar grupo')
+      setMensaje('Error al eliminar grupo')
     } finally {
       setLoading(false)
     }
   }
 
-  
+  const fetchBomberosDelGrupo = async (idGrupo) => {
+    setLoading(true)
+    try {
+      
+      const res = await fetch(API_URLS.grupos.obtenerBomberosDelGrupo(idGrupo))
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setBomberosDelGrupo(data.data || [])
+        const grupo = grupos.find(g => g.idGrupo === idGrupo)
+        setGrupoSeleccionado(grupo)
+        setMensaje('')
+      } else {
+        setMensaje(data.message || 'No se pudieron obtener los bomberos del grupo')
+      }
+    } catch (error) {
+      setMensaje('Error de conexión al obtener bomberos del grupo')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const volverListado = () => {
+    setGrupoSeleccionado(null)
+    setBomberosDelGrupo([])
+    setMensaje('')
+  }
 
   const handleBusqueda = (e) => {
-    setBusqueda(e.target.value);
-    setPaginaActual(1);
-  };
+    setBusqueda(e.target.value)
+    setPaginaActual(1)
+  }
+
+  if (grupoSeleccionado) {
+    return (
+      <ConsultarBomberosDelGrupo
+        idGrupo={grupoSeleccionado.idGrupo}
+        nombreGrupo={grupoSeleccionado.nombre}
+        bomberos={bomberosDelGrupo}
+        onVolver={volverListado}
+        mensaje={mensaje}
+        loading={loading}
+      />
+    )
+  }
 
   return (
     <div className="container mt-4 formulario-consistente">
       <h2 className="text-black mb-3">Grupos de Guardias</h2>
       {mensaje && <div className="alert alert-warning">{mensaje}</div>}
-      {successMessage && <div className="alert alert-success">{successMessage}</div>}
 
       <input
         type="text"
@@ -92,54 +115,49 @@ const ConsultarGrupoGuardia = ({ onVolver }) => {
         value={busqueda}
         onChange={handleBusqueda}
       />
-      
+
       <div className="table-responsive">
         <table className="tabla-bomberos mt-3">
           <thead>
             <tr>
               <th>Nombre</th>
-              <th>Descripcion</th>
+              <th>Descripción</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {grupos.map((grupo) => (
               <tr key={grupo.idGrupo}>
-                
                 <td>{grupo.nombre}</td>
-                <td>Una descripcion</td>
+                <td>-</td>
                 <td>
-                            <button
-                              className="btn btn-outline-light btn-sm me-2"
-                              onClick={() => setGrupoSeleccionado(grupo)}
-                              disabled={loading}
-                            >
-                              Ver detalles
-                            </button>
-                            <button
-                              className="btn btn-outline-danger btn-sm"
-                              onClick={() => eliminarGrupo(grupo)}
-                              disabled={loading}
-                              title="Eliminar grupo"
-                            >
-                              ❌
-                            </button>
-                          </td>
-
+                  <button
+                    className="btn btn-outline-light btn-sm me-2"
+                    onClick={() => fetchBomberosDelGrupo(grupo.idGrupo)}
+                    disabled={loading}
+                  >
+                    Ver detalles
+                  </button>
+                  <button
+                    className="btn btn-outline-danger btn-sm"
+                    onClick={() => eliminarGrupo(grupo)}
+                    disabled={loading}
+                    title="Eliminar grupo"
+                  >
+                    ❌
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
 
         {grupos.length === 0 && !loading && (
-          <div className="text-black mt-3 text-center">
-            No se encontraron grupos.
-          </div>
+          <div className="text-white mt-3 text-center">No se encontraron grupos.</div>
         )}
-
       </div>
 
-      <div className="pagination mb-3">
+      <div className="pagination mt-3">
         {Array.from({ length: Math.ceil(total / limite) }, (_, i) => (
           <button
             key={i}
@@ -151,15 +169,13 @@ const ConsultarGrupoGuardia = ({ onVolver }) => {
         ))}
       </div>
 
-    
       <div className="botones-accion mx-auto" style={{ width: '25%' }}>
-        
-        <button className="btn btn-secondary me-3 w-100" onClick={onVolver} disabled={loading}>
+        <button className="btn btn-secondary w-100" onClick={onVolver} disabled={loading}>
           Volver
         </button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ConsultarGrupoGuardia;
+export default ConsultarGrupoGuardia

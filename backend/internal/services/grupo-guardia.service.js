@@ -98,4 +98,23 @@ export class GrupoGuardiaService {
     }
   }
 
+  async obtenerBomberosDeGrupo(idGrupo) {
+  try {
+    logger.debug('Servicio: Obtener bomberos del grupo', { idGrupo })
+
+    if (!idGrupo || isNaN(idGrupo)) {
+      throw new Error('ID de grupo inválido')
+    }
+
+    return await this.grupoRepository.obtenerBomberosDelGrupo(idGrupo)
+  } catch (error) {
+    logger.error('Error al obtener bomberos del grupo', {
+      idGrupo,
+      error: error.message,
+      stack: error.stack
+    })
+    throw error
+  }
+}
+
 }
