@@ -220,6 +220,46 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
     }
   }
 
+async actualizar(grupo) {
+  const pool = getConnection()
+  const connection = await pool.getConnection()
+
+  const data = grupo.toDatabase()
+
+  try {
+    await connection.beginTransaction()
+
+    // 1. Actualizar nombre del grupo
+    await connection.execute(
+      `UPDATE ${this.tableGrupos} SET nombre = ? WHERE idGrupo = ?`,
+      [data.nombreGrupo, grupo.id]
+    )
+
+    // 2. Eliminar relaciones actuales de bomberos
+    await connection.execute(
+      `DELETE FROM ${this.tableIntermedia} WHERE idGrupo = ?`,
+      [grupo.id]
+    )
+
+    // 3. Insertar nuevas relaciones
+    for (const dni of data.bomberos) {
+      await connection.execute(
+        `INSERT INTO ${this.tableIntermedia} (idGrupo, dni) VALUES (?, ?)`,
+        [grupo.id, dni]
+      )
+    }
+
+    await connection.commit()
+    logger.debug('Grupo de guardia actualizado correctamente', { idGrupo: grupo.id })
+    return true
+  } catch (error) {
+    await connection.rollback()
+    logger.error('Error al actualizar grupo de guardia', { error: error.message })
+    throw new Error(`Error al actualizar grupo: ${error.message}`)
+  } finally {
+    connection.release()
+  }
+}
 
 
 

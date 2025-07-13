@@ -316,6 +316,16 @@ export function setupRoutes(app, container) {
     }
   })
 
+  app.put('/api/grupos/:id', async (req, res) => {
+  try {
+    await grupoGuardiaHandler.actualizarGrupo(req, res)
+  } catch (error) {
+    logger.error('Error en ruta actualizarGrupo:', error)
+    res.status(500).json({ error: 'Error interno' })
+  }
+})
+
+
 
 
   // ACCIDENTES DE TRÁNSITO

@@ -1,13 +1,10 @@
-// frontend/src/Component/Guardia/ConsultarBomberosDelGrupo.jsx
-
 import React from 'react'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
 const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, bomberos, onVolver, onEditar }) => {
   return (
     <div className="container formulario-consistente">
-      <h2 className="mb-2 text-black"> Bomberos</h2>
-      <h2 className="mb-3 text-black"> {nombreGrupo}</h2>
+      <h2 className="mb-3 text-black">Bomberos del grupo: {nombreGrupo || 'Sin nombre'}</h2>
 
       {bomberos.length === 0 ? (
         <div className="alert alert-warning">No hay bomberos asignados a este grupo.</div>
@@ -19,7 +16,6 @@ const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, bomberos, onVolver, o
                 <th>DNI</th>
                 <th>Nombre</th>
                 <th>Apellido</th>
-                {/* Podés agregar más columnas si es necesario */}
               </tr>
             </thead>
             <tbody>
@@ -36,8 +32,14 @@ const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, bomberos, onVolver, o
       )}
 
       <div className="botones-accion mt-4">
-        <button className="btn btn-secondary w-100" onClick={onVolver}>
+        <button className="btn btn-secondary w-100 mb-2" onClick={onVolver}>
           ← Volver a grupos
+        </button>
+        <button
+          className="btn btn-warning w-100"
+          onClick={() => onEditar({ idGrupo, nombre: nombreGrupo })}
+        >
+          ✏️ Editar grupo
         </button>
       </div>
     </div>

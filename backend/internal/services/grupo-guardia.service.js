@@ -117,4 +117,43 @@ export class GrupoGuardiaService {
   }
 }
 
+async actualizarGrupo(id, dto) {
+  try {
+    logger.debug('Servicio: Actualizar grupo', { id, dto })
+
+    const grupoExistente = await this.grupoRepository.findById(id)
+    if (!grupoExistente) {
+      throw new Error('Grupo no encontrado')
+    }
+
+    // Validar que los bomberos existen
+    for (const dni of dto.bomberos) {
+      const bombero = await this.bomberoRepository.findById(dni)
+      if (!bombero) {
+        throw new Error(`No existe un bombero con dni: ${dni}`)
+      }
+    }
+
+
+    const grupoActualizado = GrupoGuardia.create({
+      idGrupo: id,
+      nombre: dto.nombreGrupo, 
+      bomberos: dto.bomberos
+    })
+
+    await this.grupoRepository.actualizar(grupoActualizado)
+
+    return grupoActualizado
+  } catch (error) {
+    logger.error('Error al actualizar grupo de guardia', {
+      id,
+      error: error.message,
+      stack: error.stack
+    })
+    throw error
+  }
+}
+
+
+
 }

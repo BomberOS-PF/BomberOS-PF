@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { API_URLS } from '../../../config/api'
 import '../RegistrarGuardia.css'
+import RegistrarGuardia from '../RegistrarGuardia/RegistrarGuardia'
 import '../../DisenioFormulario/DisenioFormulario.css'
 import ConsultarBomberosDelGrupo from './ConsultarBomberosDelGrupo'
 
@@ -10,10 +11,11 @@ const ConsultarGrupoGuardia = ({ onVolver }) => {
   const [limite] = useState(10)
   const [total, setTotal] = useState(0)
   const [grupos, setGrupos] = useState([])
-  const [grupoSeleccionado, setGrupoSeleccionado] = useState(null)
   const [bomberosDelGrupo, setBomberosDelGrupo] = useState([])
   const [mensaje, setMensaje] = useState('')
   const [loading, setLoading] = useState(false)
+  const [modoEdicion, setModoEdicion] = useState(false)
+  const [grupoSeleccionado, setGrupoSeleccionado] = useState(null)
 
   useEffect(() => {
     fetchGrupos()
@@ -90,18 +92,39 @@ const ConsultarGrupoGuardia = ({ onVolver }) => {
     setPaginaActual(1)
   }
 
-  if (grupoSeleccionado) {
-    return (
-      <ConsultarBomberosDelGrupo
-        idGrupo={grupoSeleccionado.idGrupo}
-        nombreGrupo={grupoSeleccionado.nombre}
-        bomberos={bomberosDelGrupo}
-        onVolver={volverListado}
-        mensaje={mensaje}
-        loading={loading}
-      />
-    )
+  const editarGrupo = (grupo) => {
+  setGrupoSeleccionado(grupo)
+  setModoEdicion(true)
   }
+
+if (modoEdicion && grupoSeleccionado) {
+  return (
+    <RegistrarGuardia
+      idGrupo={grupoSeleccionado.idGrupo}
+      nombreGrupoInicial={grupoSeleccionado.nombre}
+      bomberosIniciales={bomberosDelGrupo}
+      onVolver={() => {
+        setModoEdicion(false)
+        volverListado()
+      }}
+    />
+  )
+}
+
+if (grupoSeleccionado) {
+  return (
+    <ConsultarBomberosDelGrupo
+      idGrupo={grupoSeleccionado.idGrupo}
+      nombreGrupo={grupoSeleccionado.nombre}
+      bomberos={bomberosDelGrupo}
+      onVolver={volverListado}
+      mensaje={mensaje}
+      loading={loading}
+      onEditar={editarGrupo}
+    />
+  )
+}
+
 
   return (
     <div className="container mt-4 formulario-consistente">

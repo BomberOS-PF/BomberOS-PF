@@ -117,7 +117,31 @@ obtenerBomberosDelGrupo: async (req, res, next) => {
     console.error('❌ Error en handler obtenerBomberosDelGrupo:', error)
     next(error)
   }
+},
+
+/**
+ * PUT /api/grupos/:id
+ * Actualizar grupo por ID
+ */
+actualizarGrupo: async (req, res, next) => {
+  try {
+    const idGrupo = parseInt(req.params.id)
+    const dto = new CreateGrupoDTO(req.body)
+
+    const grupoActualizado = await grupoService.actualizarGrupo(idGrupo, dto)
+
+    res.json({
+      success: true,
+      data: GrupoMapper.toJSON(grupoActualizado)
+    })
+  } catch (error) {
+    console.error('❌ Error en handler actualizarGrupo:', error)
+    next(error)
+  }
 }
+
+
+
 
 
 
