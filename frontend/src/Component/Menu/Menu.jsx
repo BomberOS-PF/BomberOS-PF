@@ -63,7 +63,24 @@ const Menu = ({ user, setUser }) => {
     }
   }, [])
 
-  
+  useEffect(() => {
+    const backdropClickHandler = (e) => {
+      const sidebar = document.getElementById('sidebarMenu')
+      const isSidebarVisible = sidebar?.classList.contains('show')
+      const isClickOutside = !sidebar?.contains(e.target)
+
+      if (isSidebarVisible && isClickOutside && !opcionSeleccionada) {
+        cerrarMenuLateral()
+      }
+    }
+
+    document.addEventListener('mousedown', backdropClickHandler)
+
+    return () => {
+      document.removeEventListener('mousedown', backdropClickHandler)
+    }
+  }, [opcionSeleccionada])
+
   const agregarBurbuja = (tipo, datosPrevios) => {
     const id = datosPrevios?.id || Date.now()
     const yaExiste = burbujas.find(b => b.id === id)
