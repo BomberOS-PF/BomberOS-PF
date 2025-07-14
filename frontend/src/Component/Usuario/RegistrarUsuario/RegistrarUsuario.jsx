@@ -2,9 +2,7 @@ import { useEffect, useState } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
-
-
-const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
+const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuarios = [] }) => {
   const [formData, setFormData] = useState({ username: '', password: '', email: '', idRol: '' })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -20,14 +18,10 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
 
   useEffect(() => {
     if (messageType === 'error') {
-      const timer = setTimeout(() => setMessage(''), 3000)
+      const timer = setTimeout(() => setMessage(''), 2000)
       return () => clearTimeout(timer)
     }
   }, [message, messageType])
-
-  
-
-
 
   const validatePasswordStrength = (password) => {
     if (!password) {
@@ -98,6 +92,25 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
     }
   }
 
+  const handleEmailBlur = () => {
+    if (!formData.email) return
+
+    // Solo validar si se está editando un usuario
+    if (usuario) {
+      const emailRepetido = listaUsuarios.find(u =>
+        u.email === formData.email && u.id !== usuario.id
+      )
+
+      if (emailRepetido) {
+        setMessage('❌ Correo electrónico ya registrado')
+        setMessageType('error')
+
+        // Limpiar mensaje tras unos segundos
+        setTimeout(() => setMessage(''), 2000)
+      }
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -105,6 +118,16 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
 
     try {
       if (usuario) {
+        const emailRepetido = listaUsuarios.find(u =>
+          u.email === formData.email && u.id !== usuario.id
+        )
+
+        if (emailRepetido) {
+          setMessage('❌ Correo electrónico ya registrado')
+          setMessageType('error')
+          setLoading(false)
+          return
+        }
         // Actualizar usuario existente
         const updateData = {
           email: formData.email,
