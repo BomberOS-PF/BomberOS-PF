@@ -4,6 +4,7 @@ import '../RegistrarGuardia.css'
 import RegistrarGuardia from '../RegistrarGuardia/RegistrarGuardia'
 import '../../DisenioFormulario/DisenioFormulario.css'
 import ConsultarBomberosDelGrupo from './ConsultarBomberosDelGrupo'
+import * as bootstrap from 'bootstrap'
 
 const ConsultarGrupoGuardia = ({ onVolver }) => {
   const [busqueda, setBusqueda] = useState('')
@@ -16,6 +17,10 @@ const ConsultarGrupoGuardia = ({ onVolver }) => {
   const [loading, setLoading] = useState(false)
   const [modoEdicion, setModoEdicion] = useState(false)
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null)
+
+  // Nuevos estados para modales
+  const [grupoAEliminar, setGrupoAEliminar] = useState(null)
+  const [resultadoOperacion, setResultadoOperacion] = useState({ mostrar: false, exito: false, mensaje: '' })
 
   useEffect(() => {
     fetchGrupos()
@@ -41,21 +46,29 @@ const ConsultarGrupoGuardia = ({ onVolver }) => {
     }
   }
 
-  const eliminarGrupo = async (grupo) => {
-    if (!window.confirm(`¿Eliminar grupo "${grupo.nombre}"?`)) return
+  const confirmarEliminacion = (grupo) => {
+    setGrupoAEliminar(grupo)
+    const modal = new bootstrap.Modal(document.getElementById('modalConfirmacion'))
+    modal.show()
+  }
+
+  const eliminarGrupo = async () => {
+    if (!grupoAEliminar) return
     setLoading(true)
     try {
-      const res = await fetch(API_URLS.grupos.delete(grupo.idGrupo), { method: 'DELETE' })
+      const res = await fetch(API_URLS.grupos.delete(grupoAEliminar.idGrupo), { method: 'DELETE' })
       const result = await res.json()
       if (res.ok && result.success) {
-        setMensaje('Grupo eliminado correctamente')
+        setResultadoOperacion({ mostrar: true, exito: true, mensaje: 'Grupo eliminado correctamente' })
         fetchGrupos()
       } else {
-        setMensaje(result.message || 'No se pudo eliminar el grupo')
+        setResultadoOperacion({ mostrar: true, exito: false, mensaje: result.message || 'No se pudo eliminar el grupo' })
       }
     } catch (error) {
-      setMensaje('Error al eliminar grupo')
+      setResultadoOperacion({ mostrar: true, exito: false, mensaje: 'Error al eliminar grupo' })
     } finally {
+      const modal = bootstrap.Modal.getInstance(document.getElementById('modalConfirmacion'))
+      modal.hide()
       setLoading(false)
     }
   }
@@ -63,7 +76,6 @@ const ConsultarGrupoGuardia = ({ onVolver }) => {
   const fetchBomberosDelGrupo = async (idGrupo) => {
     setLoading(true)
     try {
-      
       const res = await fetch(API_URLS.grupos.obtenerBomberosDelGrupo(idGrupo))
       const data = await res.json()
       if (res.ok && data.success) {
@@ -93,41 +105,40 @@ const ConsultarGrupoGuardia = ({ onVolver }) => {
   }
 
   const editarGrupo = (grupo) => {
-  setGrupoSeleccionado(grupo)
-  setModoEdicion(true)
+    setGrupoSeleccionado(grupo)
+    setModoEdicion(true)
   }
 
-if (modoEdicion && grupoSeleccionado) {
-  return (
-    <RegistrarGuardia
-      idGrupo={grupoSeleccionado.idGrupo}
-      nombreGrupoInicial={grupoSeleccionado.nombre}
-      descripcionInicial={grupoSeleccionado.descripcion}
-      bomberosIniciales={bomberosDelGrupo}
-      onVolver={() => {
-        setModoEdicion(false)
-        volverListado()
-        fetchGrupos()
-      }}
-    />
-  )
-}
+  if (modoEdicion && grupoSeleccionado) {
+    return (
+      <RegistrarGuardia
+        idGrupo={grupoSeleccionado.idGrupo}
+        nombreGrupoInicial={grupoSeleccionado.nombre}
+        descripcionInicial={grupoSeleccionado.descripcion}
+        bomberosIniciales={bomberosDelGrupo}
+        onVolver={() => {
+          setModoEdicion(false)
+          volverListado()
+          fetchGrupos()
+        }}
+      />
+    )
+  }
 
-if (grupoSeleccionado) {
-  return (
-    <ConsultarBomberosDelGrupo
-      idGrupo={grupoSeleccionado.idGrupo}
-      nombreGrupo={grupoSeleccionado.nombre}
-      descripcion={grupoSeleccionado.descripcion}
-      bomberos={bomberosDelGrupo}
-      onVolver={volverListado}
-      mensaje={mensaje}
-      loading={loading}
-      onEditar={editarGrupo}
-    />
-  )
-}
-
+  if (grupoSeleccionado) {
+    return (
+      <ConsultarBomberosDelGrupo
+        idGrupo={grupoSeleccionado.idGrupo}
+        nombreGrupo={grupoSeleccionado.nombre}
+        descripcion={grupoSeleccionado.descripcion}
+        bomberos={bomberosDelGrupo}
+        onVolver={volverListado}
+        mensaje={mensaje}
+        loading={loading}
+        onEditar={editarGrupo}
+      />
+    )
+  }
 
   return (
     <div className="container mt-4 formulario-consistente">
@@ -166,7 +177,7 @@ if (grupoSeleccionado) {
                   </button>
                   <button
                     className="btn btn-outline-danger btn-sm"
-                    onClick={() => eliminarGrupo(grupo)}
+                    onClick={() => confirmarEliminacion(grupo)}
                     disabled={loading}
                     title="Eliminar grupo"
                   >
@@ -200,6 +211,55 @@ if (grupoSeleccionado) {
           Volver
         </button>
       </div>
+
+      {/* Modal Confirmación */}
+      <div className="modal fade" id="modalConfirmacion" tabIndex="-1" aria-hidden="true">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Confirmar eliminación</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div className="modal-body">
+              ¿Estás seguro de que deseas eliminar el grupo <strong>{grupoAEliminar?.nombre}</strong>?
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="button" className="btn btn-danger" onClick={eliminarGrupo}>Eliminar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal Resultado */}
+      {resultadoOperacion.mostrar && (
+        <div
+          className="modal fade show"
+          style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
+          tabIndex="-1"
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className={`modal-header ${resultadoOperacion.exito ? 'bg-success' : 'bg-danger'}`}>
+                <h5 className="modal-title text-white">
+                  {resultadoOperacion.exito ? 'Éxito' : 'Error'}
+                </h5>
+              </div>
+              <div className="modal-body">
+                <p>{resultadoOperacion.mensaje}</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setResultadoOperacion({ mostrar: false, exito: false, mensaje: '' })}
+                >
+                  Aceptar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
