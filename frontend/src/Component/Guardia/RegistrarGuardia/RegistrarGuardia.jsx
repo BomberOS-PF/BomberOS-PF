@@ -167,7 +167,8 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', bomberosIniciales 
               <th>Seleccionar</th>
               <th>DNI</th>
               <th>Legajo</th>
-              <th>Nombre completo</th>
+              <th>Nombre</th>
+              <th>Apellido</th>
               <th>Teléfono</th>
               <th>Email</th>
             </tr>
@@ -210,7 +211,8 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', bomberosIniciales 
         </td>
         <td>{b.dni}</td>
         <td>{b.legajo}</td>
-        <td>{b.nombre && b.apellido ? `${b.nombre} ${b.apellido}` : ''}</td>
+        <td>{b.nombre}</td>
+        <td>{b.apellido}</td>
         <td>{b.telefono}</td>
         <td>{b.email}</td>
       </tr>
@@ -241,7 +243,8 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', bomberosIniciales 
               <tr>
                 <th>DNI</th>
                 <th>Legajo</th>
-                <th>Nombre completo</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
                 <th>Teléfono</th>
                 <th>Email</th>
                 <th>Quitar</th>
@@ -252,7 +255,8 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', bomberosIniciales 
                 <tr key={b.dni}>
                   <td>{b.dni}</td>
                   <td>{b.legajo}</td>
-                  <td>{`${b.nombre} ${b.apellido}`}</td>
+                  <td>{b.nombre}</td>
+                  <td>{b.apellido}</td>
                   <td>{b.telefono}</td>
                   <td>{b.email}</td>
                   <td>

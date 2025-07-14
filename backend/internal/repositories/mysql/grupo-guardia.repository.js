@@ -195,30 +195,34 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
   }
 }
 
-  async obtenerBomberosDelGrupo(idGrupo) {
-    const pool = getConnection()
-    const connection = await pool.getConnection()
+async obtenerBomberosDelGrupo(idGrupo) {
+  const pool = getConnection()
+  const connection = await pool.getConnection()
 
-    try {
-      const [rows] = await connection.execute(
-        `SELECT b.dni, b.nombre, b.apellido, b.legajo
-         FROM ${this.tableIntermedia} bg
-         INNER JOIN bombero b ON b.dni = bg.dni
-         WHERE bg.idGrupo = ?`,
-        [idGrupo]
-      )
+  try {
+    const [rows] = await connection.execute(
+      `SELECT b.dni, b.nombre, b.apellido, b.legajo, b.telefono, b.correo
+       FROM ${this.tableIntermedia} bg
+       INNER JOIN bombero b ON b.dni = bg.dni
+       WHERE bg.idGrupo = ?`,
+      [idGrupo]
+    )
 
-      return rows
-    } catch (error) {
-      logger.error('Error al obtener bomberos del grupo', {
-        idGrupo,
-        error: error.message
-      })
-      throw new Error(`Error al obtener bomberos del grupo: ${error.message}`)
-    } finally {
-      connection.release()
-    }
+    return rows.map(b => ({
+      ...b,
+      email: b.correo
+    }))
+  } catch (error) {
+    logger.error('Error al obtener bomberos del grupo', {
+      idGrupo,
+      error: error.message
+    })
+    throw new Error(`Error al obtener bomberos del grupo: ${error.message}`)
+  } finally {
+    connection.release()
   }
+}
+
 
 async actualizar(grupo) {
   const pool = getConnection()

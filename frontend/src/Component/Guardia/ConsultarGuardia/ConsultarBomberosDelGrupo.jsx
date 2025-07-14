@@ -14,16 +14,22 @@ const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, bomberos, onVolver, o
             <thead>
               <tr>
                 <th>DNI</th>
+                <th>Legajo</th>
                 <th>Nombre</th>
                 <th>Apellido</th>
+                <th>Teléfono</th>
+                <th>Email</th>
               </tr>
             </thead>
             <tbody>
               {bomberos.map((b, i) => (
                 <tr key={i}>
                   <td>{b.dni}</td>
+                  <td>{b.legajo}</td>
                   <td>{b.nombre}</td>
                   <td>{b.apellido}</td>
+                  <td>{b.telefono}</td>
+                  <td>{b.email}</td>
                 </tr>
               ))}
             </tbody>
