@@ -64,9 +64,14 @@ export class UsuarioService {
 
       const usuarioExistente = await this.usuarioRepository.findByUsername(datosUsuario.username)
       if (usuarioExistente) {
-        throw new Error(`Ya existe un usuario con el nombre "${datosUsuario.username}"`)
+        throw new Error(`Nombre de usuario no disponible`)
       }
 
+      const usuarioExistentePorEmail = await this.usuarioRepository.findByEmail(datosUsuario.email)
+      if (usuarioExistentePorEmail) {
+        throw new Error(`Correo electrónico ya registrado`)
+      }
+      
       const nuevoUsuario = Usuario.create({
         username: datosUsuario.username,
         password: datosUsuario.password,

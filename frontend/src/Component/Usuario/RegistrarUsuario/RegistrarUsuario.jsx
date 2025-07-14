@@ -160,8 +160,7 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
         }
       }
 
-    } catch (error) {
-      console.error('❌ Error al procesar usuario:', error)
+    } catch (error) {    
       setMessage(`Error: ${error.message}`)
       setMessageType('error')
     } finally {
