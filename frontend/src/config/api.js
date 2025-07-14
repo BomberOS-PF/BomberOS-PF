@@ -55,7 +55,6 @@ export const apiRequest = async (url, options = {}) => {
   }
 
   try {
-    console.log(`🌐 API Request: ${config.method || 'GET'} ${url}`)
     const response = await fetch(url, config)
     const data = await response.json()
 
