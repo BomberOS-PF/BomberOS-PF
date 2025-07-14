@@ -38,8 +38,7 @@ const Login = ({ setUser, user }) => {
       })
 
       const data = await res.json()
-      console.log('📦 Respuesta del backend:', data)
-
+      
       if (res.ok && data.success) {
         const sesion = {
           id: data.user.id,
@@ -52,12 +51,10 @@ const Login = ({ setUser, user }) => {
           timestamp: new Date().toISOString()
         }
 
-        console.log('🧠 Sesión a guardar en localStorage:', sesion)
         setUser(sesion)
         localStorage.setItem('usuario', JSON.stringify(sesion))
 
         const stored = JSON.parse(localStorage.getItem('usuario'))
-        console.log('📥 Datos guardados efectivamente:', stored)
 
         resetForm()
         navigate('/')
@@ -66,7 +63,6 @@ const Login = ({ setUser, user }) => {
         resetForm()
       }
     } catch (error) {
-      console.error('Error en el login:', error)
       setError('Error en el sistema. Intenta más tarde.')
       resetForm()
     } finally {
