@@ -104,8 +104,6 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
     setMessage('')
 
     try {
-      console.log('📝 Enviando datos de usuario:', formData)
-
       if (usuario) {
         // Actualizar usuario existente
         const updateData = {
@@ -114,8 +112,6 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
           ...(formData.password && { password: formData.password })
         }
 
-        console.log('🔄 Actualizando usuario:', { id: usuario.id, data: updateData })
-        
         const response = await apiRequest(API_URLS.usuarios.update(usuario.id), {
           method: 'PUT',
           body: JSON.stringify(updateData)
@@ -138,10 +134,7 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
           password: formData.password,
           email: formData.email,
           idRol: parseInt(formData.rol, 10)
-        }
-
-        console.log('➕ Creando nuevo usuario:', newUserData)
-        
+        } 
         const response = await apiRequest(API_URLS.usuarios.create, {
           method: 'POST',
           body: JSON.stringify(newUserData)
@@ -301,13 +294,6 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false }) => {
             )}
           </div>
         </form>
-
-        <div className="mt-3 text-muted">
-          <small>
-            <strong>Nota:</strong> Los usuarios se guardan en la base de datos del servidor.
-            Las contraseñas se almacenan de forma segura usando encriptación bcrypt.
-          </small>
-        </div>
       </div>
     </div>
   )
