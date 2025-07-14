@@ -64,9 +64,9 @@ const ConsultarRol = ({ onVolver }) => {
     setLoading(true)
 
     if (!datosActualizados.nombreRol.trim()) {
-      setMensaje('❌ El nombre del rol es obligatorio')
+      setMensaje('El nombre del rol es obligatorio')
       setLoading(false)
-      setTimeout(() => setMensaje(''), 2000)
+      setTimeout(() => setMensaje(''), 2500)
       return
     }
 
@@ -84,17 +84,27 @@ const ConsultarRol = ({ onVolver }) => {
           setMensaje('')
         }, 1500)
         fetchRoles()
-      } else {
-        setMensaje(response.message || 'Error al guardar los cambios')
-        setTimeout(() => setMensaje(''), 2000)
       }
     } catch (error) {
-      setMensaje('Error de conexión al guardar cambios')
-      setTimeout(() => setMensaje(''), 2000)
+      const errorMsg = error?.response?.error || error.message || 'Error al guardar'
+      
+      if (
+        errorMsg.toLowerCase().includes('disponible') ||
+        errorMsg.toLowerCase().includes('ya existe') ||
+        errorMsg.toLowerCase().includes('duplicado')
+      ) {
+        setMensaje('Nombre de rol ya registrado')
+      } else {
+        setMensaje(errorMsg)
+      }
+
+      setTimeout(() => setMensaje(''), 2500)
     } finally {
       setLoading(false)
     }
   }
+
+
 
   const eliminarRol = async (rol) => {
     if (!window.confirm(`¿Estás seguro de eliminar el rol "${rol.nombreRol}"?`)) return
