@@ -16,9 +16,7 @@ const ConsultarUsuario = ({ onVolver }) => {
   }, [])
 
   const cargarUsuarios = async () => {
-    try {
-      console.log('📋 Cargando usuarios desde el backend...')
-      
+    try {     
       const response = await apiRequest(API_URLS.usuarios.getAll)
       
       if (response.success) {
@@ -29,8 +27,6 @@ const ConsultarUsuario = ({ onVolver }) => {
         } else {
           setMensaje('')
         }
-        
-        console.log(`✅ ${response.data.length} usuarios cargados`)
       } else {
         throw new Error(response.message || 'Error al obtener usuarios')
       }
@@ -59,9 +55,7 @@ const ConsultarUsuario = ({ onVolver }) => {
   const eliminarUsuario = async (usuario) => {
     if (!window.confirm(`¿Estás seguro de que querés eliminar el usuario "${usuario.username}"?`)) return
 
-    try {
-      console.log('🗑️ Eliminando usuario:', { id: usuario.id, username: usuario.username })
-      
+    try {     
       const response = await apiRequest(API_URLS.usuarios.delete(usuario.id), {
         method: 'DELETE'
       })
@@ -215,6 +209,7 @@ const ConsultarUsuario = ({ onVolver }) => {
               usuario={usuarioSeleccionado} 
               onVolver={volverListado}
               ocultarTitulo={true}
+              listaUsuarios={usuarios}
             />
           ) : (
             <div className="row">
