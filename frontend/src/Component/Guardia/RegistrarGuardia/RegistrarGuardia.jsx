@@ -122,6 +122,7 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
 
         if (!modoEdicion) {
           setNombreGrupo('')
+          setDescripcion('')
           setGrupo([])
         }
         fetchBomberos()

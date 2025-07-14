@@ -179,7 +179,7 @@ if (grupoSeleccionado) {
         </table>
 
         {grupos.length === 0 && !loading && (
-          <div className="text-white mt-3 text-center">No se encontraron grupos.</div>
+          <div className="text-black mt-3 text-center">No se encontraron grupos.</div>
         )}
       </div>
 
