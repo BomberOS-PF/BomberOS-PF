@@ -20,6 +20,16 @@ const Login = ({ setUser, user }) => {
     }
   }, [])
 
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError('')
+      }, 2000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [error])
+
   const resetForm = () => {
     setUsuario('')
     setpassword('')
@@ -60,7 +70,8 @@ const Login = ({ setUser, user }) => {
         navigate('/')
       } else {
         setError(data.message || 'Usuario o contraseña incorrectos')
-        resetForm()
+        setUsuario('')
+        setpassword('')
       }
     } catch (error) {
       setError('Error en el sistema. Intenta más tarde.')
