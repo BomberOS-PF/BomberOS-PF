@@ -29,32 +29,43 @@ const RegistrarRol = ({ onVolver }) => {
     setMessage('')
     setMessageType('')
 
+    if (!formData.nombreRol.trim()) {
+      setMessage('❌ El nombre del rol es obligatorio')
+      setMessageType('error')
+      setLoading(false)
+
+      setTimeout(() => setMessage(''), 2000)
+      return
+    }
+
     try {
-      const response = await apiRequest(API_URLS.roles.create, {
-        method: 'POST',
-        body: JSON.stringify(formData)
-      })
+      const response = rol
+        ? await apiRequest(API_URLS.roles.update(rol.idRol), {
+            method: 'PUT',
+            body: JSON.stringify(formData)
+          })
+        : await apiRequest(API_URLS.roles.create, {
+            method: 'POST',
+            body: JSON.stringify(formData)
+          })
 
       if (response.success) {
-        setMessage('✅ Rol creado correctamente!')
+        setMessage(rol ? '✅ Rol actualizado correctamente' : '✅ Rol creado correctamente')
         setMessageType('success')
+
         setTimeout(() => {
           if (onVolver) onVolver()
-        }, 2000)
+        }, 1500)
       } else {
-        // fallback si llega sin lanzar error
-        setMessage(response.error || 'Error al registrar rol')
-        setMessageType('error')
+        throw new Error(response.message || 'Error al procesar rol')
       }
     } catch (error) {
-      console.error('❌ Error al procesar rol:', error)
+      console.error('❌ Error:', error)
       const mensaje = error.response?.error || error.message
-      if (mensaje.includes('Nombre de rol no disponible')) {
-        setMessage('❌ Nombre de rol no disponible')
-      } else {
-        setMessage(`Error: ${mensaje}`)
-      }
+      setMessage(`Error: ${mensaje}`)
       setMessageType('error')
+
+      setTimeout(() => setMessage(''), 2000)
     } finally {
       setLoading(false)
     }

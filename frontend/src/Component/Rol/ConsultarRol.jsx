@@ -62,6 +62,14 @@ const ConsultarRol = ({ onVolver }) => {
 
   const guardarCambios = async (datosActualizados) => {
     setLoading(true)
+
+    if (!datosActualizados.nombreRol.trim()) {
+      setMensaje('❌ El nombre del rol es obligatorio')
+      setLoading(false)
+      setTimeout(() => setMensaje(''), 2000)
+      return
+    }
+
     try {
       const response = await apiRequest(API_URLS.roles.update(rolSeleccionado.idRol), {
         method: 'PUT',
@@ -78,9 +86,11 @@ const ConsultarRol = ({ onVolver }) => {
         fetchRoles()
       } else {
         setMensaje(response.message || 'Error al guardar los cambios')
+        setTimeout(() => setMensaje(''), 2000)
       }
     } catch (error) {
       setMensaje('Error de conexión al guardar cambios')
+      setTimeout(() => setMensaje(''), 2000)
     } finally {
       setLoading(false)
     }
