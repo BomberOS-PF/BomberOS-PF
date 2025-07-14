@@ -12,7 +12,7 @@ export class RolService {
     }
 
     const existe = await this.rolRepository.obtenerPorNombre(data.nombreRol)
-    if (existe) throw new Error('Ya existe un rol con ese nombre')
+    if (existe) throw new Error('Nombre de rol no disponible')
 
     const nuevoRol = new Rol(data)
     const resultado = await this.rolRepository.guardar(nuevoRol)

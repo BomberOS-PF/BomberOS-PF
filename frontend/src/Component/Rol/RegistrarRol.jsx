@@ -3,10 +3,7 @@ import { apiRequest, API_URLS } from '../../config/api'
 import '../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarRol = ({ onVolver }) => {
-  const [formData, setFormData] = useState({
-    nombreRol: '',
-    descripcion: ''
-  })
+  const [formData, setFormData] = useState({ nombreRol: '', descripcion: '' })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('')
@@ -20,20 +17,19 @@ const RegistrarRol = ({ onVolver }) => {
 
   const handleChange = (e) => {
     const { id, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [id]: value
-    }))
+    setFormData(prev => ({ ...prev, [id]: value }))
+    if (id === 'nombreRol' && messageType === 'error') {
+      setMessage('')
+    }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setMessage('')
+    setMessageType('')
 
     try {
-      console.log('📝 Enviando datos de rol:', formData)
-
       const response = await apiRequest(API_URLS.roles.create, {
         method: 'POST',
         body: JSON.stringify(formData)
@@ -42,16 +38,22 @@ const RegistrarRol = ({ onVolver }) => {
       if (response.success) {
         setMessage('✅ Rol creado correctamente!')
         setMessageType('success')
-
         setTimeout(() => {
           if (onVolver) onVolver()
-        }, 1500)
+        }, 2000)
       } else {
-        throw new Error(response.message || 'Error al crear rol')
+        // fallback si llega sin lanzar error
+        setMessage(response.error || 'Error al registrar rol')
+        setMessageType('error')
       }
     } catch (error) {
       console.error('❌ Error al procesar rol:', error)
-      setMessage(`Error: ${error.message}`)
+      const mensaje = error.response?.error || error.message
+      if (mensaje.includes('Nombre de rol no disponible')) {
+        setMessage('❌ Nombre de rol no disponible')
+      } else {
+        setMessage(`Error: ${mensaje}`)
+      }
       setMessageType('error')
     } finally {
       setLoading(false)
@@ -100,11 +102,7 @@ const RegistrarRol = ({ onVolver }) => {
             />
           </div>
 
-          <button 
-            type="submit" 
-            className="btn btn-danger w-100 mb-3"
-            disabled={loading}
-          >
+          <button type="submit" className="btn btn-danger w-100 mb-3" disabled={loading}>
             {loading ? (
               <>
                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -115,12 +113,7 @@ const RegistrarRol = ({ onVolver }) => {
             )}
           </button>
 
-          <button 
-            type="button" 
-            className="btn btn-secondary w-100" 
-            onClick={onVolver}
-            disabled={loading}
-          >
+          <button type="button" className="btn btn-secondary w-100" onClick={onVolver} disabled={loading}>
             Volver
           </button>
         </form>
