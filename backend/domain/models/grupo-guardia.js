@@ -5,6 +5,7 @@ export class GrupoGuardia {
   constructor(data) {
     this._id = data.id || data.idGrupo || null
     this._nombre = this._validateNombre(data.nombre || data.nombreGrupo)
+    this._descripcion = this._validateDescripcion(data.descripcion || null)
     this._bomberos = this._validateBomberos(data.bomberos)
   }
 
@@ -20,9 +21,15 @@ export class GrupoGuardia {
     return this._nombre
   }
 
+  get descripcion() {
+    return this._descripcion
+  }
+
   get bomberos() {
     return this._bomberos
   }
+
+  
 
   agregarBombero(dni) {
     if (!this._bomberos.includes(dni)) {
@@ -38,8 +45,9 @@ export class GrupoGuardia {
   toDatabase() {
     return {
       idGrupo: this._id,
-      nombreGrupo: this._nombre,
-      bomberos: this._bomberos // Se usará en tabla intermedia
+      nombre: this._nombre,
+      descripcion: this._descripcion,
+      bomberos: this._bomberos
     }
   }
 
@@ -47,7 +55,8 @@ export class GrupoGuardia {
   toJSON() {
     return {
       idGrupo: this._id,
-      nombreGrupo: this._nombre,
+      nombre: this._nombre,
+      descripcion: this._descripcion,
       bomberos: this._bomberos
     }
   }
@@ -58,6 +67,18 @@ export class GrupoGuardia {
       throw new Error('El nombre del grupo es requerido y debe ser un string')
     }
     return nombre.trim()
+  }
+
+  _validateDescripcion(desc) {
+    if (desc === null || desc === undefined) return null
+    if (typeof desc !== 'string') {
+      throw new Error('La descripción debe ser una cadena de texto o null')
+    }
+    const trimmed = desc.trim()
+    if (trimmed.length > 30) {
+      throw new Error('La descripción no puede superar los 30 caracteres')
+    }
+    return trimmed
   }
 
   _validateBomberos(bomberos) {

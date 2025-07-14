@@ -7,9 +7,9 @@ export class GrupoGuardiaService {
     this.bomberoRepository = bomberoRepository
   }
 
-  async crearGrupo({ nombreGrupo, bomberos }) {
+  async crearGrupo({ nombreGrupo, descripcion, bomberos }) {
     try {
-      logger.debug('Servicio: Crear grupo de guardia', { nombreGrupo, bomberos })
+      logger.debug('Servicio: Crear grupo de guardia', { nombreGrupo, descripcion, bomberos })
 
       if (!nombreGrupo || typeof nombreGrupo !== 'string') {
         throw new Error('El nombre del grupo es requerido y debe ser una cadena de texto')
@@ -27,7 +27,7 @@ export class GrupoGuardiaService {
         }
       }
 
-      const grupo = GrupoGuardia.create({ nombre: nombreGrupo, bomberos })
+      const grupo = GrupoGuardia.create({ nombre: nombreGrupo,descripcion, bomberos })
 
       return await this.grupoRepository.create(grupo)
     } catch (error) {
@@ -137,7 +137,8 @@ async actualizarGrupo(id, dto) {
 
     const grupoActualizado = GrupoGuardia.create({
       idGrupo: id,
-      nombre: dto.nombreGrupo, 
+      nombre: dto.nombreGrupo,
+      descripcion: dto.descripcion, 
       bomberos: dto.bomberos
     })
 

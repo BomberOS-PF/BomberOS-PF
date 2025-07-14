@@ -3,8 +3,9 @@ import { API_URLS } from '../../../config/api'
 import '../RegistrarGuardia.css'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
-const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', bomberosIniciales = [], onVolver }) => {
+const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial = '', bomberosIniciales = [], onVolver }) => {
   const [nombreGrupo, setNombreGrupo] = useState(nombreGrupoInicial)
+  const [descripcion, setDescripcion] = useState('')
   const [busqueda, setBusqueda] = useState('')
   const [paginaActual, setPaginaActual] = useState(1)
   const [limite] = useState(10)
@@ -25,8 +26,9 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', bomberosIniciales 
   useEffect(() => {
     if (modoEdicion) {
       setGrupo(bomberosIniciales)
+      setDescripcion(descripcionInicial || '')
     }
-  }, [modoEdicion, bomberosIniciales])
+  }, [modoEdicion, bomberosIniciales, descripcionInicial])
 
   const fetchBomberos = async () => {
     try {
@@ -101,6 +103,7 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', bomberosIniciales 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nombreGrupo,
+          descripcion,
           bomberos: grupo.map((b) => b.dni),
         }),
       })
@@ -151,6 +154,15 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', bomberosIniciales 
           setMensaje('')
         }}
       />
+
+      <input
+  type="text"
+  className="form-control mt-3"
+  placeholder="Descripción del grupo (opcional)"
+  value={descripcion}
+  maxLength={30}
+  onChange={(e) => setDescripcion(e.target.value)}
+/>
 
       <input
         type="text"

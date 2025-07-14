@@ -19,8 +19,8 @@ export class MySQLGrupoGuardiaRepository {
 
       // Insertar en grupoGuardia
       const [result] = await connection.execute(
-        `INSERT INTO ${this.tableGrupos} (nombre) VALUES (?)`,
-        [data.nombreGrupo]
+        `INSERT INTO ${this.tableGrupos} (nombre, descripcion) VALUES (?, ?)`,
+        [data.nombre, data.descripcion]
       )
       const nuevoId = result.insertId
 
@@ -51,7 +51,7 @@ export class MySQLGrupoGuardiaRepository {
 
     try {
       const [rowsGrupo] = await connection.execute(
-        `SELECT idGrupo, nombre FROM ${this.tableGrupos} WHERE idGrupo = ?`,
+        `SELECT idGrupo, nombre, descripcion FROM ${this.tableGrupos} WHERE idGrupo = ?`,
         [id]
       )
 
@@ -69,6 +69,7 @@ export class MySQLGrupoGuardiaRepository {
       return GrupoGuardia.create({
         idGrupo: grupo.idGrupo,
         nombreGrupo: grupo.nombre,
+        descripcion: grupo.descripcion,
         bomberos
       })
     } catch (error) {
@@ -85,7 +86,7 @@ export class MySQLGrupoGuardiaRepository {
 
     try {
       const [grupos] = await connection.execute(
-        `SELECT idGrupo, nombre FROM ${this.tableGrupos} ORDER BY nombre ASC`
+        `SELECT idGrupo, nombre, descripcion FROM ${this.tableGrupos} ORDER BY nombre ASC`
       )
 
       const resultados = []
@@ -102,6 +103,7 @@ export class MySQLGrupoGuardiaRepository {
           GrupoGuardia.create({
             idGrupo: grupo.idGrupo,
             nombreGrupo: grupo.nombre,
+            descripcion: grupo.descripcion,
             bomberos
           })
         )
@@ -161,7 +163,7 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
 
   try {
     const query = `
-      SELECT idGrupo, nombre
+      SELECT idGrupo, nombre, descripcion
       FROM ${this.tableGrupos}
       ${whereClause}
       ORDER BY idGrupo DESC
@@ -183,6 +185,7 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
         GrupoGuardia.create({
           idGrupo: row.idGrupo,
           nombreGrupo: row.nombre,
+          descripcion: row.descripcion,
           bomberos: [] // vacío, porque no querés traerlos
         })
       ),
@@ -235,8 +238,8 @@ async actualizar(grupo) {
 
     // 1. Actualizar nombre del grupo
     await connection.execute(
-      `UPDATE ${this.tableGrupos} SET nombre = ? WHERE idGrupo = ?`,
-      [data.nombreGrupo, grupo.id]
+      `UPDATE ${this.tableGrupos} SET nombre = ?, descripcion = ? WHERE idGrupo = ?`,
+    [data.nombre, data.descripcion, grupo.id]
     )
 
     // 2. Eliminar relaciones actuales de bomberos

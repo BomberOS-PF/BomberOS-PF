@@ -1,7 +1,7 @@
 import React from 'react'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
-const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, bomberos, onVolver, onEditar }) => {
+const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, descripcion, bomberos, onVolver, onEditar }) => {
   return (
     <div className="container formulario-consistente">
       <h2 className="mb-3 text-black">Bomberos del grupo: {nombreGrupo || 'Sin nombre'}</h2>
@@ -38,15 +38,16 @@ const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, bomberos, onVolver, o
       )}
 
       <div className="botones-accion mt-4">
-        <button className="btn btn-secondary w-100 mb-2" onClick={onVolver}>
-          ← Volver a grupos
-        </button>
         <button
           className="btn btn-warning w-100"
-          onClick={() => onEditar({ idGrupo, nombre: nombreGrupo })}
+          onClick={() => onEditar({ idGrupo, nombre: nombreGrupo, descripcion })}
         >
           ✏️ Editar grupo
         </button>
+        <button className="btn btn-secondary w-100 mb-2" onClick={onVolver}>
+          ← Volver a grupos
+        </button>
+        
       </div>
     </div>
   )

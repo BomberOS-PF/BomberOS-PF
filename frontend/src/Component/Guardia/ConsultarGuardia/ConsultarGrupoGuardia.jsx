@@ -102,10 +102,12 @@ if (modoEdicion && grupoSeleccionado) {
     <RegistrarGuardia
       idGrupo={grupoSeleccionado.idGrupo}
       nombreGrupoInicial={grupoSeleccionado.nombre}
+      descripcionInicial={grupoSeleccionado.descripcion}
       bomberosIniciales={bomberosDelGrupo}
       onVolver={() => {
         setModoEdicion(false)
         volverListado()
+        fetchGrupos()
       }}
     />
   )
@@ -116,6 +118,7 @@ if (grupoSeleccionado) {
     <ConsultarBomberosDelGrupo
       idGrupo={grupoSeleccionado.idGrupo}
       nombreGrupo={grupoSeleccionado.nombre}
+      descripcion={grupoSeleccionado.descripcion}
       bomberos={bomberosDelGrupo}
       onVolver={volverListado}
       mensaje={mensaje}
@@ -152,7 +155,7 @@ if (grupoSeleccionado) {
             {grupos.map((grupo) => (
               <tr key={grupo.idGrupo}>
                 <td>{grupo.nombre}</td>
-                <td>-</td>
+                <td>{grupo.descripcion}</td>
                 <td>
                   <button
                     className="btn btn-outline-light btn-sm me-2"
