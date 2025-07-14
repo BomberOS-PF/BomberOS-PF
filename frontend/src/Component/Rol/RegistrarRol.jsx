@@ -32,8 +32,6 @@ const RegistrarRol = ({ onVolver }) => {
     setMessage('')
 
     try {
-      console.log('📝 Enviando datos de rol:', formData)
-
       const response = await apiRequest(API_URLS.roles.create, {
         method: 'POST',
         body: JSON.stringify(formData)
