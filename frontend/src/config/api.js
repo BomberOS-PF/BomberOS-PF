@@ -40,6 +40,12 @@ export const API_URLS = {
     update: (id) => `${API_BASE_URL}/roles/${id}`,
     delete: (id) => `${API_BASE_URL}/roles/${id}`
   },
+
+  // Rangos
+  rangos: {
+    getAll: `${API_BASE_URL}/rangos`
+  },
+
   // Health check
   health: 'http://localhost:3000/health'
 }
@@ -69,7 +75,6 @@ export const apiRequest = async (url, options = {}) => {
       throw error
     }
 
-    console.log(`✅ API Response:`, data)
     return data
   } catch (error) {
     console.error(`❌ API Error:`, error)

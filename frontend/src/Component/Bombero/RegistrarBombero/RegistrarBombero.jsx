@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { API_URLS, apiRequest } from '../../../config/api'
+import { API_URLS, apiRequest } from '../../../config/api.js'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarBombero = ({ onVolver }) => {
@@ -12,7 +12,7 @@ const RegistrarBombero = ({ onVolver }) => {
     telefono: '',
     legajo: '',
     antiguedad: '',
-    rango: 'Bombero',
+    rango: '',
     esPlan: false,
     fichaMedica: null,
     fechaFicha: new Date().toISOString().split('T')[0],
@@ -23,7 +23,7 @@ const RegistrarBombero = ({ onVolver }) => {
     emailUsuario: '',
     rolUsuario: '2'
   })
-
+  const [rangosDisponibles, setRangosDisponibles] = useState([])
   const [rolesDisponibles, setRolesDisponibles] = useState([])
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -67,14 +67,28 @@ const RegistrarBombero = ({ onVolver }) => {
         if (response.success) {
           setRolesDisponibles(response.data)
         } else {
-          console.error('❌ Error al obtener roles:', response.message)
+          console.error('Error al obtener roles:', response.message)
         }
       } catch (error) {
-        console.error('💥 Error al cargar roles:', error)
+        console.error('Error al cargar roles:', error)
+      }
+    }
+
+    const fetchRangos = async () => {
+      try {
+        const response = await apiRequest(API_URLS.rangos.getAll)
+        if (response.success) {
+          setRangosDisponibles(response.data)
+        } else {
+          console.error('Error al obtener rangos:', response.message)
+        }
+      } catch (error) {
+        console.error('Error al cargar rangos:', error)
       }
     }
 
     fetchRoles()
+    fetchRangos()
   }, [])
 
   const handleSubmit = async (e) => {
@@ -115,20 +129,14 @@ const RegistrarBombero = ({ onVolver }) => {
           fechaFichaMedica: formData.fechaFicha || null
         }
       }
-
-      console.log('🚀 Enviando datos al backend:', dataToSend)
-      console.log('📡 URL de la API:', API_URLS.bomberos.createFull)
-      
+     
       const response = await fetch(API_URLS.bomberos.createFull, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dataToSend)
       })
 
-      console.log('📥 Respuesta del servidor:', response.status, response.statusText)
-
       const result = await response.json()
-      console.log('📋 Datos de respuesta:', result)
 
       if (response.ok && result.success) {
         setMessage('¡Bombero registrado exitosamente!')
@@ -179,23 +187,8 @@ const RegistrarBombero = ({ onVolver }) => {
   }
 
   const getRangoId = (rangoNombre) => {
-    const rangos = {
-      'Bombero': 1,
-      'Cabo': 2,
-      'Sargento': 3,
-      'Sargento Primero': 4,
-      'Suboficial': 5,
-      'Suboficial Principal': 6,
-      'Suboficial Mayor': 7,
-      'Oficial': 8,
-      'Teniente': 9,
-      'Capitán': 10,
-      'Mayor': 11,
-      'Teniente Coronel': 12,
-      'Coronel': 13,
-      'Jefe': 14
-    }
-    return rangos[rangoNombre] || 1
+    const encontrado = rangosDisponibles.find(r => r.descripcion === rangoNombre)
+    return encontrado ? encontrado.idRango : null
   }
 
   return (
@@ -328,20 +321,11 @@ const RegistrarBombero = ({ onVolver }) => {
                 onChange={handleChange}
               >
                 <option value="">Seleccione un rango</option>
-                <option value="Bombero">Bombero</option>
-                <option value="Cabo">Cabo</option>
-                <option value="Sargento">Sargento</option>
-                <option value="Sargento Primero">Sargento Primero</option>
-                <option value="Suboficial">Suboficial</option>
-                <option value="Suboficial Principal">Suboficial Principal</option>
-                <option value="Suboficial Mayor">Suboficial Mayor</option>
-                <option value="Oficial">Oficial</option>
-                <option value="Teniente">Teniente</option>
-                <option value="Capitán">Capitán</option>
-                <option value="Mayor">Mayor</option>
-                <option value="Teniente Coronel">Teniente Coronel</option>
-                <option value="Coronel">Coronel</option>
-                <option value="Jefe">Jefe</option>
+                {rangosDisponibles.map(r => (
+                  <option key={r.idRango} value={r.descripcion}>
+                    {r.descripcion}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

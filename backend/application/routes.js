@@ -21,7 +21,7 @@ export function setupRoutes(app, container) {
 
   app.get('/', (req, res) => res.redirect('/health'))
 
-  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler,causaAccidenteHandler, vehiculoHandler } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler } = container
 
   // ROLES
   app.get('/api/roles', async (req, res) => {
@@ -346,6 +346,11 @@ export function setupRoutes(app, container) {
     }
   })
 
+  // RANGOS
+  app.get('/api/rangos', async (req, res) => {
+    await rangoHandler.getAll(req, res)
+  })
+  
   // 404 handler
   app.use((req, res) => {
     logger.warn('Ruta no encontrada', {
@@ -392,7 +397,8 @@ export function setupRoutes(app, container) {
         'GET /api/accidentes',
         'GET /api/accidentes/:id',        
         'GET /api/causa-accidente',
-        'POST /api/vehiculos'
+        'POST /api/vehiculos',
+        'GET /api/rangos'
       ]
     })
   })
