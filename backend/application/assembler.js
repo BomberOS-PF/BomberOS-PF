@@ -45,6 +45,10 @@ import { MySQLAccidenteDamnificadoRepository } from '../internal/repositories/my
 import { MySQLAccidenteVehiculoRepository } from '../internal/repositories/mysql/accidenteVehiculo.repository.js'
 import { AccidenteVehiculoService } from '../internal/services/accidenteVehiculo.service.js'
 
+import { MySQLRangoRepository } from '../internal/repositories/mysql/rango.repository.js'
+import { RangoService } from '../internal/services/rango.service.js'
+import { RangoHandler } from '../rangos/handler.js'
+
 export async function createServer(config) {
   try {
     logger.info('🏗️ Iniciando assembler de dependencias...')
@@ -65,6 +69,7 @@ export async function createServer(config) {
     const vehiculoRepository = new MySQLVehiculoRepository()
     const accidenteDamnificadoRepository = new MySQLAccidenteDamnificadoRepository()
     const accidenteVehiculoRepository = new MySQLAccidenteVehiculoRepository()
+    const rangoRepository = new MySQLRangoRepository()
     
     // Servicios
     const whatsappService = new WhatsAppService(config)
@@ -84,6 +89,7 @@ export async function createServer(config) {
     const vehiculoService = new VehiculoService(vehiculoRepository)
     const damnificadoService = new DamnificadoService(damnificadoRepository)
     const accidenteVehiculoService = new AccidenteVehiculoService(accidenteVehiculoRepository)
+    const rangoService = new RangoService(rangoRepository)
 
     // Handlers
     const bomberoHandler = new BomberoHandler(bomberoService)
@@ -94,7 +100,7 @@ export async function createServer(config) {
     const causaAccidenteHandler = new CausaAccidenteHandler(causaAccidenteService)
     const accidenteTransitoHandler = new AccidenteTransitoHandler(accidenteTransitoService)
     const vehiculoHandler = new VehiculoHandler(vehiculoService)
-    
+    const rangoHandler = new RangoHandler(rangoService)
 
     // Contenedor
     const container = {
@@ -128,6 +134,9 @@ export async function createServer(config) {
       vehiculoHandler,
       accidenteDamnificadoRepository,
       accidenteVehiculoRepository,
+      rangoHandler,
+      rangoRepository,
+      rangoService,
       dbConnection,
       config
     }
@@ -135,9 +144,9 @@ export async function createServer(config) {
     await validateDependencies(container)
 
     logger.info('✅ Assembler completado exitosamente', {
-      services: ['bomberoService', 'usuarioService', 'incidenteService', 'grupoGuardiaService', 'whatsappService', 'rolService', 'accidenteTransitoService' ,'causaAccidenteService', 'vehiculoService'],
-      repositories: ['bomberoRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository', 'grupoGuardiaRepository', 'rolRepository', 'rolRepository', 'accidenteTransitoRepository', 'causaAccidenteRepository', 'vehiculoRepository'],
-      handlers: ['bomberoHandler', 'usuarioHandler', 'incidenteHandler', 'grupoGuardiaHandler', 'rolesAdapter','accidenteTransitoHandler' ,'causaAccidenteHandler', 'vehiculoHandler'],
+      services: ['bomberoService', 'usuarioService', 'incidenteService', 'grupoGuardiaService', 'whatsappService', 'rolService', 'accidenteTransitoService' ,'causaAccidenteService', 'vehiculoService', 'rangoService'],
+      repositories: ['bomberoRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository', 'grupoGuardiaRepository', 'rolRepository', 'rolRepository', 'accidenteTransitoRepository', 'causaAccidenteRepository', 'vehiculoRepository', 'rangoRepository'],
+      handlers: ['bomberoHandler', 'usuarioHandler', 'incidenteHandler', 'grupoGuardiaHandler', 'rolesAdapter','accidenteTransitoHandler' ,'causaAccidenteHandler', 'vehiculoHandler', 'rangoHandler'],
       infrastructure: ['dbConnection']
     })
 
@@ -196,6 +205,10 @@ async function validateDependencies(container) {
 
     if (!container.accidenteDamnificadoRepository) throw new Error('AccidenteDamnificadoRepository no inicializado')
     if (!container.accidenteVehiculoRepository) throw new Error('AccidenteVehiculoRepository no inicializado')
+
+    if (!container.rangoService) throw new Error('RangoServicee no inicializado')
+    if (!container.rangoRepository) throw new Error('RangoRepository no inicializado')
+    if (!container.rangoHandler) throw new Error('RangoHandler no inicializado')
 
     if (!container.dbConnection) throw new Error('Database connection no inicializada')
 
