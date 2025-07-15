@@ -20,16 +20,11 @@ const ConsultarBombero = ({ onVolver }) => {
   const fetchBomberos = async () => {
     setLoading(true)
     try {
-      console.log('🔍 Obteniendo bomberos desde:', API_URLS.bomberos.getAll)
       const res = await fetch(API_URLS.bomberos.getAll)
       const data = await res.json()
       
-      console.log('📋 Respuesta del servidor:', data)
-      console.log('📊 Datos recibidos:', data.data)
-      
       if (res.ok && data.success) {
         const bomberos = data.data || []
-        console.log('✅ Bomberos procesados:', bomberos)
         setBomberos(bomberos)
         setResultadosFiltrados(bomberos)
         setMensaje('')
@@ -50,9 +45,7 @@ const ConsultarBombero = ({ onVolver }) => {
   }
 
   const buscarPordni = () => {
-    console.log('🔍 Buscando dni:', dniBusqueda)
-    console.log('📊 Bomberos disponibles:', bomberos)
-    
+   
     if (dniBusqueda.trim() === '') {
       setResultadosFiltrados(bomberos)
       setMensaje('')
@@ -61,11 +54,9 @@ const ConsultarBombero = ({ onVolver }) => {
 
     const filtrados = bomberos.filter(b => {
       const dni = String(b.dni || b.dni || '')
-      console.log('🔍 Comparando:', dni, 'con', dniBusqueda.trim())
       return dni.includes(dniBusqueda.trim())
     })
     
-    console.log('✅ Resultados filtrados:', filtrados)
     setResultadosFiltrados(filtrados)
 
     if (filtrados.length === 0) {
@@ -93,9 +84,6 @@ const ConsultarBombero = ({ onVolver }) => {
 
   const guardarCambios = async (datosActualizados) => {
     const dni = bomberoSeleccionado.dni || bomberoSeleccionado.dni
-    console.log('💾 Guardando cambios para bombero:', bomberoSeleccionado)
-    console.log('🆔 dni del bombero:', dni)
-    console.log('📝 Datos actualizados:', datosActualizados)
     
     if (!dni) {
       console.error('❌ No se encontró dni válido para actualizar')
@@ -106,7 +94,6 @@ const ConsultarBombero = ({ onVolver }) => {
     setLoading(true)
     try {
       const url = API_URLS.bomberos.update(dni)
-      console.log('🌐 URL de actualización:', url)
       
       const res = await fetch(url, {
         method: 'PUT',
@@ -114,9 +101,7 @@ const ConsultarBombero = ({ onVolver }) => {
         body: JSON.stringify(datosActualizados)
       })
       
-      console.log('📥 Respuesta del servidor:', res.status, res.statusText)
       const result = await res.json()
-      console.log('📋 Datos de respuesta:', result)
       
       if (res.ok && result.success) {
         setMensaje('✅ Bombero actualizado correctamente. Volviendo al listado...')
@@ -143,8 +128,6 @@ const ConsultarBombero = ({ onVolver }) => {
 
   const eliminarBombero = async (bombero) => {
     const dni = bombero.dni || bombero.dni
-    console.log('🗑️ Intentando eliminar bombero:', bombero)
-    console.log('🆔 dni a eliminar:', dni)
     
     if (!dni) {
       console.error('❌ No se encontró dni válido:', bombero)
@@ -157,14 +140,12 @@ const ConsultarBombero = ({ onVolver }) => {
     setLoading(true)
     try {
       const url = API_URLS.bomberos.delete(dni)
-      console.log('🌐 URL de eliminación:', url)
       
       const res = await fetch(url, {
         method: 'DELETE'
       })
       
       const result = await res.json()
-      console.log('📋 Respuesta de eliminación:', result)
       
       if (res.ok && result.success) {
         setMensaje('Bombero eliminado correctamente')
@@ -197,7 +178,7 @@ const ConsultarBombero = ({ onVolver }) => {
   return (
     <>
       <div className="container mt-4 formulario-consistente">
-        <h2 className="text-white mb-3">Consultar Bomberos</h2>
+        <h2 className="text-black mb-3">Consultar Bomberos</h2>
 
         {mensaje && (
           <div className={`alert ${
@@ -210,7 +191,7 @@ const ConsultarBombero = ({ onVolver }) => {
         )}
 
         {loading && (
-          <div className="text-center text-white mb-3">
+          <div className="text-center text-black mb-3">
             <div className="spinner-border" role="status">
               <span className="visually-hidden">Cargando...</span>
             </div>
@@ -260,7 +241,6 @@ const ConsultarBombero = ({ onVolver }) => {
                   </thead>
                   <tbody>
                     {resultadosFiltrados.map((bombero, index) => {
-                      console.log(`🔍 Renderizando bombero ${index}:`, bombero)
                       return (
                         <tr key={bombero.dni || bombero.dni || index}>
                           <td>{bombero.nombre & bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : 'N/A'}</td>
@@ -296,11 +276,11 @@ const ConsultarBombero = ({ onVolver }) => {
                 </table>
               </div>
             ) : !loading && bomberos.length === 0 ? (
-              <div className="text-center text-white">
+              <div className="text-center text-black">
                 <p>No hay bomberos registrados.</p>
               </div>
             ) : !loading && resultadosFiltrados.length === 0 && dniBusqueda ? (
-              <div className="text-center text-white">
+              <div className="text-center text-black">
                 <p>No se encontraron bomberos que coincidan con la búsqueda.</p>
               </div>
             ) : null}
@@ -310,7 +290,7 @@ const ConsultarBombero = ({ onVolver }) => {
         {bomberoSeleccionado && (
           <div className="detalle-bombero">
             <div className="d-flex justify-content-between align-items-center mb-4">
-              <h3 className="text-white mb-0">
+              <h3 className="text-black mb-0">
                 {modoEdicion ? (
                   <>✏️ Editando: {bomberoSeleccionado.nombre && bomberoSeleccionado.apellido ? `${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}` : 'Bombero'}</>
                 ) : (
