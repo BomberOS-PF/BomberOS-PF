@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { API_URLS } from '../../../config/api'
+import { useState, useEffect } from 'react'
+import { API_URLS, apiRequest } from '../../../config/api'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarBombero = ({ onVolver }) => {
@@ -24,6 +24,7 @@ const RegistrarBombero = ({ onVolver }) => {
     rolUsuario: '2'
   })
 
+  const [rolesDisponibles, setRolesDisponibles] = useState([])
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('')
@@ -58,6 +59,23 @@ const RegistrarBombero = ({ onVolver }) => {
       return newData
     })
   }
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await apiRequest(API_URLS.roles.getAll)
+        if (response.success) {
+          setRolesDisponibles(response.data)
+        } else {
+          console.error('❌ Error al obtener roles:', response.message)
+        }
+      } catch (error) {
+        console.error('💥 Error al cargar roles:', error)
+      }
+    }
+
+    fetchRoles()
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -420,9 +438,20 @@ const RegistrarBombero = ({ onVolver }) => {
             </div>
             <div className="col-md-3">
               <label htmlFor="rolUsuario" className="text-black form-label">Rol usuario</label>
-              <select id="rolUsuario" className="form-select" value={formData.rolUsuario} disabled={loading} onChange={handleChange}>
-                <option value="1">Administrador</option>
-                <option value="2">Bombero</option>
+              <select
+                id="rolUsuario"
+                className="form-select"
+                value={formData.rolUsuario}
+                disabled={loading}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Seleccione un rol</option>
+                {rolesDisponibles.map(rol => (
+                  <option key={rol.idRol} value={rol.idRol}>
+                    {rol.nombreRol}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
