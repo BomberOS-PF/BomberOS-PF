@@ -50,6 +50,11 @@ const RegistrarBombero = ({ onVolver }) => {
         newData.emailUsuario = value
       }
 
+      if (id === 'emailUsuario') {
+        // Sincroniza también el email del bombero cuando se cambia el del usuario
+        newData.email = value
+      }
+
       if (id === 'dni') {
         if (!prev.legajo && value) {
           newData.legajo = `LEG-${value}`
@@ -96,6 +101,73 @@ const RegistrarBombero = ({ onVolver }) => {
     setLoading(true)
     setMessage('')
 
+    try {
+      const resUsuarios = await apiRequest(API_URLS.usuarios.getAll)
+
+      if (resUsuarios.success) {
+        const usuarios = resUsuarios.data
+
+        const emailEnUso = usuarios.find(u =>
+          u.email.trim().toLowerCase() === formData.emailUsuario.trim().toLowerCase()
+        )
+
+        if (emailEnUso) {
+          setMessage('Correo electrónico ya registrado')
+          setMessageType('error')
+          setLoading(false)
+          return
+        }
+      } else {
+        throw new Error('No se pudo verificar el email del usuario')
+      }
+    } catch (error) {
+      setMessage(`Error al verificar el correo: ${error.message}`)
+      setMessageType('error')
+      setLoading(false)
+      return
+    }
+
+    try {
+      const resUsuarios = await apiRequest(API_URLS.usuarios.getAll)
+
+      if (resUsuarios.success) {
+        const usuarios = resUsuarios.data
+
+        const emailEnUso = usuarios.find(u =>
+          u.email &&
+          formData.emailUsuario &&
+          u.email.toLowerCase().trim() === formData.emailUsuario.toLowerCase().trim()
+        )
+
+        if (emailEnUso) {
+          setMessage('Correo electrónico ya registrado')
+          setMessageType('error')
+          setLoading(false)
+          return
+        }
+
+        const usernameEnUso = usuarios.find(u =>
+          u.usuario &&
+          formData.username &&
+          u.usuario.toLowerCase().trim() === formData.username.toLowerCase().trim()
+        )
+
+        if (usernameEnUso) {
+          setMessage('Nombre de usuario no disponible')
+          setMessageType('error')
+          setLoading(false)
+          return
+        }
+
+      } else {
+        throw new Error('No se pudo verificar los datos del usuario')
+      }
+    } catch (error) {
+      setMessage(`Error al validar usuario: ${error.message}`)
+      setMessageType('error')
+      setLoading(false)
+      return
+    }
     try {
       if (!formData.dni || !formData.nombre || !formData.apellido || !formData.email || !formData.telefono || !formData.domicilio || !formData.rango || !formData.grupoSanguineo) {
         setMessage('Por favor, complete todos los campos obligatorios')
