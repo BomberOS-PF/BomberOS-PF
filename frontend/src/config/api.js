@@ -25,11 +25,14 @@ export const API_URLS = {
     authenticate: `${API_BASE_URL}/usuarios/auth`,
     libresBombero: `${API_BASE_URL}/usuarios/bomberos/libres`
   },
+
+  // Grupos
   grupos: {
     create: `${API_BASE_URL}/grupos`
     
   },
   
+  // Roles
   roles: {
     getAll: `${API_BASE_URL}/roles`,
     getById: (id) => `${API_BASE_URL}/roles/${id}`,

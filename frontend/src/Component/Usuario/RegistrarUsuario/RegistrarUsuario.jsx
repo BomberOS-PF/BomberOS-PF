@@ -9,6 +9,24 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuar
   const [messageType, setMessageType] = useState('')
   const [passwordStrength, setPasswordStrength] = useState(null)
 
+  const [roles, setRoles] = useState([])
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await apiRequest(API_URLS.roles.getAll)
+        if (response.success) {
+          setRoles(response.data)
+        } else {
+          console.error('Error al cargar roles:', response.message)
+        }
+      } catch (error) {
+        console.error('Error al obtener roles:', error)
+      }
+    }
+
+    fetchRoles()
+  }, [])
 
   useEffect(() => {
     if (usuario) {
@@ -293,12 +311,15 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuar
               id="rol"
               value={formData.rol}
               required
-              disabled={loading}
+              disabled={loading || roles.length === 0}
               onChange={handleChange}
             >
               <option value="">Seleccione un rol</option>
-              <option value="1">Administrador</option>
-              <option value="2">Bombero</option>
+              {roles.map((rol) => (
+                <option key={rol.idRol} value={rol.idRol}>
+                  {rol.nombreRol}
+                </option>
+              ))}
             </select>
           </div>
 
