@@ -90,7 +90,24 @@ const ConsultarBombero = ({ onVolver }) => {
       setMensaje('Error: No se pudo identificar el dni del bombero')
       return
     }
-    
+    // Validación local: evitar legajo/correo duplicados de OTROS bomberos
+    const otroConMismoEmail = bomberos.find(b =>
+      b.dni !== dni && b.correo?.trim().toLowerCase() === datosActualizados.correo?.trim().toLowerCase()
+    )
+    const otroConMismoLegajo = bomberos.find(b =>
+      b.dni !== dni && b.legajo?.trim().toLowerCase() === datosActualizados.legajo?.trim().toLowerCase()
+    )
+
+    if (otroConMismoEmail) {
+      setMensaje('❌ El correo electrónico ya está en uso por otro bombero')
+      return
+    }
+
+    if (otroConMismoLegajo) {
+      setMensaje('❌ El legajo ya está en uso por otro bombero')
+      return
+    }
+
     setLoading(true)
     try {
       const url = API_URLS.bomberos.update(dni)
