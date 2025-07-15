@@ -34,6 +34,13 @@ export class RolService {
       throw new Error('El nombre del rol debe tener al menos 3 caracteres')
     }
 
+    if (data.nombreRol) {
+      const existente = await this.rolRepository.obtenerPorNombre(data.nombreRol)
+      if (existente && existente.idRol !== parseInt(id)) {
+        throw new Error('Nombre de rol ya registrado')
+      }
+    }
+
     return await this.rolRepository.actualizarPorId(id, data)
   }
 
