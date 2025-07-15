@@ -249,7 +249,7 @@ const ConsultarBombero = ({ onVolver }) => {
                   <thead>
                     <tr>
                       <th>Nombre completo</th>
-                      <th>dni</th>
+                      <th>DNI</th>
                       <th>Teléfono</th>
                       <th>Email</th>
                       <th>Es del Plan</th>
@@ -257,13 +257,14 @@ const ConsultarBombero = ({ onVolver }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {resultadosFiltrados.map((bombero, index) => {
-                      return (
-                        <tr key={bombero.dni || bombero.dni || index}>
-                          <td>{bombero.nombre & bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : 'N/A'}</td>
-                          <td>{bombero.dni || bombero.dni || 'N/A'}</td>
-                          <td>{bombero.telefono || bombero.phone || 'N/A'}</td>
-                          <td>{bombero.correo || bombero.email || 'N/A'}</td>
+                    {[...resultadosFiltrados]
+                      .sort((a, b) => (a.apellido || '').localeCompare(b.apellido || '', undefined, { sensitivity: 'base' }))
+                      .map((bombero, index) => (
+                        <tr key={bombero.dni || index}>
+                          <td>{bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : bombero.nombre || bombero.apellido || 'N/A'}</td>
+                          <td>{bombero.dni || 'N/A'}</td>
+                          <td>{bombero.telefono || 'N/A'}</td>
+                          <td>{bombero.correo || 'N/A'}</td>
                           <td>
                             <span className={`badge ${(bombero.esDelPlan || bombero.es_del_plan) ? 'bg-success' : 'bg-secondary'}`}>
                               {(bombero.esDelPlan || bombero.es_del_plan) ? 'Sí' : 'No'}
@@ -287,8 +288,7 @@ const ConsultarBombero = ({ onVolver }) => {
                             </button>
                           </td>
                         </tr>
-                      )
-                    })}
+                    ))}
                   </tbody>
                 </table>
               </div>
