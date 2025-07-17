@@ -19,8 +19,8 @@ export class MySQLGrupoGuardiaRepository {
 
       // Insertar en grupoGuardia
       const [result] = await connection.execute(
-        `INSERT INTO ${this.tableGrupos} (nombre) VALUES (?)`,
-        [data.nombreGrupo]
+        `INSERT INTO ${this.tableGrupos} (nombre, descripcion) VALUES (?, ?)`,
+        [data.nombre, data.descripcion]
       )
       const nuevoId = result.insertId
 
@@ -51,7 +51,7 @@ export class MySQLGrupoGuardiaRepository {
 
     try {
       const [rowsGrupo] = await connection.execute(
-        `SELECT idGrupo, nombre FROM ${this.tableGrupos} WHERE idGrupo = ?`,
+        `SELECT idGrupo, nombre, descripcion FROM ${this.tableGrupos} WHERE idGrupo = ?`,
         [id]
       )
 
@@ -69,6 +69,7 @@ export class MySQLGrupoGuardiaRepository {
       return GrupoGuardia.create({
         idGrupo: grupo.idGrupo,
         nombreGrupo: grupo.nombre,
+        descripcion: grupo.descripcion,
         bomberos
       })
     } catch (error) {
@@ -85,7 +86,7 @@ export class MySQLGrupoGuardiaRepository {
 
     try {
       const [grupos] = await connection.execute(
-        `SELECT idGrupo, nombre FROM ${this.tableGrupos} ORDER BY nombre ASC`
+        `SELECT idGrupo, nombre, descripcion FROM ${this.tableGrupos} ORDER BY nombre ASC`
       )
 
       const resultados = []
@@ -102,6 +103,7 @@ export class MySQLGrupoGuardiaRepository {
           GrupoGuardia.create({
             idGrupo: grupo.idGrupo,
             nombreGrupo: grupo.nombre,
+            descripcion: grupo.descripcion,
             bomberos
           })
         )
@@ -143,4 +145,129 @@ export class MySQLGrupoGuardiaRepository {
       connection.release()
     }
   }
+
+async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
+  const offset = (pagina - 1) * limite
+  const connection = getConnection()
+
+  let whereClause = ''
+  let valores = []
+
+  if (busqueda && busqueda.trim() !== '') {
+    whereClause = 'WHERE nombre LIKE ?'
+    valores.push(`%${busqueda.trim()}%`)
+  }
+
+  const limitInt = parseInt(limite, 10)
+  const offsetInt = parseInt(offset, 10)
+
+  try {
+    const query = `
+      SELECT idGrupo, nombre, descripcion
+      FROM ${this.tableGrupos}
+      ${whereClause}
+      ORDER BY idGrupo DESC
+      LIMIT ${limitInt} OFFSET ${offsetInt}
+    `
+
+    const [rows] = await connection.execute(query, valores)
+
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM ${this.tableGrupos}
+      ${whereClause}
+    `
+
+    const [countRows] = await connection.execute(countQuery, valores)
+
+    return {
+      data: rows.map(row =>
+        GrupoGuardia.create({
+          idGrupo: row.idGrupo,
+          nombreGrupo: row.nombre,
+          descripcion: row.descripcion,
+          bomberos: [] // vacío, porque no querés traerlos
+        })
+      ),
+      total: countRows[0].total
+    }
+
+  } catch (error) {
+    logger.error('Error al buscar grupos con paginado', { error: error.message })
+    throw new Error(`Error en búsqueda paginada: ${error.message}`)
+  }
+}
+
+async obtenerBomberosDelGrupo(idGrupo) {
+  const pool = getConnection()
+  const connection = await pool.getConnection()
+
+  try {
+    const [rows] = await connection.execute(
+      `SELECT b.dni, b.nombre, b.apellido, b.legajo, b.telefono, b.correo
+       FROM ${this.tableIntermedia} bg
+       INNER JOIN bombero b ON b.dni = bg.dni
+       WHERE bg.idGrupo = ?`,
+      [idGrupo]
+    )
+
+    return rows.map(b => ({
+      ...b,
+      email: b.correo
+    }))
+  } catch (error) {
+    logger.error('Error al obtener bomberos del grupo', {
+      idGrupo,
+      error: error.message
+    })
+    throw new Error(`Error al obtener bomberos del grupo: ${error.message}`)
+  } finally {
+    connection.release()
+  }
+}
+
+
+async actualizar(grupo) {
+  const pool = getConnection()
+  const connection = await pool.getConnection()
+
+  const data = grupo.toDatabase()
+
+  try {
+    await connection.beginTransaction()
+
+    // 1. Actualizar nombre del grupo
+    await connection.execute(
+      `UPDATE ${this.tableGrupos} SET nombre = ?, descripcion = ? WHERE idGrupo = ?`,
+    [data.nombre, data.descripcion, grupo.id]
+    )
+
+    // 2. Eliminar relaciones actuales de bomberos
+    await connection.execute(
+      `DELETE FROM ${this.tableIntermedia} WHERE idGrupo = ?`,
+      [grupo.id]
+    )
+
+    // 3. Insertar nuevas relaciones
+    for (const dni of data.bomberos) {
+      await connection.execute(
+        `INSERT INTO ${this.tableIntermedia} (idGrupo, dni) VALUES (?, ?)`,
+        [grupo.id, dni]
+      )
+    }
+
+    await connection.commit()
+    logger.debug('Grupo de guardia actualizado correctamente', { idGrupo: grupo.id })
+    return true
+  } catch (error) {
+    await connection.rollback()
+    logger.error('Error al actualizar grupo de guardia', { error: error.message })
+    throw new Error(`Error al actualizar grupo: ${error.message}`)
+  } finally {
+    connection.release()
+  }
+}
+
+
+
 }

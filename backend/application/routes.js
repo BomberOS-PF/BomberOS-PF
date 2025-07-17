@@ -298,6 +298,36 @@ export function setupRoutes(app, container) {
     }
   })
 
+  app.get('/api/grupos/buscar', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.buscarGrupos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta buscarGrupos:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.delete('/api/grupos/:id', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.eliminarGrupo(req, res)
+    } catch (error) {
+      logger.error('Error en ruta eliminarGrupo:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.put('/api/grupos/:id', async (req, res) => {
+  try {
+    await grupoGuardiaHandler.actualizarGrupo(req, res)
+  } catch (error) {
+    logger.error('Error en ruta actualizarGrupo:', error)
+    res.status(500).json({ error: 'Error interno' })
+  }
+})
+
+
+
+
   // ACCIDENTES DE TRÁNSITO
   app.post('/api/accidentes', async (req, res) => {
     try {
@@ -345,6 +375,7 @@ export function setupRoutes(app, container) {
       res.status(500).json({ error: 'Error interno' })
     }
   })
+  
 
   // RANGOS
   app.get('/api/rangos', async (req, res) => {
@@ -393,6 +424,8 @@ export function setupRoutes(app, container) {
         'POST /api/grupos',
         'GET /api/grupos',
         'GET /api/grupos/:id/bomberos',
+        'GET /api/grupos/buscar',
+        'DELETE /api/grupos/:id',
         'POST /api/accidentes',
         'GET /api/accidentes',
         'GET /api/accidentes/:id',        

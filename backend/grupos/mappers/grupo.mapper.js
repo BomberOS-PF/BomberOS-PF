@@ -10,6 +10,7 @@ export const GrupoMapper = {
     return GrupoGuardia.create({
       idGrupo: raw.idGrupo || raw.id,
       nombre: raw.nombre || raw.nombreGrupo,
+      descripcion: raw.descripcion ?? null,
       bomberos: raw.bomberos || [] // Podría ser un array de dnis si viene desde DTO
     })
   },
@@ -17,7 +18,9 @@ export const GrupoMapper = {
   toDatabase: (grupoEntity) => {
     return {
       idGrupo: grupoEntity.id,
-      nombre: grupoEntity.nombre
+      nombre: grupoEntity.nombre,
+      descripcion: grupoEntity.descripcion ?? null,
+      bomberos: grupoEntity.bomberos
     }
   },
 
@@ -25,6 +28,7 @@ export const GrupoMapper = {
     return {
       idGrupo: grupoEntity.id,
       nombre: grupoEntity.nombre,
+      descripcion: grupoEntity.descripcion ?? null,
       bomberos: grupoEntity.bomberos
     }
   }

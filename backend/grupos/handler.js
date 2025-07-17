@@ -26,6 +26,7 @@ export const buildGrupoHandlers = (grupoService) => {
     console.error('Mensaje:', error.message)
     console.error('Stack:', error.stack)
     console.error('Body recibido:', req.body)
+    next(error)
 }
     },
 
@@ -72,6 +73,78 @@ export const buildGrupoHandlers = (grupoService) => {
       } catch (error) {
         next(error)
       }
-    }
+    },
+
+    /**
+ * GET /api/grupos/buscar
+ * Buscar grupos con paginado y búsqueda
+ */
+buscarGrupos: async (req, res, next) => {
+  try {
+    const { pagina = 1, limite = 10, busqueda = '' } = req.query
+
+    const resultado = await grupoService.buscarConPaginado({
+      pagina: parseInt(pagina),
+      limite: parseInt(limite),
+      busqueda: busqueda.trim()
+    })
+
+    res.json({
+      success: true,
+      data: resultado.data.map(g => GrupoMapper.toJSON(g)),
+      total: resultado.total
+    })
+  } catch (error) {
+    console.error('❌ Error en handler buscarGrupos:', error)
+    next(error)
+  }
+},
+
+/**
+ * GET /api/grupos/:id/bomberos
+ * Obtener bomberos pertenecientes a un grupo
+ */
+obtenerBomberosDelGrupo: async (req, res, next) => {
+  try {
+    const idGrupo = parseInt(req.params.id)
+    const bomberos = await grupoService.obtenerBomberosDeGrupo(idGrupo)
+
+    res.json({
+      success: true,
+      data: bomberos
+    })
+  } catch (error) {
+    console.error('❌ Error en handler obtenerBomberosDelGrupo:', error)
+    next(error)
+  }
+},
+
+/**
+ * PUT /api/grupos/:id
+ * Actualizar grupo por ID
+ */
+actualizarGrupo: async (req, res, next) => {
+  try {
+    const idGrupo = parseInt(req.params.id)
+    const dto = new CreateGrupoDTO(req.body)
+
+    const grupoActualizado = await grupoService.actualizarGrupo(idGrupo, dto)
+
+    res.json({
+      success: true,
+      data: GrupoMapper.toJSON(grupoActualizado)
+    })
+  } catch (error) {
+    console.error('❌ Error en handler actualizarGrupo:', error)
+    next(error)
+  }
+}
+
+
+
+
+
+
+    
   }
 }

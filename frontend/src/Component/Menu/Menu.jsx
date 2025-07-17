@@ -13,6 +13,7 @@ import ConsultarUsuario from '../Usuario/ConsultarUsuario/ConsultarUsuario'
 import RegistrarRol from '../Rol/RegistrarRol'
 import ConsultarRol from '../Rol/ConsultarRol'
 import RegistrarGuardia from '../Guardia/RegistrarGuardia/RegistrarGuardia'
+import ConsultarGrupoGuardia from '../Guardia/ConsultarGuardia/ConsultarGrupoGuardia'
 
 import AccidenteTransito from '../Incidente/TipoIncidente/AccidenteTransito/AccidenteTransito'
 import FactorClimatico from '../Incidente/TipoIncidente/FactorClimatico/FactorClimatico'
@@ -156,7 +157,7 @@ const Menu = ({ user, setUser }) => {
       'cargar-incidente', 'registrar-bombero', 'consultar-bombero',
       'registrar-usuario', 'consultar-usuario',
       'registrar-rol', 'consultar-rol',
-      'participacion-incidente', 'vehiculo-involucrado', 'registrar-guardia'
+      'participacion-incidente', 'vehiculo-involucrado', 'registrar-guardia', 'consultar-grupos-guardia'
     ],
     bombero: ['cargar-incidente', 'consultar-bombero', 'participacion-incidente']
   }
@@ -171,7 +172,8 @@ const Menu = ({ user, setUser }) => {
     { key: 'consultar-rol', label: 'Consultar Rol' },
     { key: 'participacion-incidente', label: 'Participación del Incidente' },
     { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' },
-    { key: 'registrar-guardia', label: 'Registrar Guardia' }
+    { key: 'registrar-guardia', label: 'Registrar Guardia' },
+    { key: 'consultar-grupos-guardia', label: 'Consultar Grupos' }
   ]
 
   const puedeVer = (key) => permisos[rol]?.includes(key)
@@ -257,6 +259,7 @@ const Menu = ({ user, setUser }) => {
             )}
             {opcionSeleccionada === 'vehiculo-involucrado' && <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />}
             {opcionSeleccionada === 'registrar-guardia' && <RegistrarGuardia onVolver={() => setOpcionSeleccionada(null)} />}
+            {opcionSeleccionada === 'consultar-grupos-guardia' && <ConsultarGrupoGuardia onVolver={() => setOpcionSeleccionada(null)} />}
           </div>
         )}
       </div>
