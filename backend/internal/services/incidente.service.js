@@ -3,12 +3,14 @@ import { IncidenteServiceInterface } from '../../interfaces/service.interface.js
 import { logger } from '../platform/logger/logger.js'
 
 export class IncidenteService extends IncidenteServiceInterface {
-  constructor(incidenteRepository, denuncianteRepository, bomberoService = null, whatsappService = null) {
+  constructor(incidenteRepository, denuncianteRepository, bomberoService = null, whatsappService = null, damnificadoRepository = null, incendioForestalRepository = null) {
     super()
     this.incidenteRepository = incidenteRepository
     this.denuncianteRepository = denuncianteRepository
     this.bomberoService = bomberoService
     this.whatsappService = whatsappService
+    this.damnificadoRepository = damnificadoRepository
+    this.incendioForestalRepository = incendioForestalRepository
   }
 
   async crearIncidente(data) {
@@ -37,14 +39,53 @@ export class IncidenteService extends IncidenteServiceInterface {
     })
 
     const incidenteCreado = await this.incidenteRepository.create(nuevoIncidente)
-    
+
+    // Guardar damnificados si vienen en la carga
+    if (Array.isArray(data.damnificados) && this.damnificadoRepository) {
+      for (const damnificado of data.damnificados) {
+        await this.damnificadoRepository.insertarDamnificado({
+          ...damnificado,
+          idIncidente: incidenteCreado.idIncidente || incidenteCreado.id // compatibilidad
+        })
+      }
+    }
+
     logger.info('📋 Incidente creado exitosamente', {
-      id: incidenteCreado.id,
+      id: incidenteCreado.idIncidente || incidenteCreado.id,
       tipo: incidenteCreado.idTipoIncidente,
       fecha: incidenteCreado.fecha
     })
 
     return incidenteCreado
+  }
+
+  async crearIncendioForestal(data) {
+    // 1. Crear incidente
+    const incidente = await this.incidenteRepository.create({
+      idTipoIncidente: 2, // Incendio Forestal
+      fecha: data.fecha,
+      idLocalizacion: data.idLocalizacion,
+      descripcion: data.descripcion
+    })
+
+    // 2. Crear registro en incendio_forestal
+    await this.incendioForestalRepository.insertarIncendioForestal({
+      idIncidente: incidente.idIncidente,
+      caracteristicasLugar: data.caracteristicasLugar,
+      areaAfectada: data.areaAfectada
+    })
+
+    // 3. Guardar damnificados
+    if (Array.isArray(data.damnificados) && this.damnificadoRepository) {
+      for (const damnificado of data.damnificados) {
+        await this.damnificadoRepository.insertarDamnificado({
+          ...damnificado,
+          idIncidente: incidente.idIncidente
+        })
+      }
+    }
+
+    return incidente
   }
 
   /**

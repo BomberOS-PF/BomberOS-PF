@@ -49,6 +49,12 @@ import { MySQLRangoRepository } from '../internal/repositories/mysql/rango.repos
 import { RangoService } from '../internal/services/rango.service.js'
 import { RangoHandler } from '../rangos/handler.js'
 
+import { MySQLCaracteristicasLugarRepository } from '../internal/repositories/mysql/caracteristicasLugar.repository.js';
+import { MySQLAreaAfectadaRepository } from '../internal/repositories/mysql/areaAfectada.repository.js';
+import { CaracteristicasLugarService } from '../internal/services/caracteristicasLugar.service.js';
+import { AreaAfectadaService } from '../internal/services/areaAfectada.service.js';
+import { ForestalCatalogosHandler } from '../forestal/handler.js';
+
 export async function createServer(config) {
   try {
     logger.info('🏗️ Iniciando assembler de dependencias...')
@@ -70,12 +76,15 @@ export async function createServer(config) {
     const accidenteDamnificadoRepository = new MySQLAccidenteDamnificadoRepository()
     const accidenteVehiculoRepository = new MySQLAccidenteVehiculoRepository()
     const rangoRepository = new MySQLRangoRepository()
+    const incendioForestalRepository = new (await import('../internal/repositories/mysql/incendioForestal.repository.js')).MySQLIncendioForestalRepository()
+    const caracteristicasLugarRepository = new MySQLCaracteristicasLugarRepository();
+    const areaAfectadaRepository = new MySQLAreaAfectadaRepository();
     
     // Servicios
     const whatsappService = new WhatsAppService(config)
     const bomberoService = new BomberoService(bomberoRepository, usuarioRepository)
     const usuarioService = new UsuarioService(usuarioRepository, bomberoRepository)
-    const incidenteService = new IncidenteService(incidenteRepository, denuncianteRepository, bomberoService, whatsappService)
+    const incidenteService = new IncidenteService(incidenteRepository, denuncianteRepository, bomberoService, whatsappService, damnificadoRepository, incendioForestalRepository)
     const grupoGuardiaService = new GrupoGuardiaService(grupoGuardiaRepository, bomberoRepository)
     const rolService = new RolService(rolRepository)
     const causaAccidenteService = new CausaAccidenteService (causaAccidenteRepository)
@@ -90,6 +99,9 @@ export async function createServer(config) {
     const damnificadoService = new DamnificadoService(damnificadoRepository)
     const accidenteVehiculoService = new AccidenteVehiculoService(accidenteVehiculoRepository)
     const rangoService = new RangoService(rangoRepository)
+    const caracteristicasLugarService = new CaracteristicasLugarService(caracteristicasLugarRepository);
+    const areaAfectadaService = new AreaAfectadaService(areaAfectadaRepository);
+    const forestalCatalogosHandler = new ForestalCatalogosHandler(caracteristicasLugarService, areaAfectadaService);
 
     // Handlers
     const bomberoHandler = new BomberoHandler(bomberoService)
@@ -138,7 +150,12 @@ export async function createServer(config) {
       rangoRepository,
       rangoService,
       dbConnection,
-      config
+      config,
+      forestalCatalogosHandler,
+      caracteristicasLugarService,
+      areaAfectadaService,
+      caracteristicasLugarRepository,
+      areaAfectadaRepository,
     }
 
     await validateDependencies(container)

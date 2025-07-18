@@ -50,6 +50,17 @@ export const API_URLS = {
     getAll: `${API_BASE_URL}/rangos`
   },
 
+  // Incidentes
+  incidentes: {
+    create: `${API_BASE_URL}/incidentes`,
+    getAll: `${API_BASE_URL}/incidentes`,
+    getById: (id) => `${API_BASE_URL}/incidentes/${id}`,
+    createIncendioForestal: `${API_BASE_URL}/incidentes/incendio-forestal`
+  },
+
+  caracteristicasLugar: `${API_BASE_URL}/caracteristicas-lugar`,
+  areasAfectadas: `${API_BASE_URL}/areas-afectadas`,
+
   // Health check
   health: 'http://localhost:3000/health'
 }

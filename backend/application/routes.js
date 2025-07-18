@@ -21,7 +21,7 @@ export function setupRoutes(app, container) {
 
   app.get('/', (req, res) => res.redirect('/health'))
 
-  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, forestalCatalogosHandler } = container;
 
   // ROLES
   app.get('/api/roles', async (req, res) => {
@@ -216,6 +216,10 @@ export function setupRoutes(app, container) {
   })
 
   // INCIDENTES
+  app.post('/api/incidentes/incendio-forestal', async (req, res, next) => {
+    await incidenteHandler.crearIncendioForestal(req, res, next)
+  })
+
   app.get('/api/incidentes', async (req, res) => {
     try {
       await incidenteHandler.listar(req, res)
@@ -382,6 +386,14 @@ export function setupRoutes(app, container) {
     await rangoHandler.getAll(req, res)
   })
   
+  // CATÁLOGOS FORESTALES
+  app.get('/api/caracteristicas-lugar', async (req, res) => {
+    await forestalCatalogosHandler.listarCaracteristicasLugar(req, res)
+  })
+  app.get('/api/areas-afectadas', async (req, res) => {
+    await forestalCatalogosHandler.listarAreasAfectadas(req, res)
+  })
+
   // 404 handler
   app.use((req, res) => {
     logger.warn('Ruta no encontrada', {
@@ -431,7 +443,9 @@ export function setupRoutes(app, container) {
         'GET /api/accidentes/:id',        
         'GET /api/causa-accidente',
         'POST /api/vehiculos',
-        'GET /api/rangos'
+        'GET /api/rangos',
+        'GET /api/caracteristicas-lugar',
+        'GET /api/areas-afectadas'
       ]
     })
   })
