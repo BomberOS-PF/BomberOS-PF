@@ -17,8 +17,6 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
   const [loading, setLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
 
-  
-
   const modoEdicion = Boolean(idGrupo)
 
   useEffect(() => {
