@@ -101,13 +101,11 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
       esDelPlan: formData.esDelPlan,
       aptoPsicologico: formData.aptoPsicologico,
       grupoSanguineo: formData.grupoSanguineo,
-      fichaMedica: formData.fichaMedica ? 1 : null, // Campo booleano/entero
+      fichaMedica: formData.fichaMedica ? 1 : null,
       fichaMedicaArchivo: formData.fichaMedica ? (typeof formData.fichaMedica === 'string' ? formData.fichaMedica : formData.fichaMedica.name) : null, // Nombre del archivo
       fechaFichaMedica: formData.fechaFichaMedica || null,
-      idUsuario: formData.idUsuario || null // Incluir idUsuario para ediciones
+      idUsuario: formData.idUsuario || null
     }
-    
-    console.log('🚀 Datos preparados para enviar:', dataToSend)
     onSubmit(dataToSend)
   }
 
