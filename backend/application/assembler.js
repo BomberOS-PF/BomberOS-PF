@@ -96,7 +96,7 @@ export async function createServer(config) {
     const damnificadoService = new DamnificadoService(damnificadoRepository)
     const accidenteVehiculoService = new AccidenteVehiculoService(accidenteVehiculoRepository)
     const rangoService = new RangoService(rangoRepository)
-    const tokenService = new TokenService(tokenRepository)
+    const tokenService = new TokenService(tokenRepository, usuarioRepository)
 
     // Handlers
     const bomberoHandler = new BomberoHandler(bomberoService)
