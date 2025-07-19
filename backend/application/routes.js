@@ -21,7 +21,7 @@ export function setupRoutes(app, container) {
 
   app.get('/', (req, res) => res.redirect('/health'))
 
-  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, recuperarClaveHandler, validarTokenHandler, restablecerClaveHandler } = container
 
   // ROLES
   app.get('/api/roles', async (req, res) => {
@@ -382,6 +382,34 @@ export function setupRoutes(app, container) {
     await rangoHandler.getAll(req, res)
   })
   
+  // RECUPERAR Y RESTABLECER CLAVE
+  app.post('/api/recuperar-clave', async (req, res) => {
+    try {
+      await container.recuperarClaveHandler(req, res)
+    } catch (error) {
+      logger.error('Error en ruta recuperarClave:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/validar-token', async (req, res) => {
+    try {
+      await container.validarTokenHandler(req, res)
+    } catch (error) {
+      logger.error('Error en ruta validarToken:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.post('/api/restablecer-clave', async (req, res) => {
+    try {
+      await container.restablecerClaveHandler(req, res)
+    } catch (error) {
+      logger.error('Error en ruta restablecerClave:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
   // 404 handler
   app.use((req, res) => {
     logger.warn('Ruta no encontrada', {
@@ -431,7 +459,10 @@ export function setupRoutes(app, container) {
         'GET /api/accidentes/:id',        
         'GET /api/causa-accidente',
         'POST /api/vehiculos',
-        'GET /api/rangos'
+        'GET /api/rangos',
+        'POST /api/recuperar-clave',
+        'GET /api/validar-token',
+        'POST /api/restablecer-clave'
       ]
     })
   })

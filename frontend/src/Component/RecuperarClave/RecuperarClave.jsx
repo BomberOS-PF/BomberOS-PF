@@ -5,9 +5,30 @@ import '../DisenioFormulario/DisenioFormulario.css'
 const RecuperarClave = ({ onVolver }) => {
   const [email, setEmail] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    alert(`Se envió un correo a: ${email}`)
+
+    try {
+      const res = await fetch('http://localhost:3000/api/recuperar-clave', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        alert(`Se envió un correo a: ${email}`)
+        setEmail('')
+      } else {
+        alert(`❌ Error: ${data.error || 'No se pudo enviar el correo'}`)
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('❌ Error al conectar con el servidor')
+    }
   }
 
   const handleVolver = () => {
