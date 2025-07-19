@@ -40,10 +40,15 @@ export const construirRecuperarClaveHandlers = (tokenService) => {
       logger.info(`📧 Correo de recuperación enviado a ${email}`)
 
       res.json({ success: true, message: 'Correo de recuperación enviado' })
-    } catch (error) {
-      logger.error('❌ Error en recuperarClaveHandler:', { error: error.message })
-      res.status(500).json({ error: 'Error interno del servidor' })
-    }
+      } catch (error) {
+        logger.error('❌ Error en recuperarClaveHandler:', { error: error.message })
+
+        if (error.message === 'El correo no está registrado') {
+          return res.status(400).json({ error: error.message })
+        }
+
+        res.status(500).json({ error: 'Error interno del servidor' })
+      }
   }
 
   /**

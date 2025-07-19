@@ -3,6 +3,8 @@ import './FormularioBombero.css'
 import '../../../Component/DisenioFormulario/DisenioFormulario.css'
 
 const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVolver, loading = false, ocultarTitulo = false }) => {
+  const [rangosDisponibles, setRangosDisponibles] = useState([])
+
   const [formData, setFormData] = useState({
     dni: '',
     nombre: '',
@@ -12,7 +14,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
     domicilio: '',
     legajo: '',
     antiguedad: 0,
-    idRango: 1,
+    rango: '',
     esDelPlan: false,
     aptoPsicologico: true,
     grupoSanguineo: '',
@@ -23,13 +25,15 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
   })
 
   useEffect(() => {
-    if (modo !== 'alta' && datosIniciales) {
-      console.log('🔄 Cargando datos iniciales en FormularioBombero:', datosIniciales)
-      console.log('🎯 Modo:', modo)
-      
-      
+
+      if (modo !== 'alta' && datosIniciales && rangosDisponibles.length > 0) {
+        const idRango = datosIniciales.idRango || datosIniciales.id_rango
+        const descripcionRango = rangosDisponibles.find(
+          r => r.idRango === (datosIniciales.idRango || datosIniciales.id_rango)
+        )?.descripcion || ''
+
       const datosFormateados = {
-        dni: datosIniciales.dni || datosIniciales.dni || '',
+        dni: datosIniciales.dni || '',
         nombre: datosIniciales.nombre || '',
         apellido: datosIniciales.apellido || '',
         correo: datosIniciales.correo || datosIniciales.email || '',
@@ -37,8 +41,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
         domicilio: datosIniciales.domicilio || datosIniciales.direccion || '',
         legajo: datosIniciales.legajo || '',
         antiguedad: datosIniciales.antiguedad || 0,
-        idRango: datosIniciales.idRango || datosIniciales.id_rango || 1,
-        rango: getRangoNombre(datosIniciales.idRango || datosIniciales.id_rango || 1),
+        rango: idRango,
         esDelPlan: datosIniciales.esDelPlan || datosIniciales.es_del_plan || false,
         aptoPsicologico: datosIniciales.aptoPsicologico !== undefined ? datosIniciales.aptoPsicologico : true,
         grupoSanguineo: datosIniciales.grupoSanguineo || datosIniciales.grupo_sanguineo || '',
@@ -47,37 +50,43 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
         fechaFichaMedica: datosIniciales.fechaFichaMedica || datosIniciales.fecha_ficha_medica || new Date().toISOString().split('T')[0],
         idUsuario: datosIniciales.idUsuario || datosIniciales.id_usuario || null
       }
-      
-      console.log('✅ Datos formateados para el formulario:', datosFormateados)
+
       setFormData(datosFormateados)
     }
-  }, [datosIniciales, modo])
+  }, [datosIniciales, modo, rangosDisponibles])
+
 
   const handleChange = (e) => {
     const { id, value, type, checked, files } = e.target
-    let newValue = type === 'checkbox' ? checked : type === 'file' ? files[0] : value
-    
-    setFormData(prev => {
-      const updated = {
-        ...prev,
-        [id]: newValue
-      }
-      
-      // Si cambia el rango, actualizar idRango
-      if (id === 'rango') {
-        updated.idRango = getRangoId(newValue)
-      }
-      
-      return updated
-    })
+    const newValue = type === 'checkbox' ? checked : type === 'file' ? files[0] : value
+
+    setFormData(prev => ({
+      ...prev,
+      [id]: newValue
+    }))
   }
+    useEffect(() => {
+      const fetchRangos = async () => {
+        try {
+          const res = await fetch('http://localhost:3000/api/rangos')
+          const data = await res.json()
+          if (res.ok && data.success) {
+            setRangosDisponibles(data.data)
+          } else {
+            console.error('Error al obtener rangos:', data)
+          }
+        } catch (error) {
+          console.error('Error de conexión al obtener rangos:', error)
+        }
+      }
+
+      fetchRangos()
+    }, [])
+
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    
-    console.log('📤 Enviando formulario en modo:', modo)
-    console.log('📋 Datos del formulario:', formData)
-    
+       
     // Preparar datos para enviar al backend
     const dataToSend = {
       dni: formData.dni,
@@ -88,60 +97,16 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
       domicilio: formData.domicilio,
       legajo: formData.legajo || null,
       antiguedad: parseInt(formData.antiguedad) || 0,
-      idRango: formData.idRango,
+      idRango: formData.rango,
       esDelPlan: formData.esDelPlan,
       aptoPsicologico: formData.aptoPsicologico,
       grupoSanguineo: formData.grupoSanguineo,
-      fichaMedica: formData.fichaMedica ? 1 : null, // Campo booleano/entero
+      fichaMedica: formData.fichaMedica ? 1 : null,
       fichaMedicaArchivo: formData.fichaMedica ? (typeof formData.fichaMedica === 'string' ? formData.fichaMedica : formData.fichaMedica.name) : null, // Nombre del archivo
       fechaFichaMedica: formData.fechaFichaMedica || null,
-      idUsuario: formData.idUsuario || null // Incluir idUsuario para ediciones
+      idUsuario: formData.idUsuario || null
     }
-    
-    console.log('🚀 Datos preparados para enviar:', dataToSend)
     onSubmit(dataToSend)
-  }
-
-  // Función para mapear IDs de rango a nombres
-  const getRangoNombre = (rangoId) => {
-    const rangos = {
-      1: 'Bombero',
-      2: 'Cabo',
-      3: 'Sargento',
-      4: 'Sargento Primero',
-      5: 'Suboficial',
-      6: 'Suboficial Principal',
-      7: 'Suboficial Mayor',
-      8: 'Oficial',
-      9: 'Teniente',
-      10: 'Capitán',
-      11: 'Mayor',
-      12: 'Teniente Coronel',
-      13: 'Coronel',
-      14: 'Jefe'
-    }
-    return rangos[rangoId] || 'Bombero'
-  }
-
-  // Función para mapear nombres de rango a IDs
-  const getRangoId = (rangoNombre) => {
-    const rangos = {
-      'Bombero': 1,
-      'Cabo': 2,
-      'Sargento': 3,
-      'Sargento Primero': 4,
-      'Suboficial': 5,
-      'Suboficial Principal': 6,
-      'Suboficial Mayor': 7,
-      'Oficial': 8,
-      'Teniente': 9,
-      'Capitán': 10,
-      'Mayor': 11,
-      'Teniente Coronel': 12,
-      'Coronel': 13,
-      'Jefe': 14
-    }
-    return rangos[rangoNombre] || 1
   }
 
   const soloLectura = modo === 'consulta'
@@ -278,29 +243,20 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
             <div className="col-md-4">
               <label className="form-label">Rango</label>
-              <select 
-                className="form-select" 
-                id="rango" 
-                value={formData.rango || ''} 
-                onChange={handleChange} 
-                disabled={soloLectura || loading}
+              <select
+                className="form-select"
+                id="rango"
+                value={formData.rango}
                 required={!soloLectura}
+                disabled={soloLectura || loading}
+                onChange={handleChange}
               >
                 <option value="">Seleccione un rango</option>
-                <option value="Bombero">Bombero</option>
-                <option value="Cabo">Cabo</option>
-                <option value="Sargento">Sargento</option>
-                <option value="Sargento Primero">Sargento Primero</option>
-                <option value="Suboficial">Suboficial</option>
-                <option value="Suboficial Principal">Suboficial Principal</option>
-                <option value="Suboficial Mayor">Suboficial Mayor</option>
-                <option value="Oficial">Oficial</option>
-                <option value="Teniente">Teniente</option>
-                <option value="Capitán">Capitán</option>
-                <option value="Mayor">Mayor</option>
-                <option value="Teniente Coronel">Teniente Coronel</option>
-                <option value="Coronel">Coronel</option>
-                <option value="Jefe">Jefe</option>
+                {rangosDisponibles.map(r => (
+                  <option key={r.idRango} value={r.idRango}>
+                    {r.descripcion}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -362,20 +318,49 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
                 <option value="O-">O-</option>
               </select>
             </div>
+            
             <div className="col-md-4">
               <label className="form-label">Ficha médica (PDF)</label>
-              <input 
-                type="file" 
-                className="form-control" 
-                id="fichaMedica" 
-                onChange={handleChange}
-                accept="application/pdf" 
-                disabled={soloLectura || loading} 
-              />
-              {formData.fichaMedicaArchivo && typeof formData.fichaMedicaArchivo === 'string' && (
-                <small className="text-muted">Archivo actual: {formData.fichaMedicaArchivo}</small>
+
+              {/* Mostrar archivo cargado con botón ❌ */}
+              {formData.fichaMedicaArchivo && typeof formData.fichaMedicaArchivo === 'string' ? (
+                <div className="d-flex align-items-center justify-content-between border rounded p-2 bg-light">
+                  <small className="text-muted me-2" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {formData.fichaMedicaArchivo}
+                  </small>
+                  {!soloLectura && (
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() => {
+                        const confirmar = window.confirm('¿Eliminar la ficha médica actual? Podrás subir una nueva.')
+                        if (confirmar) {
+                          setFormData(prev => ({
+                            ...prev,
+                            fichaMedica: null,
+                            fichaMedicaArchivo: null
+                          }))
+                        }
+                      }}
+                      title="Eliminar archivo"
+                    >
+                      ❌
+                    </button>
+                  )}
+                </div>
+              ) : (
+                // Input de carga solo si no hay archivo
+                <input 
+                  type="file" 
+                  className="form-control" 
+                  id="fichaMedica" 
+                  onChange={handleChange}
+                  accept="application/pdf" 
+                  disabled={soloLectura || loading} 
+                />
               )}
             </div>
+
             <div className="col-md-4">
               <label className="form-label">Fecha de ficha médica</label>
               <input 
