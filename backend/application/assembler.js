@@ -49,6 +49,11 @@ import { MySQLRangoRepository } from '../internal/repositories/mysql/rango.repos
 import { RangoService } from '../internal/services/rango.service.js'
 import { RangoHandler } from '../rangos/handler.js'
 
+import { MySQLTokenRepository } from '../internal/repositories/mysql/token.repository.js'
+import { TokenService } from '../internal/services/token.service.js'
+import { construirRecuperarClaveHandlers } from '../recuperarClave/handler.js'
+import { construirRestablecerClaveHandler } from '../restablecerClave/handler.js'
+
 export async function createServer(config) {
   try {
     logger.info('🏗️ Iniciando assembler de dependencias...')
@@ -70,6 +75,7 @@ export async function createServer(config) {
     const accidenteDamnificadoRepository = new MySQLAccidenteDamnificadoRepository()
     const accidenteVehiculoRepository = new MySQLAccidenteVehiculoRepository()
     const rangoRepository = new MySQLRangoRepository()
+    const tokenRepository = new MySQLTokenRepository()
     
     // Servicios
     const whatsappService = new WhatsAppService(config)
@@ -90,6 +96,7 @@ export async function createServer(config) {
     const damnificadoService = new DamnificadoService(damnificadoRepository)
     const accidenteVehiculoService = new AccidenteVehiculoService(accidenteVehiculoRepository)
     const rangoService = new RangoService(rangoRepository)
+    const tokenService = new TokenService(tokenRepository)
 
     // Handlers
     const bomberoHandler = new BomberoHandler(bomberoService)
@@ -101,6 +108,8 @@ export async function createServer(config) {
     const accidenteTransitoHandler = new AccidenteTransitoHandler(accidenteTransitoService)
     const vehiculoHandler = new VehiculoHandler(vehiculoService)
     const rangoHandler = new RangoHandler(rangoService)
+    const { recuperarClaveHandler, validarTokenHandler } = construirRecuperarClaveHandlers(tokenService)
+    const { restablecerClaveHandler } = construirRestablecerClaveHandler(tokenService, usuarioRepository)
 
     // Contenedor
     const container = {
@@ -137,6 +146,9 @@ export async function createServer(config) {
       rangoHandler,
       rangoRepository,
       rangoService,
+      recuperarClaveHandler,
+      validarTokenHandler,
+      restablecerClaveHandler,
       dbConnection,
       config
     }
