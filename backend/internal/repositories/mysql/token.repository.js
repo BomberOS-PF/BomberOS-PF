@@ -22,10 +22,8 @@ export class MySQLTokenRepository {
     const ahora = new Date()
     const expiracion = new Date(fila.expiracion)
 
-    console.log('🕒 Ahora local:', ahora.toISOString())
-    console.log('⏰ Expiración:', expiracion.toISOString())
-
     if (ahora > expiracion) {
+      await conn.execute('DELETE FROM tokensTemporales WHERE token = ?', [token])
       return null // Token expirado
     }
 
@@ -36,4 +34,5 @@ export class MySQLTokenRepository {
     const conn = getConnection()
     await conn.execute('DELETE FROM tokensTemporales WHERE token = ?', [token])
   }
+
 }
