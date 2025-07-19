@@ -318,20 +318,49 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
                 <option value="O-">O-</option>
               </select>
             </div>
+            
             <div className="col-md-4">
               <label className="form-label">Ficha médica (PDF)</label>
-              <input 
-                type="file" 
-                className="form-control" 
-                id="fichaMedica" 
-                onChange={handleChange}
-                accept="application/pdf" 
-                disabled={soloLectura || loading} 
-              />
-              {formData.fichaMedicaArchivo && typeof formData.fichaMedicaArchivo === 'string' && (
-                <small className="text-muted">Archivo actual: {formData.fichaMedicaArchivo}</small>
+
+              {/* Mostrar archivo cargado con botón ❌ */}
+              {formData.fichaMedicaArchivo && typeof formData.fichaMedicaArchivo === 'string' ? (
+                <div className="d-flex align-items-center justify-content-between border rounded p-2 bg-light">
+                  <small className="text-muted me-2" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {formData.fichaMedicaArchivo}
+                  </small>
+                  {!soloLectura && (
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() => {
+                        const confirmar = window.confirm('¿Eliminar la ficha médica actual? Podrás subir una nueva.')
+                        if (confirmar) {
+                          setFormData(prev => ({
+                            ...prev,
+                            fichaMedica: null,
+                            fichaMedicaArchivo: null
+                          }))
+                        }
+                      }}
+                      title="Eliminar archivo"
+                    >
+                      ❌
+                    </button>
+                  )}
+                </div>
+              ) : (
+                // Input de carga solo si no hay archivo
+                <input 
+                  type="file" 
+                  className="form-control" 
+                  id="fichaMedica" 
+                  onChange={handleChange}
+                  accept="application/pdf" 
+                  disabled={soloLectura || loading} 
+                />
               )}
             </div>
+
             <div className="col-md-4">
               <label className="form-label">Fecha de ficha médica</label>
               <input 
