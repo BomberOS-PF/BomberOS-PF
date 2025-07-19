@@ -1,10 +1,7 @@
 import dotenv from 'dotenv'
-dotenv.config() // asegurate que se cargue por si entra directo acá
+dotenv.config()
 
 import nodemailer from 'nodemailer'
-
-console.log('🔍 CORREO_ORIGEN:', process.env.CORREO_ORIGEN)
-console.log('🔍 CORREO_APP_PASS:', process.env.CORREO_APP_PASS)
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',

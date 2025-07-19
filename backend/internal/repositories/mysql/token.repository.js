@@ -12,10 +12,24 @@ export class MySQLTokenRepository {
   async obtenerTokenValido(token) {
     const conn = getConnection()
     const [rows] = await conn.execute(
-      'SELECT * FROM tokensTemporales WHERE token = ? AND expiracion > NOW()',
+      'SELECT * FROM tokensTemporales WHERE token = ?',
       [token]
     )
-    return rows[0] || null
+
+    if (rows.length === 0) return null
+
+    const fila = rows[0]
+    const ahora = new Date()
+    const expiracion = new Date(fila.expiracion)
+
+    console.log('🕒 Ahora local:', ahora.toISOString())
+    console.log('⏰ Expiración:', expiracion.toISOString())
+
+    if (ahora > expiracion) {
+      return null // Token expirado
+    }
+
+    return fila
   }
 
   async eliminarToken(token) {

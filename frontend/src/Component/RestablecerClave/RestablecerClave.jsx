@@ -72,7 +72,7 @@ const RestablecerClave = ({ onVolver }) => {
         ) : (
           <form onSubmit={handleSubmit}>
             <div className="mb-3 text-start">
-              <label htmlFor="nuevaContrasena" className="form-label">Nueva contraseña</label>
+              <label htmlFor="nuevaContrasena" className="form-label text-black">Nueva contraseña</label>
               <input
                 type="password"
                 className="form-control"
@@ -83,7 +83,7 @@ const RestablecerClave = ({ onVolver }) => {
               />
             </div>
             <div className="mb-3 text-start">
-              <label htmlFor="confirmacion" className="form-label">Confirmar contraseña</label>
+              <label htmlFor="confirmacion" className="form-label text-black">Confirmar contraseña</label>
               <input
                 type="password"
                 className="form-control"
