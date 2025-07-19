@@ -14,6 +14,19 @@ async function main() {
     // Crear servidor con dependencias
     const { app, container } = await createServer(config)
     
+    // 🧹 Limpiar tokens expirados al iniciar el servidor
+    const tokenRepo = container.tokenRepository || container.tokenService?.tokenRepository
+    if (tokenRepo?.limpiarTokensExpirados) {
+      setInterval(async () => {
+        try {
+          await tokenRepo.limpiarTokensExpirados()
+          logger.info('⏰ Tokens expirados eliminados (ejecución periódica)')
+        } catch (error) {
+          logger.error('❌ Error al limpiar tokens periódicamente', { error: error.message })
+        }
+      }, 60 * 60 * 1000) // Cada 1 hora
+    }
+
     // Configurar middlewares globales
     app.use(cors(config.cors))
     app.use(express.json({ limit: '10mb' }))

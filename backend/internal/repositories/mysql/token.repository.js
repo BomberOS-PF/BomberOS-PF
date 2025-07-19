@@ -35,4 +35,9 @@ export class MySQLTokenRepository {
     await conn.execute('DELETE FROM tokensTemporales WHERE token = ?', [token])
   }
 
+  async limpiarTokensExpirados() {
+    const conn = getConnection()
+    await conn.execute('DELETE FROM tokensTemporales WHERE expiracion <= NOW()')
+  }
+
 }
