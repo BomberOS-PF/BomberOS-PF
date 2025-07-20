@@ -1,7 +1,8 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom' // podés quitar esto si ya no lo usás
 import '../../DisenioFormulario/DisenioFormulario.css'
 
-const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, descripcion, bomberos, onVolver, onEditar }) => {
+const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, descripcion, bomberos, onVolver, onEditar, onIrAGestionarGuardias }) => {
   return (
     <div className="container formulario-consistente">
       <h2 className="mb-3 text-black">Bomberos del grupo: {nombreGrupo || 'Sin nombre'}</h2>
@@ -39,15 +40,25 @@ const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, descripcion, bomberos
 
       <div className="botones-accion mt-4">
         <button
-          className="btn btn-warning w-100"
+          className="btn btn-warning mt-2 w-100" 
           onClick={() => onEditar({ idGrupo, nombre: nombreGrupo, descripcion })}
         >
-          ✏️ Editar grupo
+          Editar grupo
         </button>
-        <button className="btn btn-secondary w-100 mb-2" onClick={onVolver}>
-          ← Volver a grupos
+
+        <button
+          className="btn btn-danger mt-2 w-100"
+          onClick={() => onIrAGestionarGuardias({ idGrupo, nombreGrupo, bomberos })}
+        >
+          Gestionar guardias
         </button>
-        
+
+        <button
+          className="btn btn-secondary mt-2 w-100"
+          onClick={onVolver}
+        >
+          Volver a grupos
+        </button>
       </div>
     </div>
   )

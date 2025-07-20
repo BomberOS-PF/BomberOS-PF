@@ -1,3 +1,6 @@
+import dotenv from 'dotenv'
+dotenv.config()
+
 import express from 'express'
 import cors from 'cors'
 import { createServer } from '../../application/assembler.js'
@@ -82,12 +85,12 @@ async function main() {
 
 function gracefulShutdown(server) {
   logger.info('🔄 Iniciando shutdown graceful...')
-  
+
   server.close(() => {
     logger.info('✅ Servidor cerrado correctamente')
     process.exit(0)
   })
-  
+
   // Forzar cierre después de 10 segundos
   setTimeout(() => {
     logger.error('⚠️ Forzando cierre del servidor')
@@ -105,4 +108,4 @@ process.on('uncaughtException', (error) => {
   process.exit(1)
 })
 
-main() 
+main()

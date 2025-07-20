@@ -13,6 +13,8 @@ import RegistrarRol from '../Rol/RegistrarRol'
 import ConsultarRol from '../Rol/ConsultarRol'
 import RegistrarGuardia from '../Guardia/RegistrarGuardia/RegistrarGuardia'
 import ConsultarGrupoGuardia from '../Guardia/ConsultarGuardia/ConsultarGrupoGuardia'
+import GestionarGuardias from '../Guardia/GestionarGuardias/GestionarGuardia'
+
 
 import AccidenteTransito from '../Incidente/TipoIncidente/AccidenteTransito/AccidenteTransito'
 import FactorClimatico from '../Incidente/TipoIncidente/FactorClimatico/FactorClimatico'
@@ -32,7 +34,8 @@ const Menu = ({ user, setUser }) => {
   const [burbujas, setBurbujas] = useState([])
   const [burbujaExpandida, setBurbujaExpandida] = useState(null)
   const [datosFinalizados, setDatosFinalizados] = useState(null)
-
+  const [grupoSeleccionado, setGrupoSeleccionado] = useState(null)
+  const [grupoAGestionar, setGrupoAGestionar] = useState(null)
   const usuarioActual = user || JSON.parse(localStorage.getItem('usuario')) || {}
   const nombreUsuario = usuarioActual.usuario || 'Usuario'
   const rol = usuarioActual.rol || 'desconocido'
@@ -117,7 +120,8 @@ const Menu = ({ user, setUser }) => {
     { key: 'participacion-incidente', label: 'Participación del Incidente' },
     { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' },
     { key: 'registrar-guardia', label: 'Registrar Guardia' },
-    { key: 'consultar-grupos-guardia', label: 'Consultar Grupos' }
+    { key: 'consultar-grupos-guardia', label: 'Consultar Grupos' },
+    
   ]
 
   const puedeVer = (key) => permisos[rol]?.includes(key)
@@ -173,7 +177,42 @@ const Menu = ({ user, setUser }) => {
             )}
             {opcionSeleccionada === 'vehiculo-involucrado' && <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />}
             {opcionSeleccionada === 'registrar-guardia' && <RegistrarGuardia onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'consultar-grupos-guardia' && <ConsultarGrupoGuardia onVolver={() => setOpcionSeleccionada(null)} />}
+            {opcionSeleccionada === 'consultar-grupos-guardia' && (
+  <ConsultarGrupoGuardia
+    onVolver={() => setOpcionSeleccionada(null)}
+    onIrAGestionarGuardias={(grupo) => {
+      setGrupoSeleccionado(grupo)
+      setOpcionSeleccionada('gestionar-guardias')
+    }}
+  />
+)}
+
+  {opcionSeleccionada === 'gestionar-guardias' && grupoSeleccionado && (
+  rol === 'administrador' ? (
+    <GestionarGuardias
+      idGrupo={grupoSeleccionado.idGrupo}
+      nombreGrupo={grupoSeleccionado.nombreGrupo}
+      bomberos={grupoSeleccionado.bomberos}
+      onVolver={() => {
+        setOpcionSeleccionada('consultar-grupos-guardia')
+        setGrupoSeleccionado(null)
+      }}
+    />
+  ) : (
+    <>
+      <div className="alert alert-danger text-center mt-4">
+        No tenés permisos para acceder a esta sección. Cerrando sesión...
+      </div>
+      {setTimeout(() => {
+        handleLogOut()
+      }, 3000)}
+    </>
+  )
+)}
+
+
+
+
           </div>
         )}
       </div>

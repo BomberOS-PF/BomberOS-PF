@@ -411,3 +411,23 @@ body {
   font-size: 0.8rem;
   line-height: 1;
 }
+
+/* Forzar texto negro en eventos del calendario */
+.fc-event-title, .fc-event-time, .fc-event-main {
+  color: black !important;
+  font-weight: bold !important;
+  background-color: #ffecb3 !important;
+  border: 1px solid black !important;
+  padding: 2px !important;
+  font-size: 0.85rem !important;
+}
+
+/* Texto del rango de fechas ("14 – 20 jul 2025") */
+.fc-toolbar-chunk .fc-toolbar-title {
+  color: black !important;
+}
+/* Texto del encabezado de los días (lunes, martes, etc.) */
+.fc-col-header-cell-cushion {
+  color: black !important;
+}
+

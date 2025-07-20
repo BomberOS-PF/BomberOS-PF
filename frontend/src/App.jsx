@@ -17,6 +17,7 @@ import ParticipacionIncidente from './Component/Incidente/ParticipacionIncidente
 import VehiculoInvolucrado from './Component/VehiculoInvolucrado/VehiculoInvolucrado.jsx'
 import ConsultarRol from './Component/Rol/ConsultarRol.jsx'
 import RegistrarRol from './Component/Rol/RegistrarRol.jsx'
+import GestionarGuardias from './Component/Guardia/GestionarGuardias/GestionarGuardia.jsx'
 
 
 const App = () => {
@@ -45,6 +46,7 @@ const App = () => {
       <Route path="/rescate" element={<RutaPrivada user={user}><Rescate /></RutaPrivada>} />
       <Route path="/participacion-incidente" element={<RutaPrivada user={user}><ParticipacionIncidente /></RutaPrivada>} />
       <Route path="/vehiculo-involucrado" element={<RutaPrivada user={user}><VehiculoInvolucrado /></RutaPrivada>} />
+      
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )

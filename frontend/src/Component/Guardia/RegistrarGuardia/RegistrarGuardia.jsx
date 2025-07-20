@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { API_URLS } from '../../../config/api'
 import '../RegistrarGuardia.css'
 import '../../DisenioFormulario/DisenioFormulario.css'
+import * as bootstrap from 'bootstrap'
 
 const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial = '', bomberosIniciales = [], onVolver }) => {
   const [nombreGrupo, setNombreGrupo] = useState(nombreGrupoInicial)
@@ -14,7 +15,6 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
   const [grupo, setGrupo] = useState([])
   const [mensaje, setMensaje] = useState('')
   const [loading, setLoading] = useState(false)
-  const [successMessage, setSuccessMessage] = useState('')
 
   
 
@@ -113,25 +113,27 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
       const data = await res.json()
 
       if (res.ok && data.success) {
-        const msg = modoEdicion
-          ? `Grupo "${data.data.nombre}" actualizado correctamente`
-          : `Grupo "${data.data.nombre}" guardado con éxito`
-        setSuccessMessage(msg)
-        setTimeout(() => {
-          setSuccessMessage('')
-          onVolver()
-        }, 2000)
+  const msg = modoEdicion
+    ? `✅ Grupo "${data.data.nombre}" actualizado correctamente`
+    : `✅ Grupo "${data.data.nombre}" guardado con éxito`
+  setMensaje(msg)
 
-        if (!modoEdicion) {
-          setNombreGrupo('')
-          setDescripcion('')
-          setGrupo([])
-        }
-        fetchBomberos()
-        setMensaje('')
-      } else {
-        setMensaje(data.message || 'Error al guardar el grupo')
-      }
+  if (!modoEdicion) {
+    setNombreGrupo('')
+    setDescripcion('')
+    setGrupo([])
+  }
+
+  setTimeout(() => {
+    setMensaje('')
+    onVolver()
+  }, 1500)
+
+  fetchBomberos()
+} else {
+  setMensaje(data.message || 'Error al guardar el grupo')
+}
+
     } catch (error) {
       setMensaje('Error de conexión al guardar grupo')
     } finally {
@@ -144,8 +146,18 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
       <h2 className="text-black mb-3">
         {modoEdicion ? 'Editar Grupo de Guardia' : 'Crear Grupo de Guardia'}
       </h2>
-      {mensaje && <div className="alert alert-warning">{mensaje}</div>}
-      {successMessage && <div className="alert alert-success">{successMessage}</div>}
+      {mensaje && (
+  <div
+    className={`alert ${
+      mensaje.startsWith('✅') ? 'alert-success' : 'alert-warning'
+    }`}
+  >
+    {mensaje}
+  </div>
+)}
+
+      
+
 
       <input
         type="text"
