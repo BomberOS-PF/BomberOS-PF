@@ -46,20 +46,55 @@ const Menu = () => {
   useEffect(() => {
     const handleClickOutsideMenu = (event) => {
       const sidebar = document.getElementById('sidebarMenu')
-      if (sidebar && !sidebar.contains(event.target)) {
-        // Ocultar todos los acordeones abiertos
+      const backdrop = document.querySelector('.offcanvas-backdrop')
+
+      if (sidebar && !sidebar.contains(event.target) && backdrop) {
+        // Cierra el offcanvas como si fuera la ❌
+        const Offcanvas = bootstrap.Offcanvas
+        const instancia = Offcanvas.getInstance(sidebar) || new Offcanvas(sidebar)
+        instancia.hide()
+
+        // Cierra todos los acordeones abiertos
         const items = document.querySelectorAll('#sidebarAccordion .accordion-collapse.show')
         items.forEach(item => {
           const instance = bootstrap.Collapse.getInstance(item)
           if (instance) instance.hide()
         })
+
         setAcordeonAbierto(null)
+
+        // 🔴 Eliminación manual del backdrop si queda enganchado
+        setTimeout(() => {
+          const backdrop = document.querySelector('.offcanvas-backdrop')
+          if (backdrop) backdrop.remove()
+          document.body.classList.remove('offcanvas-backdrop', 'modal-open')
+        }, 300)
       }
     }
 
     document.addEventListener('mousedown', handleClickOutsideMenu)
     return () => {
       document.removeEventListener('mousedown', handleClickOutsideMenu)
+    }
+  }, [])
+
+  useEffect(() => {
+    const sidebar = document.getElementById('sidebarMenu')
+
+    const handleOffcanvasHidden = () => {
+      const backdrop = document.querySelector('.offcanvas-backdrop')
+      if (backdrop) backdrop.remove()
+      document.body.classList.remove('offcanvas-backdrop', 'modal-open')
+    }
+
+    if (sidebar) {
+      sidebar.addEventListener('hidden.bs.offcanvas', handleOffcanvasHidden)
+    }
+
+    return () => {
+      if (sidebar) {
+        sidebar.removeEventListener('hidden.bs.offcanvas', handleOffcanvasHidden)
+      }
     }
   }, [])
 
