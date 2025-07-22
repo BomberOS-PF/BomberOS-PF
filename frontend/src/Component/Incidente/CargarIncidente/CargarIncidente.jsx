@@ -2,7 +2,7 @@ import { useState } from 'react'
 import './CargarIncidente.css'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
-const CargarIncidente = ({ onVolver, onNotificar}) => {
+const CargarIncidente = ({ onVolver, onNotificar }) => {
   const now = new Date()
   const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
     .toISOString()
@@ -10,27 +10,26 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
 
   const usuario = JSON.parse(localStorage.getItem('usuario'))
   console.log('🧾 Usuario cargado desde localStorage:', usuario)
-  
-  // Construir nombre completo con fallbacks
-  const nombreCompleto = usuario ? 
-    `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim() || 
-    usuario.usuario || 
-    'Usuario no identificado' 
-    : 'Usuario no logueado'
 
   const [formData, setFormData] = useState({
-    fechaHora: localDateTime
+    fechaHora: localDateTime,
+    tipoSiniestro: '',
+    localizacion: '',
+    lugar: '',
+    nombreDenunciante: '',
+    apellidoDenunciante: '',
+    telefonoDenunciante: '',
+    dniDenunciante: ''
   })
 
   const [incidenteCreado, setIncidenteCreado] = useState(null)
   const [notificandoBomberos, setNotificandoBomberos] = useState(false)
 
   const handleChange = (e) => {
-    const { id, value } = e.target
-    setFormData(prev => ({ ...prev, [id]: value }))
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  // Función para verificar si los datos esenciales están completos
   const datosEsencialesCompletos = () => {
     return formData.tipoSiniestro && formData.localizacion && formData.lugar
   }
@@ -63,8 +62,12 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
         descripcion: formData.lugar
       }
 
-      // Agrega datos del denunciante solo si se completaron
-      if (formData.nombreDenunciante || formData.apellidoDenunciante || formData.telefonoDenunciante || formData.dniDenunciante) {
+      if (
+        formData.nombreDenunciante ||
+        formData.apellidoDenunciante ||
+        formData.telefonoDenunciante ||
+        formData.dniDenunciante
+      ) {
         payload.nombreDenunciante = formData.nombreDenunciante
         payload.apellidoDenunciante = formData.apellidoDenunciante
         payload.telefonoDenunciante = formData.telefonoDenunciante
@@ -96,8 +99,6 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
     try {
       const incidenteGuardado = await guardarIncidente()
       alert('✅ Incidente guardado correctamente')
-      
-      // Guardar el incidente creado para referencia
       setIncidenteCreado(incidenteGuardado)
 
       if (onNotificar) {
@@ -118,7 +119,6 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
     setNotificandoBomberos(true)
 
     try {
-      // Primero guardar el incidente automáticamente
       let incidente = incidenteCreado
       if (!incidente) {
         console.log('💾 Guardando incidente automáticamente antes de notificar...')
@@ -127,8 +127,6 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
         console.log('✅ Incidente guardado:', incidente)
       }
 
-      console.log('📱 Notificando bomberos para incidente:', incidente)
-      
       const response = await fetch(`http://localhost:3000/api/incidentes/${incidente.idIncidente}/notificar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
@@ -138,23 +136,20 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
 
       if (response.ok && data.success) {
         const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = data.data
-        
+
         let mensaje = `🚨 ALERTA ENVIADA A BOMBEROS:\n\n`
         mensaje += `📍 Tipo: ${formData.tipoSiniestro}\n`
         mensaje += `📍 Ubicación: ${formData.localizacion} - ${formData.lugar}\n`
         mensaje += `📍 Fecha/Hora: ${formData.fechaHora}\n\n`
         mensaje += `📱 Total bomberos contactados: ${totalBomberos}\n`
         mensaje += `✅ Notificaciones exitosas: ${notificacionesExitosas}\n`
-        
         if (notificacionesFallidas > 0) {
           mensaje += `❌ Notificaciones fallidas: ${notificacionesFallidas}\n`
         }
-        
+
         mensaje += `\n✅ Incidente registrado y bomberos notificados correctamente.`
-        
         alert(mensaje)
 
-        // Callback para manejar el flujo posterior
         if (onNotificar) {
           onNotificar(formData.tipoSiniestro, incidente)
         }
@@ -171,145 +166,98 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center">
-      <div className="formulario-consistente">
-        <h2 className="text-black text-center mb-4">Cargar Incidente</h2>
+    <div className="container-fluid p-4" style={{ maxHeight: 'calc(100vh - 5rem)', overflowY: 'auto' }}>
+      <div className="form-wrapper shadow rounded bg-dark text-white p-4">
+        <h2 className="mb-4">Cargar Incidente</h2>
         <form onSubmit={handleSubmit}>
-          <div className="row mb-3">
-            <div className="col-md-6">
-              <label className="text-black form-label">Persona que carga</label>
-              <input
-                type="text"
-                className="form-control"
-                value={nombreCompleto || 'Desconocido'}
-                disabled
-                readOnly
-              />
+          <h5 className="mb-3">🗓️ Datos del Incidente</h5>
+          <div className="row">
+            <div className="col-md-6 mb-3">
+              <label htmlFor="fechaHora" className="form-label">Fecha y hora</label>
+              <input type="datetime-local" className="form-control" name="fechaHora" value={formData.fechaHora} onChange={handleChange} required />
             </div>
-            <div className="col-md-6">
-              <label htmlFor="tipoSiniestro" className="text-black form-label">Tipo de Siniestro</label>
-              <select className="form-select" id="tipoSiniestro" required onChange={handleChange} defaultValue="">
-                <option disabled value="">Seleccione tipo</option>
-                <option>Accidente</option>
-                <option>Factores Climáticos</option>
-                <option>Incendio Estructural</option>
-                <option>Incendio Forestal</option>
-                <option>Material Peligroso</option>
-                <option>Rescate</option>
+            <div className="col-md-6 mb-3">
+              <label htmlFor="tipoSiniestro" className="form-label">Tipo de siniestro</label>
+              <select className="form-select" name="tipoSiniestro" value={formData.tipoSiniestro} onChange={handleChange} required>
+                <option value="">Seleccione</option>
+                <option value="Accidente">Accidente</option>
+                <option value="Factores Climáticos">Factores Climáticos</option>
+                <option value="Incendio Estructural">Incendio Estructural</option>
+                <option value="Incendio Forestal">Incendio Forestal</option>
+                <option value="Material Peligroso">Material Peligroso</option>
+                <option value="Rescate">Rescate</option>
               </select>
             </div>
           </div>
 
-          <div className="row mb-3">
-            <div className="col-md-4">
-              <label htmlFor="fechaHora" className="text-black form-label">Fecha y Hora</label>
-              <input
-                type="datetime-local"
-                className="form-control estrecho"
-                id="fechaHora"
-                value={formData.fechaHora}
-                required
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          <h5 className="text-black mb-3">Datos del denunciante (opcional)</h5>
-          <div className="row mb-3">
-            <div className="col">
-              <label htmlFor="nombreDenunciante" className="text-black form-label">Nombre</label>
-              <input type="text" className="form-control" id="nombreDenunciante" onChange={handleChange} />
-            </div>
-            <div className="col">
-              <label htmlFor="apellidoDenunciante" className="text-black form-label">Apellido</label>
-              <input type="text" className="form-control" id="apellidoDenunciante" onChange={handleChange} />
-            </div>
-          </div>
-
-          <div className="row mb-3">
-            <div className="col">
-              <label htmlFor="telefonoDenunciante" className="text-black form-label">Teléfono</label>
-              <input type="tel" className="form-control" id="telefonoDenunciante" onChange={handleChange} />
-            </div>
-            <div className="col">
-              <label htmlFor="dniDenunciante" className="text-black form-label">dni</label>
-              <input type="text" className="form-control" id="dniDenunciante" onChange={handleChange} />
-            </div>
-          </div>
-
-          <div className="row mb-3">
-            <div className="col-md-6">
-              <label htmlFor="localizacion" className="text-black form-label">Localización</label>
-              <select className="form-select" id="localizacion" required onChange={handleChange} defaultValue="">
-                <option disabled value="">Seleccione localización</option>
-                <option>Despeñaderos</option>
-                <option>Zona Rural</option>
-                <option>Zona Urbana</option>
-                <option>Zona Industrial</option>
-                <option>Zona Costera</option>
-                <option>Otros</option>
+          <h5 className="mb-3 mt-4">📍 Ubicación</h5>
+          <div className="row">
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Zona</label>
+              <select className="form-select" name="localizacion" value={formData.localizacion} onChange={handleChange} required>
+                <option value="">Seleccione</option>
+                <option value="Despeñaderos">Despeñaderos</option>
+                <option value="Zona Rural">Zona Rural</option>
+                <option value="Zona Urbana">Zona Urbana</option>
+                <option value="Zona Industrial">Zona Industrial</option>
+                <option value="Zona Costera">Zona Costera</option>
+                <option value="Otros">Otros</option>
               </select>
             </div>
-
-            <div className="col-md-6">
-              <label htmlFor="lugar" className="text-black form-label">Calle y/o Kilometraje o Lugar</label>
-              <input
-                type="text"
-                className="form-control"
-                id="lugar"
-                placeholder="Ej: Av. Siempre Viva 742, km 12"
-                required
-                onChange={handleChange}
-              />
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Lugar específico</label>
+              <input type="text" className="form-control" name="lugar" value={formData.lugar} onChange={handleChange} required />
             </div>
           </div>
 
-          <div className="botones-accion">
-            {/* Botón de Notificar - Aparece cuando los datos esenciales están completos */}
-            {datosEsencialesCompletos() && (
-              <button 
-                type="button" 
-                className="btn btn-warning btn-lg" 
-                onClick={notificarBomberos}
-                disabled={notificandoBomberos}
-                style={{ 
-                  fontSize: '1.1rem',
-                  fontWeight: 'bold',
-                  marginBottom: '10px',
-                  width: '100%'
-                }}
-              >
-                {notificandoBomberos ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    🚨 Enviando alerta a bomberos...
-                  </>
-                ) : (
-                  <>
-                    🚨 NOTIFICAR EMERGENCIA A BOMBEROS
-                  </>
-                )}
-              </button>
-            )}
-            
-            {/* Botón de guardar incidente - Solo aparece si no se ha notificado */}
+          <h5 className="mb-3 mt-4">👤 Denunciante (opcional)</h5>
+          <div className="row">
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Nombre</label>
+              <input type="text" className="form-control" name="nombreDenunciante" value={formData.nombreDenunciante} onChange={handleChange} />
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Apellido</label>
+              <input type="text" className="form-control" name="apellidoDenunciante" value={formData.apellidoDenunciante} onChange={handleChange} />
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Teléfono</label>
+              <input type="tel" className="form-control" name="telefonoDenunciante" value={formData.telefonoDenunciante} onChange={handleChange} />
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label">DNI</label>
+              <input type="number" className="form-control" name="dniDenunciante" value={formData.dniDenunciante} onChange={handleChange} />
+            </div>
+          </div>
+
+          <div className="mt-4 d-flex justify-content-end gap-2 flex-wrap">
             {!incidenteCreado && (
               <button type="submit" className="btn btn-danger">
                 Guardar Incidente (Sin Notificar)
               </button>
             )}
-            
-            {/* Información del estado */}
+
             {incidenteCreado && (
-              <div className="alert alert-success mt-2">
-                ✅ Incidente registrado y bomberos notificados
-              </div>
+              <button
+                type="button"
+                className="btn btn-warning"
+                onClick={notificarBomberos}
+                disabled={notificandoBomberos}
+              >
+                {notificandoBomberos ? 'Notificando...' : '🚨 Notificar Bomberos'}
+              </button>
             )}
-            
-            <button type="button" className="btn btn-secondary" onClick={onVolver}>
-              Volver
-            </button>
           </div>
+
+          {incidenteCreado && (
+            <div className="alert alert-success mt-3 mb-0">
+              ✅ Incidente registrado y bomberos notificados
+            </div>
+          )}
+
+          <button type="button" className="btn btn-secondary" onClick={onVolver}>
+              Volver
+          </button>
         </form>
       </div>
     </div>

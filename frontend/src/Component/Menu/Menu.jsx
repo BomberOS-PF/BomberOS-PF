@@ -1,9 +1,8 @@
-// Menu.jsx
-import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect, useRef } from 'react'
 import './Menu.css'
-import * as bootstrap from 'bootstrap'
 import logoBomberos from '/img/logo-bomberos.png'
+import * as bootstrap from 'bootstrap'
+import { useNavigate } from 'react-router-dom'
 
 import CargarIncidente from '../Incidente/CargarIncidente/CargarIncidente'
 import RegistrarBombero from '../Bombero/RegistrarBombero/RegistrarBombero'
@@ -15,260 +14,136 @@ import ConsultarRol from '../Rol/ConsultarRol'
 import RegistrarGuardia from '../Guardia/RegistrarGuardia/RegistrarGuardia'
 import ConsultarGrupoGuardia from '../Guardia/ConsultarGuardia/ConsultarGrupoGuardia'
 
-import AccidenteTransito from '../Incidente/TipoIncidente/AccidenteTransito/AccidenteTransito'
-import FactorClimatico from '../Incidente/TipoIncidente/FactorClimatico/FactorClimatico'
-import IncendioEstructural from '../Incidente/TipoIncidente/IncendioEstructural/IncendioEstructural'
-import IncendioForestal from '../Incidente/TipoIncidente/IncendioForestal/IncendioForestal'
-import MaterialPeligroso from '../Incidente/TipoIncidente/MaterialPeligroso/MaterialPeligroso'
-import Rescate from '../Incidente/TipoIncidente/Rescate/Rescate'
-
-import ParticipacionIncidente from '../Incidente/ParticipacionIncidente/ParticipacionIncidente'
-import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
-import BurbujaFormulario from '../BurbujaFormulario/BurbujaFormulario'
-
-const Menu = ({ user, setUser }) => {
+const Menu = () => {
+  const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
+  const [usuario, setUsuario] = useState(null)
+  const [mostrarDropdown, setMostrarDropdown] = useState(false)
+  const dropdownRef = useRef(null)
   const navigate = useNavigate()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [opcionSeleccionada, setOpcionSeleccionada] = useState(null)
-  const [burbujas, setBurbujas] = useState([])
-  const [burbujaExpandida, setBurbujaExpandida] = useState(null)
-  const [datosFinalizados, setDatosFinalizados] = useState(null)
-
-  const usuarioActual = user || JSON.parse(localStorage.getItem('usuario')) || {}
-  const nombreUsuario = usuarioActual.usuario || 'Usuario'
-  const rol = usuarioActual.rol || 'desconocido'
-
-  const handleLogOut = () => {
-    localStorage.removeItem('usuario')
-    setUser(null)
-    navigate('/login')
-  }
 
   useEffect(() => {
-    const boton = document.getElementById('btnHamburguesa')
-    const sidebar = document.getElementById('sidebarMenu')
-
-    const handleOpen = () => boton.classList.add('abierto')
-    const handleClose = () => boton.classList.remove('abierto')
-
-    if (sidebar && boton) {
-      sidebar.addEventListener('shown.bs.offcanvas', handleOpen)
-      sidebar.addEventListener('hidden.bs.offcanvas', handleClose)
-    }
-
-    return () => {
-      if (sidebar && boton) {
-        sidebar.removeEventListener('shown.bs.offcanvas', handleOpen)
-        sidebar.removeEventListener('hidden.bs.offcanvas', handleClose)
+    const datosUsuario = localStorage.getItem('usuario')
+    if (datosUsuario) {
+      try {
+        setUsuario(JSON.parse(datosUsuario))
+      } catch (e) {
+        console.error('Error al parsear usuario:', e)
       }
     }
   }, [])
 
   useEffect(() => {
-    const backdropClickHandler = (e) => {
-      const sidebar = document.getElementById('sidebarMenu')
-      const isSidebarVisible = sidebar?.classList.contains('show')
-      const isClickOutside = !sidebar?.contains(e.target)
-
-      if (isSidebarVisible && isClickOutside && !opcionSeleccionada) {
-        cerrarMenuLateral()
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setMostrarDropdown(false)
       }
     }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
-    document.addEventListener('mousedown', backdropClickHandler)
-
-    return () => {
-      document.removeEventListener('mousedown', backdropClickHandler)
-    }
-  }, [opcionSeleccionada])
-
-  const agregarBurbuja = (tipo, datosPrevios) => {
-    const id = datosPrevios?.id || Date.now()
-    const yaExiste = burbujas.find(b => b.id === id)
-    if (!yaExiste) {
-      const nueva = { id, tipo, datosPrevios, minimizada: true }
-      setBurbujas(prev => [...prev, nueva])
-    }
-    setOpcionSeleccionada(null)
-  }
-
-  const cerrarBurbuja = (id) => {
-    setBurbujas(prev => prev.filter(b => b.id !== id))
-    if (burbujaExpandida === id) setBurbujaExpandida(null)
-  }
-
-  const toggleMinimizada = (id) => {
-    setBurbujas(prev => prev.map(b => {
-      const activa = b.id === id
-      const minimizada = !b.minimizada
-      if (activa) setBurbujaExpandida(minimizada ? null : id)
-      return { ...b, minimizada: activa ? minimizada : true }
-    }))
-  }
-
-  const manejarFinalizarCarga = (datos) => {
-    if (burbujaExpandida) cerrarBurbuja(burbujaExpandida)
-    setDatosFinalizados(datos)
-    setOpcionSeleccionada('participacion-incidente')
-  }
-
-  const cerrarMenuLateral = () => {
+  const cerrarOffcanvas = () => {
     const sidebar = document.getElementById('sidebarMenu')
-    const Offcanvas = window.bootstrap?.Offcanvas || bootstrap?.Offcanvas
-
+    const Offcanvas = bootstrap.Offcanvas
     if (sidebar && Offcanvas) {
-      let instancia = Offcanvas.getInstance(sidebar)
-      if (!instancia) {
-        instancia = new Offcanvas(sidebar) // fuerza la instancia
-      }
+      const instancia = Offcanvas.getInstance(sidebar) || new Offcanvas(sidebar)
       instancia.hide()
-
-      const backdrop = document.querySelector('.offcanvas-backdrop')
-      if (backdrop) {
-        backdrop.classList.remove('show')
-        backdrop.remove()
-      }
-      document.body.classList.remove('offcanvas-backdrop', 'modal-open')
     }
   }
 
-  const renderFormularioExpandido = () => {
-    const burbuja = burbujas.find(b => b.id === burbujaExpandida)
-    if (!burbuja) return null
-
-    const props = {
-      datosPrevios: burbuja.datosPrevios,
-      onFinalizar: manejarFinalizarCarga
-    }
-
-    switch (burbuja.tipo) {
-      case 'Accidente': return <AccidenteTransito {...props} />
-      case 'Factores Climáticos': return <FactorClimatico {...props} />
-      case 'Incendio Estructural': return <IncendioEstructural {...props} />
-      case 'Incendio Forestal': return <IncendioForestal {...props} />
-      case 'Material Peligroso': return <MaterialPeligroso {...props} />
-      case 'Rescate': return <Rescate {...props} />
-      default: return <p>Formulario no encontrado</p>
-    }
+  const cerrarSesion = () => {
+    localStorage.clear()
+    navigate('/login')
   }
 
-  const permisos = {
-    administrador: [
-      'cargar-incidente', 'registrar-bombero', 'consultar-bombero',
-      'registrar-usuario', 'consultar-usuario',
-      'registrar-rol', 'consultar-rol',
-      'participacion-incidente', 'vehiculo-involucrado', 'registrar-guardia', 'consultar-grupos-guardia'
-    ],
-    bombero: ['cargar-incidente', 'consultar-bombero', 'participacion-incidente']
+  const renderContenido = () => {
+    switch (opcionSeleccionada) {
+      case 'cargarIncidente': return <CargarIncidente onVolver={() => setOpcionSeleccionada('')} />
+      case 'registrarBombero': return <RegistrarBombero onVolver={() => setOpcionSeleccionada('')} />
+      case 'consultarBombero': return <ConsultarBombero onVolver={() => setOpcionSeleccionada('')} />
+      case 'registrarUsuario': return <RegistrarUsuario onVolver={() => setOpcionSeleccionada('')} />
+      case 'consultarUsuario': return <ConsultarUsuario onVolver={() => setOpcionSeleccionada('')} />
+      case 'registrarRol': return <RegistrarRol onVolver={() => setOpcionSeleccionada('')} />
+      case 'consultarRol': return <ConsultarRol onVolver={() => setOpcionSeleccionada('')} />
+      case 'registrarGuardia': return <RegistrarGuardia onVolver={() => setOpcionSeleccionada('')} />
+      case 'consultarGuardia': return <ConsultarGrupoGuardia onVolver={() => setOpcionSeleccionada('')} />
+      default:
+        return (
+          <div className="text-white text-center mt-5">
+            <h2>Bienvenido a BomberOS</h2>
+            <p>Seleccione una opción del menú</p>
+          </div>
+        )
+    }
   }
-
-  const items = [
-    { key: 'cargar-incidente', label: 'Cargar Incidente' },
-    { key: 'registrar-bombero', label: 'Nuevo Bombero' },
-    { key: 'consultar-bombero', label: 'Consultar Bombero' },
-    { key: 'registrar-usuario', label: 'Nuevo Usuario' },
-    { key: 'consultar-usuario', label: 'Consultar Usuarios' },
-    { key: 'registrar-rol', label: 'Registrar Rol' },
-    { key: 'consultar-rol', label: 'Consultar Rol' },
-    { key: 'participacion-incidente', label: 'Participación del Incidente' },
-    { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' },
-    { key: 'registrar-guardia', label: 'Registrar Guardia' },
-    { key: 'consultar-grupos-guardia', label: 'Consultar Grupos' }
-  ]
-
-  const puedeVer = (key) => permisos[rol]?.includes(key)
 
   return (
     <div>
-      <div className="offcanvas offcanvas-start bg-black text-white" tabIndex="-1" id="sidebarMenu">
-        <div className="offcanvas-header d-flex justify-content-between px-3 py-3 sidebar-header">
-          <div className="d-flex align-items-center">
-            <img src={logoBomberos} alt="Logo" style={{ height: 30 }} className="me-2" />
-            <span className="fs-5 fw-semibold text-white">BomberOS</span>
-          </div>
-          <button
-            id="btnCerrarSidebar"
-            className="btn btn-hamburguesa abierto d-flex flex-column justify-content-between align-items-center p-2"
-            type="button"
-            data-bs-dismiss="offcanvas"
-            aria-label="Cerrar menú"
-          >
-            <span className="linea linea-top"></span>
-            <span className="linea linea-middle"></span>
-            <span className="linea linea-bottom"></span>
-          </button>
-        </div>
-        <div className="offcanvas-body p-3 sidebar-body">
-          <nav className="nav flex-column">
-            {items.map(({ key, label }) => puedeVer(key) && (
-              <button
-                key={key}
-                className="btn btn-menu-option text-white text-start w-100 mb-2"
-                onClick={() => {
-                  setOpcionSeleccionada(key)
-                  cerrarMenuLateral()
-                }}
-              >
-                {label}
-              </button>
-            ))}
-            <hr />
-            <button className="btn btn-outline-danger w-100 mt-3" onClick={handleLogOut}>
-              <i className="bi bi-box-arrow-right me-2"></i> Cerrar sesión
+      {/* Navbar superior */}
+      <nav className="navbar navbar-dark bg-dark fixed-top">
+        <div className="container-fluid d-flex justify-content-between align-items-center">
+          <div>
+            <button
+              className="navbar-toggler"
+              type="button"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#sidebarMenu"
+              aria-controls="sidebarMenu"
+            >
+              <span className="navbar-toggler-icon"></span>
             </button>
-          </nav>
-        </div>
-      </div>
-
-      <header className="bg-dark border-bottom border-secondary p-3 d-flex justify-content-between align-items-center topbar">
-        <button
-          id='btnHamburguesa'
-          className="btn btn-hamburguesa d-flex flex-column justify-content-between align-items-center p-2"
-          type="button"
-          data-bs-toggle="offcanvas"
-          data-bs-target="#sidebarMenu"
-          aria-label="Menú"
-        >
-          <span className="linea linea-top"></span>
-          <span className="linea linea-middle"></span>
-          <span className="linea linea-bottom"></span>
-        </button>
-        <h1 className="h5 m-0">BomberOS - Panel Principal</h1>
-        <div className="text-end">
-          <span className="me-3">{nombreUsuario} - ({rol})</span>
-          <img src="https://i.pravatar.cc/30" className="rounded-circle" alt="user" />
-        </div>
-      </header>
-
-      <div className="p-4">
-        {burbujaExpandida ? renderFormularioExpandido() : opcionSeleccionada !== null && (
-          <div className="form-wrapper">
-            {opcionSeleccionada === 'cargar-incidente' && <CargarIncidente onVolver={() => setOpcionSeleccionada(null)} onNotificar={agregarBurbuja} />}
-            {opcionSeleccionada === 'registrar-bombero' && <RegistrarBombero onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'consultar-bombero' && <ConsultarBombero onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'registrar-usuario' && <RegistrarUsuario onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'consultar-usuario' && <ConsultarUsuario onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'registrar-rol' && <RegistrarRol onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'consultar-rol' && <ConsultarRol onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'participacion-incidente' && (
-              <ParticipacionIncidente
-                datosPrevios={datosFinalizados}
-                onFinalizar={() => setOpcionSeleccionada('vehiculo-involucrado')}
-                onVolver={() => setOpcionSeleccionada(null)}
-              />
-            )}
-            {opcionSeleccionada === 'vehiculo-involucrado' && <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'registrar-guardia' && <RegistrarGuardia onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'consultar-grupos-guardia' && <ConsultarGrupoGuardia onVolver={() => setOpcionSeleccionada(null)} />}
+            <span className="navbar-brand ms-3">BomberOS</span>
           </div>
-        )}
+          {usuario && (
+            <div className="d-flex align-items-center position-relative" ref={dropdownRef}>
+              <span className="text-white me-2">
+                {usuario.nombre} {usuario.apellido}
+              </span>
+              <button
+                className="btn btn-light rounded-circle"
+                style={{ width: '38px', height: '38px', padding: 0 }}
+                onClick={() => setMostrarDropdown(!mostrarDropdown)}
+              >
+                <i className="bi bi-person-fill" style={{ fontSize: '1.2rem' }}></i>
+              </button>
+              {mostrarDropdown && (
+                <ul className="dropdown-menu show mt-2 position-absolute end-0 shadow-sm border-0 overflow-visible" style={{ minWidth: '12rem', top: '100%' }}>
+                  <li><button className="dropdown-item" disabled>Mi perfil</button></li>
+                  <li><button className="dropdown-item" disabled>Configuración</button></li>
+                  <li><hr className="dropdown-divider" /></li>
+                  <li><button className="dropdown-item" onClick={cerrarSesion}><i className="bi bi-box-arrow-right me-2"></i>Cerrar sesión</button></li>
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+      </nav>
+
+      {/* Menú lateral */}
+      <div className="offcanvas offcanvas-start bg-dark text-white d-flex flex-column" tabIndex="-1" id="sidebarMenu">
+        <div className="offcanvas-header">
+          <h5 className="offcanvas-title">Menú</h5>
+          <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+        </div>
+        <div className="offcanvas-body flex-grow-1">
+          <ul className="nav flex-column">
+            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('cargarIncidente'); cerrarOffcanvas() }}>Cargar Incidente</button></li>
+            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('registrarBombero'); cerrarOffcanvas() }}>Registrar Bombero</button></li>
+            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('consultarBombero'); cerrarOffcanvas() }}>Consultar Bombero</button></li>
+            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('registrarUsuario'); cerrarOffcanvas() }}>Registrar Usuario</button></li>
+            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('consultarUsuario'); cerrarOffcanvas() }}>Consultar Usuario</button></li>
+            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('registrarRol'); cerrarOffcanvas() }}>Registrar Rol</button></li>
+            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('consultarRol'); cerrarOffcanvas() }}>Consultar Rol</button></li>
+            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('registrarGuardia'); cerrarOffcanvas() }}>Registrar Guardia</button></li>
+            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('consultarGuardia'); cerrarOffcanvas() }}>Consultar Guardia</button></li>
+          </ul>
+        </div>
       </div>
 
-      {burbujas.map((b, i) => (
-        <div key={b.id} style={{ position: 'fixed', right: `${20 + i * 370}px`, bottom: 0, zIndex: 9999 }}>
-          <BurbujaFormulario {...b} onCerrar={cerrarBurbuja} onToggleMinimizada={toggleMinimizada} />
-        </div>
-      ))}
+      {/* Contenido principal */}
+      <main className="container mt-5 pt-5">
+        {renderContenido()}
+      </main>
     </div>
   )
 }
