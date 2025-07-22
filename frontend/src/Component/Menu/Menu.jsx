@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
 import './Menu.css'
-import logoBomberos from '/img/logo-bomberos.png'
 import * as bootstrap from 'bootstrap'
 import { useNavigate } from 'react-router-dom'
 
@@ -67,24 +66,16 @@ const Menu = () => {
       case 'consultarRol': return <ConsultarRol onVolver={() => setOpcionSeleccionada('')} />
       case 'registrarGuardia': return <RegistrarGuardia onVolver={() => setOpcionSeleccionada('')} />
       case 'consultarGuardia': return <ConsultarGrupoGuardia onVolver={() => setOpcionSeleccionada('')} />
-      default:
-        return (
-          <div className="text-white text-center mt-5">
-            <h2>Bienvenido a BomberOS</h2>
-            <p>Seleccione una opción del menú</p>
-          </div>
-        )
     }
   }
 
   return (
     <div>
-      {/* Navbar superior */}
       <nav className="navbar navbar-dark bg-dark fixed-top">
         <div className="container-fluid d-flex justify-content-between align-items-center">
-          <div>
+          <div className="d-flex align-items-center">
             <button
-              className="navbar-toggler"
+              className="navbar-toggler me-3"
               type="button"
               data-bs-toggle="offcanvas"
               data-bs-target="#sidebarMenu"
@@ -92,7 +83,10 @@ const Menu = () => {
             >
               <span className="navbar-toggler-icon"></span>
             </button>
-            <span className="navbar-brand ms-3">BomberOS</span>
+            <div className="logo-bomberos-container">
+              <img src="/img/logo-bomberos.png" alt="Logo Bomberos" />
+              <span className="navbar-brand mb-0 h1">BomberOS</span>
+            </div>
           </div>
           {usuario && (
             <div className="d-flex align-items-center position-relative" ref={dropdownRef}>
@@ -100,14 +94,13 @@ const Menu = () => {
                 {usuario.nombre} {usuario.apellido}
               </span>
               <button
-                className="btn btn-light rounded-circle"
-                style={{ width: '38px', height: '38px', padding: 0 }}
+                className="btn btn-light rounded-circle avatar-boton"
                 onClick={() => setMostrarDropdown(!mostrarDropdown)}
               >
-                <i className="bi bi-person-fill" style={{ fontSize: '1.2rem' }}></i>
+                <i className="bi bi-person-fill"></i>
               </button>
               {mostrarDropdown && (
-                <ul className="dropdown-menu show mt-2 position-absolute end-0 shadow-sm border-0 overflow-visible" style={{ minWidth: '12rem', top: '100%' }}>
+                <ul className="dropdown-menu show user-dropdown">
                   <li><button className="dropdown-item" disabled>Mi perfil</button></li>
                   <li><button className="dropdown-item" disabled>Configuración</button></li>
                   <li><hr className="dropdown-divider" /></li>
@@ -119,28 +112,97 @@ const Menu = () => {
         </div>
       </nav>
 
-      {/* Menú lateral */}
       <div className="offcanvas offcanvas-start bg-dark text-white d-flex flex-column" tabIndex="-1" id="sidebarMenu">
         <div className="offcanvas-header">
           <h5 className="offcanvas-title">Menú</h5>
           <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
         </div>
         <div className="offcanvas-body flex-grow-1">
-          <ul className="nav flex-column">
-            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('cargarIncidente'); cerrarOffcanvas() }}>Cargar Incidente</button></li>
-            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('registrarBombero'); cerrarOffcanvas() }}>Registrar Bombero</button></li>
-            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('consultarBombero'); cerrarOffcanvas() }}>Consultar Bombero</button></li>
-            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('registrarUsuario'); cerrarOffcanvas() }}>Registrar Usuario</button></li>
-            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('consultarUsuario'); cerrarOffcanvas() }}>Consultar Usuario</button></li>
-            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('registrarRol'); cerrarOffcanvas() }}>Registrar Rol</button></li>
-            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('consultarRol'); cerrarOffcanvas() }}>Consultar Rol</button></li>
-            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('registrarGuardia'); cerrarOffcanvas() }}>Registrar Guardia</button></li>
-            <li className="nav-item"><button className="btn btn-link text-white" onClick={() => { setOpcionSeleccionada('consultarGuardia'); cerrarOffcanvas() }}>Consultar Guardia</button></li>
-          </ul>
+          <div className="accordion accordion-flush" id="sidebarAccordion">
+
+            {/* Incidentes */}
+            <div className="accordion-item bg-dark border-0">
+              <h2 className="accordion-header">
+                <button className="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIncidente">
+                  <i className="bi bi-fire me-2"></i>Incidentes
+                </button>
+              </h2>
+              <div id="collapseIncidente" className="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
+                <div className="accordion-body p-0">
+                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('cargarIncidente'); cerrarOffcanvas() }}>
+                    Cargar Incidente
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Bomberos */}
+            <div className="accordion-item bg-dark border-0">
+              <h2 className="accordion-header">
+                <button className="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBomberos">
+                  <i className="bi bi-person-badge me-2"></i>Bomberos
+                </button>
+              </h2>
+              <div id="collapseBomberos" className="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
+                <div className="accordion-body p-0">
+                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('registrarBombero'); cerrarOffcanvas() }}>
+                    Registrar Bombero
+                  </button>
+                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('consultarBombero'); cerrarOffcanvas() }}>
+                    Consultar Bombero
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Usuarios y Roles */}
+            <div className="accordion-item bg-dark border-0">
+              <h2 className="accordion-header">
+                <button className="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUsuarios">
+                  <i className="bi bi-person-circle me-2"></i>Usuarios y Roles
+                </button>
+              </h2>
+              <div id="collapseUsuarios" className="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
+                <div className="accordion-body p-0">
+                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('registrarUsuario'); cerrarOffcanvas() }}>
+                    Registrar Usuario
+                  </button>
+                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('consultarUsuario'); cerrarOffcanvas() }}>
+                    Consultar Usuario
+                  </button>
+                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('registrarRol'); cerrarOffcanvas() }}>
+                    Registrar Rol
+                  </button>
+                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('consultarRol'); cerrarOffcanvas() }}>
+                    Consultar Rol
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Guardias */}
+            <div className="accordion-item bg-dark border-0">
+              <h2 className="accordion-header">
+                <button className="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGuardias">
+                  <i className="bi bi-clock-history me-2"></i>Guardias
+                </button>
+              </h2>
+              <div id="collapseGuardias" className="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
+                <div className="accordion-body p-0">
+                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('registrarGuardia'); cerrarOffcanvas() }}>
+                    Registrar Guardia
+                  </button>
+                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('consultarGuardia'); cerrarOffcanvas() }}>
+                    Consultar Guardia
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
       </div>
 
-      {/* Contenido principal */}
       <main className="container mt-5 pt-5">
         {renderContenido()}
       </main>
