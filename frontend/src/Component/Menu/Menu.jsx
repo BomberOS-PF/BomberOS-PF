@@ -49,12 +49,10 @@ const Menu = () => {
       const backdrop = document.querySelector('.offcanvas-backdrop')
 
       if (sidebar && !sidebar.contains(event.target) && backdrop) {
-        // Cierra el offcanvas como si fuera la ❌
         const Offcanvas = bootstrap.Offcanvas
         const instancia = Offcanvas.getInstance(sidebar) || new Offcanvas(sidebar)
         instancia.hide()
 
-        // Cierra todos los acordeones abiertos
         const items = document.querySelectorAll('#sidebarAccordion .accordion-collapse.show')
         items.forEach(item => {
           const instance = bootstrap.Collapse.getInstance(item)
@@ -63,7 +61,6 @@ const Menu = () => {
 
         setAcordeonAbierto(null)
 
-        // 🔴 Eliminación manual del backdrop si queda enganchado
         setTimeout(() => {
           const backdrop = document.querySelector('.offcanvas-backdrop')
           if (backdrop) backdrop.remove()
@@ -151,9 +148,14 @@ const Menu = () => {
             <button
               className="navbar-toggler me-3"
               type="button"
-              data-bs-toggle="offcanvas"
-              data-bs-target="#sidebarMenu"
-              aria-controls="sidebarMenu"
+              onClick={() => {
+                const sidebar = document.getElementById('sidebarMenu')
+                const Offcanvas = bootstrap.Offcanvas
+                if (sidebar && Offcanvas) {
+                  const instancia = Offcanvas.getInstance(sidebar) || new Offcanvas(sidebar)
+                  instancia.show()
+                }
+              }}
             >
               <span className="navbar-toggler-icon"></span>
             </button>
@@ -188,45 +190,38 @@ const Menu = () => {
         </div>
         <div className="offcanvas-body flex-grow-1">
           <div className="accordion accordion-flush" id="sidebarAccordion">
-
-            {/* Reutilizable para todas las secciones */}
-            {[
-              {
-                id: 'collapseIncidente',
-                icono: 'bi-fire',
-                titulo: 'Incidentes',
-                botones: [{ texto: 'Cargar Incidente', accion: 'cargarIncidente' }]
-              },
-              {
-                id: 'collapseBomberos',
-                icono: 'bi-person-badge',
-                titulo: 'Bomberos',
-                botones: [
-                  { texto: 'Registrar Bombero', accion: 'registrarBombero' },
-                  { texto: 'Consultar Bombero', accion: 'consultarBombero' }
-                ]
-              },
-              {
-                id: 'collapseUsuarios',
-                icono: 'bi-person-circle',
-                titulo: 'Usuarios y Roles',
-                botones: [
-                  { texto: 'Registrar Usuario', accion: 'registrarUsuario' },
-                  { texto: 'Consultar Usuario', accion: 'consultarUsuario' },
-                  { texto: 'Registrar Rol', accion: 'registrarRol' },
-                  { texto: 'Consultar Rol', accion: 'consultarRol' }
-                ]
-              },
-              {
-                id: 'collapseGuardias',
-                icono: 'bi-clock-history',
-                titulo: 'Guardias',
-                botones: [
-                  { texto: 'Registrar Guardia', accion: 'registrarGuardia' },
-                  { texto: 'Consultar Guardia', accion: 'consultarGuardia' }
-                ]
-              }
-            ].map(({ id, icono, titulo, botones }) => (
+            {[{
+              id: 'collapseIncidente',
+              icono: 'bi-fire',
+              titulo: 'Incidentes',
+              botones: [{ texto: 'Cargar Incidente', accion: 'cargarIncidente' }]
+            }, {
+              id: 'collapseBomberos',
+              icono: 'bi-person-badge',
+              titulo: 'Bomberos',
+              botones: [
+                { texto: 'Registrar Bombero', accion: 'registrarBombero' },
+                { texto: 'Consultar Bombero', accion: 'consultarBombero' }
+              ]
+            }, {
+              id: 'collapseUsuarios',
+              icono: 'bi-person-circle',
+              titulo: 'Usuarios y Roles',
+              botones: [
+                { texto: 'Registrar Usuario', accion: 'registrarUsuario' },
+                { texto: 'Consultar Usuario', accion: 'consultarUsuario' },
+                { texto: 'Registrar Rol', accion: 'registrarRol' },
+                { texto: 'Consultar Rol', accion: 'consultarRol' }
+              ]
+            }, {
+              id: 'collapseGuardias',
+              icono: 'bi-clock-history',
+              titulo: 'Guardias',
+              botones: [
+                { texto: 'Registrar Guardia', accion: 'registrarGuardia' },
+                { texto: 'Consultar Guardia', accion: 'consultarGuardia' }
+              ]
+            }].map(({ id, icono, titulo, botones }) => (
               <div key={id} className="accordion-item bg-dark border-0">
                 <h2 className="accordion-header">
                   <button
@@ -259,7 +254,6 @@ const Menu = () => {
                 </div>
               </div>
             ))}
-
           </div>
         </div>
       </div>
