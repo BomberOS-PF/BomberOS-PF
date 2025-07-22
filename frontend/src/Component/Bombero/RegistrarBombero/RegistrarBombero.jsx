@@ -4,24 +4,10 @@ import '../../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarBombero = ({ onVolver }) => {
   const [formData, setFormData] = useState({
-    dni: '',
-    nombre: '',
-    apellido: '',
-    domicilio: '',
-    email: '',
-    telefono: '',
-    legajo: '',
-    antiguedad: '',
-    rango: '',
-    esPlan: false,
-    fichaMedica: null,
-    fechaFicha: new Date().toISOString().split('T')[0],
-    aptoPsico: true,
-    grupoSanguineo: '',
-    username: '',
-    password: '',
-    emailUsuario: '',
-    rolUsuario: '2'
+    dni: '', nombre: '', apellido: '', domicilio: '', email: '', telefono: '',
+    legajo: '', antiguedad: '', rango: '', esPlan: false, fichaMedica: null,
+    fechaFicha: new Date().toISOString().split('T')[0], aptoPsico: true,
+    grupoSanguineo: '', username: '', password: '', emailUsuario: '', rolUsuario: '2'
   })
   const [rangosDisponibles, setRangosDisponibles] = useState([])
   const [rolesDisponibles, setRolesDisponibles] = useState([])
@@ -32,11 +18,7 @@ const RegistrarBombero = ({ onVolver }) => {
   const handleChange = (e) => {
     const { id, value, type, checked, files } = e.target
     setFormData(prev => {
-      const newData = {
-        ...prev,
-        [id]: type === 'checkbox' ? checked : type === 'file' ? files[0] : value
-      }
-
+      const newData = { ...prev, [id]: type === 'checkbox' ? checked : type === 'file' ? files[0] : value }
       if (id === 'nombre' || id === 'apellido') {
         const nombre = id === 'nombre' ? value : prev.nombre
         const apellido = id === 'apellido' ? value : prev.apellido
@@ -44,23 +26,9 @@ const RegistrarBombero = ({ onVolver }) => {
           newData.username = `${nombre.toLowerCase()}.${apellido.toLowerCase()}`.replace(/\s+/g, '')
         }
       }
-
-      if (id === 'email') {
-        // Siempre sincronizar el email del usuario con el del bombero
-        newData.emailUsuario = value
-      }
-
-      if (id === 'emailUsuario') {
-        // Sincroniza también el email del bombero cuando se cambia el del usuario
-        newData.email = value
-      }
-
-      if (id === 'dni') {
-        if (!prev.legajo && value) {
-          newData.legajo = `LEG-${value}`
-        }
-      }
-
+      if (id === 'email') newData.emailUsuario = value
+      if (id === 'emailUsuario') newData.email = value
+      if (id === 'dni' && !prev.legajo && value) newData.legajo = `LEG-${value}`
       return newData
     })
   }
@@ -69,27 +37,15 @@ const RegistrarBombero = ({ onVolver }) => {
     const fetchRoles = async () => {
       try {
         const response = await apiRequest(API_URLS.roles.getAll)
-        if (response.success) {
-          setRolesDisponibles(response.data)
-        } else {
-          console.error('Error al obtener roles:', response.message)
-        }
-      } catch (error) {
-        console.error('Error al cargar roles:', error)
-      }
+        if (response.success) setRolesDisponibles(response.data)
+      } catch (error) { console.error('Error al cargar roles:', error) }
     }
 
     const fetchRangos = async () => {
       try {
         const response = await apiRequest(API_URLS.rangos.getAll)
-        if (response.success) {
-          setRangosDisponibles(response.data)
-        } else {
-          console.error('Error al obtener rangos:', response.message)
-        }
-      } catch (error) {
-        console.error('Error al cargar rangos:', error)
-      }
+        if (response.success) setRangosDisponibles(response.data)
+      } catch (error) { console.error('Error al cargar rangos:', error) }
     }
 
     fetchRoles()
@@ -103,64 +59,22 @@ const RegistrarBombero = ({ onVolver }) => {
 
     try {
       const resUsuarios = await apiRequest(API_URLS.usuarios.getAll)
-
       if (resUsuarios.success) {
         const usuarios = resUsuarios.data
-
-        const emailEnUso = usuarios.find(u =>
-          u.email.trim().toLowerCase() === formData.emailUsuario.trim().toLowerCase()
-        )
-
+        const emailEnUso = usuarios.find(u => u.email?.trim().toLowerCase() === formData.emailUsuario.trim().toLowerCase())
         if (emailEnUso) {
           setMessage('Correo electrónico ya registrado')
           setMessageType('error')
           setLoading(false)
           return
         }
-      } else {
-        throw new Error('No se pudo verificar el email del usuario')
-      }
-    } catch (error) {
-      setMessage(`Error al verificar el correo: ${error.message}`)
-      setMessageType('error')
-      setLoading(false)
-      return
-    }
-
-    try {
-      const resUsuarios = await apiRequest(API_URLS.usuarios.getAll)
-
-      if (resUsuarios.success) {
-        const usuarios = resUsuarios.data
-
-        const emailEnUso = usuarios.find(u =>
-          u.email &&
-          formData.emailUsuario &&
-          u.email.toLowerCase().trim() === formData.emailUsuario.toLowerCase().trim()
-        )
-
-        if (emailEnUso) {
-          setMessage('Correo electrónico ya registrado')
-          setMessageType('error')
-          setLoading(false)
-          return
-        }
-
-        const usernameEnUso = usuarios.find(u =>
-          u.usuario &&
-          formData.username &&
-          u.usuario.toLowerCase().trim() === formData.username.toLowerCase().trim()
-        )
-
+        const usernameEnUso = usuarios.find(u => u.usuario?.toLowerCase().trim() === formData.username.toLowerCase().trim())
         if (usernameEnUso) {
           setMessage('Nombre de usuario no disponible')
           setMessageType('error')
           setLoading(false)
           return
         }
-
-      } else {
-        throw new Error('No se pudo verificar los datos del usuario')
       }
     } catch (error) {
       setMessage(`Error al validar usuario: ${error.message}`)
@@ -168,6 +82,7 @@ const RegistrarBombero = ({ onVolver }) => {
       setLoading(false)
       return
     }
+
     try {
       if (!formData.dni || !formData.nombre || !formData.apellido || !formData.email || !formData.telefono || !formData.domicilio || !formData.rango || !formData.grupoSanguineo) {
         setMessage('Por favor, complete todos los campos obligatorios')
@@ -201,7 +116,7 @@ const RegistrarBombero = ({ onVolver }) => {
           fechaFichaMedica: formData.fechaFicha || null
         }
       }
-     
+
       const response = await fetch(API_URLS.bomberos.createFull, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -213,45 +128,15 @@ const RegistrarBombero = ({ onVolver }) => {
       if (response.ok && result.success) {
         setMessage('¡Bombero registrado exitosamente!')
         setMessageType('success')
-        
-        setFormData({
-          dni: '',
-          nombre: '',
-          apellido: '',
-          domicilio: '',
-          email: '',
-          telefono: '',
-          legajo: '',
-          antiguedad: '',
-          rango: '',
-          esPlan: false,
-          fichaMedica: null,
-          fechaFicha: new Date().toISOString().split('T')[0],
-          aptoPsico: true,
-          grupoSanguineo: '',
-          username: '',
-          password: '',
-          emailUsuario: '',
-          rolUsuario: ''
-        })
-
-        setTimeout(() => {
-          if (onVolver) onVolver()
-        }, 2000)
+        setFormData({ dni: '', nombre: '', apellido: '', domicilio: '', email: '', telefono: '', legajo: '', antiguedad: '', rango: 'Bombero', esPlan: false, fichaMedica: null, fechaFicha: new Date().toISOString().split('T')[0], aptoPsico: true, grupoSanguineo: '', username: '', password: '', emailUsuario: '', rolUsuario: '' })
+        setTimeout(() => { if (onVolver) onVolver() }, 2000)
       } else {
         const errorMessage = result.message || result.error || 'Error al registrar bombero'
-        console.error('❌ Error del servidor:', errorMessage)
         setMessage(errorMessage)
         setMessageType('error')
       }
     } catch (error) {
-      console.error('💥 Error al enviar datos:', error)
-      console.error('🔍 Detalles del error:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      })
-      setMessage(`Error de conexión: ${error.message}. Verifique que el servidor esté funcionando en http://localhost:3000`)
+      setMessage(`Error de conexión: ${error.message}`)
       setMessageType('error')
     } finally {
       setLoading(false)
@@ -264,7 +149,7 @@ const RegistrarBombero = ({ onVolver }) => {
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center">
+    <div className="container-fluid px-5">
       <div className="formulario-consistente">
         <h2 className="text-black text-center mb-4">Alta de Bombero</h2>
 
@@ -276,257 +161,75 @@ const RegistrarBombero = ({ onVolver }) => {
 
         <form onSubmit={handleSubmit}>
           <div className="row mb-3">
-            <div className="col-md-4">
-              <label htmlFor="nombre" className="text-black form-label">Nombre</label>
-              <input 
-                type="text" 
-                className="form-control" 
-                id="nombre" 
-                value={formData.nombre} 
-                required 
-                disabled={loading}
-                onChange={handleChange} 
-              />
+            <div className="col-md-3">
+              <label className="text-black form-label">Nombre</label>
+              <input type="text" id="nombre" className="form-control" value={formData.nombre} onChange={handleChange} required disabled={loading} />
             </div>
-            <div className="col-md-4">
-              <label htmlFor="apellido" className="text-black form-label">Apellido</label>
-              <input 
-                type="text" 
-                className="form-control" 
-                id="apellido" 
-                value={formData.apellido} 
-                required 
-                disabled={loading}
-                onChange={handleChange} 
-              />
+            <div className="col-md-3">
+              <label className="text-black form-label">Apellido</label>
+              <input type="text" id="apellido" className="form-control" value={formData.apellido} onChange={handleChange} required disabled={loading} />
             </div>
-            <div className="col-md-4">
-              <label htmlFor="dni" className="text-black form-label">dni</label>
-              <input 
-                type="text" 
-                className="form-control" 
-                id="dni" 
-                value={formData.dni} 
-                required 
-                disabled={loading}
-                pattern="[0-9]{7,8}"
-                title="Ingrese un dni válido (7-8 dígitos)"
-                onChange={handleChange} 
-              />
+            <div className="col-md-3">
+              <label className="text-black form-label">DNI</label>
+              <input type="text" id="dni" className="form-control" value={formData.dni} onChange={handleChange} required disabled={loading} />
+            </div>
+            <div className="col-md-3">
+              <label className="text-black form-label">Domicilio</label>
+              <input type="text" id="domicilio" className="form-control" value={formData.domicilio} onChange={handleChange} required disabled={loading} />
             </div>
           </div>
 
           <div className="row mb-3">
-            <div className="col-md-4">
-              <label htmlFor="domicilio" className="text-black form-label">Domicilio</label>
-              <input 
-                type="text" 
-                className="form-control" 
-                id="domicilio" 
-                value={formData.domicilio} 
-                required 
-                disabled={loading}
-                onChange={handleChange} 
-              />
+            <div className="col-md-3">
+              <label className="text-black form-label">Teléfono</label>
+              <input type="tel" id="telefono" className="form-control" value={formData.telefono} onChange={handleChange} required disabled={loading} />
             </div>
-            <div className="col-md-4">
-              <label htmlFor="telefono" className="text-black form-label">Teléfono</label>
-              <input 
-                type="tel" 
-                className="form-control" 
-                id="telefono" 
-                value={formData.telefono} 
-                required 
-                disabled={loading}
-                pattern="[0-9+\-\s\(\)]{8,15}"
-                title="Ingrese un teléfono válido (8-15 dígitos)"
-                onChange={handleChange} 
-              />
+            <div className="col-md-3">
+              <label className="text-black form-label">Email</label>
+              <input type="email" id="email" className="form-control" value={formData.email} onChange={handleChange} required disabled={loading} />
             </div>
-            <div className="col-md-4">
-              <label htmlFor="email" className="text-black form-label">Correo electrónico</label>
-              <input 
-                type="email" 
-                className="form-control" 
-                id="email" 
-                value={formData.email} 
-                required 
-                disabled={loading}
-                onChange={handleChange} 
-              />
-            </div>
-          </div>
-
-          <div className="row mb-3">
-            <div className="col-md-4">
-              <label htmlFor="legajo" className="text-black form-label">Legajo (opcional)</label>
-              <input 
-                type="text" 
-                className="form-control" 
-                id="legajo" 
-                value={formData.legajo} 
-                disabled={loading}
-                onChange={handleChange} 
-              />
-            </div>
-            <div className="col-md-4">
-              <label htmlFor="antiguedad" className="text-black form-label">Antigüedad (años)</label>
-              <input 
-                type="number" 
-                className="form-control" 
-                id="antiguedad" 
-                value={formData.antiguedad} 
-                min="0" 
-                max="50"
-                disabled={loading}
-                onChange={handleChange} 
-              />
-            </div>
-            <div className="col-md-4">
-              <label htmlFor="rango" className="text-black form-label">Rango</label>
-              <select 
-                className="form-select" 
-                id="rango" 
-                value={formData.rango} 
-                required 
-                disabled={loading}
-                onChange={handleChange}
-              >
-                <option value="">Seleccione un rango</option>
-                {rangosDisponibles.map(r => (
-                  <option key={r.idRango} value={r.descripcion}>
-                    {r.descripcion}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="form-check form-switch mb-3">
-            <input 
-              className="form-check-input" 
-              type="checkbox" 
-              id="esPlan" 
-              checked={formData.esPlan} 
-              disabled={loading}
-              onChange={handleChange} 
-            />
-            <label className="text-black form-check-label" htmlFor="esPlan">
-              Es del plan (guardias pagas)
-            </label>
-          </div>
-
-          <div className="row mb-3">
-            <div className="col-md-4">
-              <label htmlFor="fichaMedica" className="text-black form-label">Ficha médica (PDF)</label>
-              <input
-                className="form-control"
-                type="file"
-                id="fichaMedica"
-                accept="application/pdf"
-                disabled={loading}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="col-md-4">
-              <label htmlFor="fechaFicha" className="text-black form-label">Fecha de carga</label>
-              <input
-                className="form-control"
-                type="date"
-                id="fechaFicha"
-                value={formData.fechaFicha}
-                disabled={loading}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="col-md-4">
-              <label htmlFor="grupoSanguineo" className="text-black form-label">Grupo sanguíneo</label>
-              <select
-                className="form-select"
-                id="grupoSanguineo"
-                value={formData.grupoSanguineo}
-                required
-                disabled={loading}
-                onChange={handleChange}
-              >
+            <div className="col-md-3">
+              <label className="text-black form-label">Rango</label>
+              <select id="rango" className="form-select" value={formData.rango} onChange={handleChange} required disabled={loading}>
                 <option value="">Seleccione</option>
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
+                {rangosDisponibles.map(r => <option key={r.idRango} value={r.descripcion}>{r.descripcion}</option>)}
+              </select>
+            </div>
+            <div className="col-md-3">
+              <label className="text-black form-label">Grupo Sanguíneo</label>
+              <select id="grupoSanguineo" className="form-select" value={formData.grupoSanguineo} onChange={handleChange} required disabled={loading}>
+                <option value="">Seleccione</option>
+                {["A+","A-","B+","B-","AB+","AB-","O+","O-"].map(gs => <option key={gs} value={gs}>{gs}</option>)}
               </select>
             </div>
           </div>
 
-          <div className="form-check form-switch mb-3">
-            <input 
-              className="form-check-input" 
-              type="checkbox" 
-              id="aptoPsico" 
-              checked={formData.aptoPsico} 
-              disabled={loading}
-              onChange={handleChange} 
-            />
-            <label className="text-black form-check-label" htmlFor="aptoPsico">
-              Apto psicológico
-            </label>
-          </div>
-
-          <h5 className="text-black mb-3">Credenciales de Usuario</h5>
+          <h5 className="text-black mt-4 mb-2">Credenciales de Usuario</h5>
           <div className="row mb-3">
             <div className="col-md-3">
-              <label htmlFor="username" className="text-black form-label">Username</label>
-              <input type="text" id="username" className="form-control" value={formData.username} required disabled={loading} onChange={handleChange} />
+              <label className="text-black form-label">Username</label>
+              <input type="text" id="username" className="form-control" value={formData.username} onChange={handleChange} required disabled={loading} />
             </div>
             <div className="col-md-3">
-              <label htmlFor="password" className="text-black form-label">Contraseña</label>
-              <input type="password" id="password" className="form-control" value={formData.password} required disabled={loading} onChange={handleChange} />
+              <label className="text-black form-label">Contraseña</label>
+              <input type="password" id="password" className="form-control" value={formData.password} onChange={handleChange} required disabled={loading} />
             </div>
             <div className="col-md-3">
-              <label htmlFor="emailUsuario" className="text-black form-label">Email usuario</label>
-              <input type="email" id="emailUsuario" className="form-control" value={formData.emailUsuario} disabled={loading} onChange={handleChange} />
+              <label className="text-black form-label">Email usuario</label>
+              <input type="email" id="emailUsuario" className="form-control" value={formData.emailUsuario} onChange={handleChange} required disabled={loading} />
             </div>
             <div className="col-md-3">
-              <label htmlFor="rolUsuario" className="text-black form-label">Rol usuario</label>
-              <select
-                id="rolUsuario"
-                className="form-select"
-                value={formData.rolUsuario}
-                disabled={loading}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Seleccione un rol</option>
-                {rolesDisponibles.map(rol => (
-                  <option key={rol.idRol} value={rol.idRol}>
-                    {rol.nombreRol}
-                  </option>
-                ))}
+              <label className="text-black form-label">Rol</label>
+              <select id="rolUsuario" className="form-select" value={formData.rolUsuario} onChange={handleChange} required disabled={loading}>
+                <option value="">Seleccione</option>
+                {rolesDisponibles.map(r => <option key={r.idRol} value={r.idRol}>{r.nombreRol}</option>)}
               </select>
             </div>
           </div>
 
           <div className="botones-accion">
-            <button type="submit" className="btn btn-danger" disabled={loading}>
-              {loading ? 'Registrando...' : 'Registrar bombero'}
-            </button>
-
-            {onVolver && (
-              <button 
-                type="button" 
-                className="btn btn-secondary" 
-                onClick={onVolver} 
-                disabled={loading}
-              >
-                Volver
-              </button>
-            )}
+            <button type="submit" className="btn btn-danger me-2" disabled={loading}>{loading ? 'Registrando...' : 'Registrar bombero'}</button>
+            {onVolver && <button type="button" className="btn btn-secondary" onClick={onVolver} disabled={loading}>Volver</button>}
           </div>
         </form>
       </div>
