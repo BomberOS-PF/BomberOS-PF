@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import './Menu.css'
 import * as bootstrap from 'bootstrap'
 import { useNavigate } from 'react-router-dom'
+import ParticlesBackground from '../ParticlesBackground/ParticlesBackground'
 
 import CargarIncidente from '../Incidente/CargarIncidente/CargarIncidente'
 import RegistrarBombero from '../Bombero/RegistrarBombero/RegistrarBombero'
@@ -71,6 +72,7 @@ const Menu = () => {
 
   return (
     <div>
+      < ParticlesBackground />
       <nav className="navbar navbar-dark bg-dark fixed-top">
         <div className="container-fluid d-flex justify-content-between align-items-center">
           <div className="d-flex align-items-center">
