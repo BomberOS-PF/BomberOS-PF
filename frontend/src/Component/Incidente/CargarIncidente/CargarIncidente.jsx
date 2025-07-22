@@ -9,7 +9,6 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
     .slice(0, 16)
 
   const usuario = JSON.parse(localStorage.getItem('usuario'))
-  console.log('🧾 Usuario cargado desde localStorage:', usuario)
 
   const nombreCompleto = usuario ? 
     `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim() || 

@@ -18,6 +18,7 @@ const Menu = () => {
   const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
   const [usuario, setUsuario] = useState(null)
   const [mostrarDropdown, setMostrarDropdown] = useState(false)
+  const [acordeonAbierto, setAcordeonAbierto] = useState(null)
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
 
@@ -41,6 +42,22 @@ const Menu = () => {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  const toggleAcordeon = (id) => {
+    const target = document.getElementById(id)
+    if (!target) return
+
+    const instancia = bootstrap.Collapse.getInstance(target)
+
+    if (acordeonAbierto === id && instancia) {
+      instancia.hide()
+      setAcordeonAbierto(null)
+    } else {
+      if (!instancia) new bootstrap.Collapse(target, { toggle: true })
+      else instancia.show()
+      setAcordeonAbierto(id)
+    }
+  }
 
   const cerrarOffcanvas = () => {
     const sidebar = document.getElementById('sidebarMenu')
@@ -72,7 +89,7 @@ const Menu = () => {
 
   return (
     <div>
-      < ParticlesBackground />
+      <ParticlesBackground />
       <nav className="navbar navbar-dark bg-dark fixed-top">
         <div className="container-fluid d-flex justify-content-between align-items-center">
           <div className="d-flex align-items-center">
@@ -92,13 +109,8 @@ const Menu = () => {
           </div>
           {usuario && (
             <div className="d-flex align-items-center position-relative" ref={dropdownRef}>
-              <span className="text-white me-2">
-                {usuario.nombre} {usuario.apellido}
-              </span>
-              <button
-                className="btn btn-light rounded-circle avatar-boton"
-                onClick={() => setMostrarDropdown(!mostrarDropdown)}
-              >
+              <span className="text-white me-2">{usuario.nombre} {usuario.apellido}</span>
+              <button className="btn btn-light rounded-circle avatar-boton" onClick={() => setMostrarDropdown(!mostrarDropdown)}>
                 <i className="bi bi-person-fill"></i>
               </button>
               {mostrarDropdown && (
@@ -122,84 +134,75 @@ const Menu = () => {
         <div className="offcanvas-body flex-grow-1">
           <div className="accordion accordion-flush" id="sidebarAccordion">
 
-            {/* Incidentes */}
-            <div className="accordion-item bg-dark border-0">
-              <h2 className="accordion-header">
-                <button className="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIncidente">
-                  <i className="bi bi-fire me-2"></i>Incidentes
-                </button>
-              </h2>
-              <div id="collapseIncidente" className="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
-                <div className="accordion-body p-0">
-                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('cargarIncidente'); cerrarOffcanvas() }}>
-                    Cargar Incidente
+            {/* Reutilizable para todas las secciones */}
+            {[
+              {
+                id: 'collapseIncidente',
+                icono: 'bi-fire',
+                titulo: 'Incidentes',
+                botones: [{ texto: 'Cargar Incidente', accion: 'cargarIncidente' }]
+              },
+              {
+                id: 'collapseBomberos',
+                icono: 'bi-person-badge',
+                titulo: 'Bomberos',
+                botones: [
+                  { texto: 'Registrar Bombero', accion: 'registrarBombero' },
+                  { texto: 'Consultar Bombero', accion: 'consultarBombero' }
+                ]
+              },
+              {
+                id: 'collapseUsuarios',
+                icono: 'bi-person-circle',
+                titulo: 'Usuarios y Roles',
+                botones: [
+                  { texto: 'Registrar Usuario', accion: 'registrarUsuario' },
+                  { texto: 'Consultar Usuario', accion: 'consultarUsuario' },
+                  { texto: 'Registrar Rol', accion: 'registrarRol' },
+                  { texto: 'Consultar Rol', accion: 'consultarRol' }
+                ]
+              },
+              {
+                id: 'collapseGuardias',
+                icono: 'bi-clock-history',
+                titulo: 'Guardias',
+                botones: [
+                  { texto: 'Registrar Guardia', accion: 'registrarGuardia' },
+                  { texto: 'Consultar Guardia', accion: 'consultarGuardia' }
+                ]
+              }
+            ].map(({ id, icono, titulo, botones }) => (
+              <div key={id} className="accordion-item bg-dark border-0">
+                <h2 className="accordion-header">
+                  <button
+                    className={`accordion-button bg-dark text-white ${acordeonAbierto !== id ? 'collapsed' : ''}`}
+                    type="button"
+                    onClick={() => toggleAcordeon(id)}
+                  >
+                    <i className={`bi ${icono} me-2`}></i>{titulo}
                   </button>
+                </h2>
+                <div
+                  id={id}
+                  className="accordion-collapse collapse"
+                >
+                  <div className="accordion-body p-0">
+                    {botones.map(b => (
+                      <button
+                        key={b.accion}
+                        className="menu-btn"
+                        onClick={() => {
+                          setOpcionSeleccionada(b.accion)
+                          cerrarOffcanvas()
+                        }}
+                      >
+                        {b.texto}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* Bomberos */}
-            <div className="accordion-item bg-dark border-0">
-              <h2 className="accordion-header">
-                <button className="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBomberos">
-                  <i className="bi bi-person-badge me-2"></i>Bomberos
-                </button>
-              </h2>
-              <div id="collapseBomberos" className="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
-                <div className="accordion-body p-0">
-                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('registrarBombero'); cerrarOffcanvas() }}>
-                    Registrar Bombero
-                  </button>
-                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('consultarBombero'); cerrarOffcanvas() }}>
-                    Consultar Bombero
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Usuarios y Roles */}
-            <div className="accordion-item bg-dark border-0">
-              <h2 className="accordion-header">
-                <button className="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUsuarios">
-                  <i className="bi bi-person-circle me-2"></i>Usuarios y Roles
-                </button>
-              </h2>
-              <div id="collapseUsuarios" className="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
-                <div className="accordion-body p-0">
-                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('registrarUsuario'); cerrarOffcanvas() }}>
-                    Registrar Usuario
-                  </button>
-                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('consultarUsuario'); cerrarOffcanvas() }}>
-                    Consultar Usuario
-                  </button>
-                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('registrarRol'); cerrarOffcanvas() }}>
-                    Registrar Rol
-                  </button>
-                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('consultarRol'); cerrarOffcanvas() }}>
-                    Consultar Rol
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Guardias */}
-            <div className="accordion-item bg-dark border-0">
-              <h2 className="accordion-header">
-                <button className="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGuardias">
-                  <i className="bi bi-clock-history me-2"></i>Guardias
-                </button>
-              </h2>
-              <div id="collapseGuardias" className="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
-                <div className="accordion-body p-0">
-                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('registrarGuardia'); cerrarOffcanvas() }}>
-                    Registrar Guardia
-                  </button>
-                  <button className="menu-btn" onClick={() => { setOpcionSeleccionada('consultarGuardia'); cerrarOffcanvas() }}>
-                    Consultar Guardia
-                  </button>
-                </div>
-              </div>
-            </div>
+            ))}
 
           </div>
         </div>
