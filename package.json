@@ -40,6 +40,8 @@
     "@fullcalendar/interaction": "^6.1.18",
     "@fullcalendar/react": "^6.1.18",
     "@fullcalendar/timegrid": "^6.1.18",
-    "bcrypt": "^6.0.0"
+    "bcrypt": "^6.0.0",
+    "react-select": "^5.10.2",
+    "react-time-picker": "^7.0.0"
   }
 }
