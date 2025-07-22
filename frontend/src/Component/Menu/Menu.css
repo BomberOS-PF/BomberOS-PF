@@ -189,13 +189,13 @@ main.container {
   color: #fff;
   width: 100%;
   text-align: left;
-  padding: 10px 16px;
+  padding: 0.5rem 1rem;
   font-size: 1rem;
   border: none;
   background: transparent;
   transition: background-color 0.2s ease-in-out;
+  margin-left: 1.5rem; /* 🔸 Esto agrega la indentación */
 }
-
 .menu-btn:hover {
   background-color: #2a2a2a;
   color: #f44336;

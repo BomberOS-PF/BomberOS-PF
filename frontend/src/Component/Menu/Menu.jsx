@@ -43,6 +43,26 @@ const Menu = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  useEffect(() => {
+    const handleClickOutsideMenu = (event) => {
+      const sidebar = document.getElementById('sidebarMenu')
+      if (sidebar && !sidebar.contains(event.target)) {
+        // Ocultar todos los acordeones abiertos
+        const items = document.querySelectorAll('#sidebarAccordion .accordion-collapse.show')
+        items.forEach(item => {
+          const instance = bootstrap.Collapse.getInstance(item)
+          if (instance) instance.hide()
+        })
+        setAcordeonAbierto(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutsideMenu)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutsideMenu)
+    }
+  }, [])
+
   const toggleAcordeon = (id) => {
     const target = document.getElementById(id)
     if (!target) return
@@ -185,6 +205,7 @@ const Menu = () => {
                 <div
                   id={id}
                   className="accordion-collapse collapse"
+                  data-bs-parent="#sidebarAccordion"
                 >
                   <div className="accordion-body p-0">
                     {botones.map(b => (
