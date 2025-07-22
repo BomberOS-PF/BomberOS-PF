@@ -344,12 +344,11 @@ const ConsultarBombero = ({ onVolver }) => {
             />
           </div>
         )}
-      </div>
-
-      <div className="text-center mt-4">
+        <div className="text-center mt-4">
         <button className="btn-volver btn-secondary" onClick={onVolver} disabled={loading}>
           Volver
         </button>
+      </div>
       </div>
     </>
   )
