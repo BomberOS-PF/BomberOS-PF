@@ -20,6 +20,15 @@ main.container {
   padding-bottom: 2rem;
 }
 
+main.container.centrado {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 56px);
+  overflow: hidden;
+  padding: 2rem;
+}
+
 .offcanvas-start {
   background-color: #121212;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
@@ -44,6 +53,7 @@ main.container {
 .navbar-brand {
   font-weight: bold;
   margin-left: 8px;
+  padding-top: 0.5px;
   font-size: 1.5rem;
 }
 

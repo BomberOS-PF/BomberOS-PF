@@ -223,7 +223,7 @@ const RegistrarBombero = ({ onVolver }) => {
           telefono: '',
           legajo: '',
           antiguedad: '',
-          rango: 'Bombero',
+          rango: '',
           esPlan: false,
           fichaMedica: null,
           fechaFicha: new Date().toISOString().split('T')[0],
@@ -232,7 +232,7 @@ const RegistrarBombero = ({ onVolver }) => {
           username: '',
           password: '',
           emailUsuario: '',
-          rolUsuario: '2'
+          rolUsuario: ''
         })
 
         setTimeout(() => {

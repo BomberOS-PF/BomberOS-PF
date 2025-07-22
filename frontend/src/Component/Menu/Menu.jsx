@@ -258,7 +258,7 @@ const Menu = () => {
         </div>
       </div>
 
-      <main className="container mt-5 pt-5">
+      <main className={`container ${opcionSeleccionada ? 'centrado' : ''}`}>
         {renderContenido()}
       </main>
     </div>
