@@ -158,7 +158,7 @@ export async function createServer(config) {
     logger.info('✅ Assembler completado exitosamente', {
       services: ['bomberoService', 'usuarioService', 'incidenteService', 'grupoGuardiaService', 'whatsappService', 'rolService', 'accidenteTransitoService' ,'causaAccidenteService', 'vehiculoService', 'rangoService'],
       repositories: ['bomberoRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository', 'grupoGuardiaRepository', 'rolRepository', 'rolRepository', 'accidenteTransitoRepository', 'causaAccidenteRepository', 'vehiculoRepository', 'rangoRepository'],
-      handlers: ['bomberoHandler', 'usuarioHandler', 'incidenteHandler', 'grupoGuardiaHandler', 'rolesAdapter','accidenteTransitoHandler' ,'causaAccidenteHandler', 'vehiculoHandler', 'rangoHandler'],
+      handlers: ['bomberoHandler', 'usuarioHandler', 'incidenteHandler', 'grupoGuardiaHandler', 'rolesAdapter', 'accidenteTransitoHandler' ,'causaAccidenteHandler', 'vehiculoHandler', 'rangoHandler'],
       infrastructure: ['dbConnection']
     })
 
@@ -218,7 +218,7 @@ async function validateDependencies(container) {
     if (!container.accidenteDamnificadoRepository) throw new Error('AccidenteDamnificadoRepository no inicializado')
     if (!container.accidenteVehiculoRepository) throw new Error('AccidenteVehiculoRepository no inicializado')
 
-    if (!container.rangoService) throw new Error('RangoServicee no inicializado')
+    if (!container.rangoService) throw new Error('RangoService no inicializado')
     if (!container.rangoRepository) throw new Error('RangoRepository no inicializado')
     if (!container.rangoHandler) throw new Error('RangoHandler no inicializado')
 
