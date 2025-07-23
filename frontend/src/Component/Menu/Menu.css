@@ -237,3 +237,21 @@ main.container {
   transform: rotate(180deg);
 }
 
+/* 🔒 Prevenir scroll horizontal general */
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.offcanvas-body {
+  overflow-x: hidden;
+}
+
+/* Asegurar que los botones tabulados no generen desborde */
+.menu-btn {
+  margin-left: 1.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
