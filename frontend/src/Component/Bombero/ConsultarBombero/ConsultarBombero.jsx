@@ -22,7 +22,7 @@ const ConsultarBombero = ({ onVolver }) => {
     try {
       const res = await fetch(API_URLS.bomberos.getAll)
       const data = await res.json()
-      
+
       if (res.ok && data.success) {
         const bomberos = data.data || []
         setBomberos(bomberos)
@@ -45,7 +45,7 @@ const ConsultarBombero = ({ onVolver }) => {
   }
 
   const buscarPordni = () => {
-   
+
     if (dniBusqueda.trim() === '') {
       setResultadosFiltrados(bomberos)
       setMensaje('')
@@ -56,7 +56,7 @@ const ConsultarBombero = ({ onVolver }) => {
       const dni = String(b.dni || b.dni || '')
       return dni.includes(dniBusqueda.trim())
     })
-    
+
     setResultadosFiltrados(filtrados)
 
     if (filtrados.length === 0) {
@@ -84,7 +84,7 @@ const ConsultarBombero = ({ onVolver }) => {
 
   const guardarCambios = async (datosActualizados) => {
     const dni = bomberoSeleccionado.dni || bomberoSeleccionado.dni
-    
+
     if (!dni) {
       console.error('❌ No se encontró dni válido para actualizar')
       setMensaje('Error: No se pudo identificar el dni del bombero')
@@ -111,25 +111,25 @@ const ConsultarBombero = ({ onVolver }) => {
     setLoading(true)
     try {
       const url = API_URLS.bomberos.update(dni)
-      
+
       const res = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datosActualizados)
       })
-      
+
       const result = await res.json()
-      
+
       if (res.ok && result.success) {
         setMensaje('✅ Bombero actualizado correctamente. Volviendo al listado...')
         setModoEdicion(false)
-        
+
         // Volver al listado después de 1.5 segundos para mostrar el mensaje de éxito
         setTimeout(() => {
           setBomberoSeleccionado(null)
           setMensaje('')
         }, 1500)
-        
+
         fetchBomberos() // Recargar lista
       } else {
         console.error('❌ Error al guardar:', result)
@@ -145,29 +145,29 @@ const ConsultarBombero = ({ onVolver }) => {
 
   const eliminarBombero = async (bombero) => {
     const dni = bombero.dni || bombero.dni
-    
+
     if (!dni) {
       console.error('❌ No se encontró dni válido:', bombero)
       setMensaje('Error: No se pudo identificar el dni del bombero')
       return
     }
-    
-    if (!window.confirm(`¿Estás seguro de que querés eliminar al bombero ${bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}`: 'seleccionado'}?`)) return
+
+    if (!window.confirm(`¿Estás seguro de que querés eliminar al bombero ${bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : 'seleccionado'}?`)) return
 
     setLoading(true)
     try {
       const url = API_URLS.bomberos.delete(dni)
-      
+
       const res = await fetch(url, {
         method: 'DELETE'
       })
-      
+
       const result = await res.json()
-      
+
       if (res.ok && result.success) {
         setMensaje('Bombero eliminado correctamente')
         fetchBomberos() // Recargar lista
-        
+
         // Si el bombero eliminado estaba seleccionado, limpiar selección
         if (bomberoSeleccionado && (bomberoSeleccionado.dni === dni || bomberoSeleccionado.dni === dni)) {
           setBomberoSeleccionado(null)
@@ -198,11 +198,10 @@ const ConsultarBombero = ({ onVolver }) => {
         <h2 className="text-black mb-3">Consultar Bomberos</h2>
 
         {mensaje && (
-          <div className={`alert ${
-            mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' : 
-            mensaje.includes('✅') || mensaje.includes('correctamente') ? 'alert-success' : 
-            'alert-info'
-          }`}>
+          <div className={`alert ${mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' :
+              mensaje.includes('✅') || mensaje.includes('correctamente') ? 'alert-success' :
+                'alert-info'
+            }`}>
             {mensaje}
           </div>
         )}
@@ -227,15 +226,15 @@ const ConsultarBombero = ({ onVolver }) => {
                 onKeyDown={(e) => { if (e.key === 'Enter') buscarPordni() }}
                 disabled={loading}
               />
-              <button 
-                className="btn btn-primary btn-sm me-2" 
+              <button
+                className="btn btn-primary btn-sm me-2"
                 onClick={buscarPordni}
                 disabled={loading}
               >
                 Buscar
               </button>
-              <button 
-                className="btn btn-secondary btn-limpiar" 
+              <button
+                className="btn btn-secondary btn-limpiar"
                 onClick={limpiarBusqueda}
                 disabled={loading}
               >
@@ -288,7 +287,7 @@ const ConsultarBombero = ({ onVolver }) => {
                             </button>
                           </td>
                         </tr>
-                    ))}
+                      ))}
                   </tbody>
                 </table>
               </div>
@@ -316,16 +315,16 @@ const ConsultarBombero = ({ onVolver }) => {
               </h3>
               <div className="d-flex gap-2">
                 {!modoEdicion && (
-                  <button 
-                    className="btn btn-warning btn-sm" 
+                  <button
+                    className="btn btn-warning btn-sm"
                     onClick={activarEdicion}
                     disabled={loading}
                   >
                     ✏️ Editar
                   </button>
                 )}
-                <button 
-                  className="btn btn-secondary btn-sm" 
+                <button
+                  className="btn btn-secondary btn-sm"
                   onClick={volverListado}
                   disabled={loading}
                 >
@@ -333,7 +332,7 @@ const ConsultarBombero = ({ onVolver }) => {
                 </button>
               </div>
             </div>
-            
+
             <FormularioBombero
               modo={modoEdicion ? 'edicion' : 'consulta'}
               datosIniciales={bomberoSeleccionado}
@@ -345,10 +344,10 @@ const ConsultarBombero = ({ onVolver }) => {
           </div>
         )}
         <div className="text-center mt-4">
-        <button className="btn-volver btn-secondary" onClick={onVolver} disabled={loading}>
-          Volver
-        </button>
-      </div>
+          <button className="btn-volver btn-secondary" onClick={onVolver} disabled={loading}>
+            Volver
+          </button>
+        </div>
       </div>
     </>
   )
