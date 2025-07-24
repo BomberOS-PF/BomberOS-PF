@@ -159,7 +159,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
       </div>
 
       <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
-        <div className="card-header bg-danger text-white d-flex align-items-center gap-2">
+        <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <FileText />
           <strong>Cargar Incidente</strong>
         </div>
@@ -167,7 +167,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
         <div className="card-body">
           <form onSubmit={handleSubmit}>
             <div className="row mb-3">
-              <div className="col-md-6">
+              <div className="col-md-6 py-4">
                 <label className="form-label text-dark d-flex align-items-center gap-2">
                   <User className="text-danger" />
                   Persona que carga
@@ -175,7 +175,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
                 <input type="text" className="form-control" value={nombreCompleto || 'Desconocido'} disabled readOnly />
               </div>
 
-              <div className="col-md-6">
+              <div className="col-md-6 py-4">
                 <label htmlFor="tipoSiniestro" className="text-dark form-label d-flex align-items-center gap-2">
                   <AlertTriangle className="text-warning" />
                   Tipo de Siniestro
@@ -193,7 +193,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
             </div>
 
             <div className="row mb-4">
-              <div className="col-md-4">
+              <div className="col-md-4 py-4">
                 <label htmlFor="fechaHora" className="form-label text-dark d-flex align-items-center gap-2">
                   <Clock className="text-primary" />
                   Fecha y Hora
@@ -208,7 +208,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
                 />
               </div>
             
-              <div className="col-md-4">
+              <div className="col-md-4 py-4">
                 <label htmlFor="lugar" className="form-label text-dark d-flex align-items-center gap-2">
                   <MapPin className="text-success" />
                   Lugar
@@ -216,7 +216,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
                 <input type="text" id="lugar" className="form-control" onChange={handleChange} required />
               </div>
 
-              <div className="col-md-4">
+              <div className="col-md-4 py-4">
                 <label htmlFor="localizacion" className="form-label text-dark d-flex align-items-center gap-2">
                   <MapPin className="text-purple" />
                   Localización
