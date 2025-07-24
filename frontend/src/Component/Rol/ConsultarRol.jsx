@@ -182,7 +182,6 @@ const ConsultarRol = ({ onVolver }) => {
             <table className="tabla-bomberos">
               <thead>
                 <tr>
-                  <th>ID</th>
                   <th>Nombre</th>
                   <th>Descripción</th>
                   <th>Acciones</th>
@@ -191,7 +190,6 @@ const ConsultarRol = ({ onVolver }) => {
               <tbody>
                 {resultadosFiltrados.map((rol) => (
                   <tr key={rol.idRol}>
-                    <td>{rol.idRol}</td>
                     <td>{rol.nombreRol}</td>
                     <td>{rol.descripcion || <em className="text-muted">Sin descripción</em>}</td>
                     <td>
