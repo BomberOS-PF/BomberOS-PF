@@ -73,7 +73,7 @@ const RegistrarRol = ({ onVolver }) => {
 
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="formulario-consistente p-4 shadow rounded w-100" style={{ maxWidth: '500px' }}>
+      <div className="formulario-consistente p-4 shadow rounded w-100">
         <h2 className="text-black text-center mb-4">Registrar Nuevo Rol</h2>
 
         {message && (

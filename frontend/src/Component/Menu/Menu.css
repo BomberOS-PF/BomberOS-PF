@@ -20,10 +20,11 @@ main.container {
   padding-bottom: 2rem;
 }
 
-main.container.centrado {
+main.container, main.container.centrado {
   padding: 2rem;
-  overflow-y: auto;
-  min-height: calc(100vh - 56px);
+  min-height: auto;
+  width: 100%;
+  overflow: visible;
 }
 
 .offcanvas-start {
@@ -65,11 +66,6 @@ main.container.centrado {
 .text-white.text-center.mt-5 p {
   color: #ccc;
   font-size: 1.1rem;
-}
-
-main {
-  overflow-y: auto;
-  max-height: calc(100vh - 4.5rem);
 }
 
 .logo-bomberos-container {
@@ -140,13 +136,6 @@ body::before {
   background: url('/img/fondo.svg') no-repeat center center;
   background-size: cover;
   opacity: 0.05;
-}
-
-main.container {
-  padding-top: 2rem;
-  padding-bottom: 2rem;
-  overflow-y: auto;
-  max-height: calc(100vh - 4.5rem);
 }
 
 /* Logo */
