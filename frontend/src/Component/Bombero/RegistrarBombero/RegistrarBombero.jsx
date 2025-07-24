@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api.js'
+import { User, Phone, Mail, Shield, UserPlus, AlertTriangle, Home, CreditCard, TriangleAlert, BoneIcon, PillIcon } from 'lucide-react'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarBombero = ({ onVolver }) => {
@@ -7,7 +8,7 @@ const RegistrarBombero = ({ onVolver }) => {
     dni: '', nombre: '', apellido: '', domicilio: '', email: '', telefono: '',
     legajo: '', antiguedad: '', rango: '', esPlan: false, fichaMedica: null,
     fechaFicha: new Date().toISOString().split('T')[0], aptoPsico: true,
-    grupoSanguineo: '', username: '', password: '', emailUsuario: '', rolUsuario: '2'
+    grupoSanguineo: '', username: '', password: '', emailUsuario: '', rolUsuario: ''
   })
   const [rangosDisponibles, setRangosDisponibles] = useState([])
   const [rolesDisponibles, setRolesDisponibles] = useState([])
@@ -149,89 +150,234 @@ const RegistrarBombero = ({ onVolver }) => {
   }
 
   return (
-    <div className="container-fluid px-5">
-      <div className="formulario-consistente">
-        <h2 className="text-black text-center mb-4">Alta de Bombero</h2>
+    <div className="container-fluid px-4 py-4">
+      <div className="card shadow border-0 bg-white bg-opacity-1">
+        <div className="card-header bg-danger text-white d-flex align-items-center justify-content-between">
+          <h5 className="mb-0 d-flex align-items-center">
+            <UserPlus className="me-2" size={20} />
+            Alta de Bombero
+          </h5>
+          <span className="badge bg-warning text-dark d-flex align-items-center">
+            <AlertTriangle className="me-1" size={14} />
+            Gestión de Personal
+          </span>
+        </div>
 
-        {message && (
-          <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'} mt-3`}>
-            {message}
-          </div>
-        )}
+        <div className="card-body">
+          {message && (
+            <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'} mt-2`}>
+              {message}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="row mb-3">
-            <div className="col-md-3">
-              <label className="text-black form-label">Nombre</label>
-              <input type="text" id="nombre" className="form-control" value={formData.nombre} onChange={handleChange} required disabled={loading} />
-            </div>
-            <div className="col-md-3">
-              <label className="text-black form-label">Apellido</label>
-              <input type="text" id="apellido" className="form-control" value={formData.apellido} onChange={handleChange} required disabled={loading} />
-            </div>
-            <div className="col-md-3">
-              <label className="text-black form-label">DNI</label>
-              <input type="text" id="dni" className="form-control" value={formData.dni} onChange={handleChange} required disabled={loading} />
-            </div>
-            <div className="col-md-3">
-              <label className="text-black form-label">Domicilio</label>
-              <input type="text" id="domicilio" className="form-control" value={formData.domicilio} onChange={handleChange} required disabled={loading} />
-            </div>
+          <div className="mb-3 d-flex align-items-center gap-2 py-4">
+            <User className="text-indigo" />
+            <h5 className="mb-0 text-dark">Datos Personales</h5>
           </div>
 
           <div className="row mb-3">
             <div className="col-md-3">
-              <label className="text-black form-label">Teléfono</label>
-              <input type="tel" id="telefono" className="form-control" value={formData.telefono} onChange={handleChange} required disabled={loading} />
+              <label htmlFor="nombre" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
+                <User size={16} className="text-primary" />
+                Nombre
+              </label>
+              <input
+                type="text"
+                id="nombre"
+                className="form-control"
+                value={formData.nombre}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
             </div>
+
             <div className="col-md-3">
-              <label className="text-black form-label">Email</label>
-              <input type="email" id="email" className="form-control" value={formData.email} onChange={handleChange} required disabled={loading} />
+              <label htmlFor="apellido" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
+                <User size={16} className="text-primary" />
+                Apellido
+              </label>
+              <input
+                type="text"
+                id="apellido"
+                className="form-control"
+                value={formData.apellido}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
             </div>
+
             <div className="col-md-3">
-              <label className="text-black form-label">Rango</label>
-              <select id="rango" className="form-select" value={formData.rango} onChange={handleChange} required disabled={loading}>
-                <option value="">Seleccione</option>
+              <label htmlFor="dni" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
+                <CreditCard size={16} className="text-success" />
+                DNI
+              </label>
+              <input
+                type="text"
+                id="dni"
+                className="form-control"
+                value={formData.dni}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div className="col-md-3">
+              <label htmlFor="domicilio" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
+                <Home size={16} className="text-purple" />
+                Domicilio
+              </label>
+              <input
+                type="text"
+                id="domicilio"
+                className="form-control"
+                value={formData.domicilio}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <div className="row mb-3">
+            <div className="col-md-3">
+              <label htmlFor="telefono" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
+                <Phone size={16} className="text-primary" />
+                Telefono
+              </label>
+              <input
+                type="tel"
+                id="telefono"
+                className="form-control"
+                value={formData.telefono}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div className="col-md-3">
+              <label htmlFor="email" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
+                <Mail size={16} className="text-primary" />
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                className="form-control"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div className="col-md-3">
+              <label htmlFor="rango" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
+                <Shield size={16} className="text-primary" />
+                Rango
+              </label>
+              <select id="rango" className="text-dark form-select" value={formData.rango}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              ><option disabled value="">Seleccione rango</option>
                 {rangosDisponibles.map(r => <option key={r.idRango} value={r.descripcion}>{r.descripcion}</option>)}
               </select>
             </div>
+
             <div className="col-md-3">
-              <label className="text-black form-label">Grupo Sanguíneo</label>
-              <select id="grupoSanguineo" className="form-select" value={formData.grupoSanguineo} onChange={handleChange} required disabled={loading}>
-                <option value="">Seleccione</option>
-                {["A+","A-","B+","B-","AB+","AB-","O+","O-"].map(gs => <option key={gs} value={gs}>{gs}</option>)}
+              <label htmlFor="grupoSanguineo" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
+                <PillIcon className="text-warning" />
+                Grupo Sanguíneo</label>
+              <select id="grupoSanguineo" className="text-dark form-select" value={formData.grupoSanguineo} onChange={handleChange} required disabled={loading}>
+                <option disabled value="">Seleccione grupo</option>
+                {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(gs => <option key={gs} value={gs}>{gs}</option>)}
+              </select>
+            </div>
+
+            <div className="mb-3 d-flex align-items-center gap-2 py-4">
+              <Shield className="text-indigo" />
+              <h5 className="mb-0 text-dark">Credenciales de Usuario</h5>
+            </div>
+
+            <div className="col-md-3">
+              <label htmlFor="username" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
+                <User size={16} className="text-primary" />
+                Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                className="form-control"
+                value={formData.username}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div className="col-md-3">
+              <label htmlFor="password" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
+                <Shield size={16} className="text-primary" />
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                className="form-control"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div className="col-md-3">
+              <label className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
+                <User size={16} className="text-primary" />
+                Email Usuario
+              </label>
+              <input
+                type="email"
+                id="emailUsuario"
+                className="form-control"
+                value={formData.emailUsuario}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div className="col-md-3">
+              <label htmlFor="rol" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
+                <Shield size={16} className="text-primary" />
+                Rol
+              </label>
+              <select id="rolUsuario" className="text-dark form-select" value={formData.rolUsuario}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              ><option disabled value="">Seleccione rol</option>
+                {rolesDisponibles.map(r => <option key={r.idRol} value={r.descripcion}>{r.nombreRol}</option>)}
               </select>
             </div>
           </div>
 
-          <h5 className="text-black mt-4 mb-2">Credenciales de Usuario</h5>
-          <div className="row mb-3">
-            <div className="col-md-3">
-              <label className="text-black form-label">Username</label>
-              <input type="text" id="username" className="form-control" value={formData.username} onChange={handleChange} required disabled={loading} />
-            </div>
-            <div className="col-md-3">
-              <label className="text-black form-label">Contraseña</label>
-              <input type="password" id="password" className="form-control" value={formData.password} onChange={handleChange} required disabled={loading} />
-            </div>
-            <div className="col-md-3">
-              <label className="text-black form-label">Email usuario</label>
-              <input type="email" id="emailUsuario" className="form-control" value={formData.emailUsuario} onChange={handleChange} required disabled={loading} />
-            </div>
-            <div className="col-md-3">
-              <label className="text-black form-label">Rol</label>
-              <select id="rolUsuario" className="form-select" value={formData.rolUsuario} onChange={handleChange} required disabled={loading}>
-                <option value="">Seleccione</option>
-                {rolesDisponibles.map(r => <option key={r.idRol} value={r.idRol}>{r.nombreRol}</option>)}
-              </select>
-            </div>
+          <div className="d-flex justify-content-end mt-4">
+            <button type="submit" className="btn btn-danger me-2" onClick={handleSubmit} disabled={loading}>
+              <UserPlus size={16} className="me-1" />
+              {loading ? 'Registrando...' : 'Registrar bombero'}
+            </button>
+            {onVolver && (
+              <button type="button" className="btn btn-outline-secondary" onClick={onVolver} disabled={loading}>
+                Volver
+              </button>
+            )}
           </div>
-
-          <div className="botones-accion">
-            <button type="submit" className="btn btn-danger me-2" disabled={loading}>{loading ? 'Registrando...' : 'Registrar bombero'}</button>
-            {onVolver && <button type="button" className="btn btn-secondary" onClick={onVolver} disabled={loading}>Volver</button>}
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   )
