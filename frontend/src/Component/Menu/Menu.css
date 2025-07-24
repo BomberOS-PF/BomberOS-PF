@@ -21,12 +21,9 @@ main.container {
 }
 
 main.container.centrado {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: calc(100vh - 56px);
-  overflow: hidden;
   padding: 2rem;
+  overflow-y: auto;
+  min-height: calc(100vh - 56px);
 }
 
 .offcanvas-start {
@@ -68,10 +65,6 @@ main.container.centrado {
 .text-white.text-center.mt-5 p {
   color: #ccc;
   font-size: 1.1rem;
-}
-
-body {
-  overflow-y: hidden !important;
 }
 
 main {
@@ -137,7 +130,6 @@ body {
   margin: 0;
   background-color: #1c1c1c;
   color: white;
-  overflow-y: hidden !important;
 }
 
 body::before {

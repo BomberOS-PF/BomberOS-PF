@@ -8,6 +8,10 @@ html, body, #root {
   overflow-x: hidden;
 }
 
+body {
+  overflow-y: auto;
+}
+
 main {
   padding: 0;
   margin: 0;
