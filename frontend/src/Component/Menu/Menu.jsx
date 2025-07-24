@@ -23,7 +23,7 @@ import Rescate from '../Incidente/TipoIncidente/Rescate/Rescate'
 import ParticipacionIncidente from '../Incidente/ParticipacionIncidente/ParticipacionIncidente'
 import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
 
-const Menu = () => {
+const Menu = ({user, setUser}) => {
   const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
   const [usuario, setUsuario] = useState(null)
   const [mostrarDropdown, setMostrarDropdown] = useState(false)
@@ -192,7 +192,7 @@ const Menu = () => {
 
   const cerrarSesion = () => {
     localStorage.clear()
-    if (setUser) setUser(null)
+    setUser(null)
     navigate('/login')
   }
 

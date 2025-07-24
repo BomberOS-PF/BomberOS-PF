@@ -101,7 +101,6 @@ const ConsultarUsuario = ({ onVolver }) => {
   return (
     <div className="container mt-4 formulario-consistente">
       <h2 className="text-black mb-3">Consultar Usuarios</h2>
-
       {mensaje && (
         <div className={`alert ${mensaje.includes('Error') ? 'alert-danger' : 'alert-info'}`}>
           {mensaje}
