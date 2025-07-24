@@ -13,6 +13,15 @@ import RegistrarRol from '../Rol/RegistrarRol'
 import ConsultarRol from '../Rol/ConsultarRol'
 import RegistrarGuardia from '../Guardia/RegistrarGuardia/RegistrarGuardia'
 import ConsultarGrupoGuardia from '../Guardia/ConsultarGuardia/ConsultarGrupoGuardia'
+import BurbujaFormulario from '../BurbujaFormulario/BurbujaFormulario'
+import AccidenteTransito from '../Incidente/TipoIncidente/AccidenteTransito/AccidenteTransito'
+import FactorClimatico from '../Incidente/TipoIncidente/FactorClimatico/FactorClimatico'
+import IncendioEstructural from '../Incidente/TipoIncidente/IncendioEstructural/IncendioEstructural'
+import IncendioForestal from '../Incidente/TipoIncidente/IncendioForestal/IncendioForestal'
+import MaterialPeligroso from '../Incidente/TipoIncidente/MaterialPeligroso/MaterialPeligroso'
+import Rescate from '../Incidente/TipoIncidente/Rescate/Rescate'
+import ParticipacionIncidente from '../Incidente/ParticipacionIncidente/ParticipacionIncidente'
+import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
 
 const Menu = () => {
   const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
@@ -21,6 +30,9 @@ const Menu = () => {
   const [acordeonAbierto, setAcordeonAbierto] = useState(null)
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
+  const [burbujas, setBurbujas] = useState([])
+  const [burbujaExpandida, setBurbujaExpandida] = useState(null)
+  const [datosFinalizados, setDatosFinalizados] = useState(null)
 
   useEffect(() => {
     const datosUsuario = localStorage.getItem('usuario')
@@ -95,6 +107,64 @@ const Menu = () => {
     }
   }, [])
 
+  const agregarBurbuja = (tipo, datosPrevios) => {
+    const id = datosPrevios?.id || Date.now()
+    const yaExiste = burbujas.find(b => b.id === id)
+    if (!yaExiste) {
+      setBurbujas(prev => [...prev, { id, tipo, datosPrevios, minimizada: true }])
+    }
+    setOpcionSeleccionada(null)
+  }
+
+  const cerrarBurbuja = (id) => {
+    setBurbujas(prev => prev.filter(b => b.id !== id))
+    if (burbujaExpandida === id) setBurbujaExpandida(null)
+  }
+
+  const toggleMinimizada = (id) => {
+    setBurbujas(prev => prev.map(b => {
+      const activa = b.id === id
+      const minimizada = !b.minimizada
+      if (activa) setBurbujaExpandida(minimizada ? null : id)
+      return { ...b, minimizada: activa ? minimizada : true }
+    }))
+  }
+
+  const manejarFinalizarCarga = (datos) => {
+    if (burbujaExpandida) cerrarBurbuja(burbujaExpandida)
+    setDatosFinalizados(datos)
+    setOpcionSeleccionada('participacion-incidente')
+  }
+
+  const renderFormularioExpandido = () => {
+    const burbuja = burbujas.find(b => b.id === burbujaExpandida)
+    if (!burbuja) return null
+
+    const props = {
+      datosPrevios: burbuja.datosPrevios,
+      onFinalizar: manejarFinalizarCarga
+    }
+
+    switch (burbuja.tipo) {
+      case 'Accidente': return <AccidenteTransito {...props} />
+      case 'Factores Climáticos': return <FactorClimatico {...props} />
+      case 'Incendio Estructural': return <IncendioEstructural {...props} />
+      case 'Incendio Forestal': return <IncendioForestal {...props} />
+      case 'Material Peligroso': return <MaterialPeligroso {...props} />
+      case 'Rescate': return <Rescate {...props} />
+      default: return <p>Formulario no encontrado</p>
+    }
+  }
+
+  const usuarioActual = usuario || JSON.parse(localStorage.getItem('usuario')) || {}
+  const rol = usuarioActual.rol || 'desconocido'
+
+  const permisos = {
+    administrador: [/* todas las opciones */],
+    bombero: ['cargarIncidente', 'consultarBombero', 'participacion-incidente']
+  }
+  const puedeVer = (clave) => permisos[rol]?.includes(clave)
+
   const toggleAcordeon = (id) => {
     const target = document.getElementById(id)
     if (!target) return
@@ -122,20 +192,29 @@ const Menu = () => {
 
   const cerrarSesion = () => {
     localStorage.clear()
+    if (setUser) setUser(null)
     navigate('/login')
   }
 
   const renderContenido = () => {
     switch (opcionSeleccionada) {
-      case 'cargarIncidente': return <CargarIncidente onVolver={() => setOpcionSeleccionada('')} />
-      case 'registrarBombero': return <RegistrarBombero onVolver={() => setOpcionSeleccionada('')} />
-      case 'consultarBombero': return <ConsultarBombero onVolver={() => setOpcionSeleccionada('')} />
-      case 'registrarUsuario': return <RegistrarUsuario onVolver={() => setOpcionSeleccionada('')} />
-      case 'consultarUsuario': return <ConsultarUsuario onVolver={() => setOpcionSeleccionada('')} />
-      case 'registrarRol': return <RegistrarRol onVolver={() => setOpcionSeleccionada('')} />
-      case 'consultarRol': return <ConsultarRol onVolver={() => setOpcionSeleccionada('')} />
-      case 'registrarGuardia': return <RegistrarGuardia onVolver={() => setOpcionSeleccionada('')} />
-      case 'consultarGuardia': return <ConsultarGrupoGuardia onVolver={() => setOpcionSeleccionada('')} />
+      case 'cargarIncidente': return (<CargarIncidente onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'registrarBombero': return (<RegistrarBombero onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'consultarBombero': return (<ConsultarBombero onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'registrarUsuario': return (<RegistrarUsuario onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'consultarUsuario': return (<ConsultarUsuario onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'registrarRol': return (<RegistrarRol onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'consultarRol': return (<ConsultarRol onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'registrarGuardia': return (<RegistrarGuardia onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'consultarGuardia': return (<ConsultarGrupoGuardia onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'participacion-incidente':
+        return <ParticipacionIncidente
+          datosPrevios={datosFinalizados}
+          onFinalizar={() => setOpcionSeleccionada('vehiculo-involucrado')}
+          onVolver={() => setOpcionSeleccionada(null)}
+        />
+      case 'vehiculo-involucrado':
+        return <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />
     }
   }
 
@@ -258,9 +337,14 @@ const Menu = () => {
         </div>
       </div>
 
-      <main className={`container ${opcionSeleccionada ? 'centrado' : ''}`}>
-        {renderContenido()}
+      <main className={`container ${opcionSeleccionada || burbujaExpandida ? 'centrado' : ''}`}>
+        {burbujaExpandida ? renderFormularioExpandido() : renderContenido()}
       </main>
+      {burbujas.map((b, i) => (
+        <div key={b.id} style={{ position: 'fixed', right: `${20 + i * 370}px`, bottom: 0, zIndex: 9999 }}>
+          <BurbujaFormulario {...b} onCerrar={cerrarBurbuja} onToggleMinimizada={toggleMinimizada} />
+        </div>
+      ))}
     </div>
   )
 }
