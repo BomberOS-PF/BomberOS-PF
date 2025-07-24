@@ -16,6 +16,7 @@ body {
   background-color: #f8f9fa;
   border: 1px solid #ccc;
   color: #000;
+
 }
 
 .form-control::placeholder {
@@ -82,8 +83,7 @@ body {
 .container {
   width: 100%;
   max-width: 100%;
-  /* margin: 0 auto; */
-  /* padding: 2rem; */
+  padding: 2.5rem;
 }
 
 /* Estilos globales para formularios de BomberOS */
