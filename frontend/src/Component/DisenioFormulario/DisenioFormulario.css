@@ -5,15 +5,6 @@ body {
   padding: 0;
 }
 
-/* .form-abm {
-  background-color: #fff !important;
-  border-top: 5px solid #d52b1e;
-  padding: 2rem 2.5rem;
-  border-radius: 8px;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
-  color: #000;
-} */
-
 .form-label,
 .form-check-label {
   font-weight: 600;
@@ -37,6 +28,10 @@ body {
   border-color: #d52b1e;
   box-shadow: 0 0 0 0.2rem rgba(213, 43, 30, 0.25);
   color: #000;
+}
+
+.form-control:disabled::placeholder {
+  color: #bdc3c7;
 }
 
 .btn-danger {

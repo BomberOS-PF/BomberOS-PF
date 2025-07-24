@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import './CargarIncidente.css'
-import '../../DisenioFormulario/DisenioFormulario.css'
+// import '../../DisenioFormulario/DisenioFormulario.css'
 
 const CargarIncidente = ({ onVolver, onNotificar}) => {
   const now = new Date()
