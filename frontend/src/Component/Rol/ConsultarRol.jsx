@@ -12,8 +12,20 @@ const ConsultarRol = ({ onVolver }) => {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    fetchRoles()
-  }, [])
+    if (nombreBusqueda.trim() === '') {
+      setResultadosFiltrados(roles)
+      setMensaje('')
+      return
+    }
+
+    const filtrados = roles.filter(r =>
+      r.nombreRol.toLowerCase().includes(nombreBusqueda.toLowerCase())
+    )
+
+    setResultadosFiltrados(filtrados)
+    setMensaje(filtrados.length === 0 ? 'No se encontró ningún rol con ese nombre.' : '')
+  }, [nombreBusqueda, roles])
+
 
   const fetchRoles = async () => {
     setLoading(true)
@@ -87,7 +99,7 @@ const ConsultarRol = ({ onVolver }) => {
       }
     } catch (error) {
       const errorMsg = error?.response?.error || error.message || 'Error al guardar'
-      
+
       if (
         errorMsg.toLowerCase().includes('disponible') ||
         errorMsg.toLowerCase().includes('ya existe') ||
@@ -143,41 +155,25 @@ const ConsultarRol = ({ onVolver }) => {
       <h2 className="text-black mb-3">Consultar Roles</h2>
 
       {mensaje && (
-        <div className={`alert ${
-          mensaje.includes('Error') ? 'alert-danger' :
+        <div className={`alert ${mensaje.includes('Error') ? 'alert-danger' :
           mensaje.includes('✅') ? 'alert-success' : 'alert-info'
-        }`}>
+          }`}>
           {mensaje}
         </div>
       )}
 
       {!rolSeleccionado && !modoEdicion && (
         <>
-          <div className="mb-3 d-flex">
+          <div className="mb-3">
             <input
               type="text"
-              className="form-control me-2"
+              className="form-control"
               placeholder="Buscar por nombre del rol..."
               value={nombreBusqueda}
               onChange={(e) => setNombreBusqueda(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') buscarPorNombre() }}
+              disabled={loading}
             />
-            <button
-              className="btn btn-primary btn-sm me-2"
-              onClick={buscarPorNombre}
-              disabled={loading}
-            >
-              Buscar
-            </button>
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={limpiarBusqueda}
-              disabled={loading}
-            >
-              Limpiar
-            </button>
           </div>
-
           <div className="table-responsive">
             <table className="tabla-bomberos">
               <thead>
