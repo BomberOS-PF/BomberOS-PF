@@ -17,6 +17,27 @@ const ConsultarBombero = ({ onVolver }) => {
     fetchBomberos()
   }, [])
 
+  useEffect(() => {
+    if (dniBusqueda.trim() === '') {
+      setResultadosFiltrados(bomberos)
+      setMensaje('')
+      return
+    }
+
+    const filtrados = bomberos.filter(b => {
+      const dni = String(b.dni || '')
+      return dni.includes(dniBusqueda.trim())
+    })
+
+    setResultadosFiltrados(filtrados)
+
+    if (filtrados.length === 0) {
+      setMensaje('No se encontró ningún bombero con ese dni.')
+    } else {
+      setMensaje('')
+    }
+  }, [dniBusqueda, bomberos])
+
   const fetchBomberos = async () => {
     setLoading(true)
     try {
@@ -199,8 +220,8 @@ const ConsultarBombero = ({ onVolver }) => {
 
         {mensaje && (
           <div className={`alert ${mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' :
-              mensaje.includes('✅') || mensaje.includes('correctamente') ? 'alert-success' :
-                'alert-info'
+            mensaje.includes('✅') || mensaje.includes('correctamente') ? 'alert-success' :
+              'alert-info'
             }`}>
             {mensaje}
           </div>
@@ -216,30 +237,16 @@ const ConsultarBombero = ({ onVolver }) => {
 
         {!bomberoSeleccionado && (
           <>
-            <div className="mb-3 d-flex">
+
+            <div className="mb-3">
               <input
                 type="text"
-                className="form-control me-2 buscador-dni"
-                placeholder="Buscar por dni"
+                className="form-control buscador-dni"
+                placeholder="Buscar por DNI..."
                 value={dniBusqueda}
                 onChange={(e) => setdniBusqueda(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') buscarPordni() }}
                 disabled={loading}
               />
-              <button
-                className="btn btn-primary btn-sm me-2"
-                onClick={buscarPordni}
-                disabled={loading}
-              >
-                Buscar
-              </button>
-              <button
-                className="btn btn-secondary btn-limpiar"
-                onClick={limpiarBusqueda}
-                disabled={loading}
-              >
-                Limpiar
-              </button>
             </div>
 
             {resultadosFiltrados.length > 0 ? (
