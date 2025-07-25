@@ -150,7 +150,7 @@ const RegistrarBombero = ({ onVolver }) => {
   }
 
   return (
-    <div className="container-fluid py-4">
+    <div className="container-fluid py-5">
       <div className="text-center mb-4">
         <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
           <div className='bg-danger p-3 rounded-circle'>
@@ -171,13 +171,14 @@ const RegistrarBombero = ({ onVolver }) => {
           <strong>Registrar Bombero</strong>
         </div>
 
-        <div className="mb-3 d-flex align-items-center gap-2 py-4 px-4">
-          <User className="text-danger" />
-          <h5 className="mb-0 text-dark">Datos Personales</h5>
-        </div>
-
         <div className="card-body">
           <form onSubmit={handleSubmit}>
+            <div className="mb-3 d-flex align-items-center gap-2">
+              <User className="text-indigo" />
+              <h5 className="mb-0 text-dark">Datos Personales</h5>
+            </div>
+
+
             <div className="row mb-3">
               <div className="col-md-4">
                 <label htmlFor="nombre" className="form-label text-dark d-flex align-items-center gap-2">
@@ -279,7 +280,8 @@ const RegistrarBombero = ({ onVolver }) => {
                 <label htmlFor="legajo" className="form-label text-dark fw-semibold d-flex align-items-center gap-2
                 ">
                   <Mail className="text-primary" />
-                  Legajo (opcional)
+                  Legajo
+                  <span className="badge bg-secondary text-white text-uppercase">opcional</span>
                 </label>
                 <input
                   type="text"
@@ -370,7 +372,7 @@ const RegistrarBombero = ({ onVolver }) => {
                 </label>
               </div>
 
-              <div className="form-check form-switch mb-0">
+              <div className="form-check form-switch mb-4">
                 <input
                   className="form-check-input"
                   type="checkbox"
@@ -383,100 +385,97 @@ const RegistrarBombero = ({ onVolver }) => {
                   Es del plan (guardias pagas)
                 </label>
               </div>
+
+              <hr className="mb-4" />
+
+              <div className="mb-3 d-flex align-items-center gap-2">
+                <Shield className="text-indigo" />
+                <h5 className="mb-0 text-dark">Credenciales de Usuario</h5>
+              </div>
+
+
+              <div className="col-md-3">
+                <label htmlFor="username" className="form-label text-dark fw-semibold d-flex align-items-center gap-2">
+                  <User className="text-primary" />
+                  Username
+                </label>
+                <input
+                  type="text"
+                  id="username"
+                  className="form-control"
+                  value={formData.username}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="col-md-3">
+                <label htmlFor="password" className="form-label text-dark fw-semibold d-flex align-items-center gap-2">
+                  <Shield className="text-primary" />
+                  Password
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  className="form-control"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="col-md-3">
+                <label className="form-label text-dark fw-semibold d-flex align-items-center gap-2">
+                  <Mail className="text-primary" />
+                  Email Usuario
+                </label>
+                <input
+                  type="email"
+                  id="emailUsuario"
+                  className="form-control"
+                  value={formData.emailUsuario}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="col-md-3">
+                <label htmlFor="rol" className="form-label text-dark fw-semibold d-flex align-items-center gap-2">
+                  <Shield className="text-primary" />
+                  Rol
+                </label>
+                <select id="rolUsuario" className="text-dark form-select" value={formData.rolUsuario}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                ><option disabled value="">Seleccione rol</option>
+                  {rolesDisponibles.map(r => <option key={r.idRol} value={r.descripcion}>{r.nombreRol}</option>)}
+                </select>
+              </div>
+
+              <div className="d-grid gap-3">
+                <button type="submit" className="btn btn-danger btn-lg" onClick={handleSubmit} disabled={loading}>
+                  <UserPlus size={16} className="me-1" />
+                  {loading ? 'Registrando...' : 'Registrar bombero'}
+                </button>
+                {onVolver && (
+                  <button type="button" className="btn btn-secondary" onClick={onVolver} disabled={loading}>
+                    Volver
+                  </button>
+                )}
+              </div>
             </div>
-
-
           </form>
-
-
-
-          {message && (
-            <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'} mt-2`}>
-              {message}
-            </div>
-          )}
         </div>
 
-        <div className="row mb-3">
-          <div className="mb-3 d-flex align-items-center gap-2 py-4">
-            <Shield className="text-indigo" />
-            <h5 className="mb-0 text-dark">Credenciales de Usuario</h5>
+        {message && (
+          <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'} mt-2`}>
+            {message}
           </div>
-
-          <div className="col-md-3">
-            <label htmlFor="username" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
-              <User size={16} className="text-primary" />
-              Username
-            </label>
-            <input
-              type="text"
-              id="username"
-              className="form-control"
-              value={formData.username}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="col-md-3">
-            <label htmlFor="password" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
-              <Shield size={16} className="text-primary" />
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              className="form-control"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="col-md-3">
-            <label className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
-              <User size={16} className="text-primary" />
-              Email Usuario
-            </label>
-            <input
-              type="email"
-              id="emailUsuario"
-              className="form-control"
-              value={formData.emailUsuario}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="col-md-3">
-            <label htmlFor="rol" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
-              <Shield size={16} className="text-primary" />
-              Rol
-            </label>
-            <select id="rolUsuario" className="text-dark form-select" value={formData.rolUsuario}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            ><option disabled value="">Seleccione rol</option>
-              {rolesDisponibles.map(r => <option key={r.idRol} value={r.descripcion}>{r.nombreRol}</option>)}
-            </select>
-          </div>
-        </div>
-
-        <div className="d-flex justify-content-end mt-4">
-          <button type="submit" className="btn btn-danger me-2" onClick={handleSubmit} disabled={loading}>
-            <UserPlus size={16} className="me-1" />
-            {loading ? 'Registrando...' : 'Registrar bombero'}
-          </button>
-          {onVolver && (
-            <button type="button" className="btn btn-outline-secondary" onClick={onVolver} disabled={loading}>
-              Volver
-            </button>
-          )}
-        </div>
+        )}
       </div>
     </div>
   )

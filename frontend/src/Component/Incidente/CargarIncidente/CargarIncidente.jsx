@@ -145,7 +145,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
   }
 
   return (
-    <div className='container py4'>
+    <div className='container'>
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
           <div className='bg-danger p-3 rounded-circle'>
