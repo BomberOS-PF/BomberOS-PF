@@ -21,7 +21,7 @@ export function setupRoutes(app, container) {
 
   app.get('/', (req, res) => res.redirect('/health'))
 
-  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, recuperarClaveHandler, validarTokenHandler, restablecerClaveHandler } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, recuperarClaveHandler, validarTokenHandler, restablecerClaveHandler, incendioEstructuralHandler  } = container
 
   // ROLES
   app.get('/api/roles', async (req, res) => {
@@ -410,6 +410,35 @@ export function setupRoutes(app, container) {
     }
   })
 
+ // INCENDIO ESTRUCTURAL
+  app.post('/api/incendio-estructural', async (req, res) => {
+    try {
+      await incendioEstructuralHandler.registrar(req, res)
+    } catch (error) {
+      logger.error('Error en ruta registrar incendio estructural:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/incendio-estructural', async (req, res) => {
+    try {
+      await incendioEstructuralHandler.listarTodos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listar incendios estructurales:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/incendio-estructural/:id', async (req, res) => {
+    try {
+      await incendioEstructuralHandler.obtenerPorIncidente(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtener incendio estructural por incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+
   // 404 handler
   app.use((req, res) => {
     logger.warn('Ruta no encontrada', {
@@ -462,7 +491,10 @@ export function setupRoutes(app, container) {
         'GET /api/rangos',
         'POST /api/recuperar-clave',
         'GET /api/validar-token',
-        'POST /api/restablecer-clave'
+        'POST /api/restablecer-clave',
+        'POST /api/incendio-estructural',
+        'GET /api/incendio-estructural',
+        'GET /api/incendio-estructural/:id'
       ]
     })
   })
