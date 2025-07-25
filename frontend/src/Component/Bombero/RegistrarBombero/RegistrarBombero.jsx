@@ -150,7 +150,7 @@ const RegistrarBombero = ({ onVolver }) => {
   }
 
   return (
-    <div className="container py-4">
+    <div className="container-fluid py-4">
       <div className="text-center mb-4">
         <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
           <div className='bg-danger p-3 rounded-circle'>
@@ -211,7 +211,7 @@ const RegistrarBombero = ({ onVolver }) => {
                 />
               </div>
 
-              <div className="col-md-6 py-4">
+              <div className="col-md-4">
                 <label htmlFor="dni" className="form-label text-dark d-flex align-items-center gap-2">
                   <CreditCard className="text-primary" />
                   DNI
@@ -227,10 +227,10 @@ const RegistrarBombero = ({ onVolver }) => {
                 />
               </div>
 
-              <div className="col-md-6 py-4">
+              <div className="col-md-4 py-4">
                 <label htmlFor="domicilio" className="form-label text-dark d-flex align-items-center gap-2">
                   <Home className="text-purple" />
-                  DNI
+                  Domicilio
                 </label>
                 <input
                   type="text"
@@ -241,6 +241,147 @@ const RegistrarBombero = ({ onVolver }) => {
                   required
                   disabled={loading}
                 />
+              </div>
+
+              <div className="col-md-4 py-4">
+                <label htmlFor="telefono" className="form-label text-dark fw-semibold d-flex align-items-center gap-2">
+                  <Phone size={16} className="text-primary" />
+                  Telefono
+                </label>
+                <input
+                  type="tel"
+                  id="telefono"
+                  className="form-control"
+                  value={formData.telefono}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="col-md-4 py-4">
+                <label htmlFor="email" className="form-label text-dark fw-semibold d-flex align-items-center gap-2">
+                  <Mail size={16} className="text-primary" />
+                  Correo electrónico
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  className="form-control"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="col-md-4">
+                <label htmlFor="legajo" className="form-label text-dark fw-semibold d-flex align-items-center gap-2
+                ">
+                  <Mail className="text-primary" />
+                  Legajo (opcional)
+                </label>
+                <input
+                  type="text"
+                  id="legajo"
+                  className="form-control"
+                  value={formData.legajo}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="col-md-4">
+                <label htmlFor="antiguedad" className="form-label text-dark fw-semibold d-flex align-items-center gap-2">
+                  <Mail className="text-primary" />
+                  Antigüedad (años)
+                </label>
+                <input
+                  type="number"
+                  id="antiguedad"
+                  className="form-control"
+                  value={formData.antiguedad}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="col-md-4">
+                <label htmlFor="rango" className="form-label text-dark fw-semibold d-flex align-items-center gap-2">
+                  <Shield size={16} className="text-primary" />
+                  Rango
+                </label>
+                <select id="rango" className="text-dark form-select" value={formData.rango}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                ><option disabled value="">Seleccione rango</option>
+                  {rangosDisponibles.map(r => <option key={r.idRango} value={r.descripcion}>{r.descripcion}</option>)}
+                </select>
+              </div>
+
+              <div className="col-md-4 py-4">
+                <label htmlFor="fichaMedica" className="form-label text-dark fw-semibold d-flex align-items-center gap-2">Ficha médica (PDF)</label>
+                <input
+                  className="form-control"
+                  type="file"
+                  id="fichaMedica"
+                  accept="application/pdf"
+                  disabled={loading}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="col-md-4 py-4">
+                <label htmlFor="fechaFicha" className="form-label text-dark fw-semibold d-flex align-items-center gap-2">Fecha de carga</label>
+                <input
+                  className="form-control"
+                  type="date"
+                  id="fechaFicha"
+                  value={formData.fechaFicha}
+                  disabled={loading}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="col-md-4 py-4">
+                <label htmlFor="grupoSanguineo" className="form-label text-dark fw-semibold d-flex align-items-center gap-2">
+                  <PillIcon className="text-warning" />
+                  Grupo Sanguíneo</label>
+                <select id="grupoSanguineo" className="text-dark form-select" value={formData.grupoSanguineo} onChange={handleChange} required disabled={loading}>
+                  <option disabled value="">Seleccione grupo</option>
+                  {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(gs => <option key={gs} value={gs}>{gs}</option>)}
+                </select>
+              </div>
+
+              <div className="form-check form-switch mb-2">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="aptoPsico"
+                  checked={formData.aptoPsico}
+                  disabled={loading}
+                  onChange={handleChange}
+                />
+                <label className="form-label text-dark d-flex align-items-center gap-2" htmlFor="aptoPsico">
+                  Apto psicológico
+                </label>
+              </div>
+
+              <div className="form-check form-switch mb-0">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="esPlan"
+                  checked={formData.esPlan}
+                  disabled={loading}
+                  onChange={handleChange}
+                />
+                <label className="form-label text-dark d-flex align-items-center gap-2" htmlFor="esPlan">
+                  Es del plan (guardias pagas)
+                </label>
               </div>
             </div>
 
@@ -257,94 +398,6 @@ const RegistrarBombero = ({ onVolver }) => {
         </div>
 
         <div className="row mb-3">
-          <div className="col-md-3">
-            <label htmlFor="telefono" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
-              <Phone size={16} className="text-primary" />
-              Telefono
-            </label>
-            <input
-              type="tel"
-              id="telefono"
-              className="form-control"
-              value={formData.telefono}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="col-md-3">
-            <label htmlFor="email" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
-              <Mail size={16} className="text-primary" />
-              Correo electrónico
-            </label>
-            <input
-              type="email"
-              id="email"
-              className="form-control"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="col-md-3">
-            <label htmlFor="legajo" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
-              <Mail className="text-primary" />
-              Legajo
-            </label>
-            <input
-              type="text"
-              id="legajo"
-              className="form-control"
-              value={formData.legajo}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="col-md-3">
-            <label htmlFor="antiguedad" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
-              <Mail className="text-primary" />
-              Antigüedad (años)
-            </label>
-            <input
-              type="number"
-              id="antiguedad"
-              className="form-control"
-              value={formData.antiguedad}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="col-md-3">
-            <label htmlFor="rango" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
-              <Shield size={16} className="text-primary" />
-              Rango
-            </label>
-            <select id="rango" className="text-dark form-select" value={formData.rango}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            ><option disabled value="">Seleccione rango</option>
-              {rangosDisponibles.map(r => <option key={r.idRango} value={r.descripcion}>{r.descripcion}</option>)}
-            </select>
-          </div>
-
-          <div className="col-md-3">
-            <label htmlFor="grupoSanguineo" className="form-label text-dark fw-semibold d-flex align-items-center gap-1">
-              <PillIcon className="text-warning" />
-              Grupo Sanguíneo</label>
-            <select id="grupoSanguineo" className="text-dark form-select" value={formData.grupoSanguineo} onChange={handleChange} required disabled={loading}>
-              <option disabled value="">Seleccione grupo</option>
-              {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(gs => <option key={gs} value={gs}>{gs}</option>)}
-            </select>
-          </div>
-
           <div className="mb-3 d-flex align-items-center gap-2 py-4">
             <Shield className="text-indigo" />
             <h5 className="mb-0 text-dark">Credenciales de Usuario</h5>
