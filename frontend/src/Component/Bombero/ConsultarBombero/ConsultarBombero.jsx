@@ -3,6 +3,7 @@ import { API_URLS } from '../../../config/api'
 import FormularioBombero from '../FormularioBombero/FormularioBombero'
 //import '../ConsultarBombero/ConsultarBombero.css'
 import '../../DisenioFormulario/DisenioFormulario.css'
+import { User2, UsersIcon } from 'lucide-react'
 
 const ConsultarBombero = ({ onVolver }) => {
   const [bomberos, setBomberos] = useState([])
@@ -214,149 +215,146 @@ const ConsultarBombero = ({ onVolver }) => {
   }
 
   return (
-    <>
-      <div className="container mt-4 formulario-consistente">
-        <h2 className="text-black mb-3">Consultar Bomberos</h2>
-
-        {mensaje && (
-          <div className={`alert ${mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' :
-            mensaje.includes('✅') || mensaje.includes('correctamente') ? 'alert-success' :
-              'alert-info'
-            }`}>
-            {mensaje}
+    <div className='container-fluid'>
+      <div className='text-center mb-4'>
+        <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
+          <div className="bg-danger p-3 rounded-circle">
+            <UsersIcon size={32} 
+            color="white" />
           </div>
-        )}
+          <h1 className="fw-bold text-white fs-3 mb-0">Consultar Bomberos</h1>
+        </div>
+        <span className="badge bg-danger-subtle text-danger">
+          <i className="bi bi-fire me-2"></i> Sistema de Gestión de Personal - Cuartel de Bomberos
+        </span>
+      </div>
 
-        {loading && (
-          <div className="text-center text-black mb-3">
-            <div className="spinner-border" role="status">
-              <span className="visually-hidden">Cargando...</span>
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+        <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
+          <User2 />
+          <strong>Listado de Bomberos</strong>
+        </div>
+        <div className="card-body p-4">
+          {mensaje && (
+            <div
+              className={`alert ${mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' :
+                mensaje.includes('✅') ? 'alert-success' : 'alert-info'
+                }`}
+            >
+              {mensaje}
             </div>
-          </div>
-        )}
+          )}
 
-        {!bomberoSeleccionado && (
-          <>
+          {loading && (
+            <div className="text-center mb-3">
+              <div className="spinner-border text-danger" role="status"></div>
+            </div>
+          )}
 
-            <div className="mb-3">
-              <input
-                type="text"
-                className="form-control buscador-dni"
-                placeholder="Buscar por DNI..."
-                value={dniBusqueda}
-                onChange={(e) => setdniBusqueda(e.target.value)}
-                disabled={loading}
+          {/* Buscador */}
+          {!bomberoSeleccionado && (
+            <>
+              <div className="mb-3 position-relative">
+                <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+                <input
+                  type="text"
+                  className="form-control ps-5 py-3 border-secondary"
+                  placeholder="Buscar por DNI..."
+                  value={dniBusqueda}
+                  onChange={(e) => setdniBusqueda(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
+              {resultadosFiltrados.length > 0 ? (
+                <div className="table-responsive rounded border">
+                  <table className="table table-hover align-middle mb-0">
+                    <thead className="bg-light">
+                      <tr>
+                        <th className="border-end">Nombre completo</th>
+                        <th className="border-end">DNI</th>
+                        <th className="border-end">Teléfono</th>
+                        <th className="border-end">Email</th>
+                        <th className="border-end">Plan</th>
+                        <th className="text-center">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...resultadosFiltrados]
+                        .sort((a, b) => (a.apellido || '').localeCompare(b.apellido || ''))
+                        .map((bombero) => (
+                          <tr key={bombero.dni}>
+                            <td className="border-end">{bombero.nombre} {bombero.apellido}</td>
+                            <td className="border-end">{bombero.dni}</td>
+                            <td className="border-end">{bombero.telefono || 'N/A'}</td>
+                            <td className="border-end text-primary">{bombero.correo || 'N/A'}</td>
+                            <td className="border-end">
+                              <span className={`badge ${bombero.esDelPlan ? 'bg-success' : 'bg-secondary'}`}>
+                                {bombero.esDelPlan ? 'Sí' : 'No'}
+                              </span>
+                            </td>
+                            <td className="text-center">
+                              <button
+                                className="btn btn-outline-secondary btn-sm me-2"
+                                onClick={() => seleccionarBombero(bombero)}
+                                disabled={loading}
+                              >
+                                <i className="bi bi-eye me-1"></i> Ver
+                              </button>
+                              <button
+                                className="btn btn-outline-danger btn-sm"
+                                onClick={() => eliminarBombero(bombero)}
+                                disabled={loading}
+                              >
+                                <i className="bi bi-trash"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : !loading && resultadosFiltrados.length === 0 && (
+                <div className="text-center py-3 text-muted">
+                  No hay resultados para la búsqueda.
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Detalles */}
+          {bomberoSeleccionado && (
+            <div className="mt-4">
+              <div className="d-flex justify-content-between align-items-center mb-4">
+                <h3 className="text-dark mb-0">
+                  {modoEdicion ? `✏️ Editando: ${bomberoSeleccionado.nombre}` : `👤 Detalles: ${bomberoSeleccionado.nombre}`}
+                </h3>
+                <div>
+                  {!modoEdicion && (
+                    <button className="btn btn-warning btn-sm me-2" onClick={activarEdicion}>
+                      ✏️ Editar
+                    </button>
+                  )}
+                  <button className="btn btn-secondary btn-sm" onClick={volverListado}>
+                    ← Volver
+                  </button>
+                </div>
+              </div>
+              <FormularioBombero
+                modo={modoEdicion ? 'edicion' : 'consulta'}
+                datosIniciales={bomberoSeleccionado}
+                onVolver={volverListado}
+                loading={loading}
               />
             </div>
+          )}
 
-            {resultadosFiltrados.length > 0 ? (
-              <div className="table-responsive">
-                <table className="tabla-bomberos">
-                  <thead>
-                    <tr>
-                      <th>Nombre completo</th>
-                      <th>DNI</th>
-                      <th>Teléfono</th>
-                      <th>Email</th>
-                      <th>Es del Plan</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...resultadosFiltrados]
-                      .sort((a, b) => (a.apellido || '').localeCompare(b.apellido || '', undefined, { sensitivity: 'base' }))
-                      .map((bombero, index) => (
-                        <tr key={bombero.dni || index}>
-                          <td>{bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : bombero.nombre || bombero.apellido || 'N/A'}</td>
-                          <td>{bombero.dni || 'N/A'}</td>
-                          <td>{bombero.telefono || 'N/A'}</td>
-                          <td>{bombero.correo || 'N/A'}</td>
-                          <td>
-                            <span className={`badge ${(bombero.esDelPlan || bombero.es_del_plan) ? 'bg-success' : 'bg-secondary'}`}>
-                              {(bombero.esDelPlan || bombero.es_del_plan) ? 'Sí' : 'No'}
-                            </span>
-                          </td>
-                          <td>
-                            <button
-                              className="btn btn-outline-light btn-sm me-2"
-                              onClick={() => seleccionarBombero(bombero)}
-                              disabled={loading}
-                            >
-                              Ver detalles
-                            </button>
-                            <button
-                              className="btn btn-outline-danger btn-sm"
-                              onClick={() => eliminarBombero(bombero)}
-                              disabled={loading}
-                              title="Eliminar bombero"
-                            >
-                              ❌
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : !loading && bomberos.length === 0 ? (
-              <div className="text-center text-black">
-                <p>No hay bomberos registrados.</p>
-              </div>
-            ) : !loading && resultadosFiltrados.length === 0 && dniBusqueda ? (
-              <div className="text-center text-black">
-                <p>No se encontraron bomberos que coincidan con la búsqueda.</p>
-              </div>
-            ) : null}
-          </>
-        )}
-
-        {bomberoSeleccionado && (
-          <div className="detalle-bombero">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <h3 className="text-black mb-0">
-                {modoEdicion ? (
-                  <>✏️ Editando: {bomberoSeleccionado.nombre && bomberoSeleccionado.apellido ? `${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}` : 'Bombero'}</>
-                ) : (
-                  <>👤 Detalles: {bomberoSeleccionado.nombre && bomberoSeleccionado.apellido ? `${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}` : 'Bombero'}</>
-                )}
-              </h3>
-              <div className="d-flex gap-2">
-                {!modoEdicion && (
-                  <button
-                    className="btn btn-warning btn-sm"
-                    onClick={activarEdicion}
-                    disabled={loading}
-                  >
-                    ✏️ Editar
-                  </button>
-                )}
-                <button
-                  className="btn btn-secondary btn-sm"
-                  onClick={volverListado}
-                  disabled={loading}
-                >
-                  ← Volver al listado
-                </button>
-              </div>
-            </div>
-
-            <FormularioBombero
-              modo={modoEdicion ? 'edicion' : 'consulta'}
-              datosIniciales={bomberoSeleccionado}
-              onSubmit={guardarCambios}
-              onVolver={volverListado}
-              loading={loading}
-              ocultarTitulo={true}
-            />
-          </div>
-        )}
-        <div className="text-center mt-4">
-          <button className="btn-volver btn-secondary" onClick={onVolver} disabled={loading}>
+          <button type="button" className="btn btn-secondary" onClick={onVolver}>
             Volver
           </button>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
