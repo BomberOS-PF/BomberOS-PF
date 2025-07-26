@@ -23,13 +23,22 @@ function damnificadoVacio(d) {
 }
 
 const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
-  const incidenteId = datosPrevios.id || 'temp'
+  const incidenteId = datosPrevios.idIncidente || datosPrevios.id || 'temp'
   const storageKey = `incendioForestal-${incidenteId}`
 
   const [formData, setFormData] = useState(() => {
     const saved = localStorage.getItem(storageKey)
     return saved ? JSON.parse(saved) : {}
   })
+
+  // Mostrar información del incidente básico si existe
+  const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id ? {
+    id: datosPrevios.idIncidente || datosPrevios.id,
+    tipo: datosPrevios.tipoSiniestro,
+    fecha: datosPrevios.fechaHora || datosPrevios.fecha,
+    localizacion: datosPrevios.localizacion,
+    lugar: datosPrevios.lugar
+  } : null
 
   useEffect(() => {
     setFormData(prev => ({ ...prev, ...datosPrevios }))
@@ -84,14 +93,19 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
 
   const [caracteristicasLugarOptions, setCaracteristicasLugarOptions] = useState([])
   const [areaAfectadaOptions, setAreaAfectadaOptions] = useState([])
+  const [causasProbablesOptions, setCausasProbablesOptions] = useState([])
 
   useEffect(() => {
     async function fetchOptions() {
       try {
-        const resCaract = await apiRequest(API_URLS.caracteristicasLugar)
+        const [resCaract, resArea, resCausas] = await Promise.all([
+          apiRequest(API_URLS.caracteristicasLugar),
+          apiRequest(API_URLS.areasAfectadas),
+          apiRequest(API_URLS.causasProbables)
+        ])
         setCaracteristicasLugarOptions(resCaract.data || [])
-        const resArea = await apiRequest(API_URLS.areasAfectadas)
         setAreaAfectadaOptions(resArea.data || [])
+        setCausasProbablesOptions(resCausas.data || [])
       } catch (e) {
         setErrorMsg('Error al cargar opciones de catálogo. Intente recargar la página.')
       }
@@ -134,19 +148,30 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
     const data = {
       fecha: toMySQLDatetime(new Date()),
       idLocalizacion: 1,
-      descripcion: formData.detalle || '',
+      descripcion: `Incendio Forestal - ${formData.caracteristicaLugar ? 'Característica: ' + caracteristicasLugarOptions.find(opt => opt.idCaractLugar == formData.caracteristicaLugar)?.descripcion : ''} - ${formData.unidadAfectada ? 'Área: ' + areaAfectadaOptions.find(opt => opt.idAreaAfectada == formData.unidadAfectada)?.descripcion : ''}`,
       caracteristicasLugar: formData.caracteristicaLugar && formData.caracteristicaLugar !== "" ? Number(formData.caracteristicaLugar) : null,
       areaAfectada: formData.unidadAfectada && formData.unidadAfectada !== "" ? Number(formData.unidadAfectada) : null,
       cantidadAfectada: formData.cantidadAfectada ? Number(formData.cantidadAfectada) : null,
       causaProbable: formData.causaProbable && formData.causaProbable !== "" ? Number(formData.causaProbable) : null,
+      detalle: formData.detalle || '',
       damnificados: damnificadosFiltrados
     };
+
+    // Si existe un incidente previo, incluir su ID
+    if (datosPrevios.idIncidente || datosPrevios.id) {
+      data.idIncidente = datosPrevios.idIncidente || datosPrevios.id
+    }
     try {
       await apiRequest(API_URLS.incidentes.createIncendioForestal, {
         method: 'POST',
         body: JSON.stringify(data)
       });
-      setSuccessMsg('Incidente de incendio forestal cargado con éxito');
+      
+      const esActualizacion = datosPrevios.idIncidente || datosPrevios.id
+      setSuccessMsg(esActualizacion ? 
+        'Incidente de incendio forestal actualizado con éxito' : 
+        'Incidente de incendio forestal cargado con éxito'
+      );
       setErrorMsg('');
       localStorage.removeItem(storageKey);
       if (onFinalizar) onFinalizar();
@@ -163,6 +188,25 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
     <div className="container d-flex justify-content-center align-items-center">
       <div className="formulario-consistente p-4 shadow rounded">
         <h2 className="text-black text-center mb-4">Incendio Forestal</h2>
+        
+        {/* Información del incidente básico */}
+        {incidenteBasico && (
+          <div className="alert alert-info mb-4">
+            <h6 className="alert-heading">📋 Incidente Base Registrado</h6>
+            <div className="row">
+              <div className="col-md-6">
+                <strong>ID:</strong> {incidenteBasico.id}<br/>
+                <strong>Tipo:</strong> {incidenteBasico.tipo}<br/>
+                <strong>Fecha:</strong> {incidenteBasico.fecha}
+              </div>
+              <div className="col-md-6">
+                <strong>Localización:</strong> {incidenteBasico.localizacion}<br/>
+                <strong>Lugar:</strong> {incidenteBasico.lugar}
+              </div>
+            </div>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label className="text-black form-label" htmlFor="caracteristicaLugar">Características del lugar *</label>
@@ -197,10 +241,9 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
             <label className="text-black form-label">Causa probable</label>
             <select className="form-select" id="causaProbable" value={formData.causaProbable || ''} onChange={handleChange}>
               <option disabled value="">Seleccione</option>
-              <option value="1">Negligencia</option>
-              <option value="2">Natural</option>
-              <option value="3">Imprudencia</option>
-              <option value="4">Se desconoce</option>
+              {causasProbablesOptions.map(opt => (
+                <option key={opt.idCausaProbable} value={opt.idCausaProbable}>{opt.descripcion}</option>
+              ))}
             </select>
           </div>
 
@@ -227,7 +270,7 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
           </button>
 
           <button type="submit" className="btn btn-danger w-100 mt-3" disabled={loading}>
-            {loading ? 'Cargando...' : 'Finalizar carga'}
+            {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Actualizar incendio forestal' : 'Finalizar carga')}
           </button>
           <button type="button" className="btn btn-secondary w-100 mt-2" onClick={guardarLocalmente} disabled={loading}>
             Guardar y continuar después

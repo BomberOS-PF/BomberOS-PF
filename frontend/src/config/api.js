@@ -60,6 +60,9 @@ export const API_URLS = {
 
   caracteristicasLugar: `${API_BASE_URL}/caracteristicas-lugar`,
   areasAfectadas: `${API_BASE_URL}/areas-afectadas`,
+  tiposIncidente: `${API_BASE_URL}/tipos-incidente`,
+  localizaciones: `${API_BASE_URL}/localizaciones`,
+  causasProbables: `${API_BASE_URL}/causas-probables`,
 
   // Health check
   health: 'http://localhost:3000/health'

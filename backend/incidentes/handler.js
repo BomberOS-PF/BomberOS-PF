@@ -142,10 +142,17 @@ export const construirIncidenteHandler = (incidenteService) => {
         logger.info('📥 Crear incendio forestal solicitado', { body: req.body })
         const datosValidados = crearIncendioForestalDto(req.body)
         const result = await incidenteService.crearIncendioForestal(datosValidados)
-        res.status(201).json(result)
+        res.status(201).json({
+          success: true,
+          message: 'Incendio forestal creado exitosamente',
+          data: result
+        })
       } catch (error) {
         logger.error('❌ Error al crear incendio forestal', { error: error.message })
-        next(error)
+        res.status(400).json({
+          success: false,
+          message: error.message
+        })
       }
     }
   }

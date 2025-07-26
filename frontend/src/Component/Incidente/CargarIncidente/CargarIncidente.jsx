@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './CargarIncidente.css'
 import '../../DisenioFormulario/DisenioFormulario.css'
+import { API_URLS, apiRequest } from '../../../config/api'
 
 const CargarIncidente = ({ onVolver, onNotificar}) => {
   const now = new Date()
@@ -24,6 +25,33 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
 
   const [incidenteCreado, setIncidenteCreado] = useState(null)
   const [notificandoBomberos, setNotificandoBomberos] = useState(false)
+  
+  // Estados para los datos dinámicos
+  const [tiposIncidente, setTiposIncidente] = useState([])
+  const [localizaciones, setLocalizaciones] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  // Cargar datos dinámicos al montar el componente
+  useEffect(() => {
+    const cargarDatos = async () => {
+      try {
+        setLoading(true)
+        const [tiposRes, localizacionesRes] = await Promise.all([
+          apiRequest(API_URLS.tiposIncidente),
+          apiRequest(API_URLS.localizaciones)
+        ])
+        
+        setTiposIncidente(tiposRes.data || [])
+        setLocalizaciones(localizacionesRes.data || [])
+      } catch (error) {
+        console.error('Error al cargar datos:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    cargarDatos()
+  }, [])
 
   const handleChange = (e) => {
     const { id, value } = e.target
@@ -37,29 +65,23 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
 
   const guardarIncidente = async () => {
     try {
-      const tipoMap = {
-        'Accidente': 1,
-        'Factores Climáticos': 2,
-        'Incendio Estructural': 3,
-        'Incendio Forestal': 4,
-        'Material Peligroso': 5,
-        'Rescate': 6
+      // Buscar el ID del tipo de incidente seleccionado
+      const tipoSeleccionado = tiposIncidente.find(tipo => tipo.nombre === formData.tipoSiniestro)
+      if (!tipoSeleccionado) {
+        throw new Error('Tipo de incidente no válido')
       }
 
-      const localizacionMap = {
-        'Despeñaderos': 1,
-        'Zona Rural': 2,
-        'Zona Urbana': 3,
-        'Zona Industrial': 4,
-        'Zona Costera': 5,
-        'Otros': 6
+      // Buscar el ID de la localización seleccionada
+      const localizacionSeleccionada = localizaciones.find(loc => loc.descripcion === formData.localizacion)
+      if (!localizacionSeleccionada) {
+        throw new Error('Localización no válida')
       }
 
       const payload = {
         dni: usuario?.dni,
-        idTipoIncidente: tipoMap[formData.tipoSiniestro],
+        idTipoIncidente: tipoSeleccionado.idTipoIncidente,
         fecha: formData.fechaHora,
-        idLocalizacion: localizacionMap[formData.localizacion] || 99,
+        idLocalizacion: localizacionSeleccionada.idLocalizacion,
         descripcion: formData.lugar
       }
 
@@ -101,7 +123,19 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
       setIncidenteCreado(incidenteGuardado)
 
       if (onNotificar) {
-        onNotificar(formData.tipoSiniestro, incidenteGuardado)
+        // Pasar datos más completos al formulario específico
+        const datosParaFormulario = {
+          ...incidenteGuardado,
+          tipoSiniestro: formData.tipoSiniestro,
+          fechaHora: formData.fechaHora,
+          localizacion: formData.localizacion,
+          lugar: formData.lugar,
+          nombreDenunciante: formData.nombreDenunciante,
+          apellidoDenunciante: formData.apellidoDenunciante,
+          telefonoDenunciante: formData.telefonoDenunciante,
+          dniDenunciante: formData.dniDenunciante
+        }
+        onNotificar(formData.tipoSiniestro, datosParaFormulario)
       }
 
     } catch (error) {
@@ -156,7 +190,19 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
 
         // Callback para manejar el flujo posterior
         if (onNotificar) {
-          onNotificar(formData.tipoSiniestro, incidente)
+          // Pasar datos más completos al formulario específico
+          const datosParaFormulario = {
+            ...incidente,
+            tipoSiniestro: formData.tipoSiniestro,
+            fechaHora: formData.fechaHora,
+            localizacion: formData.localizacion,
+            lugar: formData.lugar,
+            nombreDenunciante: formData.nombreDenunciante,
+            apellidoDenunciante: formData.apellidoDenunciante,
+            telefonoDenunciante: formData.telefonoDenunciante,
+            dniDenunciante: formData.dniDenunciante
+          }
+          onNotificar(formData.tipoSiniestro, datosParaFormulario)
         }
       } else {
         throw new Error(data.message || 'Error en la notificación')
@@ -190,12 +236,15 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
               <label htmlFor="tipoSiniestro" className="text-black form-label">Tipo de Siniestro</label>
               <select className="form-select" id="tipoSiniestro" required onChange={handleChange} defaultValue="">
                 <option disabled value="">Seleccione tipo</option>
-                <option>Accidente</option>
-                <option>Factores Climáticos</option>
-                <option>Incendio Estructural</option>
-                <option>Incendio Forestal</option>
-                <option>Material Peligroso</option>
-                <option>Rescate</option>
+                {loading ? (
+                  <option>Cargando tipos...</option>
+                ) : (
+                  tiposIncidente.map(tipo => (
+                    <option key={tipo.idTipoIncidente} value={tipo.nombre}>
+                      {tipo.nombre}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
           </div>
@@ -242,12 +291,15 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
               <label htmlFor="localizacion" className="text-black form-label">Localización</label>
               <select className="form-select" id="localizacion" required onChange={handleChange} defaultValue="">
                 <option disabled value="">Seleccione localización</option>
-                <option>Despeñaderos</option>
-                <option>Zona Rural</option>
-                <option>Zona Urbana</option>
-                <option>Zona Industrial</option>
-                <option>Zona Costera</option>
-                <option>Otros</option>
+                {loading ? (
+                  <option>Cargando localizaciones...</option>
+                ) : (
+                  localizaciones.map(loc => (
+                    <option key={loc.idLocalizacion} value={loc.descripcion}>
+                      {loc.descripcion}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 

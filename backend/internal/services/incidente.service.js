@@ -3,7 +3,7 @@ import { IncidenteServiceInterface } from '../../interfaces/service.interface.js
 import { logger } from '../platform/logger/logger.js'
 
 export class IncidenteService extends IncidenteServiceInterface {
-  constructor(incidenteRepository, denuncianteRepository, bomberoService = null, whatsappService = null, damnificadoRepository = null, incendioForestalRepository = null, areaAfectadaRepository = null) {
+  constructor(incidenteRepository, denuncianteRepository, bomberoService = null, whatsappService = null, damnificadoRepository = null, incendioForestalRepository = null, areaAfectadaRepository = null, tipoIncidenteService = null) {
     super()
     this.incidenteRepository = incidenteRepository
     this.denuncianteRepository = denuncianteRepository
@@ -12,6 +12,7 @@ export class IncidenteService extends IncidenteServiceInterface {
     this.damnificadoRepository = damnificadoRepository
     this.incendioForestalRepository = incendioForestalRepository
     this.areaAfectadaRepository = areaAfectadaRepository
+    this.tipoIncidenteService = tipoIncidenteService
   }
 
   async crearIncidente(data) {
@@ -61,17 +62,33 @@ export class IncidenteService extends IncidenteServiceInterface {
   }
 
   async crearIncendioForestal(data) {
-    // 1. Crear incidente
-    const incidente = await this.incidenteRepository.create({
-      idTipoIncidente: 4, // Incendio Forestal
-      fecha: data.fecha,
-      idLocalizacion: data.idLocalizacion,
-      descripcion: data.descripcion
-    })
+    let incidente
 
-    // 2. Crear registro en incendio_forestal
+    // Si ya existe un incidente, actualizarlo; si no, crear uno nuevo
+    if (data.idIncidente) {
+      // Actualizar incidente existente
+      incidente = await this.incidenteRepository.obtenerPorId(data.idIncidente)
+      if (!incidente) {
+        throw new Error(`Incidente con ID ${data.idIncidente} no encontrado`)
+      }
+      
+      // Actualizar con los datos específicos del incendio forestal
+      await this.incidenteRepository.actualizar(data.idIncidente, {
+        descripcion: data.descripcion || incidente.descripcion
+      })
+    } else {
+      // Crear nuevo incidente
+      incidente = await this.incidenteRepository.create({
+        idTipoIncidente: 4, // Incendio Forestal
+        fecha: data.fecha,
+        idLocalizacion: data.idLocalizacion,
+        descripcion: data.descripcion
+      })
+    }
+
+    // Crear o actualizar registro en incendio_forestal
     await this.incendioForestalRepository.insertarIncendioForestal({
-      idIncidente: incidente.idIncidente,
+      idIncidente: incidente.idIncidente || incidente.id,
       caracteristicasLugar: data.caracteristicasLugar,
       areaAfectada: data.areaAfectada,
       cantidadAfectada: data.cantidadAfectada,
@@ -79,14 +96,12 @@ export class IncidenteService extends IncidenteServiceInterface {
       detalle: data.detalle
     })
 
-    // 3. La cantidad se guarda directamente en la tabla forestal (no necesitamos actualizar areaAfectada)
-
-    // 4. Guardar damnificados
+    // Guardar damnificados
     if (Array.isArray(data.damnificados) && this.damnificadoRepository) {
       for (const damnificado of data.damnificados) {
         await this.damnificadoRepository.insertarDamnificado({
           ...damnificado,
-          idIncidente: incidente.idIncidente
+          idIncidente: incidente.idIncidente || incidente.id
         })
       }
     }
@@ -148,9 +163,9 @@ export class IncidenteService extends IncidenteServiceInterface {
       // Construir datos del incidente para el mensaje
       const incidenteParaMensaje = {
         id: incidente.id,
-        tipo: this.mapearTipoIncidente(incidente.idTipoIncidente),
+        tipo: await this.mapearTipoIncidente(incidente.idTipoIncidente),
         fecha: incidente.fecha,
-        ubicacion: `Localización ID: ${incidente.idLocalizacion}`, // TODO: mapear a nombre real
+        ubicacion: incidente.localizacion || `Localización ID: ${incidente.idLocalizacion}`,
         descripcion: incidente.descripcion
       }
 
@@ -190,16 +205,12 @@ export class IncidenteService extends IncidenteServiceInterface {
   /**
    * Mapear ID de tipo de incidente a nombre legible
    */
-  mapearTipoIncidente(idTipo) {
-    const tipos = {
-      1: 'Accidente de Tránsito',
-      2: 'Factores Climáticos',
-      3: 'Incendio Estructural',
-      4: 'Incendio Forestal',
-      5: 'Material Peligroso',
-      6: 'Rescate'
+  async mapearTipoIncidente(idTipo) {
+    if (!this.tipoIncidenteService) {
+      throw new Error('TipoIncidenteService no disponible para mapear tipos')
     }
-    return tipos[idTipo] || `Tipo ${idTipo}`
+    const tipo = await this.tipoIncidenteService.obtenerPorId(idTipo)
+    return tipo ? tipo.nombre : `Tipo ${idTipo}`
   }
 
   async listarIncidentes() {

@@ -8,7 +8,12 @@ export class MySQLIncidenteRepository {
   }
 
   async findAll() {
-    const query = `SELECT * FROM ${this.tableName} ORDER BY fecha DESC`
+    const query = `
+      SELECT i.*, l.direccion as localizacion 
+      FROM ${this.tableName} i
+      LEFT JOIN localizacion l ON i.idLocalizacion = l.idLocalizacion
+      ORDER BY i.fecha DESC
+    `
     const connection = getConnection()
 
     try {
@@ -22,7 +27,12 @@ export class MySQLIncidenteRepository {
   }
 
   async findById(id) {
-    const query = `SELECT * FROM ${this.tableName} WHERE idIncidente = ?`
+    const query = `
+      SELECT i.*, l.direccion as localizacion 
+      FROM ${this.tableName} i
+      LEFT JOIN localizacion l ON i.idLocalizacion = l.idLocalizacion
+      WHERE i.idIncidente = ?
+    `
     const connection = getConnection()
 
     try {

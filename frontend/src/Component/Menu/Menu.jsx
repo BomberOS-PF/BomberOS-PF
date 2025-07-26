@@ -109,7 +109,15 @@ const Menu = ({ user, setUser }) => {
 
   const manejarFinalizarCarga = (datos) => {
     if (burbujaExpandida) cerrarBurbuja(burbujaExpandida)
-    setDatosFinalizados(datos)
+    
+    // Combinar datos del incidente básico con los específicos
+    const datosCompletos = {
+      ...datosFinalizados, // Datos del incidente básico
+      ...datos, // Datos específicos del tipo de incidente
+      incidenteCompleto: true
+    }
+    
+    setDatosFinalizados(datosCompletos)
     setOpcionSeleccionada('participacion-incidente')
   }
 

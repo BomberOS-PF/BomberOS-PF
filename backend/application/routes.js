@@ -21,7 +21,7 @@ export function setupRoutes(app, container) {
 
   app.get('/', (req, res) => res.redirect('/health'))
 
-  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, recuperarClaveHandler, validarTokenHandler, restablecerClaveHandler,incendioEstructuralHandler, forestalCatalogosHandler } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, recuperarClaveHandler, validarTokenHandler, restablecerClaveHandler,incendioEstructuralHandler, forestalCatalogosHandler, tipoIncidenteHandler, localizacionHandler, causaProbableHandler } = container
 
   // ROLES
   app.get('/api/roles', async (req, res) => {
@@ -392,6 +392,63 @@ export function setupRoutes(app, container) {
   })
   app.get('/api/areas-afectadas', async (req, res) => {
     await forestalCatalogosHandler.listarAreasAfectadas(req, res)
+  })
+
+  // TIPOS DE INCIDENTE
+  app.get('/api/tipos-incidente', async (req, res) => {
+    try {
+      await tipoIncidenteHandler.listarTiposIncidente(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listarTiposIncidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/tipos-incidente/:id', async (req, res) => {
+    try {
+      await tipoIncidenteHandler.obtenerTipoIncidentePorId(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtenerTipoIncidentePorId:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // LOCALIZACIONES
+  app.get('/api/localizaciones', async (req, res) => {
+    try {
+      await localizacionHandler.listarLocalizaciones(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listarLocalizaciones:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/localizaciones/:id', async (req, res) => {
+    try {
+      await localizacionHandler.obtenerLocalizacionPorId(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtenerLocalizacionPorId:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // CAUSAS PROBABLES
+  app.get('/api/causas-probables', async (req, res) => {
+    try {
+      await causaProbableHandler.listarCausasProbables(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listarCausasProbables:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/causas-probables/:id', async (req, res) => {
+    try {
+      await causaProbableHandler.obtenerCausaProbablePorId(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtenerCausaProbablePorId:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
   })
 
   // RECUPERAR Y RESTABLECER CLAVE
