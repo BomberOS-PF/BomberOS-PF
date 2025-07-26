@@ -82,6 +82,7 @@ const Menu = ({ user, setUser }) => {
     }
   }, [opcionSeleccionada])
 
+  // Permite abrir una burbuja flotante según el tipo
   const agregarBurbuja = (tipo, datosPrevios) => {
     const id = datosPrevios?.id || Date.now()
     const yaExiste = burbujas.find(b => b.id === id)
@@ -119,7 +120,7 @@ const Menu = ({ user, setUser }) => {
     if (sidebar && Offcanvas) {
       let instancia = Offcanvas.getInstance(sidebar)
       if (!instancia) {
-        instancia = new Offcanvas(sidebar) // fuerza la instancia
+        instancia = new Offcanvas(sidebar)
       }
       instancia.hide()
 
@@ -132,6 +133,7 @@ const Menu = ({ user, setUser }) => {
     }
   }
 
+  // Renderiza el formulario expandido según el tipo de incidente
   const renderFormularioExpandido = () => {
     const burbuja = burbujas.find(b => b.id === burbujaExpandida)
     if (!burbuja) return null
@@ -180,6 +182,7 @@ const Menu = ({ user, setUser }) => {
 
   return (
     <div>
+      {/* Sidebar */}
       <div className="offcanvas offcanvas-start bg-black text-white" tabIndex="-1" id="sidebarMenu">
         <div className="offcanvas-header d-flex justify-content-between px-3 py-3 sidebar-header">
           <div className="d-flex align-items-center">
@@ -220,6 +223,7 @@ const Menu = ({ user, setUser }) => {
         </div>
       </div>
 
+      {/* Topbar */}
       <header className="bg-dark border-bottom border-secondary p-3 d-flex justify-content-between align-items-center topbar">
         <button
           id='btnHamburguesa'
@@ -240,6 +244,7 @@ const Menu = ({ user, setUser }) => {
         </div>
       </header>
 
+      {/* Contenido principal */}
       <div className="p-4">
         {burbujaExpandida ? renderFormularioExpandido() : opcionSeleccionada !== null && (
           <div className="form-wrapper">
@@ -264,6 +269,7 @@ const Menu = ({ user, setUser }) => {
         )}
       </div>
 
+      {/* Burbujas flotantes */}
       {burbujas.map((b, i) => (
         <div key={b.id} style={{ position: 'fixed', right: `${20 + i * 370}px`, bottom: 0, zIndex: 9999 }}>
           <BurbujaFormulario {...b} onCerrar={cerrarBurbuja} onToggleMinimizada={toggleMinimizada} />
