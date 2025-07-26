@@ -209,7 +209,7 @@ export class IncidenteService extends IncidenteServiceInterface {
     if (!this.tipoIncidenteService) {
       throw new Error('TipoIncidenteService no disponible para mapear tipos')
     }
-    const tipo = await this.tipoIncidenteService.obtenerPorId(idTipo)
+    const tipo = await this.tipoIncidenteService.obtenerTipoIncidentePorId(idTipo)
     return tipo ? tipo.nombre : `Tipo ${idTipo}`
   }
 
