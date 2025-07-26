@@ -294,4 +294,15 @@ export class MySQLUsuarioRepository {
       throw new Error(`Error al obtener usuarios sin bombero: ${error.message}`)
     }
   }
+
+  async actualizarContrasenaPorEmail(email, nuevaContrasenaHasheada) {
+    const conn = getConnection()
+    const [result] = await conn.execute(
+      'UPDATE usuario SET password = ? WHERE email = ?',
+      [nuevaContrasenaHasheada, email]
+    )
+    logger.debug('Contraseña actualizada por email', { email })
+    return result.affectedRows > 0
+  }
 } 
+

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { API_URLS } from '../../../config/api'
-import '../RegistrarGuardia.css'
+import './RegistrarGuardia.css'
+
 import '../../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial = '', bomberosIniciales = [], onVolver }) => {
@@ -15,8 +16,6 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
   const [mensaje, setMensaje] = useState('')
   const [loading, setLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
-
-  
 
   const modoEdicion = Boolean(idGrupo)
 

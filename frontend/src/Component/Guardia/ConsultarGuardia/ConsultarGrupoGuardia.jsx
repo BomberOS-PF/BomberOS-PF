@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { API_URLS } from '../../../config/api'
-import '../RegistrarGuardia.css'
 import RegistrarGuardia from '../RegistrarGuardia/RegistrarGuardia'
+import '../RegistrarGuardia/RegistrarGuardia.css'
 import '../../DisenioFormulario/DisenioFormulario.css'
 import ConsultarBomberosDelGrupo from './ConsultarBomberosDelGrupo'
 import * as bootstrap from 'bootstrap'

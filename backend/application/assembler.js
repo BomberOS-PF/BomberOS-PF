@@ -41,19 +41,27 @@ import { VehiculoService } from '../internal/services/vehiculo.service.js'
 import { VehiculoHandler } from '../vehiculo/handler.js'
 
 import { MySQLAccidenteDamnificadoRepository } from '../internal/repositories/mysql/accidenteDamnificado.repository.js'
-
 import { MySQLAccidenteVehiculoRepository } from '../internal/repositories/mysql/accidenteVehiculo.repository.js'
 import { AccidenteVehiculoService } from '../internal/services/accidenteVehiculo.service.js'
+
+// 🔥 Incendio Estructural
+import { IncendioEstructuralHandler } from '../incendioEstructural/handler.js'
+import { IncendioEstructuralService } from '../internal/services/incendioEstructural.service.js'
+import { MySQLIncendioEstructuralRepository } from '../internal/repositories/mysql/incendioEstructural.repository.js'
 
 import { MySQLRangoRepository } from '../internal/repositories/mysql/rango.repository.js'
 import { RangoService } from '../internal/services/rango.service.js'
 import { RangoHandler } from '../rangos/handler.js'
-
 import { MySQLCaracteristicasLugarRepository } from '../internal/repositories/mysql/caracteristicasLugar.repository.js';
 import { MySQLAreaAfectadaRepository } from '../internal/repositories/mysql/areaAfectada.repository.js';
 import { CaracteristicasLugarService } from '../internal/services/caracteristicasLugar.service.js';
 import { AreaAfectadaService } from '../internal/services/areaAfectada.service.js';
 import { ForestalCatalogosHandler } from '../forestal/handler.js';
+import { MySQLTokenRepository } from '../internal/repositories/mysql/token.repository.js'
+import { TokenService } from '../internal/services/token.service.js'
+import { construirRecuperarClaveHandlers } from '../recuperarClave/handler.js'
+import { construirRestablecerClaveHandler } from '../restablecerClave/handler.js'
+
 
 export async function createServer(config) {
   try {
@@ -70,7 +78,7 @@ export async function createServer(config) {
     const denuncianteRepository = new MySQLDenuncianteRepository()
     const grupoGuardiaRepository = new MySQLGrupoGuardiaRepository()
     const rolRepository = new MySQLRolRepository()
-    const damnificadoRepository = new MySQLDamnificadoRepository ()
+    const damnificadoRepository = new MySQLDamnificadoRepository()
     const accidenteTransitoRepository = new MySQLAccidenteTransitoRepository()
     const causaAccidenteRepository = new MySQLCausaAccidenteRepository()
     const vehiculoRepository = new MySQLVehiculoRepository()
@@ -80,7 +88,9 @@ export async function createServer(config) {
     const incendioForestalRepository = new (await import('../internal/repositories/mysql/incendioForestal.repository.js')).MySQLIncendioForestalRepository()
     const caracteristicasLugarRepository = new MySQLCaracteristicasLugarRepository();
     const areaAfectadaRepository = new MySQLAreaAfectadaRepository();
-    
+    const tokenRepository = new MySQLTokenRepository()
+    const incendioEstructuralRepository = new MySQLIncendioEstructuralRepository()
+
     // Servicios
     const whatsappService = new WhatsAppService(config)
     logger.info('📱 Servicio WhatsApp inicializado')
@@ -90,7 +100,7 @@ export async function createServer(config) {
     const incidenteService = new IncidenteService(incidenteRepository, denuncianteRepository, bomberoService, whatsappService, damnificadoRepository, incendioForestalRepository)
     const grupoGuardiaService = new GrupoGuardiaService(grupoGuardiaRepository, bomberoRepository)
     const rolService = new RolService(rolRepository)
-    const causaAccidenteService = new CausaAccidenteService (causaAccidenteRepository)
+    const causaAccidenteService = new CausaAccidenteService(causaAccidenteRepository)
     const accidenteTransitoService = new AccidenteTransitoService({
       accidenteTransitoRepository,
       vehiculoRepository,
@@ -102,9 +112,15 @@ export async function createServer(config) {
     const damnificadoService = new DamnificadoService(damnificadoRepository)
     const accidenteVehiculoService = new AccidenteVehiculoService(accidenteVehiculoRepository)
     const rangoService = new RangoService(rangoRepository)
+
     const caracteristicasLugarService = new CaracteristicasLugarService(caracteristicasLugarRepository);
     const areaAfectadaService = new AreaAfectadaService(areaAfectadaRepository);
     const forestalCatalogosHandler = new ForestalCatalogosHandler(caracteristicasLugarService, areaAfectadaService);
+
+    const tokenService = new TokenService(tokenRepository, usuarioRepository)
+    const incendioEstructuralService = new IncendioEstructuralService(
+      incendioEstructuralRepository
+    )
 
     // Handlers
     const bomberoHandler = new BomberoHandler(bomberoService)
@@ -116,6 +132,15 @@ export async function createServer(config) {
     const accidenteTransitoHandler = new AccidenteTransitoHandler(accidenteTransitoService)
     const vehiculoHandler = new VehiculoHandler(vehiculoService)
     const rangoHandler = new RangoHandler(rangoService)
+    const { recuperarClaveHandler, validarTokenHandler } =
+      construirRecuperarClaveHandlers(tokenService)
+    const { restablecerClaveHandler } = construirRestablecerClaveHandler(
+      tokenService,
+      usuarioRepository
+    )
+    const incendioEstructuralHandler = new IncendioEstructuralHandler(
+      incendioEstructuralService
+    )
 
     // Contenedor
     const container = {
@@ -152,6 +177,9 @@ export async function createServer(config) {
       rangoHandler,
       rangoRepository,
       rangoService,
+      recuperarClaveHandler,
+      validarTokenHandler,
+      restablecerClaveHandler,
       dbConnection,
       config,
       forestalCatalogosHandler,
@@ -159,14 +187,56 @@ export async function createServer(config) {
       areaAfectadaService,
       caracteristicasLugarRepository,
       areaAfectadaRepository,
+      incendioEstructuralRepository,
+      incendioEstructuralService,
+      incendioEstructuralHandler
     }
 
     await validateDependencies(container)
 
-    logger.info('✅ Assembler completado exitosamente')
+    logger.info('✅ Assembler completado exitosamente', {
+      services: [
+        'bomberoService',
+        'usuarioService',
+        'incidenteService',
+        'grupoGuardiaService',
+        'whatsappService',
+        'rolService',
+        'accidenteTransitoService',
+        'causaAccidenteService',
+        'vehiculoService',
+        'rangoService',
+        'incendioEstructuralService'
+      ],
+      repositories: [
+        'bomberoRepository',
+        'usuarioRepository',
+        'incidenteRepository',
+        'denuncianteRepository',
+        'grupoGuardiaRepository',
+        'rolRepository',
+        'accidenteTransitoRepository',
+        'causaAccidenteRepository',
+        'vehiculoRepository',
+        'rangoRepository',
+        'incendioEstructuralRepository'
+      ],
+      handlers: [
+        'bomberoHandler',
+        'usuarioHandler',
+        'incidenteHandler',
+        'grupoGuardiaHandler',
+        'rolesAdapter',
+        'accidenteTransitoHandler',
+        'causaAccidenteHandler',
+        'vehiculoHandler',
+        'rangoHandler',
+        'incendioEstructuralHandler'
+      ],
+      infrastructure: ['dbConnection']
+    })
 
     return { app, container }
-
   } catch (error) {
     logger.error('❌ Error en assembler:', {
       error: error.message,
@@ -202,7 +272,7 @@ async function validateDependencies(container) {
     if (!container.rolService) throw new Error('RolService no inicializado')
     if (!container.rolRepository) throw new Error('RolRepository no inicializado')
     if (!container.rolesAdapter) throw new Error('RolesAdapter no inicializado')
-    
+
     if (!container.damnificadoService) throw new Error('DamnificadoService no inicializado')
     if (!container.accidenteVehiculoService) throw new Error('AccidenteVehiculoService no inicializado')
 
@@ -213,7 +283,7 @@ async function validateDependencies(container) {
     if (!container.causaAccidenteService) throw new Error('CausaAccidenteServicee no inicializado')
     if (!container.causaAccidenteRepository) throw new Error('CausaAccidenteRepository no inicializado')
     if (!container.causaAccidenteHandler) throw new Error('CausaAccidenteHandler no inicializado')
-    
+
     if (!container.vehiculoService) throw new Error('VehiculoService no inicializado')
     if (!container.vehiculoHandler) throw new Error('VehiculoHandler no inicializado')
     if (!container.vehiculoRepository) throw new Error('VehiculoRepository no inicializado')
@@ -225,6 +295,13 @@ async function validateDependencies(container) {
     if (!container.rangoRepository) throw new Error('RangoRepository no inicializado')
     if (!container.rangoHandler) throw new Error('RangoHandler no inicializado')
 
+    if (!container.incendioEstructuralRepository)
+      throw new Error('IncendioEstructuralRepository no inicializado')
+    if (!container.incendioEstructuralService)
+      throw new Error('IncendioEstructuralService no inicializado')
+    if (!container.incendioEstructuralHandler)
+      throw new Error('IncendioEstructuralHandler no inicializado')
+
     if (!container.dbConnection) throw new Error('Database connection no inicializada')
 
     const testConnection = await container.dbConnection.getConnection()
@@ -232,7 +309,6 @@ async function validateDependencies(container) {
     testConnection.release()
 
     logger.debug('✅ Todas las dependencias validadas correctamente')
-
   } catch (error) {
     logger.error('❌ Error en validación de dependencias:', error)
     throw error

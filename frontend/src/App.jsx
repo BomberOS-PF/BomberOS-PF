@@ -17,7 +17,7 @@ import ParticipacionIncidente from './Component/Incidente/ParticipacionIncidente
 import VehiculoInvolucrado from './Component/VehiculoInvolucrado/VehiculoInvolucrado.jsx'
 import ConsultarRol from './Component/Rol/ConsultarRol.jsx'
 import RegistrarRol from './Component/Rol/RegistrarRol.jsx'
-
+import RestablecerClave from './Component/RestablecerClave/RestablecerClave.jsx'
 
 const App = () => {
   const [user, setUser] = useState(() => {
@@ -31,6 +31,7 @@ const App = () => {
     <Routes>
       <Route path="/login" element={<Login setUser={setUser} user={user} />} />
       <Route path="/recuperar-clave" element={<RecuperarClave onVolver={() => navigate('/login')} />} />
+      <Route path="/restablecer-clave" element={<RestablecerClave onVolver={() => navigate('/login')} />} />
       <Route path="/" element={<RutaPrivada user={user}><Menu user={user} setUser={setUser} /></RutaPrivada>} />
       <Route path="/registrar-bombero" element={<RutaPrivada user={user}><RegistrarBombero /></RutaPrivada>} />
       <Route path="/cargar-incidente" element={<RutaPrivada user={user}><CargarIncidente /></RutaPrivada>} />
@@ -45,6 +46,7 @@ const App = () => {
       <Route path="/rescate" element={<RutaPrivada user={user}><Rescate /></RutaPrivada>} />
       <Route path="/participacion-incidente" element={<RutaPrivada user={user}><ParticipacionIncidente /></RutaPrivada>} />
       <Route path="/vehiculo-involucrado" element={<RutaPrivada user={user}><VehiculoInvolucrado /></RutaPrivada>} />
+
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )
