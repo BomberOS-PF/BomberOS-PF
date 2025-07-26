@@ -151,7 +151,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
           <div className='bg-danger p-3 rounded-circle'>
             <Flame size={32} color="white" />
           </div>
-          <h1 className="fw-bold text-white fs-3 mb-0">Registro de Incidente</h1>
+          <h1 className="fw-bold text-white fs-3 mb-0">Cargar Incidente</h1>
         </div>
         <span className="badge bg-danger-subtle text-danger">
           <AlertTriangle className="me-2" /> Sistema de Emergencias - Cuartel de Bomberos

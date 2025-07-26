@@ -413,7 +413,7 @@ const RegistrarBombero = ({ onVolver }) => {
               <div className="col-md-3">
                 <label htmlFor="password" className="form-label text-dark fw-semibold d-flex align-items-center gap-2">
                   <Shield className="text-primary" />
-                  Password
+                  Contraseña
                 </label>
                 <input
                   type="password"
