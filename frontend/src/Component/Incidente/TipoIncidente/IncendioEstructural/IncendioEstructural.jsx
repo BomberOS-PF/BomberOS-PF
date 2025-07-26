@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './IncendioEstructural.css'
 import '../../../DisenioFormulario/DisenioFormulario.css'
 
@@ -22,7 +22,19 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
         }
   })
 
-  const [enviando, setEnviando] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [successMsg, setSuccessMsg] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
+  const toastRef = useRef(null)
+
+  // Mostrar información del incidente básico si existe
+  const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id ? {
+    id: datosPrevios.idIncidente || datosPrevios.id,
+    tipo: datosPrevios.tipoSiniestro,
+    fecha: datosPrevios.fechaHora || datosPrevios.fecha,
+    localizacion: datosPrevios.localizacion,
+    lugar: datosPrevios.lugar
+  } : null
 
   useEffect(() => {
     setFormData(prev => ({
@@ -82,7 +94,9 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
 
   const handleFinalizar = async (e) => {
     e.preventDefault()
-    setEnviando(true)
+    setLoading(true)
+    setSuccessMsg('')
+    setErrorMsg('')
 
     try {
       localStorage.setItem(storageKey, JSON.stringify(formData))
@@ -109,13 +123,20 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
         throw new Error(data.message || 'Error al registrar incendio estructural')
       }
 
-      alert('✅ Incendio estructural registrado correctamente')
-
+      const esActualizacion = datosPrevios.idIncidente || datosPrevios.id
+      setSuccessMsg(esActualizacion ? 
+        'Incendio estructural actualizado con éxito' : 
+        '✅ Incendio estructural registrado correctamente'
+      )
+      setErrorMsg('')
+      localStorage.removeItem(storageKey)
       if (onFinalizar) onFinalizar({ idIncidente: incidenteId })
     } catch (error) {
-      alert(`❌ Error al registrar incendio estructural: ${error.message}`)
+      setErrorMsg(`❌ Error al registrar incendio estructural: ${error.message}`)
+      setSuccessMsg('')
     } finally {
-      setEnviando(false)
+      setLoading(false)
+      if (toastRef.current) toastRef.current.focus()
     }
   }
 
@@ -123,6 +144,25 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
     <div className="container d-flex justify-content-center align-items-center">
       <div className="formulario-consistente p-4 shadow rounded">
         <h2 className="text-black text-center mb-4">Incendio Estructural</h2>
+        
+        {/* Información del incidente básico */}
+        {incidenteBasico && (
+          <div className="alert alert-info mb-4">
+            <h6 className="alert-heading">📋 Incidente Base Registrado</h6>
+            <div className="row">
+              <div className="col-md-6">
+                <strong>ID:</strong> {incidenteBasico.id}<br/>
+                <strong>Tipo:</strong> {incidenteBasico.tipo}<br/>
+                <strong>Fecha:</strong> {incidenteBasico.fecha}
+              </div>
+              <div className="col-md-6">
+                <strong>Localización:</strong> {incidenteBasico.localizacion}<br/>
+                <strong>Lugar:</strong> {incidenteBasico.lugar}
+              </div>
+            </div>
+          </div>
+        )}
+        
         <form onSubmit={handleFinalizar}>
           
           {/* LOS CAMPOS QUE YA TENÍAS */}
@@ -221,13 +261,20 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
           </button>
 
           {/* BOTONES FINALES */}
-          <button type="submit" className="btn btn-danger w-100 mt-3" disabled={enviando}>
-            {enviando ? 'Enviando...' : 'Finalizar carga'}
+          <button type="submit" className="btn btn-danger w-100 mt-3" disabled={loading}>
+            {loading ? 'Enviando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Actualizar incendio estructural' : 'Finalizar carga')}
           </button>
-          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={guardarLocalmente}>
+          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={guardarLocalmente} disabled={loading}>
             Guardar y continuar después
           </button>
         </form>
+        
+        {errorMsg && (
+          <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">{errorMsg}</div>
+        )}
+        {successMsg && (
+          <div ref={toastRef} tabIndex={-1} className="alert alert-success mt-3" role="alert">{successMsg}</div>
+        )}
       </div>
     </div>
   )

@@ -52,11 +52,25 @@ import { MySQLIncendioEstructuralRepository } from '../internal/repositories/mys
 import { MySQLRangoRepository } from '../internal/repositories/mysql/rango.repository.js'
 import { RangoService } from '../internal/services/rango.service.js'
 import { RangoHandler } from '../rangos/handler.js'
-
+import { MySQLCaracteristicasLugarRepository } from '../internal/repositories/mysql/caracteristicasLugar.repository.js';
+import { MySQLAreaAfectadaRepository } from '../internal/repositories/mysql/areaAfectada.repository.js';
+import { CaracteristicasLugarService } from '../internal/services/caracteristicasLugar.service.js';
+import { AreaAfectadaService } from '../internal/services/areaAfectada.service.js';
+import { ForestalCatalogosHandler } from '../forestal/handler.js';
 import { MySQLTokenRepository } from '../internal/repositories/mysql/token.repository.js'
 import { TokenService } from '../internal/services/token.service.js'
 import { construirRecuperarClaveHandlers } from '../recuperarClave/handler.js'
 import { construirRestablecerClaveHandler } from '../restablecerClave/handler.js'
+import { MySQLTipoIncidenteRepository } from '../internal/repositories/mysql/tipoIncidente.repository.js'
+import { TipoIncidenteService } from '../internal/services/tipoIncidente.service.js'
+import { TipoIncidenteHandler } from '../tipoIncidente/handler.js'
+import { MySQLLocalizacionRepository } from '../internal/repositories/mysql/localizacion.repository.js'
+import { LocalizacionService } from '../internal/services/localizacion.service.js'
+import { LocalizacionHandler } from '../localizacion/handler.js'
+import { MySQLCausaProbableRepository } from '../internal/repositories/mysql/causaProbable.repository.js'
+import { CausaProbableService } from '../internal/services/causaProbable.service.js'
+import { CausaProbableHandler } from '../causaProbable/handler.js'
+
 
 export async function createServer(config) {
   try {
@@ -64,6 +78,7 @@ export async function createServer(config) {
 
     const app = express()
     const dbConnection = await createConnection(config.database)
+    logger.info('📊 Conexión a base de datos establecida')
 
     // Repositorios
     const bomberoRepository = new MySQLBomberoRepository()
@@ -79,23 +94,24 @@ export async function createServer(config) {
     const accidenteDamnificadoRepository = new MySQLAccidenteDamnificadoRepository()
     const accidenteVehiculoRepository = new MySQLAccidenteVehiculoRepository()
     const rangoRepository = new MySQLRangoRepository()
+    const incendioForestalRepository = new (await import('../internal/repositories/mysql/incendioForestal.repository.js')).MySQLIncendioForestalRepository()
+    const caracteristicasLugarRepository = new MySQLCaracteristicasLugarRepository();
+    const areaAfectadaRepository = new MySQLAreaAfectadaRepository();
     const tokenRepository = new MySQLTokenRepository()
     const incendioEstructuralRepository = new MySQLIncendioEstructuralRepository()
+    const tipoIncidenteRepository = new MySQLTipoIncidenteRepository()
+    const localizacionRepository = new MySQLLocalizacionRepository()
+    const causaProbableRepository = new MySQLCausaProbableRepository()
 
     // Servicios
     const whatsappService = new WhatsAppService(config)
+    logger.info('📱 Servicio WhatsApp inicializado')
+    
     const bomberoService = new BomberoService(bomberoRepository, usuarioRepository)
     const usuarioService = new UsuarioService(usuarioRepository, bomberoRepository)
-    const incidenteService = new IncidenteService(
-      incidenteRepository,
-      denuncianteRepository,
-      bomberoService,
-      whatsappService
-    )
-    const grupoGuardiaService = new GrupoGuardiaService(
-      grupoGuardiaRepository,
-      bomberoRepository
-    )
+    const tipoIncidenteService = new TipoIncidenteService(tipoIncidenteRepository)
+    const incidenteService = new IncidenteService(incidenteRepository, denuncianteRepository, bomberoService, whatsappService, damnificadoRepository, incendioForestalRepository, areaAfectadaRepository, tipoIncidenteService)
+    const grupoGuardiaService = new GrupoGuardiaService(grupoGuardiaRepository, bomberoRepository)
     const rolService = new RolService(rolRepository)
     const causaAccidenteService = new CausaAccidenteService(causaAccidenteRepository)
     const accidenteTransitoService = new AccidenteTransitoService({
@@ -109,6 +125,13 @@ export async function createServer(config) {
     const damnificadoService = new DamnificadoService(damnificadoRepository)
     const accidenteVehiculoService = new AccidenteVehiculoService(accidenteVehiculoRepository)
     const rangoService = new RangoService(rangoRepository)
+    const localizacionService = new LocalizacionService(localizacionRepository)
+    const causaProbableService = new CausaProbableService(causaProbableRepository)
+
+    const caracteristicasLugarService = new CaracteristicasLugarService(caracteristicasLugarRepository);
+    const areaAfectadaService = new AreaAfectadaService(areaAfectadaRepository);
+    const forestalCatalogosHandler = new ForestalCatalogosHandler(caracteristicasLugarService, areaAfectadaService);
+
     const tokenService = new TokenService(tokenRepository, usuarioRepository)
     const incendioEstructuralService = new IncendioEstructuralService(
       incendioEstructuralRepository
@@ -124,6 +147,9 @@ export async function createServer(config) {
     const accidenteTransitoHandler = new AccidenteTransitoHandler(accidenteTransitoService)
     const vehiculoHandler = new VehiculoHandler(vehiculoService)
     const rangoHandler = new RangoHandler(rangoService)
+    const tipoIncidenteHandler = new TipoIncidenteHandler(tipoIncidenteService)
+    const localizacionHandler = new LocalizacionHandler(localizacionService)
+    const causaProbableHandler = new CausaProbableHandler(causaProbableService)
     const { recuperarClaveHandler, validarTokenHandler } =
       construirRecuperarClaveHandlers(tokenService)
     const { restablecerClaveHandler } = construirRestablecerClaveHandler(
@@ -169,11 +195,25 @@ export async function createServer(config) {
       rangoHandler,
       rangoRepository,
       rangoService,
+      tipoIncidenteHandler,
+      tipoIncidenteRepository,
+      tipoIncidenteService,
+      localizacionHandler,
+      localizacionRepository,
+      localizacionService,
+      causaProbableHandler,
+      causaProbableRepository,
+      causaProbableService,
       recuperarClaveHandler,
       validarTokenHandler,
       restablecerClaveHandler,
       dbConnection,
       config,
+      forestalCatalogosHandler,
+      caracteristicasLugarService,
+      areaAfectadaService,
+      caracteristicasLugarRepository,
+      areaAfectadaRepository,
       incendioEstructuralRepository,
       incendioEstructuralService,
       incendioEstructuralHandler

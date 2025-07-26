@@ -2,6 +2,7 @@ import { crearIncidenteDto } from './dto/create-incidente.dto.js'
 import { updateIncidenteDto } from './dto/update-incidente.dto.js'
 import { mapToIncidenteResponse } from './mappers/incidente.mapper.js'
 import { logger } from '../internal/platform/logger/logger.js'
+import { crearIncendioForestalDto } from './dto/create-incendio-forestal.dto.js'
 
 export const construirIncidenteHandler = (incidenteService) => {
   return {
@@ -133,6 +134,25 @@ export const construirIncidenteHandler = (incidenteService) => {
           error: error.message 
         })
         next(error)
+      }
+    },
+
+    crearIncendioForestal: async (req, res, next) => {
+      try {
+        logger.info('📥 Crear incendio forestal solicitado', { body: req.body })
+        const datosValidados = crearIncendioForestalDto(req.body)
+        const result = await incidenteService.crearIncendioForestal(datosValidados)
+        res.status(201).json({
+          success: true,
+          message: 'Incendio forestal creado exitosamente',
+          data: result
+        })
+      } catch (error) {
+        logger.error('❌ Error al crear incendio forestal', { error: error.message })
+        res.status(400).json({
+          success: false,
+          message: error.message
+        })
       }
     }
   }

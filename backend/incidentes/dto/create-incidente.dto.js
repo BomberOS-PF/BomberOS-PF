@@ -7,7 +7,8 @@ export function crearIncidenteDto(data) {
     idTipoIncidente: data.idTipoIncidente,
     fecha: data.fecha,
     idLocalizacion: data.idLocalizacion,
-    descripcion: data.descripcion
+    descripcion: data.descripcion,
+    damnificados: Array.isArray(data.damnificados) ? data.damnificados : undefined
   }
 
   return dto

@@ -38,15 +38,15 @@ export class WhatsAppService {
 
     try {
       // Obtener valores de los value objects
-      const telefonoValue = bombero.telefono ? (bombero.telefono.toString() || bombero.telefono._value || '') : ''
+      const telefonoValue = bombero.telefono ? bombero.telefono.toString() : ''
       const nombreValue = bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : ''
       
       const telefono = this.formatearTelefono(telefonoValue)
       if (!telefono) {
-        throw new Error(`Teléfono inválido para ${nombre} && ${apellido}: ${telefonoValue}`)
+        throw new Error(`Teléfono inválido para ${nombreValue}: ${telefonoValue}`)
       }
 
-      const mensaje = this.construirMensajeIncidente({ ...bombero, nombre: nombre, apellido: apellido}, incidente)
+      const mensaje = this.construirMensajeIncidente(bombero, incidente)
       
       const result = await this.client.messages.create({
         from: this.config.whatsappNumber,
@@ -111,7 +111,7 @@ export class WhatsAppService {
           
           resultados.push({
             bombero: bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : '',
-            telefono: bombero.telefono ? (bombero.telefono.toString() || bombero.telefono._value || '') : '',
+            telefono: bombero.telefono ? bombero.telefono.toString() : '',
             ...resultado
           })
           
@@ -202,13 +202,13 @@ _Cuerpo de Bomberos - Sistema BomberOS_`
     }
     
     // 3. Formato con 0 inicial (ej: 03515053482)
-    if (numero.startsWith('0') && numero.length >= 10) {
+    if (numero.startsWith('0') && numero.length >= 9) {
       // Remover el 0 y agregar código completo
       return '+549' + numero.substring(1)
     }
     
     // 4. Formato local sin prefijos (ej: 3515053482)
-    if (numero.length >= 10 && !numero.startsWith('0') && !numero.startsWith('54')) {
+    if (numero.length >= 8 && !numero.startsWith('0') && !numero.startsWith('54')) {
       return '+549' + numero
     }
     

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './AccidenteTransito.css'
 import '../../../DisenioFormulario/DisenioFormulario.css'
 
 const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
-  const incidenteId = datosPrevios.id || 'temp'
+  const incidenteId = datosPrevios.idIncidente || datosPrevios.id || 'temp'
   const storageKey = `accidente-${incidenteId}`
 
   const [formData, setFormData] = useState(() => {
@@ -12,6 +12,19 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
   })
 
   const [causasAccidente, setCausasAccidente] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [successMsg, setSuccessMsg] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
+  const toastRef = useRef(null)
+
+  // Mostrar información del incidente básico si existe
+  const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id ? {
+    id: datosPrevios.idIncidente || datosPrevios.id,
+    tipo: datosPrevios.tipoSiniestro,
+    fecha: datosPrevios.fechaHora || datosPrevios.fecha,
+    localizacion: datosPrevios.localizacion,
+    lugar: datosPrevios.lugar
+  } : null
 
   useEffect(() => {
     setFormData(prev => ({
@@ -102,9 +115,12 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setSuccessMsg('')
+    setErrorMsg('')
+    setLoading(true)
 
     const payload = {
-      idIncidente: datosPrevios.idIncidente,
+      idIncidente: datosPrevios.idIncidente || datosPrevios.id,
       descripcion: formData.detalle,
       idCausaAccidente: parseInt(formData.idCausaAccidente),
       vehiculos: formData.vehiculos,
@@ -121,16 +137,26 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
       const data = await res.json()
 
       if (data.success) {
-        alert('Accidente registrado exitosamente')
+        const esActualizacion = datosPrevios.idIncidente || datosPrevios.id
+        setSuccessMsg(esActualizacion ? 
+          'Accidente de tránsito actualizado con éxito' : 
+          'Accidente de tránsito registrado exitosamente'
+        )
+        setErrorMsg('')
         localStorage.removeItem(storageKey)
-        if (onFinalizar) onFinalizar({ id: datosPrevios.id })
+        if (onFinalizar) onFinalizar({ id: datosPrevios.idIncidente || datosPrevios.id })
       } else {
-        alert('Error al registrar: ' + (data.message || ''))
+        setErrorMsg('Error al registrar: ' + (data.message || ''))
+        setSuccessMsg('')
         console.error(data)
       }
     } catch (error) {
-      alert('Error al conectar con el backend')
+      setErrorMsg('Error al conectar con el backend')
+      setSuccessMsg('')
       console.error('Error al enviar:', error)
+    } finally {
+      setLoading(false)
+      if (toastRef.current) toastRef.current.focus()
     }
   }
 
@@ -138,6 +164,25 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
     <div className="container d-flex justify-content-center align-items-center">
       <div className="formulario-consistente">
         <h2 className="text-black text-center mb-4">Accidente de Tránsito</h2>
+        
+        {/* Información del incidente básico */}
+        {incidenteBasico && (
+          <div className="alert alert-info mb-4">
+            <h6 className="alert-heading">📋 Incidente Base Registrado</h6>
+            <div className="row">
+              <div className="col-md-6">
+                <strong>ID:</strong> {incidenteBasico.id}<br/>
+                <strong>Tipo:</strong> {incidenteBasico.tipo}<br/>
+                <strong>Fecha:</strong> {incidenteBasico.fecha}
+              </div>
+              <div className="col-md-6">
+                <strong>Localización:</strong> {incidenteBasico.localizacion}<br/>
+                <strong>Lugar:</strong> {incidenteBasico.lugar}
+              </div>
+            </div>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label htmlFor="idCausaAccidente" className="text-black form-label">Causa del accidente</label>
@@ -239,14 +284,21 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
             <button type="button" className="btn btn-sm btn-success" onClick={agregarDamnificado}>+ Agregar damnificado</button>
           </div>
 
-          <button type="submit" className="btn btn-danger w-100 mt-3">
-            Finalizar carga
+          <button type="submit" className="btn btn-danger w-100 mt-3" disabled={loading}>
+            {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Actualizar accidente de tránsito' : 'Finalizar carga')}
           </button>
 
-          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={guardarLocalmente}>
+          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={guardarLocalmente} disabled={loading}>
             Guardar y continuar después
           </button>
         </form>
+        
+        {errorMsg && (
+          <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">{errorMsg}</div>
+        )}
+        {successMsg && (
+          <div ref={toastRef} tabIndex={-1} className="alert alert-success mt-3" role="alert">{successMsg}</div>
+        )}
       </div>
     </div>
   )
