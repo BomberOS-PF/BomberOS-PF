@@ -237,13 +237,59 @@ async function validateDependencies(container) {
   logger.debug('🔍 Validando dependencias...')
 
   try {
-    // Validaciones existentes...
+    if (!container.bomberoService) throw new Error('BomberoService no inicializado')
+    if (!container.bomberoRepository) throw new Error('BomberoRepository no inicializado')
+    if (!container.bomberoHandler) throw new Error('BomberoHandler no inicializado')
+
+    if (!container.usuarioService) throw new Error('UsuarioService no inicializado')
+    if (!container.usuarioRepository) throw new Error('UsuarioRepository no inicializado')
+    if (!container.usuarioHandler) throw new Error('UsuarioHandler no inicializado')
+
+    if (!container.incidenteService) throw new Error('IncidenteService no inicializado')
+    if (!container.incidenteRepository) throw new Error('IncidenteRepository no inicializado')
+    if (!container.incidenteHandler) throw new Error('IncidenteHandler no inicializado')
+
+    if (!container.grupoGuardiaRepository) throw new Error('GrupoGuardiaRepository no inicializado')
+    if (!container.grupoGuardiaService) throw new Error('GrupoGuardiaService no inicializado')
+    if (!container.grupoGuardiaHandler) throw new Error('GrupoGuardiaHandler no inicializado')
+
+    if (!container.denuncianteRepository) throw new Error('DenuncianteRepository no inicializado')
+    if (!container.whatsappService) throw new Error('WhatsAppService no inicializado')
+
+    if (!container.rolService) throw new Error('RolService no inicializado')
+    if (!container.rolRepository) throw new Error('RolRepository no inicializado')
+    if (!container.rolesAdapter) throw new Error('RolesAdapter no inicializado')
+
+    if (!container.damnificadoService) throw new Error('DamnificadoService no inicializado')
+    if (!container.accidenteVehiculoService) throw new Error('AccidenteVehiculoService no inicializado')
+
+    if (!container.accidenteTransitoService) throw new Error('AccidenteTransitoService no inicializado')
+    if (!container.accidenteTransitoHandler) throw new Error('AccidenteTransitoHandler no inicializado')
+    if (!container.accidenteTransitoRepository) throw new Error('AccidenteTransitoRepository no inicializado')
+
+    if (!container.causaAccidenteService) throw new Error('CausaAccidenteServicee no inicializado')
+    if (!container.causaAccidenteRepository) throw new Error('CausaAccidenteRepository no inicializado')
+    if (!container.causaAccidenteHandler) throw new Error('CausaAccidenteHandler no inicializado')
+
+    if (!container.vehiculoService) throw new Error('VehiculoService no inicializado')
+    if (!container.vehiculoHandler) throw new Error('VehiculoHandler no inicializado')
+    if (!container.vehiculoRepository) throw new Error('VehiculoRepository no inicializado')
+
+    if (!container.accidenteDamnificadoRepository) throw new Error('AccidenteDamnificadoRepository no inicializado')
+    if (!container.accidenteVehiculoRepository) throw new Error('AccidenteVehiculoRepository no inicializado')
+
+    if (!container.rangoService) throw new Error('RangoServicee no inicializado')
+    if (!container.rangoRepository) throw new Error('RangoRepository no inicializado')
+    if (!container.rangoHandler) throw new Error('RangoHandler no inicializado')
+
     if (!container.incendioEstructuralRepository)
       throw new Error('IncendioEstructuralRepository no inicializado')
     if (!container.incendioEstructuralService)
       throw new Error('IncendioEstructuralService no inicializado')
     if (!container.incendioEstructuralHandler)
       throw new Error('IncendioEstructuralHandler no inicializado')
+
+    if (!container.dbConnection) throw new Error('Database connection no inicializada')
 
     const testConnection = await container.dbConnection.getConnection()
     await testConnection.ping()
