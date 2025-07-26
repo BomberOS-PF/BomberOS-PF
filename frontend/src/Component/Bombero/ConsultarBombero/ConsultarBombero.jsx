@@ -329,7 +329,7 @@ const ConsultarBombero = ({ onVolver }) => {
                 <div className="d-flex align-items-center gap-2">
                   <i className="text-secondary fs-5"></i>
                   <h3 className="text-dark mb-0">
-                    {modoEdicion ? `✏️ Editando: ${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}` : `👤 Detalles: ${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}` }
+                    {modoEdicion ? `✏️ Editando: ${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}` : `👤 Detalles: ${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}`}
                   </h3>
                 </div>
 
@@ -357,17 +357,13 @@ const ConsultarBombero = ({ onVolver }) => {
                   loading={loading}
                   ocultarTitulo={true}
                 />
-
-                <div className="text-center mt-4">
-                  <button type="button" className="btn btn-secondary" onClick={onVolver}>
-                  Volver al menú
-                </button>
-                </div>
-
-                
               </div>
             </div>
           )}
+          <div className="d-grid gap-3 py-2"></div>
+          <button type="button" className="btn btn-secondary" onClick={onVolver} disabled={loading}>
+            Volver al menú
+          </button>
         </div>
       </div>
     </div>

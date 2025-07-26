@@ -464,7 +464,7 @@ const RegistrarBombero = ({ onVolver }) => {
                 
                 {onVolver && (
                   <button type="button" className="btn btn-secondary" onClick={onVolver} disabled={loading}>
-                    Volver
+                    Volver al menú
                   </button>
                 )}
               </div>
