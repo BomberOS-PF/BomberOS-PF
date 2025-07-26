@@ -62,7 +62,7 @@ export class IncidenteService extends IncidenteServiceInterface {
   async crearIncendioForestal(data) {
     // 1. Crear incidente
     const incidente = await this.incidenteRepository.create({
-      idTipoIncidente: 2, // Incendio Forestal
+      idTipoIncidente: 4, // Incendio Forestal
       fecha: data.fecha,
       idLocalizacion: data.idLocalizacion,
       descripcion: data.descripcion
@@ -114,7 +114,7 @@ export class IncidenteService extends IncidenteServiceInterface {
       const bomberos = await this.bomberoService.listarBomberos()
       const bomberosActivos = bomberos.filter(bombero => {
         // Acceder correctamente a los value objects
-        const telefono = bombero.telefono ? (bombero.telefono.toString() || bombero.telefono._value || '').trim() : ''
+        const telefono = bombero.telefono ? bombero.telefono.toString().trim() : ''
         const nombre = bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}`.trim() : ''
         
         return telefono !== '' && nombre !== ''
@@ -186,12 +186,12 @@ export class IncidenteService extends IncidenteServiceInterface {
    */
   mapearTipoIncidente(idTipo) {
     const tipos = {
-      1: 'Incendio Estructural',
-      2: 'Incendio Forestal',
-      3: 'Accidente de Tránsito',
-      4: 'Rescate',
+      1: 'Accidente de Tránsito',
+      2: 'Factores Climáticos',
+      3: 'Incendio Estructural',
+      4: 'Incendio Forestal',
       5: 'Material Peligroso',
-      6: 'Factor Climático'
+      6: 'Rescate'
     }
     return tipos[idTipo] || `Tipo ${idTipo}`
   }

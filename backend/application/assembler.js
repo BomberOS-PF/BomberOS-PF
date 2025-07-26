@@ -61,6 +61,7 @@ export async function createServer(config) {
 
     const app = express()
     const dbConnection = await createConnection(config.database)
+    logger.info('📊 Conexión a base de datos establecida')
 
     // Repositorios
     const bomberoRepository = new MySQLBomberoRepository()
@@ -82,6 +83,8 @@ export async function createServer(config) {
     
     // Servicios
     const whatsappService = new WhatsAppService(config)
+    logger.info('📱 Servicio WhatsApp inicializado')
+    
     const bomberoService = new BomberoService(bomberoRepository, usuarioRepository)
     const usuarioService = new UsuarioService(usuarioRepository, bomberoRepository)
     const incidenteService = new IncidenteService(incidenteRepository, denuncianteRepository, bomberoService, whatsappService, damnificadoRepository, incendioForestalRepository)
@@ -160,12 +163,7 @@ export async function createServer(config) {
 
     await validateDependencies(container)
 
-    logger.info('✅ Assembler completado exitosamente', {
-      services: ['bomberoService', 'usuarioService', 'incidenteService', 'grupoGuardiaService', 'whatsappService', 'rolService', 'accidenteTransitoService' ,'causaAccidenteService', 'vehiculoService', 'rangoService'],
-      repositories: ['bomberoRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository', 'grupoGuardiaRepository', 'rolRepository', 'rolRepository', 'accidenteTransitoRepository', 'causaAccidenteRepository', 'vehiculoRepository', 'rangoRepository'],
-      handlers: ['bomberoHandler', 'usuarioHandler', 'incidenteHandler', 'grupoGuardiaHandler', 'rolesAdapter','accidenteTransitoHandler' ,'causaAccidenteHandler', 'vehiculoHandler', 'rangoHandler'],
-      infrastructure: ['dbConnection']
-    })
+    logger.info('✅ Assembler completado exitosamente')
 
     return { app, container }
 
