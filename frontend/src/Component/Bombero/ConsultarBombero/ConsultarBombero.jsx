@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { API_URLS } from '../../../config/api'
 import FormularioBombero from '../FormularioBombero/FormularioBombero'
 //import '../ConsultarBombero/ConsultarBombero.css'
-import '../../DisenioFormulario/DisenioFormulario.css'
+// import '../../DisenioFormulario/DisenioFormulario.css'
 import { User2, UsersIcon } from 'lucide-react'
 
 const ConsultarBombero = ({ onVolver }) => {
@@ -215,12 +215,12 @@ const ConsultarBombero = ({ onVolver }) => {
   }
 
   return (
-    <div className='container-fluid'>
+    <div className='container-fluid py-5'>
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
           <div className="bg-danger p-3 rounded-circle">
-            <UsersIcon size={32} 
-            color="white" />
+            <UsersIcon size={32}
+              color="white" />
           </div>
           <h1 className="fw-bold text-white fs-3 mb-0">Consultar Bomberos</h1>
         </div>
@@ -234,7 +234,7 @@ const ConsultarBombero = ({ onVolver }) => {
           <User2 />
           <strong>Listado de Bomberos</strong>
         </div>
-        <div className="card-body p-4">
+        <div className="card-body">
           {mensaje && (
             <div
               className={`alert ${mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' :
@@ -271,11 +271,11 @@ const ConsultarBombero = ({ onVolver }) => {
                   <table className="table table-hover align-middle mb-0">
                     <thead className="bg-light">
                       <tr>
-                        <th className="border-end">Nombre completo</th>
-                        <th className="border-end">DNI</th>
-                        <th className="border-end">Teléfono</th>
-                        <th className="border-end">Email</th>
-                        <th className="border-end">Plan</th>
+                        <th className="border-end text-center">Nombre completo</th>
+                        <th className="border-end text-center">DNI</th>
+                        <th className="border-end text-center">Teléfono</th>
+                        <th className="border-end text-center">Email</th>
+                        <th className="border-end text-center">Plan</th>
                         <th className="text-center">Acciones</th>
                       </tr>
                     </thead>
@@ -284,9 +284,9 @@ const ConsultarBombero = ({ onVolver }) => {
                         .sort((a, b) => (a.apellido || '').localeCompare(b.apellido || ''))
                         .map((bombero) => (
                           <tr key={bombero.dni}>
-                            <td className="border-end">{bombero.nombre} {bombero.apellido}</td>
-                            <td className="border-end">{bombero.dni}</td>
-                            <td className="border-end">{bombero.telefono || 'N/A'}</td>
+                            <td className="border-end px-3">{bombero.nombre} {bombero.apellido}</td>
+                            <td className="border-end px-3">{bombero.dni}</td>
+                            <td className="border-end px-2">{bombero.telefono || 'N/A'}</td>
                             <td className="border-end text-primary">{bombero.correo || 'N/A'}</td>
                             <td className="border-end">
                               <span className={`badge ${bombero.esDelPlan ? 'bg-success' : 'bg-secondary'}`}>
@@ -325,33 +325,49 @@ const ConsultarBombero = ({ onVolver }) => {
           {/* Detalles */}
           {bomberoSeleccionado && (
             <div className="mt-4">
-              <div className="d-flex justify-content-between align-items-center mb-4">
-                <h3 className="text-dark mb-0">
-                  {modoEdicion ? `✏️ Editando: ${bomberoSeleccionado.nombre}` : `👤 Detalles: ${bomberoSeleccionado.nombre}`}
-                </h3>
+              <div className="d-flex align-items-center justify-content-between mb-3">
+                <div className="d-flex align-items-center gap-2">
+                  <i className="text-secondary fs-5"></i>
+                  <h3 className="text-dark mb-0">
+                    {modoEdicion ? `✏️ Editando: ${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}` : `👤 Detalles: ${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}` }
+                  </h3>
+                </div>
+
                 <div>
                   {!modoEdicion && (
-                    <button className="btn btn-warning btn-sm me-2" onClick={activarEdicion}>
-                      ✏️ Editar
+                    <button className="btn btn-warning btn-sm me-2 d-flex align-items-center gap-1" onClick={activarEdicion}>
+                      <i className="bi bi-pencil-square"></i>
+                      Editar
                     </button>
                   )}
-                  <button className="btn btn-secondary btn-sm" onClick={volverListado}>
-                    ← Volver
+                  <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" onClick={volverListado}>
+                    <i className="bi bi-arrow-left"></i> Volver al listado
                   </button>
                 </div>
               </div>
-              <FormularioBombero
-                modo={modoEdicion ? 'edicion' : 'consulta'}
-                datosIniciales={bomberoSeleccionado}
-                onVolver={volverListado}
-                loading={loading}
-              />
+
+              <hr className="border-4 border-danger mb-4" />
+
+              <div className="card bg-dark text-white border-0 shadow-lg py-4">
+                <FormularioBombero
+                  modo={modoEdicion ? 'edicion' : 'consulta'}
+                  datosIniciales={bomberoSeleccionado}
+                  onSubmit={guardarCambios}
+                  onVolver={volverListado}
+                  loading={loading}
+                  ocultarTitulo={true}
+                />
+
+                <div className="text-center mt-4">
+                  <button type="button" className="btn btn-secondary" onClick={onVolver}>
+                  Volver al menú
+                </button>
+                </div>
+
+                
+              </div>
             </div>
           )}
-
-          <button type="button" className="btn btn-secondary" onClick={onVolver}>
-            Volver
-          </button>
         </div>
       </div>
     </div>

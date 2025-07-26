@@ -461,6 +461,7 @@ const RegistrarBombero = ({ onVolver }) => {
                   <UserPlus size={16} className="me-1" />
                   {loading ? 'Registrando...' : 'Registrar bombero'}
                 </button>
+                
                 {onVolver && (
                   <button type="button" className="btn btn-secondary" onClick={onVolver} disabled={loading}>
                     Volver

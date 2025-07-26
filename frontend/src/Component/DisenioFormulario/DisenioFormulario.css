@@ -31,7 +31,7 @@ body {
   color: #000;
 }
 
-.form-control:disabled::placeholder {
+.form-control:disabled::placeholder, .form-select:disabled::placeholder {
   color: #bdc3c7;
 }
 
