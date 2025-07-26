@@ -125,7 +125,7 @@ const RegistrarRol = ({ onVolver }) => {
           </button>
 
           <button type="button" className="btn btn-secondary w-100" onClick={onVolver} disabled={loading}>
-            Volver
+            Volver al menú
           </button>
         </form>
       </div>

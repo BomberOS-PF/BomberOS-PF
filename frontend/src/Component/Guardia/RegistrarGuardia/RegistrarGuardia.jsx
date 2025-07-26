@@ -267,7 +267,7 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
           onClick={onVolver}
           disabled={loading}
         >
-          Volver
+          Volver al menú
         </button>
       </div>
     </div>

@@ -236,7 +236,7 @@ const ConsultarUsuario = ({ onVolver }) => {
 
       <div className="text-center mt-4">
         <button className="btn-volver btn-secondary" onClick={onVolver}>
-          Volver
+          Volver al menú
         </button>
       </div>
     </div>

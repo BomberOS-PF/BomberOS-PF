@@ -287,7 +287,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
               )}
 
               <button type="button" className="btn btn-secondary" onClick={onVolver}>
-                Volver
+                Volveral menú
               </button>
             </div>
           </form>

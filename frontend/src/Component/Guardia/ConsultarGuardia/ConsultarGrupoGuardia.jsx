@@ -208,7 +208,7 @@ const ConsultarGrupoGuardia = ({ onVolver }) => {
 
       <div className="botones-accion mx-auto" style={{ width: '25%' }}>
         <button className="btn btn-secondary w-100" onClick={onVolver} disabled={loading}>
-          Volver
+          Volver al menú
         </button>
       </div>
 
