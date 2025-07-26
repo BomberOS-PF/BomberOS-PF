@@ -200,8 +200,8 @@ const ConsultarRol = ({ onVolver }) => {
                     <tbody>
                       {resultadosFiltrados.map((rol) => (
                         <tr key={rol.idRol}>
-                          <td className="border-end text-center">{rol.nombreRol}</td>
-                          <td className="border-end text-center">
+                          <td className="border-end">{rol.nombreRol}</td>
+                          <td className="border-end">
                             {rol.descripcion || <em className="text-muted">Sin descripción</em>}
                           </td>
                           <td className="text-center">

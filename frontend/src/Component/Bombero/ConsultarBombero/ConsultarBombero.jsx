@@ -66,34 +66,6 @@ const ConsultarBombero = ({ onVolver }) => {
     }
   }
 
-  const buscarPordni = () => {
-
-    if (dniBusqueda.trim() === '') {
-      setResultadosFiltrados(bomberos)
-      setMensaje('')
-      return
-    }
-
-    const filtrados = bomberos.filter(b => {
-      const dni = String(b.dni || b.dni || '')
-      return dni.includes(dniBusqueda.trim())
-    })
-
-    setResultadosFiltrados(filtrados)
-
-    if (filtrados.length === 0) {
-      setMensaje('No se encontró ningún bombero con ese dni.')
-    } else {
-      setMensaje('')
-    }
-  }
-
-  const limpiarBusqueda = () => {
-    setdniBusqueda('')
-    setResultadosFiltrados(bomberos)
-    setMensaje('')
-  }
-
   const seleccionarBombero = (bombero) => {
     setBomberoSeleccionado(bombero)
     setModoEdicion(false)
