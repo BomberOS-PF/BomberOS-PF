@@ -11,6 +11,9 @@ export function crearIncendioForestalDto(data) {
     descripcion: data.descripcion,
     caracteristicasLugar: data.caracteristicasLugar,
     areaAfectada: data.areaAfectada,
+    cantidadAfectada: data.cantidadAfectada,
+    causaProbable: data.causaProbable,
+    detalle: data.descripcion, // El detalle va a la tabla forestal
     damnificados: Array.isArray(data.damnificados) ? data.damnificados : []
   }
 } 

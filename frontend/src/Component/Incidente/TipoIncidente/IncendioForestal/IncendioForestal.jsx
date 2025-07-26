@@ -137,6 +137,8 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
       descripcion: formData.detalle || '',
       caracteristicasLugar: formData.caracteristicaLugar && formData.caracteristicaLugar !== "" ? Number(formData.caracteristicaLugar) : null,
       areaAfectada: formData.unidadAfectada && formData.unidadAfectada !== "" ? Number(formData.unidadAfectada) : null,
+      cantidadAfectada: formData.cantidadAfectada ? Number(formData.cantidadAfectada) : null,
+      causaProbable: formData.causaProbable && formData.causaProbable !== "" ? Number(formData.causaProbable) : null,
       damnificados: damnificadosFiltrados
     };
     try {
@@ -195,10 +197,10 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
             <label className="text-black form-label">Causa probable</label>
             <select className="form-select" id="causaProbable" value={formData.causaProbable || ''} onChange={handleChange}>
               <option disabled value="">Seleccione</option>
-              <option>Negligencia</option>
-              <option>Natural</option>
-              <option>Intencional</option>
-              <option>Se desconoce</option>
+              <option value="1">Negligencia</option>
+              <option value="2">Natural</option>
+              <option value="3">Imprudencia</option>
+              <option value="4">Se desconoce</option>
             </select>
           </div>
 

@@ -6,12 +6,12 @@ export class MySQLIncendioForestalRepository {
     this.tableName = 'forestal'
   }
 
-  async insertarIncendioForestal({ idIncidente, caracteristicasLugar, areaAfectada }) {
+  async insertarIncendioForestal({ idIncidente, caracteristicasLugar, areaAfectada, cantidadAfectada, causaProbable, detalle }) {
     const query = `
-      INSERT INTO ${this.tableName} (idIncidente, caracteristicasLugar, areaAfectada)
-      VALUES (?, ?, ?)
+      INSERT INTO ${this.tableName} (idIncidente, caracteristicasLugar, areaAfectada, cantidad, idCausaProbable, detalle)
+      VALUES (?, ?, ?, ?, ?, ?)
     `
-    const params = [idIncidente, caracteristicasLugar, areaAfectada]
+    const params = [idIncidente, caracteristicasLugar, areaAfectada, cantidadAfectada, causaProbable, detalle]
     const connection = getConnection()
     try {
       const [result] = await connection.execute(query, params)

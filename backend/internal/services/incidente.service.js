@@ -3,7 +3,7 @@ import { IncidenteServiceInterface } from '../../interfaces/service.interface.js
 import { logger } from '../platform/logger/logger.js'
 
 export class IncidenteService extends IncidenteServiceInterface {
-  constructor(incidenteRepository, denuncianteRepository, bomberoService = null, whatsappService = null, damnificadoRepository = null, incendioForestalRepository = null) {
+  constructor(incidenteRepository, denuncianteRepository, bomberoService = null, whatsappService = null, damnificadoRepository = null, incendioForestalRepository = null, areaAfectadaRepository = null) {
     super()
     this.incidenteRepository = incidenteRepository
     this.denuncianteRepository = denuncianteRepository
@@ -11,6 +11,7 @@ export class IncidenteService extends IncidenteServiceInterface {
     this.whatsappService = whatsappService
     this.damnificadoRepository = damnificadoRepository
     this.incendioForestalRepository = incendioForestalRepository
+    this.areaAfectadaRepository = areaAfectadaRepository
   }
 
   async crearIncidente(data) {
@@ -72,10 +73,15 @@ export class IncidenteService extends IncidenteServiceInterface {
     await this.incendioForestalRepository.insertarIncendioForestal({
       idIncidente: incidente.idIncidente,
       caracteristicasLugar: data.caracteristicasLugar,
-      areaAfectada: data.areaAfectada
+      areaAfectada: data.areaAfectada,
+      cantidadAfectada: data.cantidadAfectada,
+      causaProbable: data.causaProbable,
+      detalle: data.detalle
     })
 
-    // 3. Guardar damnificados
+    // 3. La cantidad se guarda directamente en la tabla forestal (no necesitamos actualizar areaAfectada)
+
+    // 4. Guardar damnificados
     if (Array.isArray(data.damnificados) && this.damnificadoRepository) {
       for (const damnificado of data.damnificados) {
         await this.damnificadoRepository.insertarDamnificado({
