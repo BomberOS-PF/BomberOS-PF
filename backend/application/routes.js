@@ -21,7 +21,7 @@ export function setupRoutes(app, container) {
 
   app.get('/', (req, res) => res.redirect('/health'))
 
-  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, recuperarClaveHandler, validarTokenHandler, restablecerClaveHandler, incendioEstructuralHandler  } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, recuperarClaveHandler, validarTokenHandler, restablecerClaveHandler,incendioEstructuralHandler } = container
 
   // ROLES
   app.get('/api/roles', async (req, res) => {
@@ -410,7 +410,7 @@ export function setupRoutes(app, container) {
     }
   })
 
- // INCENDIO ESTRUCTURAL
+// INCENDIO ESTRUCTURAL
   app.post('/api/incendio-estructural', async (req, res) => {
     try {
       await incendioEstructuralHandler.registrar(req, res)
@@ -437,6 +437,7 @@ export function setupRoutes(app, container) {
       res.status(500).json({ error: 'Error interno' })
     }
   })
+
 
 
   // 404 handler
