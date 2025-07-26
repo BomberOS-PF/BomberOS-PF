@@ -50,6 +50,18 @@ const customStyles = {
   })
 }
 
+// Paleta rojo-negro por bombero
+const coloresBomberos = [
+  '#d52b1e', '#a8231a', '#e67360', '#ff8c8c',
+  '#330000', '#660000', '#990000', '#cc0000'
+]
+
+// Asignar color único por DNI
+const obtenerColorPorDNI = (dni) => {
+  const hash = [...dni.toString()].reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  return coloresBomberos[hash % coloresBomberos.length]
+}
+
 const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) => {
   const [eventos, setEventos] = useState([])
   const [bomberoSeleccionado, setBomberoSeleccionado] = useState(null)
@@ -75,11 +87,40 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     )
     const fechaBase = primerDiaSemana.toISOString().split('T')[0]
 
+    const nuevoInicio = `${fechaBase}T${horaDesde}`
+    const nuevoFin = `${fechaBase}T${horaHasta}`
+
+    const solapa = eventos.some(ev => {
+      const existenteInicio = new Date(ev.start)
+      const existenteFin = new Date(ev.end)
+      const nuevoInicioDate = new Date(nuevoInicio)
+      const nuevoFinDate = new Date(nuevoFin)
+
+      return (
+        ev.title === bomberoSeleccionado.label &&
+        nuevoInicioDate < existenteFin &&
+        nuevoFinDate > existenteInicio
+      )
+    })
+
+    if (solapa) {
+      setMensaje('El bombero ya tiene una guardia asignada en ese horario.')
+      return
+    }
+
+    const color = obtenerColorPorDNI(bomberoSeleccionado.value)
+
     const nuevoEvento = {
       title: `${bomberoSeleccionado.label}`,
-      start: `${fechaBase}T${horaDesde}`,
-      end: `${fechaBase}T${horaHasta}`,
-      allDay: false
+      start: nuevoInicio,
+      end: nuevoFin,
+      backgroundColor: color,
+      borderColor: 'black',
+      textColor: '#fff',
+      allDay: false,
+      extendedProps: {
+      color
+      }
     }
 
     setEventos(prev => [...prev, nuevoEvento])
@@ -105,11 +146,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       <h2 className="text-black mb-4">Gestión de guardias - {nombreGrupo}</h2>
 
       {mensaje && (
-        <div
-          className={`alert ${
-            mensaje.includes('correctamente') ? 'alert-success' : 'alert-warning'
-          }`}
-        >
+        <div className={`alert ${mensaje.includes('correctamente') ? 'alert-success' : 'alert-warning'}`}>
           {mensaje}
         </div>
       )}
@@ -139,92 +176,75 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             />
 
             <label className="mt-2">Desde:</label>
-<div className="d-flex gap-2">
-  <Select
-    options={[...Array(24).keys()].map(h => ({
-      label: h.toString().padStart(2, '0'),
-      value: h.toString().padStart(2, '0')
-    }))}
-    value={
-      horaDesde
-        ? { label: horaDesde.split(':')[0], value: horaDesde.split(':')[0] }
-        : null
-    }
-    onChange={(selected) => {
-      const nuevaHora = selected?.value || ''
-      setHoraDesde(`${nuevaHora}:${horaDesde.split(':')[1] || '00'}`)
-    }}
-    styles={customStyles}
-    placeholder="HH"
-    isClearable
-  />
+            <div className="d-flex gap-2">
+              <Select
+                options={[...Array(24).keys()].map(h => ({
+                  label: h.toString().padStart(2, '0'),
+                  value: h.toString().padStart(2, '0')
+                }))}
+                value={horaDesde ? { label: horaDesde.split(':')[0], value: horaDesde.split(':')[0] } : null}
+                onChange={(selected) => {
+                  const nuevaHora = selected?.value || ''
+                  setHoraDesde(`${nuevaHora}:${horaDesde.split(':')[1] || '00'}`)
+                }}
+                styles={customStyles}
+                placeholder="HH"
+                isClearable
+              />
 
-  <Select
-    options={[...Array(60).keys()].map(m => ({
-      label: m.toString().padStart(2, '0'),
-      value: m.toString().padStart(2, '0')
-    }))}
-    value={
-      horaDesde
-        ? { label: horaDesde.split(':')[1], value: horaDesde.split(':')[1] }
-        : null
-    }
-    onChange={(selected) => {
-      const nuevosMin = selected?.value || ''
-      setHoraDesde(`${horaDesde.split(':')[0] || '00'}:${nuevosMin}`)
-    }}
-    styles={customStyles}
-    placeholder="MM"
-    isClearable
-    isSearchable
-  />
-</div>
+              <Select
+                options={[...Array(60).keys()].map(m => ({
+                  label: m.toString().padStart(2, '0'),
+                  value: m.toString().padStart(2, '0')
+                }))}
+                value={horaDesde ? { label: horaDesde.split(':')[1], value: horaDesde.split(':')[1] } : null}
+                onChange={(selected) => {
+                  const nuevosMin = selected?.value || ''
+                  setHoraDesde(`${horaDesde.split(':')[0] || '00'}:${nuevosMin}`)
+                }}
+                styles={customStyles}
+                placeholder="MM"
+                isClearable
+                isSearchable
+              />
+            </div>
 
-<label className="mt-2">Hasta:</label>
-<div className="d-flex gap-2">
-  <Select
-    options={[...Array(24).keys()].map(h => ({
-      label: h.toString().padStart(2, '0'),
-      value: h.toString().padStart(2, '0')
-    }))}
-    value={
-      horaHasta
-        ? { label: horaHasta.split(':')[0], value: horaHasta.split(':')[0] }
-        : null
-    }
-    onChange={(selected) => {
-      const nuevaHora = selected?.value || ''
-      setHoraHasta(`${nuevaHora}:${horaHasta.split(':')[1] || '00'}`)
-    }}
-    styles={customStyles}
-    placeholder="HH"
-    isClearable
-  />
+            <label className="mt-2">Hasta:</label>
+            <div className="d-flex gap-2">
+              <Select
+                options={[...Array(24).keys()].map(h => ({
+                  label: h.toString().padStart(2, '0'),
+                  value: h.toString().padStart(2, '0')
+                }))}
+                value={horaHasta ? { label: horaHasta.split(':')[0], value: horaHasta.split(':')[0] } : null}
+                onChange={(selected) => {
+                  const nuevaHora = selected?.value || ''
+                  setHoraHasta(`${nuevaHora}:${horaHasta.split(':')[1] || '00'}`)
+                }}
+                styles={customStyles}
+                placeholder="HH"
+                isClearable
+              />
 
-  <Select
-    options={[...Array(60).keys()].map(m => ({
-      label: m.toString().padStart(2, '0'),
-      value: m.toString().padStart(2, '0')
-    }))}
-    value={
-      horaHasta
-        ? { label: horaHasta.split(':')[1], value: horaHasta.split(':')[1] }
-        : null
-    }
-    onChange={(selected) => {
-      const nuevosMin = selected?.value || ''
-      setHoraHasta(`${horaHasta.split(':')[0] || '00'}:${nuevosMin}`)
-    }}
-    styles={customStyles}
-    placeholder="MM"
-    isClearable
-    isSearchable
-  />
-</div>
-
+              <Select
+                options={[...Array(60).keys()].map(m => ({
+                  label: m.toString().padStart(2, '0'),
+                  value: m.toString().padStart(2, '0')
+                }))}
+                value={horaHasta ? { label: horaHasta.split(':')[1], value: horaHasta.split(':')[1] } : null}
+                onChange={(selected) => {
+                  const nuevosMin = selected?.value || ''
+                  setHoraHasta(`${horaHasta.split(':')[0] || '00'}:${nuevosMin}`)
+                }}
+                styles={customStyles}
+                placeholder="MM"
+                isClearable
+                isSearchable
+              />
+            </div>
 
             <button className="btn btn-danger me-3 w-100 mt-3" onClick={asignarGuardia}>
-              Asignar guardia
+              Guardar
             </button>
             <button className="btn btn-secondary mt-2 w-100" onClick={onVolver}>
               Volver
@@ -234,36 +254,37 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
 
         <div className="col-md-8">
           <FullCalendar
-            plugins={[timeGridPlugin, interactionPlugin]}
-            initialView="timeGridWeek"
-            events={eventos}
-            locale={esLocale}
-            headerToolbar={{
-              left: 'prev,next today',
-              center: 'title',
-              right: ''
-            }}
-            allDaySlot={false}
-            slotDuration="00:30:00"
-            slotLabelFormat={{
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: false
-            }}
-            eventContent={arg => {
-              const customStyle = `
-                background-color: #ffecb3;
-                color: black;
-                font-weight: bold;
-                border: 1px solid black;
-                padding: 2px;
-                font-size: 0.85rem;
-              `
-              return {
-                html: `<div style="${customStyle}">${arg.event.title}</div>`
-              }
-            }}
-          />
+  plugins={[timeGridPlugin, interactionPlugin]}
+  initialView="timeGridWeek"
+  events={eventos}
+  locale={esLocale}
+  headerToolbar={{
+    left: 'prev,next today',
+    center: 'title',
+    right: ''
+  }}
+  allDaySlot={false}
+  slotDuration="00:30:00"
+  slotLabelFormat={{
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }}
+  eventDidMount={(info) => {
+    const color = info.event.extendedProps.color || '#d52b1e'
+    const el = info.el
+
+    el.style.setProperty('background-color', color, 'important')
+    el.style.setProperty('border', '1px solid black', 'important')
+    el.style.setProperty('color', '#fff', 'important')
+    el.style.setProperty('font-weight', 'bold', 'important')
+    el.style.setProperty('font-size', '0.85rem', 'important')
+    el.style.setProperty('padding', '2px', 'important')
+  }}
+/>
+
+
+
         </div>
       </div>
     </div>

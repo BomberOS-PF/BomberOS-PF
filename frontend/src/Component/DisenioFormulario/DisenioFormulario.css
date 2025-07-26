@@ -480,3 +480,16 @@ body {
   background-color: #dc3545 !important;
   color: #fff !important;
 }
+
+/* Fuerza colores personalizados sobre eventos */
+.fc-event {
+  background-color: unset !important;
+  color: unset !important;
+  border: none !important;
+}
+
+/* El contenedor del título del evento */
+.fc-event-title {
+  background-color: unset !important;
+  color: unset !important;
+}
