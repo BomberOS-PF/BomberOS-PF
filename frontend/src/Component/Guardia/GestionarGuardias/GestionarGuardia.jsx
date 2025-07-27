@@ -7,13 +7,13 @@ import Select from 'react-select'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
 const diasSemana = [
-  { label: 'Lunes', value: 1 },
-  { label: 'Martes', value: 2 },
-  { label: 'Miércoles', value: 3 },
-  { label: 'Jueves', value: 4 },
-  { label: 'Viernes', value: 5 },
-  { label: 'Sábado', value: 6 },
-  { label: 'Domingo', value: 0 }
+  { label: 'Lunes', value: 0 },
+  { label: 'Martes', value: 1 },
+  { label: 'Miércoles', value: 2 },
+  { label: 'Jueves', value: 3 },
+  { label: 'Viernes', value: 4 },
+  { label: 'Sábado', value: 5 },
+  { label: 'Domingo', value: 6 }
 ]
 
 const customStyles = {
@@ -50,18 +50,6 @@ const customStyles = {
   })
 }
 
-// Paleta rojo-negro por bombero
-const coloresBomberos = [
-  '#d52b1e', '#a8231a', '#e67360', '#ff8c8c',
-  '#330000', '#660000', '#990000', '#cc0000'
-]
-
-// Asignar color único por DNI
-const obtenerColorPorDNI = (dni) => {
-  const hash = [...dni.toString()].reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  return coloresBomberos[hash % coloresBomberos.length]
-}
-
 const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) => {
   const [eventos, setEventos] = useState([])
   const [bomberoSeleccionado, setBomberoSeleccionado] = useState(null)
@@ -71,7 +59,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   const [mensaje, setMensaje] = useState('')
 
   const asignarGuardia = () => {
-    if (!bomberoSeleccionado || !horaDesde || !horaHasta || !diaSeleccionado) {
+    if (!bomberoSeleccionado || !horaDesde || !horaHasta || diaSeleccionado === null) {
       setMensaje('Debes completar todos los campos obligatorios para asignar una guardia.')
       return
     }
@@ -81,49 +69,109 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       return
     }
 
-    const ahora = new Date()
-    const primerDiaSemana = new Date(
-      ahora.setDate(ahora.getDate() - ahora.getDay() + Number(diaSeleccionado.value))
+    // Calcular lunes de la semana actual
+    const hoy = new Date()
+    const diaHoy = hoy.getDay()
+    const lunesSemana = new Date(hoy)
+    const offset = diaHoy === 0 ? -6 : 1 - diaHoy
+    lunesSemana.setDate(hoy.getDate() + offset)
+
+    // Día seleccionado
+    const fechaObjetivo = new Date(lunesSemana)
+    fechaObjetivo.setDate(lunesSemana.getDate() + diaSeleccionado.value)
+
+    // Crear fechas manualmente
+    const [horaI, minI] = horaDesde.split(':').map(Number)
+    const [horaF, minF] = horaHasta.split(':').map(Number)
+
+    const nuevoInicioDate = new Date(
+      fechaObjetivo.getFullYear(),
+      fechaObjetivo.getMonth(),
+      fechaObjetivo.getDate(),
+      horaI,
+      minI
     )
-    const fechaBase = primerDiaSemana.toISOString().split('T')[0]
 
-    const nuevoInicio = `${fechaBase}T${horaDesde}`
-    const nuevoFin = `${fechaBase}T${horaHasta}`
+    const nuevoFinDate = new Date(
+      fechaObjetivo.getFullYear(),
+      fechaObjetivo.getMonth(),
+      fechaObjetivo.getDate(),
+      horaF,
+      minF
+    )
 
-    const solapa = eventos.some(ev => {
-      const existenteInicio = new Date(ev.start)
-      const existenteFin = new Date(ev.end)
-      const nuevoInicioDate = new Date(nuevoInicio)
-      const nuevoFinDate = new Date(nuevoFin)
+    setEventos((prevEventos) => {
+      let eventosActualizados = [...prevEventos]
+      let fusionado = false
 
-      return (
-        ev.title === bomberoSeleccionado.label &&
-        nuevoInicioDate < existenteFin &&
-        nuevoFinDate > existenteInicio
-      )
+      eventosActualizados = eventosActualizados.map((ev) => {
+        const inicioEv = new Date(ev.start)
+        const finEv = new Date(ev.end)
+
+        // Si el nuevo bloque se solapa con el actual
+        const solapan = nuevoInicioDate <= finEv && nuevoFinDate >= inicioEv
+
+        if (solapan) {
+          fusionado = true
+
+          // Expandir rango al más amplio
+          const nuevoStart = nuevoInicioDate < inicioEv ? nuevoInicioDate : inicioEv
+          const nuevoEnd = nuevoFinDate > finEv ? nuevoFinDate : finEv
+
+          // Copiar bomberos y agregar si es nuevo
+          const bomberosActualizados = [...ev.extendedProps.bomberos]
+          const yaExiste = bomberosActualizados.some(
+            (b) => b.nombre === bomberoSeleccionado.label
+          )
+
+          if (!yaExiste) {
+            bomberosActualizados.push({
+              nombre: bomberoSeleccionado.label,
+              desde: horaDesde,
+              hasta: horaHasta
+            })
+          }
+
+          return {
+            ...ev,
+            start: nuevoStart,
+            end: nuevoEnd,
+            extendedProps: {
+              ...ev.extendedProps,
+              bomberos: bomberosActualizados
+            }
+          }
+        }
+
+        return ev
+      })
+
+      // Si no hubo solapamiento, crear un nuevo bloque
+      if (!fusionado) {
+        eventosActualizados.push({
+          id: `${fechaObjetivo.toISOString()}-${horaDesde}`,
+          title: '',
+          start: nuevoInicioDate,
+          end: nuevoFinDate,
+          backgroundColor: '#d52b1e',
+          borderColor: 'black',
+          textColor: 'transparent',
+          allDay: false,
+          extendedProps: {
+            bomberos: [
+              {
+                nombre: bomberoSeleccionado.label,
+                desde: horaDesde,
+                hasta: horaHasta
+              }
+            ]
+          }
+        })
+      }
+
+      return eventosActualizados
     })
 
-    if (solapa) {
-      setMensaje('El bombero ya tiene una guardia asignada en ese horario.')
-      return
-    }
-
-    const color = obtenerColorPorDNI(bomberoSeleccionado.value)
-
-    const nuevoEvento = {
-      title: `${bomberoSeleccionado.label}`,
-      start: nuevoInicio,
-      end: nuevoFin,
-      backgroundColor: color,
-      borderColor: 'black',
-      textColor: '#fff',
-      allDay: false,
-      extendedProps: {
-      color
-      }
-    }
-
-    setEventos(prev => [...prev, nuevoEvento])
     setHoraDesde('')
     setHoraHasta('')
     setDiaSeleccionado(null)
@@ -135,7 +183,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     return <div className="alert alert-danger">No se encontró el grupo.</div>
   }
 
-  const opcionesBomberos = bomberos.map(b => ({
+  const opcionesBomberos = bomberos.map((b) => ({
     label: `${b.nombre} ${b.apellido}`,
     value: b.dni,
     ...b
@@ -146,7 +194,11 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       <h2 className="text-black mb-4">Gestión de guardias - {nombreGrupo}</h2>
 
       {mensaje && (
-        <div className={`alert ${mensaje.includes('correctamente') ? 'alert-success' : 'alert-warning'}`}>
+        <div
+          className={`alert ${
+            mensaje.includes('correctamente') ? 'alert-success' : 'alert-warning'
+          }`}
+        >
           {mensaje}
         </div>
       )}
@@ -178,11 +230,18 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             <label className="mt-2">Desde:</label>
             <div className="d-flex gap-2">
               <Select
-                options={[...Array(24).keys()].map(h => ({
+                options={[...Array(24).keys()].map((h) => ({
                   label: h.toString().padStart(2, '0'),
                   value: h.toString().padStart(2, '0')
                 }))}
-                value={horaDesde ? { label: horaDesde.split(':')[0], value: horaDesde.split(':')[0] } : null}
+                value={
+                  horaDesde
+                    ? {
+                        label: horaDesde.split(':')[0],
+                        value: horaDesde.split(':')[0]
+                      }
+                    : null
+                }
                 onChange={(selected) => {
                   const nuevaHora = selected?.value || ''
                   setHoraDesde(`${nuevaHora}:${horaDesde.split(':')[1] || '00'}`)
@@ -193,11 +252,18 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
               />
 
               <Select
-                options={[...Array(60).keys()].map(m => ({
+                options={[...Array(60).keys()].map((m) => ({
                   label: m.toString().padStart(2, '0'),
                   value: m.toString().padStart(2, '0')
                 }))}
-                value={horaDesde ? { label: horaDesde.split(':')[1], value: horaDesde.split(':')[1] } : null}
+                value={
+                  horaDesde
+                    ? {
+                        label: horaDesde.split(':')[1],
+                        value: horaDesde.split(':')[1]
+                      }
+                    : null
+                }
                 onChange={(selected) => {
                   const nuevosMin = selected?.value || ''
                   setHoraDesde(`${horaDesde.split(':')[0] || '00'}:${nuevosMin}`)
@@ -212,11 +278,18 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             <label className="mt-2">Hasta:</label>
             <div className="d-flex gap-2">
               <Select
-                options={[...Array(24).keys()].map(h => ({
+                options={[...Array(24).keys()].map((h) => ({
                   label: h.toString().padStart(2, '0'),
                   value: h.toString().padStart(2, '0')
                 }))}
-                value={horaHasta ? { label: horaHasta.split(':')[0], value: horaHasta.split(':')[0] } : null}
+                value={
+                  horaHasta
+                    ? {
+                        label: horaHasta.split(':')[0],
+                        value: horaHasta.split(':')[0]
+                      }
+                    : null
+                }
                 onChange={(selected) => {
                   const nuevaHora = selected?.value || ''
                   setHoraHasta(`${nuevaHora}:${horaHasta.split(':')[1] || '00'}`)
@@ -227,11 +300,18 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
               />
 
               <Select
-                options={[...Array(60).keys()].map(m => ({
+                options={[...Array(60).keys()].map((m) => ({
                   label: m.toString().padStart(2, '0'),
                   value: m.toString().padStart(2, '0')
                 }))}
-                value={horaHasta ? { label: horaHasta.split(':')[1], value: horaHasta.split(':')[1] } : null}
+                value={
+                  horaHasta
+                    ? {
+                        label: horaHasta.split(':')[1],
+                        value: horaHasta.split(':')[1]
+                      }
+                    : null
+                }
                 onChange={(selected) => {
                   const nuevosMin = selected?.value || ''
                   setHoraHasta(`${horaHasta.split(':')[0] || '00'}:${nuevosMin}`)
@@ -254,37 +334,37 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
 
         <div className="col-md-8">
           <FullCalendar
-  plugins={[timeGridPlugin, interactionPlugin]}
-  initialView="timeGridWeek"
-  events={eventos}
-  locale={esLocale}
-  headerToolbar={{
-    left: 'prev,next today',
-    center: 'title',
-    right: ''
-  }}
-  allDaySlot={false}
-  slotDuration="00:30:00"
-  slotLabelFormat={{
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  }}
-  eventDidMount={(info) => {
-    const color = info.event.extendedProps.color || '#d52b1e'
-    const el = info.el
+            plugins={[timeGridPlugin, interactionPlugin]}
+            initialView="timeGridWeek"
+            events={eventos}
+            locale={esLocale}
+            firstDay={1}
+            headerToolbar={{
+              left: 'prev,next today',
+              center: 'title',
+              right: ''
+            }}
+            allDaySlot={false}
+            slotDuration="00:30:00"
+            slotLabelFormat={{
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            }}
+            eventContent={() => ({ domNodes: [] })}
+            eventDidMount={(info) => {
+              // Tooltip siempre se genera dinámicamente con la lista actual de bomberos
+              const tooltip = info.event.extendedProps.bomberos
+                .map((b) => `${b.nombre} (${b.desde}-${b.hasta})`)
+                .join(' | ')
 
-    el.style.setProperty('background-color', color, 'important')
-    el.style.setProperty('border', '1px solid black', 'important')
-    el.style.setProperty('color', '#fff', 'important')
-    el.style.setProperty('font-weight', 'bold', 'important')
-    el.style.setProperty('font-size', '0.85rem', 'important')
-    el.style.setProperty('padding', '2px', 'important')
-  }}
-/>
-
-
-
+              const el = info.el
+              el.style.setProperty('background-color', '#d52b1e', 'important')
+              el.style.setProperty('border', '1px solid black', 'important')
+              el.style.setProperty('color', 'transparent', 'important')
+              el.setAttribute('data-tooltip', tooltip)
+            }}
+          />
         </div>
       </div>
     </div>
