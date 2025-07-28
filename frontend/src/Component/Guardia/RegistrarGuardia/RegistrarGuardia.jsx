@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { API_URLS } from '../../../config/api'
 import './RegistrarGuardia.css'
+import { Users, AlertTriangle, Search, Plus, Minus, Trash2, FileText } from 'lucide-react'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial = '', bomberosIniciales = [], onVolver }) => {
@@ -113,164 +114,197 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
   }
 
   return (
-    <div className="container mt-4 formulario-consistente">
-      <h2 className="text-black mb-3">
-        {modoEdicion ? 'Editar Grupo de Guardia' : 'Crear Grupo de Guardia'}
-      </h2>
-
-      {mensaje && <div className="alert alert-warning">{mensaje}</div>}
-      {successMessage && <div className="alert alert-success">{successMessage}</div>}
-
-      <div className="row g-3">
-        <div className="col-md-4">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Nombre del grupo"
-            value={nombreGrupo}
-            onChange={(e) => {
-              setNombreGrupo(e.target.value)
-              setMensaje('')
-            }}
-          />
+    <div className="container-fluid py-5">
+      <div className="text-center mb-4">
+        {/* Header */}
+        <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+          <div className="bg-danger p-3 rounded-circle">
+            <Users size={32} color="white" />
+          </div>
+          <h1 className="fw-bold text-white fs-3 mb-0">Crear Grupo de Guardia</h1>
         </div>
-        <div className="col-md-4">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Descripción del grupo (opcional)"
-            value={descripcion}
-            maxLength={30}
-            onChange={(e) => setDescripcion(e.target.value)}
-          />
-        </div>
-        <div className="col-md-4">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Buscar por DNI, legajo, nombre o apellido"
-            value={busqueda}
-            onChange={handleBusqueda}
-          />
-        </div>
+        <span className="badge bg-danger-subtle text-danger">
+          <AlertTriangle className="me-2" />
+          Sistema de Gestión de Personal - Cuartel de Bomberos
+        </span>
       </div>
 
-      <div className="table-responsive mt-3" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-        <table className="table table-bordered table-sm text-center">
-          <thead className="table-light">
-            <tr>
-              <th>Seleccionar</th>
-              <th>DNI</th>
-              <th>Legajo</th>
-              <th>Nombre</th>
-              <th>Apellido</th>
-              <th>Teléfono</th>
-              <th>Email</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bomberos.map((b) => {
-              const yaEstaEnGrupo = grupo.some((g) => g.dni === b.dni)
-              const asignado = b.grupos !== 'No asignado'
-              let perteneceAOtroGrupo = false
-              if (modoEdicion && asignado) {
-                const gruposAsignados = b.grupos.toLowerCase().split(',').map((g) => g.trim())
-                perteneceAOtroGrupo = !gruposAsignados.includes(nombreGrupo.toLowerCase())
-              } else if (!modoEdicion && asignado) {
-                perteneceAOtroGrupo = true
-              }
-              const deshabilitado = yaEstaEnGrupo || perteneceAOtroGrupo
-              return (
-                <tr key={b.dni}>
-                  <td>
-                    <button
-                      onClick={() => agregarAlGrupo(b)}
-                      disabled={deshabilitado}
-                      className={`btn btn-sm ${deshabilitado ? 'btn-secondary' : 'btn-success'}`}
-                    >
-                      ➕
-                    </button>
-                  </td>
-                  <td>{b.dni}</td>
-                  <td>{b.legajo}</td>
-                  <td>{b.nombre}</td>
-                  <td>{b.apellido}</td>
-                  <td>{b.telefono}</td>
-                  <td>{b.email}</td>
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+        <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
+          <FileText />
+          <strong>Registrar Grupo de Guardia</strong>
+        </div>
+
+        {mensaje && <div className="alert alert-warning text-center">{mensaje}</div>}
+        {successMessage && <div className="alert alert-success text-center">{successMessage}</div>}
+
+        {/* Card principal */}
+        <div className="card-body">
+          <div className="p-8 space-y-8">
+            {/* Información del Grupo */}
+            <div className="row mb-3">
+              <div className="col-md-4">
+                <label htmlFor="nombreGrupo" className="form-label text-dark d-flex align-items-center gap-2">Nombre del grupo</label>
+                <input
+                  type="text"
+                  id="nombreGrupo"
+                  value={nombreGrupo}
+                  onChange={(e) => setNombreGrupo(e.target.value)}
+                  placeholder="Ingrese el nombre del grupo"
+                  className="form-control"
+                />
+              </div>
+
+              <div className="col-md-4">
+                <label htmlFor="descripcion" className="form-label text-dark d-flex align-items-center gap-2">Descripción <span className="badge bg-secondary text-white text-uppercase">opcional</span>
+                </label>
+                <input
+                  type='text'
+                  value={descripcion}
+                  onChange={(e) => setDescripcion(e.target.value)}
+                  placeholder="Descripción opcional del grupo"
+                  className="form-control"
+                />
+              </div>
+            </div>
+
+            {/* Buscador */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                placeholder="Buscar bombero por dni, legajo, nombre o apellido"
+                value={busqueda}
+                onChange={handleBusqueda}
+                className="w-full pl-10 border-gray-300 border rounded p-2"
+              />
+            </div>
+
+            {/* Tabla de bomberos disponibles */}
+            <table className="w-full border mt-4">
+              <thead className="bg-gray-600 text-white">
+                <tr>
+                  <th className="p-2">Seleccionar</th>
+                  <th className="p-2">DNI</th>
+                  <th className="p-2">Legajo</th>
+                  <th className="p-2">Nombre</th>
+                  <th className="p-2">Apellido</th>
+                  <th className="p-2">Teléfono</th>
+                  <th className="p-2">Email</th>
                 </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {bomberos.map((b) => {
+                  const yaEstaEnGrupo = grupo.some((g) => g.dni === b.dni)
+                  return (
+                    <tr key={b.dni} className="border-b">
+                      <td className="text-center">
+                        <button
+                          onClick={() => agregarAlGrupo(b)}
+                          disabled={yaEstaEnGrupo}
+                          className={`w-8 h-8 p-0 rounded ${yaEstaEnGrupo ? 'bg-gray-400 text-white' : 'bg-green-600 text-white'
+                            }`}
+                        >
+                          {yaEstaEnGrupo ? <Minus className="h-4 w-4 mx-auto" /> : <Plus className="h-4 w-4 mx-auto" />}
+                        </button>
+                      </td>
+                      <td className="p-2">{b.dni}</td>
+                      <td className="p-2">{b.legajo || '-'}</td>
+                      <td className="p-2">{b.nombre}</td>
+                      <td className="p-2">{b.apellido}</td>
+                      <td className="p-2">{b.telefono}</td>
+                      <td className="p-2">{b.email}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
 
-      <div className="pagination my-3">
-        {Array.from({ length: Math.ceil(total / limite) }, (_, i) => (
-          <button
-            key={i}
-            className={`btn btn-sm me-1 ${paginaActual === i + 1 ? 'btn-secondary' : 'btn-outline-secondary'}`}
-            onClick={() => setPaginaActual(i + 1)}
-          >
-            {i + 1}
-          </button>
-        ))}
-      </div>
+            {/* Paginación */}
+            <div className="flex justify-center mt-4">
+              {Array.from({ length: Math.ceil(total / limite) }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setPaginaActual(i + 1)}
+                  className={`px-4 py-2 rounded mx-1 ${paginaActual === i + 1
+                      ? 'bg-gray-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
 
-      <h4 className="text-black mt-4">Bomberos en el grupo</h4>
-      <div className="table-responsive" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-        <table className="table table-bordered table-sm text-center">
-          <thead className="table-light">
-            <tr>
-              <th>DNI</th>
-              <th>Legajo</th>
-              <th>Nombre</th>
-              <th>Apellido</th>
-              <th>Teléfono</th>
-              <th>Email</th>
-              <th>Quitar</th>
-            </tr>
-          </thead>
-          <tbody>
-            {grupo.map((b) => (
-              <tr key={b.dni}>
-                <td>{b.dni}</td>
-                <td>{b.legajo}</td>
-                <td>{b.nombre}</td>
-                <td>{b.apellido}</td>
-                <td>{b.telefono}</td>
-                <td>{b.email}</td>
-                <td>
-                  <button
-                    className="btn btn-sm text-danger border-0 bg-transparent"
-                    onClick={() => quitarDelGrupo(b.dni)}
-                    title="Quitar bombero"
-                  >
-                    ❌
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            {/* Bomberos seleccionados */}
+            <h3 className="text-lg font-semibold text-center">Bomberos en el grupo</h3>
+            <table className="w-full border">
+              <thead className="bg-gray-600 text-white">
+                <tr>
+                  <th className="p-2">DNI</th>
+                  <th className="p-2">Legajo</th>
+                  <th className="p-2">Nombre</th>
+                  <th className="p-2">Apellido</th>
+                  <th className="p-2">Teléfono</th>
+                  <th className="p-2">Email</th>
+                  <th className="p-2">Quitar</th>
+                </tr>
+              </thead>
+              <tbody>
+                {grupo.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center p-4 text-gray-500">
+                      No hay bomberos seleccionados en el grupo
+                    </td>
+                  </tr>
+                ) : (
+                  grupo.map((b) => (
+                    <tr key={b.dni} className="border-b">
+                      <td className="p-2">{b.dni}</td>
+                      <td className="p-2">{b.legajo || '-'}</td>
+                      <td className="p-2">{b.nombre}</td>
+                      <td className="p-2">{b.apellido}</td>
+                      <td className="p-2">{b.telefono}</td>
+                      <td className="p-2">{b.email}</td>
+                      <td className="text-center">
+                        <button
+                          onClick={() => quitarDelGrupo(b.dni)}
+                          className="p-1 border border-red-400 rounded text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
 
-      <div className="d-flex justify-content-center gap-3 mt-4">
-        <button
-          className="btn btn-danger"
-          onClick={guardarGrupo}
-          disabled={loading}
-        >
-          {loading ? 'Espere...' : modoEdicion ? 'Actualizar Grupo' : 'Guardar Grupo'}
-        </button>
-        <button
-          className="btn btn-secondary"
-          onClick={onVolver}
-          disabled={loading}
-        >
-          Volver al menú
-        </button>
+            {/* Botones */}
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <button
+                onClick={guardarGrupo}
+                disabled={loading}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded"
+              >
+                <Users className="h-5 w-5 mr-2 inline" />
+                {loading ? 'Espere...' : modoEdicion ? 'Actualizar Grupo' : 'Guardar Grupo'}
+              </button>
+              <button
+                onClick={onVolver}
+                disabled={loading}
+                className="flex-1 border border-gray-400 text-gray-700 hover:bg-gray-50 py-3 rounded"
+              >
+                Volver
+              </button>
+            </div>
+          </div>
+        </div>
+
+
+
       </div>
     </div>
+
   )
 }
 
