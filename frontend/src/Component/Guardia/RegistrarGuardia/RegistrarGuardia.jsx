@@ -169,65 +169,93 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
             </div>
 
             {/* Buscador */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <div className="mb-3 position-relative">
+              <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
               <input
-                placeholder="Buscar bombero por dni, legajo, nombre o apellido"
+                type='text'
+                placeholder="Buscar bombero por DNI, legajo, nombre o apellido"
                 value={busqueda}
                 onChange={handleBusqueda}
-                className="w-full pl-10 border-gray-300 border rounded p-2"
+                className="form-control ps-5 py-3 border-secondary"
               />
             </div>
 
             {/* Tabla de bomberos disponibles */}
-            <table className="w-full border mt-4">
-              <thead className="bg-gray-600 text-white">
-                <tr>
-                  <th className="p-2">Seleccionar</th>
-                  <th className="p-2">DNI</th>
-                  <th className="p-2">Legajo</th>
-                  <th className="p-2">Nombre</th>
-                  <th className="p-2">Apellido</th>
-                  <th className="p-2">Teléfono</th>
-                  <th className="p-2">Email</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bomberos.map((b) => {
-                  const yaEstaEnGrupo = grupo.some((g) => g.dni === b.dni)
-                  return (
-                    <tr key={b.dni} className="border-b">
-                      <td className="text-center">
-                        <button
-                          onClick={() => agregarAlGrupo(b)}
-                          disabled={yaEstaEnGrupo}
-                          className={`w-8 h-8 p-0 rounded ${yaEstaEnGrupo ? 'bg-gray-400 text-white' : 'bg-green-600 text-white'
-                            }`}
-                        >
-                          {yaEstaEnGrupo ? <Minus className="h-4 w-4 mx-auto" /> : <Plus className="h-4 w-4 mx-auto" />}
-                        </button>
-                      </td>
-                      <td className="p-2">{b.dni}</td>
-                      <td className="p-2">{b.legajo || '-'}</td>
-                      <td className="p-2">{b.nombre}</td>
-                      <td className="p-2">{b.apellido}</td>
-                      <td className="p-2">{b.telefono}</td>
-                      <td className="p-2">{b.email}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+            <div className="table-responsive rounded border">
+              <table className="table table-hover align-middle mb-0">
+                <thead className="bg-light">
+                  <tr>
+                    <th className="border-end text-center">Seleccionar</th>
+                    <th className="border-end text-center">DNI</th>
+                    <th className="border-end text-center">Legajo</th>
+                    <th className="border-end text-center">Nombre</th>
+                    <th className="border-end text-center">Apellido</th>
+                    <th className="border-end text-center">Teléfono</th>
+                    <th className="text-center">Email</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {bomberos.map((b) => {
+                    const yaEstaEnGrupoActual = grupo.some((g) => g.dni === b.dni)
+                    const asignado = b.grupos !== 'No asignado'
+
+                    let perteneceAOtroGrupo = false
+
+                    if (modoEdicion && asignado) {
+                      // El bombero tiene asignación y estamos editando
+                      const gruposAsignados = b.grupos.split(',').map((g) => g.trim().toLowerCase())
+                      perteneceAOtroGrupo = !gruposAsignados.includes(nombreGrupo.toLowerCase())
+                    } else if (!modoEdicion && asignado) {
+                      perteneceAOtroGrupo = true
+                    }
+
+                    const deshabilitarBtn = yaEstaEnGrupoActual || perteneceAOtroGrupo
+                    const mostrarTooltip = asignado
+
+                    return (
+                      <tr key={b.dni}>
+                        <td className="border-end px-3 text-center">
+                          <div className="tooltip-container">
+                            <button
+                              onClick={() => agregarAlGrupo(b)}
+                              disabled={deshabilitarBtn}
+                              className={`btn btn-sm ${deshabilitarBtn ? 'btn-secondary' : 'btn-success'}`}
+                            >
+                              ➕
+                            </button>
+                            {mostrarTooltip && (
+                              <div className="tooltip">
+                                Pertenece a: {b.grupos}
+                              </div>
+                            )}
+                          </div>
+
+                        </td>
+                        <td className="border-end px-3">{b.dni}</td>
+                        <td className="border-end px-3">{b.legajo || '-'}</td>
+                        <td className="border-end px-4">{b.nombre}</td>
+                        <td className="border-end px-4">{b.apellido}</td>
+                        <td className="border-end px-2">{b.telefono}</td>
+                        <td className="border-end text-primary">{b.email}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
 
             {/* Paginación */}
-            <div className="flex justify-center mt-4">
+            <div className="flex justify-center text-primary py-2">
               {Array.from({ length: Math.ceil(total / limite) }, (_, i) => (
                 <button
                   key={i}
                   onClick={() => setPaginaActual(i + 1)}
-                  className={`px-4 py-2 rounded mx-1 ${paginaActual === i + 1
-                      ? 'bg-gray-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+
+                  className={`btn btn-sm me-1 ${paginaActual === i + 1
+                    ? 'btn-secondary'
+                    : 'btn-outline-secondary'
                     }`}
                 >
                   {i + 1}
@@ -236,48 +264,54 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
             </div>
 
             {/* Bomberos seleccionados */}
-            <h3 className="text-lg font-semibold text-center">Bomberos en el grupo</h3>
-            <table className="w-full border">
-              <thead className="bg-gray-600 text-white">
-                <tr>
-                  <th className="p-2">DNI</th>
-                  <th className="p-2">Legajo</th>
-                  <th className="p-2">Nombre</th>
-                  <th className="p-2">Apellido</th>
-                  <th className="p-2">Teléfono</th>
-                  <th className="p-2">Email</th>
-                  <th className="p-2">Quitar</th>
-                </tr>
-              </thead>
-              <tbody>
-                {grupo.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="text-center p-4 text-gray-500">
-                      No hay bomberos seleccionados en el grupo
-                    </td>
-                  </tr>
-                ) : (
-                  grupo.map((b) => (
-                    <tr key={b.dni} className="border-b">
-                      <td className="p-2">{b.dni}</td>
-                      <td className="p-2">{b.legajo || '-'}</td>
-                      <td className="p-2">{b.nombre}</td>
-                      <td className="p-2">{b.apellido}</td>
-                      <td className="p-2">{b.telefono}</td>
-                      <td className="p-2">{b.email}</td>
-                      <td className="text-center">
-                        <button
-                          onClick={() => quitarDelGrupo(b.dni)}
-                          className="p-1 border border-red-400 rounded text-red-600 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </td>
+            <div className="mt-4">
+              <h4 className="text-lg font-semibold text-center">Bomberos en el grupo</h4>
+              <div className="table-responsive">
+                <table className="w-full border">
+                  <thead className="bg-gray-600 text-white">
+                    <tr>
+                      <th className="p-2">DNI</th>
+                      <th className="p-2">Legajo</th>
+                      <th className="p-2">Nombre</th>
+                      <th className="p-2">Apellido</th>
+                      <th className="p-2">Teléfono</th>
+                      <th className="p-2">Email</th>
+                      <th className="p-2">Quitar</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {grupo.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="text-center p-4 text-gray-500">
+                          No hay bomberos seleccionados en el grupo
+                        </td>
+                      </tr>
+                    ) : (
+                      grupo.map((b) => (
+                        <tr key={b.dni} className="border-b">
+                          <td className="p-2">{b.dni}</td>
+                          <td className="p-2">{b.legajo || '-'}</td>
+                          <td className="p-2">{b.nombre}</td>
+                          <td className="p-2">{b.apellido}</td>
+                          <td className="p-2">{b.telefono}</td>
+                          <td className="p-2">{b.email}</td>
+                          <td className="text-center">
+                            <button
+                              onClick={() => quitarDelGrupo(b.dni)}
+                              className="p-1 border border-red-400 rounded text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+
 
             {/* Botones */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
