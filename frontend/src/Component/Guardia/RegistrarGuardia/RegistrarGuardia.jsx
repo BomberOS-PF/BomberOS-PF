@@ -222,7 +222,7 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
                               disabled={deshabilitarBtn}
                               className={`btn btn-sm ${deshabilitarBtn ? 'btn-secondary' : 'btn-success'}`}
                             >
-                              ➕
+                              +
                             </button>
                             {mostrarTooltip && (
                               <div className="tooltip">
@@ -247,7 +247,7 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
 
 
             {/* Paginación */}
-            <div className="flex justify-center text-primary py-2">
+            <div className="flex justify-center mb-3">
               {Array.from({ length: Math.ceil(total / limite) }, (_, i) => (
                 <button
                   key={i}
@@ -310,8 +310,6 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
                 </table>
               </div>
             </div>
-
-
 
             {/* Botones */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
