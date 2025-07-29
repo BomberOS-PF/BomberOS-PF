@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
@@ -58,6 +58,20 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   const [horaHasta, setHoraHasta] = useState('')
   const [mensaje, setMensaje] = useState('')
 
+  // 🔹 Actualizar tooltips en el DOM cada vez que cambien los eventos
+  useEffect(() => {
+    document.querySelectorAll('.fc-event').forEach((el) => {
+      const eventId = el.getAttribute('data-event-id')
+      const evento = eventos.find((ev) => ev.id === eventId)
+      if (evento) {
+        const tooltip = evento.extendedProps.bomberos
+          .map((b) => `${b.nombre} (${b.desde}-${b.hasta})`)
+          .join(' | ')
+        el.setAttribute('data-tooltip', tooltip)
+      }
+    })
+  }, [eventos])
+
   const asignarGuardia = () => {
     if (!bomberoSeleccionado || !horaDesde || !horaHasta || diaSeleccionado === null) {
       setMensaje('Debes completar todos los campos obligatorios para asignar una guardia.')
@@ -108,17 +122,14 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
         const inicioEv = new Date(ev.start)
         const finEv = new Date(ev.end)
 
-        // Si el nuevo bloque se solapa con el actual
         const solapan = nuevoInicioDate <= finEv && nuevoFinDate >= inicioEv
 
         if (solapan) {
           fusionado = true
 
-          // Expandir rango al más amplio
           const nuevoStart = nuevoInicioDate < inicioEv ? nuevoInicioDate : inicioEv
           const nuevoEnd = nuevoFinDate > finEv ? nuevoFinDate : finEv
 
-          // Copiar bomberos y agregar si es nuevo
           const bomberosActualizados = [...ev.extendedProps.bomberos]
           const yaExiste = bomberosActualizados.some(
             (b) => b.nombre === bomberoSeleccionado.label
@@ -137,7 +148,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             start: nuevoStart,
             end: nuevoEnd,
             extendedProps: {
-              ...ev.extendedProps,
               bomberos: bomberosActualizados
             }
           }
@@ -146,7 +156,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
         return ev
       })
 
-      // Si no hubo solapamiento, crear un nuevo bloque
       if (!fusionado) {
         eventosActualizados.push({
           id: `${fechaObjetivo.toISOString()}-${horaDesde}`,
@@ -169,7 +178,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
         })
       }
 
-      return eventosActualizados
+      return [...eventosActualizados]
     })
 
     setHoraDesde('')
@@ -353,16 +362,15 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             }}
             eventContent={() => ({ domNodes: [] })}
             eventDidMount={(info) => {
-              // Tooltip siempre se genera dinámicamente con la lista actual de bomberos
+              // Inicializa el tooltip
               const tooltip = info.event.extendedProps.bomberos
                 .map((b) => `${b.nombre} (${b.desde}-${b.hasta})`)
                 .join(' | ')
-
-              const el = info.el
-              el.style.setProperty('background-color', '#d52b1e', 'important')
-              el.style.setProperty('border', '1px solid black', 'important')
-              el.style.setProperty('color', 'transparent', 'important')
-              el.setAttribute('data-tooltip', tooltip)
+              info.el.setAttribute('data-event-id', info.event.id)
+              info.el.setAttribute('data-tooltip', tooltip)
+              info.el.style.setProperty('background-color', '#d52b1e', 'important')
+              info.el.style.setProperty('border', '1px solid black', 'important')
+              info.el.style.setProperty('color', 'transparent', 'important')
             }}
           />
         </div>
