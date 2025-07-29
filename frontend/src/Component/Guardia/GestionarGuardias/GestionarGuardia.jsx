@@ -58,11 +58,11 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   const [horaHasta, setHoraHasta] = useState('')
   const [mensaje, setMensaje] = useState('')
 
-  // 🔹 Guardamos tooltips y calendario
+  // tooltips y calendario
   const tooltipsRef = useRef({})
   const calendarRef = useRef()
 
-  // 🔹 Actualizar texto del tooltip cuando cambian los eventos
+  // Actualiza tooltips cuando cambian eventos
   useEffect(() => {
     eventos.forEach((ev) => {
       const tooltip = tooltipsRef.current[ev.id]
@@ -85,7 +85,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       return
     }
 
-    // 🔹 Usar el lunes de la semana visible en el calendario
+    // Semana visible en el calendario
     const calendarApi = calendarRef.current?.getApi()
     const lunesSemana = new Date(calendarApi.view.activeStart)
 
@@ -93,7 +93,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     const fechaObjetivo = new Date(lunesSemana)
     fechaObjetivo.setDate(lunesSemana.getDate() + diaSeleccionado.value)
 
-    // Crear fechas manualmente
     const [horaI, minI] = horaDesde.split(':').map(Number)
     const [horaF, minF] = horaHasta.split(':').map(Number)
 
@@ -158,8 +157,8 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
           title: '',
           start: nuevoInicioDate,
           end: nuevoFinDate,
-          backgroundColor: '#d52b1e',
-          borderColor: 'black',
+          backgroundColor: '#f08080', // 🔹 Rojo claro por defecto
+          borderColor: '#b30000',
           textColor: 'transparent',
           allDay: false,
           extendedProps: {
@@ -359,7 +358,12 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             }}
             eventContent={() => ({ domNodes: [] })}
             eventDidMount={(info) => {
-              // Tooltip flotante y guardamos la referencia
+              // Estilos dinámicos del bloque (eventos)
+              info.el.style.backgroundColor = '#f08080' // Rojo claro
+              info.el.style.border = '1px solid #b30000'
+              info.el.style.transition = 'background-color 0.2s ease'
+
+              // Tooltip flotante
               const tooltip = document.createElement('div')
               tooltip.className = 'tooltip-dinamico'
               tooltip.innerText = info.event.extendedProps.bomberos
@@ -368,24 +372,23 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
               document.body.appendChild(tooltip)
               tooltipsRef.current[info.event.id] = tooltip
 
-              const showTooltip = (e) => {
+              // Eventos de hover: color + tooltip
+              info.el.addEventListener('mouseenter', (e) => {
+                info.el.style.backgroundColor = '#d52b1e' // Rojo oscuro al hover
                 tooltip.style.display = 'block'
                 tooltip.style.left = `${e.pageX + 10}px`
                 tooltip.style.top = `${e.pageY - 20}px`
-              }
+              })
 
-              const moveTooltip = (e) => {
+              info.el.addEventListener('mousemove', (e) => {
                 tooltip.style.left = `${e.pageX + 10}px`
                 tooltip.style.top = `${e.pageY - 20}px`
-              }
+              })
 
-              const hideTooltip = () => {
+              info.el.addEventListener('mouseleave', () => {
+                info.el.style.backgroundColor = '#f08080' // Vuelve a claro
                 tooltip.style.display = 'none'
-              }
-
-              info.el.addEventListener('mouseenter', showTooltip)
-              info.el.addEventListener('mousemove', moveTooltip)
-              info.el.addEventListener('mouseleave', hideTooltip)
+              })
             }}
           />
         </div>

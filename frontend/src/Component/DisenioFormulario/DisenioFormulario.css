@@ -503,3 +503,15 @@ body {
   white-space: pre-line;
   pointer-events: none;
 }
+
+/* Color por defecto de los bloques (eventos) */
+.fc-timegrid-event {
+  background-color: #f08080 !important; /* Rojo más claro */
+  border: 1px solid #b30000 !important;
+  transition: background-color 0.2s ease;
+}
+
+/* Cuando paso el mouse sobre el bloque */
+.fc-timegrid-event:hover {
+  background-color: #d52b1e !important; /* Rojo actual más oscuro */
+}
