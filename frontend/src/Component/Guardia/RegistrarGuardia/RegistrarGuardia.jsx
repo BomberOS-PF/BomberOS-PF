@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { API_URLS } from '../../../config/api'
 import './RegistrarGuardia.css'
-import { Users, AlertTriangle, Search, Plus, Minus, Trash2, FileText } from 'lucide-react'
+import { Users, AlertTriangle, Plus, Trash2, FileText } from 'lucide-react'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial = '', bomberosIniciales = [], onVolver }) => {
@@ -222,7 +222,7 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
                               disabled={deshabilitarBtn}
                               className={`btn btn-sm btn-add ${deshabilitarBtn ? 'disabled' : ''}`}
                             >
-                              +
+                              <Plus className="h-4 w-4" />
                             </button>
                             {mostrarTooltip && (
                               <div className="tooltip">
@@ -237,7 +237,7 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
                         <td className="border-end px-4">{b.nombre}</td>
                         <td className="border-end px-4">{b.apellido}</td>
                         <td className="border-end px-2">{b.telefono}</td>
-                        <td className="border-end text-secondary">{b.email}</td>
+                        <td className="border-end text-black">{b.email}</td>
                       </tr>
                     )
                   })}
@@ -247,15 +247,13 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
 
 
             {/* Paginación */}
-            <div className="flex justify-center mb-3">
+            <div className="d-flex justify-content-center mb-3 py-2">
               {Array.from({ length: Math.ceil(total / limite) }, (_, i) => (
                 <button
                   key={i}
                   onClick={() => setPaginaActual(i + 1)}
-
-                  className={`btn btn-sm me-1 ${paginaActual === i + 1
-                    ? 'btn-secondary'
-                    : 'btn-outline-secondary'
+                  type='button'
+                  className={`btn btn-sm me-1 custom-page-btn ${paginaActual === i + 1 ? 'active' : ''
                     }`}
                 >
                   {i + 1}
@@ -265,10 +263,13 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
 
             {/* Bomberos seleccionados */}
             <div className="mt-4">
-              <h4 className="text-lg font-semibold text-center">Bomberos en el grupo</h4>
-              <div className="table-responsive">
-                <table className="w-full border">
-                  <thead className="bg-gray-600 text-white">
+              <div mb-3 d-flex align-items-center gap-2>
+                <h5 className="mb-2 text-dark">Bomberos en el Grupo</h5>
+              </div>
+
+              <div className="table-responsive rounded border">
+                <table className="table table-hover align-middle mb-0">
+                  <thead className="bg-light">
                     <tr>
                       <th className="p-2">DNI</th>
                       <th className="p-2">Legajo</th>

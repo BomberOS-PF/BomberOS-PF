@@ -66,4 +66,31 @@
 
 
 
+/* Estilo base del botón de paginación */
+.custom-page-btn {
+  background-color: #6b7280;     
+  color: #fff;                   
+  border: 1px solid #6b7280;      
+  padding: 0.4rem 0.8rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Hover */
+.custom-page-btn:hover {
+  background-color: #374151;      
+  border-color: #374151;
+  color: #000000 !important;
+}
+
+/* Página activa */
+.custom-page-btn.active {
+  background-color: #374151;
+  border-color: #374151;
+  color: #fff;
+}
+
+
+
+
 
