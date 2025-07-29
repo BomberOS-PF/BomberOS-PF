@@ -237,7 +237,7 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
                         <td className="border-end px-4">{b.nombre}</td>
                         <td className="border-end px-4">{b.apellido}</td>
                         <td className="border-end px-2">{b.telefono}</td>
-                        <td className="border-end text-black">{b.email}</td>
+                        <td className="text-black">{b.email}</td>
                       </tr>
                     )
                   })}
@@ -271,13 +271,13 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
                 <table className="table table-hover align-middle mb-0">
                   <thead className="bg-light">
                     <tr>
-                      <th className="p-2">DNI</th>
-                      <th className="p-2">Legajo</th>
-                      <th className="p-2">Nombre</th>
-                      <th className="p-2">Apellido</th>
-                      <th className="p-2">Teléfono</th>
-                      <th className="p-2">Email</th>
-                      <th className="p-2">Quitar</th>
+                      <th className="border-end text-center">DNI</th>
+                      <th className="border-end text-center">Legajo</th>
+                      <th className="border-end text-center">Nombre</th>
+                      <th className="border-end text-center">Apellido</th>
+                      <th className="border-end text-center">Teléfono</th>
+                      <th className="border-end text-center">Email</th>
+                      <th className="text-center">Quitar</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -290,18 +290,18 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
                     ) : (
                       grupo.map((b) => (
                         <tr key={b.dni} className="border-b">
-                          <td className="p-2">{b.dni}</td>
-                          <td className="p-2">{b.legajo || '-'}</td>
-                          <td className="p-2">{b.nombre}</td>
-                          <td className="p-2">{b.apellido}</td>
-                          <td className="p-2">{b.telefono}</td>
-                          <td className="p-2">{b.email}</td>
+                          <td className="border-end text-center">{b.dni}</td>
+                          <td className="border-end text-center">{b.legajo || '-'}</td>
+                          <td className="border-end text-center">{b.nombre}</td>
+                          <td className="border-end text-center">{b.apellido}</td>
+                          <td className="border-end text-center">{b.telefono}</td>
+                          <td className="border-end text-center">{b.email}</td>
                           <td className="text-center">
                             <button
                               onClick={() => quitarDelGrupo(b.dni)}
-                              className="p-1 border border-red-400 rounded text-red-600 hover:bg-red-50"
+                              className="btn btn-outline-danger btn-sm"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <i className="bi bi-trash"></i>
                             </button>
                           </td>
                         </tr>
@@ -313,21 +313,24 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
             </div>
 
             {/* Botones */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <div className="d-grid gap-3">
               <button
+                type="submit"
                 onClick={guardarGrupo}
                 disabled={loading}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded"
+                className="btn btn-danger btn-lg"
               >
-                <Users className="h-5 w-5 mr-2 inline" />
+                <Users size={16} className="me-1" />
                 {loading ? 'Espere...' : modoEdicion ? 'Actualizar Grupo' : 'Guardar Grupo'}
               </button>
+
               <button
+                type="button"
                 onClick={onVolver}
                 disabled={loading}
-                className="flex-1 border border-gray-400 text-gray-700 hover:bg-gray-50 py-3 rounded"
+                className="btn btn-secondary"
               >
-                Volver
+                Volver al menú
               </button>
             </div>
           </div>
