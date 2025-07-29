@@ -21,7 +21,27 @@ export function setupRoutes(app, container) {
 
   app.get('/', (req, res) => res.redirect('/health'))
 
-  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, recuperarClaveHandler, validarTokenHandler, restablecerClaveHandler,incendioEstructuralHandler, forestalCatalogosHandler, tipoIncidenteHandler, localizacionHandler, causaProbableHandler } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, recuperarClaveHandler, validarTokenHandler, restablecerClaveHandler,incendioEstructuralHandler, forestalCatalogosHandler, tipoIncidenteHandler, localizacionHandler, causaProbableHandler, materialPeligrosoHandler,categoriaMaterialPeligrosoHandler } = container
+
+
+  //Categoria Materiales peligrosos
+  app.get('/api/categorias-material-peligroso', async (req, res) => {
+    try {
+      await categoriaMaterialPeligrosoHandler.listar(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listar categorías material peligroso:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/categorias-material-peligroso/:id', async (req, res) => {
+    try {
+      await categoriaMaterialPeligrosoHandler.obtenerPorId(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtener categoría material peligroso por ID:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
 
   // ROLES
   app.get('/api/roles', async (req, res) => {
@@ -507,6 +527,33 @@ export function setupRoutes(app, container) {
     }
   })
 
+    // ===================== MATERIALES PELIGROSOS =====================
+  app.post('/api/materiales-peligrosos', async (req, res) => {
+    try {
+      await materialPeligrosoHandler.registrar(req, res)
+    } catch (error) {
+      logger.error('Error en ruta registrar material peligroso:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+  app.get('/api/materiales-peligrosos', async (req, res) => {
+    try {
+      await materialPeligrosoHandler.listarTodos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listar materiales peligrosos:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+  app.get('/api/materiales-peligrosos/:id', async (req, res) => {
+    try {
+      await materialPeligrosoHandler.obtenerPorIncidente(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtener material peligroso por incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+
 
   app.use((req, res) => {
     logger.warn('Ruta no encontrada', {
@@ -564,7 +611,13 @@ export function setupRoutes(app, container) {
         'POST /api/restablecer-clave',
         'POST /api/incendio-estructural',
         'GET /api/incendio-estructural',
-        'GET /api/incendio-estructural/:id'
+        'GET /api/incendio-estructural/:id',
+        'GET /api/categorias-material-peligroso',
+        'GET /api/categorias-material-peligroso/:id',
+        'POST /api/materiales-peligrosos',
+        'GET /api/materiales-peligrosos',
+        'GET /api/materiales-peligrosos/:id'
+
       ]
     })
   })
