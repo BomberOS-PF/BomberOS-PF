@@ -24,7 +24,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
 
   const [incidenteCreado, setIncidenteCreado] = useState(null)
   const [notificandoBomberos, setNotificandoBomberos] = useState(false)
-  
+
   // Estados para los datos dinámicos
   const [tiposIncidente, setTiposIncidente] = useState([])
   const [localizaciones, setLocalizaciones] = useState([])
@@ -39,7 +39,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
           apiRequest(API_URLS.tiposIncidente),
           apiRequest(API_URLS.localizaciones)
         ])
-        
+
         setTiposIncidente(tiposRes.data || [])
         setLocalizaciones(localizacionesRes.data || [])
       } catch (error) {
@@ -48,7 +48,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
         setLoading(false)
       }
     }
-    
+
     cargarDatos()
   }, [])
 
@@ -259,7 +259,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
                   required
                 />
               </div>
-            
+
               <div className="col-md-4 py-4">
                 <label htmlFor="lugar" className="form-label text-dark d-flex align-items-center gap-2">
                   <MapPin className="text-success" />
@@ -273,14 +273,17 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
                   <MapPin className="text-purple" />
                   Localización
                 </label>
-                <select id="localizacion" required onChange={handleChange} className="text-dark form-select">
-                  <option value="">Seleccione localización</option>
-                  <option>Despeñaderos</option>
-                  <option>Zona Rural</option>
-                  <option>Zona Urbana</option>
-                  <option>Zona Industrial</option>
-                  <option>Zona Costera</option>
-                  <option>Otros</option>
+                <select className="form-select" id="localizacion" required onChange={handleChange} defaultValue="">
+                  <option disabled value="">Seleccione localización</option>
+                  {loading ? (
+                    <option>Cargando localizaciones...</option>
+                  ) : (
+                    localizaciones.map(loc => (
+                      <option key={loc.idLocalizacion} value={loc.descripcion}>
+                        {loc.descripcion}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
             </div>
@@ -311,46 +314,16 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
                 <input type="text" id="dniDenunciante" className="form-control" onChange={handleChange} />
               </div>
             </div>
-          <div className="row mb-3">
-            <div className="col">
-              <label htmlFor="telefonoDenunciante" className="text-black form-label">Teléfono</label>
-              <input type="tel" className="form-control" id="telefonoDenunciante" onChange={handleChange} />
+            <div className="row mb-3">
+              <div className="col">
+                <label htmlFor="telefonoDenunciante" className="text-black form-label">Teléfono</label>
+                <input type="tel" className="form-control" id="telefonoDenunciante" onChange={handleChange} />
+              </div>
+              <div className="col">
+                <label htmlFor="dniDenunciante" className="text-black form-label">dni</label>
+                <input type="text" className="form-control" id="dniDenunciante" onChange={handleChange} />
+              </div>
             </div>
-            <div className="col">
-              <label htmlFor="dniDenunciante" className="text-black form-label">dni</label>
-              <input type="text" className="form-control" id="dniDenunciante" onChange={handleChange} />
-            </div>
-          </div>
-
-          <div className="row mb-3">
-            <div className="col-md-6">
-              <label htmlFor="localizacion" className="text-black form-label">Localización</label>
-              <select className="form-select" id="localizacion" required onChange={handleChange} defaultValue="">
-                <option disabled value="">Seleccione localización</option>
-                {loading ? (
-                  <option>Cargando localizaciones...</option>
-                ) : (
-                  localizaciones.map(loc => (
-                    <option key={loc.idLocalizacion} value={loc.descripcion}>
-                      {loc.descripcion}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
-
-            <div className="col-md-6">
-              <label htmlFor="lugar" className="text-black form-label">Calle y/o Kilometraje o Lugar</label>
-              <input
-                type="text"
-                className="form-control"
-                id="lugar"
-                placeholder="Ej: Av. Siempre Viva 742, km 12"
-                required
-                onChange={handleChange}
-              />
-            </div>
-          </div>
 
             <div className="d-grid gap-3">
               {datosEsencialesCompletos() && (
@@ -379,7 +352,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
               )}
 
               <button type="button" className="btn btn-secondary" onClick={onVolver}>
-                Volveral menú
+                Volver al menú
               </button>
             </div>
           </form>
