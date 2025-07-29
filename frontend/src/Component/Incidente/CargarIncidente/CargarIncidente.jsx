@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import './CargarIncidente.css'
-import '../../DisenioFormulario/DisenioFormulario.css'
+import { Flame, AlertTriangle, FileText, User, Clock, MapPin, Phone } from 'lucide-react'
+// import '../../DisenioFormulario/DisenioFormulario.css'
 import { API_URLS, apiRequest } from '../../../config/api'
 
-const CargarIncidente = ({ onVolver, onNotificar}) => {
+const CargarIncidente = ({ onVolver, onNotificar }) => {
   const now = new Date()
   const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
     .toISOString()
@@ -11,12 +12,12 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
 
   const usuario = JSON.parse(localStorage.getItem('usuario'))
   console.log('🧾 Usuario cargado desde localStorage:', usuario)
-  
+
   // Construir nombre completo con fallbacks
-  const nombreCompleto = usuario ? 
-    `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim() || 
-    usuario.usuario || 
-    'Usuario no identificado' 
+  const nombreCompleto = usuario ?
+    `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim() ||
+    usuario.usuario ||
+    'Usuario no identificado'
     : 'Usuario no logueado'
 
   const [formData, setFormData] = useState({
@@ -25,7 +26,7 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
 
   const [incidenteCreado, setIncidenteCreado] = useState(null)
   const [notificandoBomberos, setNotificandoBomberos] = useState(false)
-  
+
   // Estados para los datos dinámicos
   const [tiposIncidente, setTiposIncidente] = useState([])
   const [localizaciones, setLocalizaciones] = useState([])
@@ -40,7 +41,7 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
           apiRequest(API_URLS.tiposIncidente),
           apiRequest(API_URLS.localizaciones)
         ])
-        
+
         setTiposIncidente(tiposRes.data || [])
         setLocalizaciones(localizacionesRes.data || [])
       } catch (error) {
@@ -49,7 +50,7 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
         setLoading(false)
       }
     }
-    
+
     cargarDatos()
   }, [])
 
@@ -118,7 +119,7 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
     try {
       const incidenteGuardado = await guardarIncidente()
       alert('✅ Incidente guardado correctamente')
-      
+
       // Guardar el incidente creado para referencia
       setIncidenteCreado(incidenteGuardado)
 
@@ -162,7 +163,7 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
       }
 
       console.log('📱 Notificando bomberos para incidente:', incidente)
-      
+
       const response = await fetch(`http://localhost:3000/api/incidentes/${incidente.idIncidente}/notificar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
@@ -172,20 +173,20 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
 
       if (response.ok && data.success) {
         const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = data.data
-        
+
         let mensaje = `🚨 ALERTA ENVIADA A BOMBEROS:\n\n`
         mensaje += `📍 Tipo: ${formData.tipoSiniestro}\n`
         mensaje += `📍 Ubicación: ${formData.localizacion} - ${formData.lugar}\n`
         mensaje += `📍 Fecha/Hora: ${formData.fechaHora}\n\n`
         mensaje += `📱 Total bomberos contactados: ${totalBomberos}\n`
         mensaje += `✅ Notificaciones exitosas: ${notificacionesExitosas}\n`
-        
+
         if (notificacionesFallidas > 0) {
           mensaje += `❌ Notificaciones fallidas: ${notificacionesFallidas}\n`
         }
-        
+
         mensaje += `\n✅ Incidente registrado y bomberos notificados correctamente.`
-        
+
         alert(mensaje)
 
         // Callback para manejar el flujo posterior
@@ -217,152 +218,164 @@ const CargarIncidente = ({ onVolver, onNotificar}) => {
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center">
-      <div className="formulario-consistente">
-        <h2 className="text-black text-center mb-4">Cargar Incidente</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="row mb-3">
-            <div className="col-md-6">
-              <label className="text-black form-label">Persona que carga</label>
-              <input
-                type="text"
-                className="form-control"
-                value={nombreCompleto || 'Desconocido'}
-                disabled
-                readOnly
-              />
-            </div>
-            <div className="col-md-6">
-              <label htmlFor="tipoSiniestro" className="text-black form-label">Tipo de Siniestro</label>
-              <select className="form-select" id="tipoSiniestro" required onChange={handleChange} defaultValue="">
-                <option disabled value="">Seleccione tipo</option>
-                {loading ? (
-                  <option>Cargando tipos...</option>
-                ) : (
-                  tiposIncidente.map(tipo => (
-                    <option key={tipo.idTipoIncidente} value={tipo.nombre}>
-                      {tipo.nombre}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
+    <div className='container'>
+      <div className='text-center mb-4'>
+        <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
+          <div className='bg-danger p-3 rounded-circle'>
+            <Flame size={32} color="white" />
           </div>
+          <h1 className="fw-bold text-white fs-3 mb-0">Cargar Incidente</h1>
+        </div>
+        <span className="badge bg-danger-subtle text-danger">
+          <AlertTriangle className="me-2" /> Sistema de Emergencias - Cuartel de Bomberos
+        </span>
+      </div>
 
-          <div className="row mb-3">
-            <div className="col-md-4">
-              <label htmlFor="fechaHora" className="text-black form-label">Fecha y Hora</label>
-              <input
-                type="datetime-local"
-                className="form-control estrecho"
-                id="fechaHora"
-                value={formData.fechaHora}
-                required
-                onChange={handleChange}
-              />
-            </div>
-          </div>
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+        <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
+          <FileText />
+          <strong>Cargar Incidente</strong>
+        </div>
 
-          <h5 className="text-black mb-3">Datos del denunciante (opcional)</h5>
-          <div className="row mb-3">
-            <div className="col">
-              <label htmlFor="nombreDenunciante" className="text-black form-label">Nombre</label>
-              <input type="text" className="form-control" id="nombreDenunciante" onChange={handleChange} />
-            </div>
-            <div className="col">
-              <label htmlFor="apellidoDenunciante" className="text-black form-label">Apellido</label>
-              <input type="text" className="form-control" id="apellidoDenunciante" onChange={handleChange} />
-            </div>
-          </div>
-
-          <div className="row mb-3">
-            <div className="col">
-              <label htmlFor="telefonoDenunciante" className="text-black form-label">Teléfono</label>
-              <input type="tel" className="form-control" id="telefonoDenunciante" onChange={handleChange} />
-            </div>
-            <div className="col">
-              <label htmlFor="dniDenunciante" className="text-black form-label">dni</label>
-              <input type="text" className="form-control" id="dniDenunciante" onChange={handleChange} />
-            </div>
-          </div>
-
-          <div className="row mb-3">
-            <div className="col-md-6">
-              <label htmlFor="localizacion" className="text-black form-label">Localización</label>
-              <select className="form-select" id="localizacion" required onChange={handleChange} defaultValue="">
-                <option disabled value="">Seleccione localización</option>
-                {loading ? (
-                  <option>Cargando localizaciones...</option>
-                ) : (
-                  localizaciones.map(loc => (
-                    <option key={loc.idLocalizacion} value={loc.descripcion}>
-                      {loc.descripcion}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
-
-            <div className="col-md-6">
-              <label htmlFor="lugar" className="text-black form-label">Calle y/o Kilometraje o Lugar</label>
-              <input
-                type="text"
-                className="form-control"
-                id="lugar"
-                placeholder="Ej: Av. Siempre Viva 742, km 12"
-                required
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          <div className="botones-accion">
-            {/* Botón de Notificar - Aparece cuando los datos esenciales están completos */}
-            {datosEsencialesCompletos() && (
-              <button 
-                type="button" 
-                className="btn btn-warning btn-lg" 
-                onClick={notificarBomberos}
-                disabled={notificandoBomberos}
-                style={{ 
-                  fontSize: '1.1rem',
-                  fontWeight: 'bold',
-                  marginBottom: '10px',
-                  width: '100%'
-                }}
-              >
-                {notificandoBomberos ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    🚨 Enviando alerta a bomberos...
-                  </>
-                ) : (
-                  <>
-                    🚨 NOTIFICAR EMERGENCIA A BOMBEROS
-                  </>
-                )}
-              </button>
-            )}
-            
-            {/* Botón de guardar incidente - Solo aparece si no se ha notificado */}
-            {!incidenteCreado && (
-              <button type="submit" className="btn btn-danger">
-                Guardar Incidente (Sin Notificar)
-              </button>
-            )}
-            
-            {/* Información del estado */}
-            {incidenteCreado && (
-              <div className="alert alert-success mt-2">
-                ✅ Incidente registrado y bomberos notificados
+        <div className="card-body">
+          <form onSubmit={handleSubmit}>
+            <div className="row mb-3">
+              <div className="col-md-6 py-4">
+                <label className="form-label text-dark d-flex align-items-center gap-2">
+                  <User className="text-danger" />
+                  Persona que carga
+                </label>
+                <input type="text" className="form-control" value={nombreCompleto || 'Desconocido'} disabled readOnly />
               </div>
-            )}
+
+              <div className="col-md-6 py-4">
+                <label htmlFor="tipoSiniestro" className="text-dark form-label d-flex align-items-center gap-2">
+                  <AlertTriangle className="text-warning" />
+                  Tipo de Siniestro
+                </label>
+                <select className="text-dark form-select"
+                  id="tipoSiniestro"
+                  required onChange={handleChange}
+                  defaultValue="">
+                  {loading ? (
+                    <option>Cargando tipos...</option>
+                  ) : (
+                    tiposIncidente.map(tipo => (
+                      <option key={tipo.idTipoIncidente} value={tipo.nombre}>
+                        {tipo.nombre}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+            </div>
+
+            <div className="row mb-4">
+              <div className="col-md-4 py-4">
+                <label htmlFor="fechaHora" className="form-label text-dark d-flex align-items-center gap-2">
+                  <Clock className="text-primary" />
+                  Fecha y Hora
+                </label>
+                <input
+                  type="datetime-local"
+                  id="fechaHora"
+                  className="form-control estrecho"
+                  value={formData.fechaHora}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="col-md-4 py-4">
+                <label htmlFor="lugar" className="form-label text-dark d-flex align-items-center gap-2">
+                  <MapPin className="text-success" />
+                  Lugar
+                </label>
+                <input type="text" id="lugar" className="form-control" onChange={handleChange} required />
+              </div>
+
+              <div className="col-md-4 py-4">
+                <label htmlFor="localizacion" className="form-label text-dark d-flex align-items-center gap-2">
+                  <MapPin className="text-purple" />
+                  Localización
+                </label>
+                <select className="form-select"
+                  id="localizacion"
+                  required onChange={handleChange}
+                  defaultValue="">
+                  <option disabled value="">Seleccione localización</option>
+                  {loading ? (
+                    <option>Cargando localizaciones...</option>
+                  ) : (
+                    localizaciones.map(loc => (
+                      <option key={loc.idLocalizacion} value={loc.descripcion}>
+                        {loc.descripcion}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+            </div>
+
+            <hr className="mb-4" />
+
+            <div className="mb-3 d-flex align-items-center gap-2">
+              <Phone className="text-indigo" />
+              <h5 className="mb-0 text-dark">Datos del denunciante</h5>
+              <span className="badge bg-secondary text-white text-uppercase">opcional</span>
+            </div>
+
+            <div className="row mb-4">
+              <div className="col-md-3">
+                <label htmlFor="nombreDenunciante" className="text-dark form-label">Nombre</label>
+                <input type="text" id="nombreDenunciante" className="form-control" onChange={handleChange} />
+              </div>
+              <div className="col-md-3">
+                <label htmlFor="apellidoDenunciante" className="text-dark form-label">Apellido</label>
+                <input type="text" id="apellidoDenunciante" className="form-control" onChange={handleChange} />
+              </div>
+              <div className="col-md-3">
+                <label htmlFor="telefonoDenunciante" className="text-dark form-label">Teléfono</label>
+                <input type="tel" id="telefonoDenunciante" className="form-control" onChange={handleChange} />
+              </div>
+              <div className="col-md-3">
+                <label htmlFor="dniDenunciante" className="text-dark form-label">DNI</label>
+                <input type="text" id="dniDenunciante" className="form-control" onChange={handleChange} />
+              </div>
+            </div>
             
-            <button type="button" className="btn btn-secondary" onClick={onVolver}>
-              Volver
-            </button>
-          </div>
-        </form>
+            <div className="d-grid gap-3">
+              {datosEsencialesCompletos() && (
+                <button type="button" className="btn btn-warning btn-lg" onClick={notificarBomberos} disabled={notificandoBomberos}>
+                  {notificandoBomberos ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      Enviando alerta...
+                    </>
+                  ) : (
+                    <>🚨 Notificar emergencia a bomberos</>
+                  )}
+                </button>
+              )}
+
+              {!incidenteCreado && (
+                <button type="submit" className="btn btn-danger btn-lg">
+                  Guardar Incidente (Sin Notificar)
+                </button>
+              )}
+
+              {incidenteCreado && (
+                <div className="alert alert-success mt-3">
+                  ✅ Incidente registrado y bomberos notificados
+                </div>
+              )}
+
+              <button type="button" className="btn btn-secondary" onClick={onVolver}>
+                Volver al menú
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { apiRequest, API_URLS } from '../../config/api'
-import '../DisenioFormulario/DisenioFormulario.css'
+import { ShieldUser, User2, UsersIcon } from 'lucide-react'
+// import '../DisenioFormulario/DisenioFormulario.css'
 
 const ConsultarRol = ({ onVolver }) => {
   const [roles, setRoles] = useState([])
@@ -14,6 +15,22 @@ const ConsultarRol = ({ onVolver }) => {
   useEffect(() => {
     fetchRoles()
   }, [])
+
+  useEffect(() => {
+    if (nombreBusqueda.trim() === '') {
+      setResultadosFiltrados(roles)
+      setMensaje('')
+      return
+    }
+
+    const filtrados = roles.filter(r =>
+      r.nombreRol.toLowerCase().includes(nombreBusqueda.toLowerCase())
+    )
+
+    setResultadosFiltrados(filtrados)
+    setMensaje(filtrados.length === 0 ? 'No se encontró ningún rol con ese nombre.' : '')
+  }, [nombreBusqueda, roles])
+
 
   const fetchRoles = async () => {
     setLoading(true)
@@ -31,25 +48,6 @@ const ConsultarRol = ({ onVolver }) => {
     } finally {
       setLoading(false)
     }
-  }
-
-  const buscarPorNombre = () => {
-    if (nombreBusqueda.trim() === '') {
-      setResultadosFiltrados(roles)
-      setMensaje('')
-      return
-    }
-    const filtrados = roles.filter(r =>
-      r.nombreRol.toLowerCase().includes(nombreBusqueda.toLowerCase())
-    )
-    setResultadosFiltrados(filtrados)
-    setMensaje(filtrados.length === 0 ? 'No se encontró ningún rol con ese nombre.' : '')
-  }
-
-  const limpiarBusqueda = () => {
-    setNombreBusqueda('')
-    setResultadosFiltrados(roles)
-    setMensaje('')
   }
 
   const seleccionarRol = (rol) => {
@@ -87,7 +85,7 @@ const ConsultarRol = ({ onVolver }) => {
       }
     } catch (error) {
       const errorMsg = error?.response?.error || error.message || 'Error al guardar'
-      
+
       if (
         errorMsg.toLowerCase().includes('disponible') ||
         errorMsg.toLowerCase().includes('ya existe') ||
@@ -103,8 +101,6 @@ const ConsultarRol = ({ onVolver }) => {
       setLoading(false)
     }
   }
-
-
 
   const eliminarRol = async (rol) => {
     if (!window.confirm(`¿Estás seguro de eliminar el rol "${rol.nombreRol}"?`)) return
@@ -139,168 +135,195 @@ const ConsultarRol = ({ onVolver }) => {
   }
 
   return (
-    <div className="container mt-4 formulario-consistente">
-      <h2 className="text-black mb-3">Consultar Roles</h2>
-
-      {mensaje && (
-        <div className={`alert ${
-          mensaje.includes('Error') ? 'alert-danger' :
-          mensaje.includes('✅') ? 'alert-success' : 'alert-info'
-        }`}>
-          {mensaje}
+    <div className='container-fluid py-5'>
+      {/* Header principal */}
+      <div className='text-center mb-4'>
+        <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
+          <div className="bg-danger p-3 rounded-circle">
+            <ShieldUser size={32}
+              color="white" />
+          </div>
+          <h1 className="fw-bold text-white fs-3 mb-0">Consultar Roles</h1>
         </div>
-      )}
+        <span className="badge bg-danger-subtle text-danger">
+          <i className="bi bi-fire me-2"></i> Sistema de Gestión de Personal - Cuartel de Bomberos
+        </span>
+      </div>
 
-      {!rolSeleccionado && !modoEdicion && (
-        <>
-          <div className="mb-3 d-flex">
-            <input
-              type="text"
-              className="form-control me-2"
-              placeholder="Buscar por nombre del rol..."
-              value={nombreBusqueda}
-              onChange={(e) => setNombreBusqueda(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') buscarPorNombre() }}
-            />
-            <button
-              className="btn btn-primary btn-sm me-2"
-              onClick={buscarPorNombre}
-              disabled={loading}
-            >
-              Buscar
-            </button>
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={limpiarBusqueda}
-              disabled={loading}
-            >
-              Limpiar
-            </button>
-          </div>
+      {/* Card principal */}
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+        <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
+          <i className="bi bi-people-fill fs-5"></i>
+          <strong>Listado de Roles</strong>
+        </div>
+        <div className="card-body">
+          {/* Mensajes */}
+          {mensaje && (
+            <div className={`alert ${mensaje.includes('Error') ? 'alert-danger' :
+              mensaje.includes('✅') ? 'alert-success' : 'alert-info'
+              }`}>
+              {mensaje}
+            </div>
+          )}
 
-          <div className="table-responsive">
-            <table className="tabla-bomberos">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>Descripción</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resultadosFiltrados.map((rol) => (
-                  <tr key={rol.idRol}>
-                    <td>{rol.idRol}</td>
-                    <td>{rol.nombreRol}</td>
-                    <td>{rol.descripcion || <em className="text-muted">Sin descripción</em>}</td>
-                    <td>
-                      <button
-                        className="btn btn-outline-light btn-sm me-2"
-                        onClick={() => seleccionarRol(rol)}
-                        disabled={loading}
-                      >
-                        Ver detalles
-                      </button>
-                      <button
-                        className="btn btn-outline-danger btn-sm"
-                        onClick={() => eliminarRol(rol)}
-                        disabled={loading}
-                      >
-                        ❌
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {resultadosFiltrados.length === 0 && (
-                  <tr>
-                    <td colSpan="4" className="text-center text-white">No hay roles para mostrar</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
+          {loading && (
+            <div className="text-center mb-3">
+              <div className="spinner-border text-danger" role="status"></div>
+            </div>
+          )}
 
-      {rolSeleccionado && (
-        <div className="formulario-consistente detalle-usuario">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h3 className="text-black mb-0">
-              {modoEdicion ? (
-                <>✏️ Editando: {rolSeleccionado.nombreRol}</>
-              ) : (
-                <>👁️ Detalles: {rolSeleccionado.nombreRol}</>
-              )}
-            </h3>
-            <div className="d-flex gap-2">
-              {!modoEdicion && (
-                <button
-                  className="btn btn-warning btn-sm"
-                  onClick={activarEdicion}
+          {/* Listado */}
+          {!rolSeleccionado && !modoEdicion && (
+            <>
+              <div className="mb-3 position-relative">
+                <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+                <input
+                  type="text"
+                  className="form-control ps-5 py-3 border-secondary"
+                  placeholder="Buscar por nombre del rol..."
+                  value={nombreBusqueda}
+                  onChange={(e) => setNombreBusqueda(e.target.value)}
                   disabled={loading}
-                >
-                  ✏️ Editar
-                </button>
+                />
+              </div>
+
+              {resultadosFiltrados.length > 0 ? (
+                <div className="table-responsive rounded border">
+                  <table className="table table-hover align-middle mb-0">
+                    <thead className="bg-light">
+                      <tr>
+                        <th className="border-end text-center">Nombre</th>
+                        <th className="border-end text-center">Descripción</th>
+                        <th className="text-center">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {resultadosFiltrados.map((rol) => (
+                        <tr key={rol.idRol}>
+                          <td className="border-end">{rol.nombreRol}</td>
+                          <td className="border-end">
+                            {rol.descripcion || <em className="text-muted">Sin descripción</em>}
+                          </td>
+                          <td className="text-center">
+                            <button
+                              className="btn btn-outline-secondary btn-sm me-2"
+                              onClick={() => seleccionarRol(rol)}
+                              disabled={loading}
+                            >
+                              <i className="bi bi-eye me-1"></i> Ver
+                            </button>
+                            <button
+                              className="btn btn-outline-danger btn-sm"
+                              onClick={() => eliminarRol(rol)}
+                              disabled={loading}
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : !loading && resultadosFiltrados.length === 0 && (
+                <div className="text-center py-3 text-muted">
+                  No hay roles para mostrar.
+                </div>
               )}
-              <button
-                className="btn btn-secondary btn-sm"
-                onClick={volverListado}
-                disabled={loading}
-              >
-                ← Volver al listado
-              </button>
+            </>
+          )}
+
+          {/* Detalles */}
+          {rolSeleccionado && (
+            <div className="mt-4">
+              <div className="d-flex align-items-center justify-content-between mb-3 gap-5">
+                <div className="d-flex align-items-center gap-2">
+                  <h3 className="text-dark mb-0">
+                    {modoEdicion
+                      ? `✏️ Editando: ${rolSeleccionado.nombreRol}`
+                      : `👁️ Detalles: ${rolSeleccionado.nombreRol}`}
+                  </h3>
+                </div>
+
+                <div>
+                  {!modoEdicion && (
+                    <button
+                      className="btn btn-warning btn-sm me-2 d-flex align-items-center gap-1"
+                      onClick={activarEdicion}
+                      disabled={loading}
+                    >
+                      <i className="bi bi-pencil-square"></i>
+                      Editar
+                    </button>
+                  )}
+                  <button
+                    className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
+                    onClick={volverListado}
+                    disabled={loading}
+                  >
+                    <i className="bi bi-arrow-left"></i> Volver al listado
+                  </button>
+                </div>
+              </div>
+
+              <hr className="border-4 border-danger mb-4" />
+
+              {/* Formulario de edición */}
+              <div className="card bg-dark text-white border-0 shadow-lg py-4">
+                <form
+                  className="px-4"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    guardarCambios({
+                      nombreRol: rolSeleccionado.nombreRol,
+                      descripcion: rolSeleccionado.descripcion
+                    })
+                  }}
+                >
+                  <div className="mb-3">
+                    <label htmlFor="nombreRol" className="form-label">Nombre del Rol *</label>
+                    <input
+                      type="text"
+                      id="nombreRol"
+                      className="form-control"
+                      value={rolSeleccionado.nombreRol}
+                      onChange={(e) => setRolSeleccionado({ ...rolSeleccionado, nombreRol: e.target.value })}
+                      disabled={!modoEdicion || loading}
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="descripcion" className="form-label">Descripción</label>
+                    <textarea
+                      id="descripcion"
+                      className="form-control"
+                      rows="3"
+                      value={rolSeleccionado.descripcion || ''}
+                      onChange={(e) => setRolSeleccionado({ ...rolSeleccionado, descripcion: e.target.value })}
+                      disabled={!modoEdicion || loading}
+                    />
+                  </div>
+
+                  {modoEdicion && (
+                    <button type="submit" className="btn btn-danger w-100 mb-3" disabled={loading}>
+                      {loading ? 'Guardando...' : 'Guardar cambios'}
+                    </button>
+                  )}
+                </form>
+              </div>
             </div>
+          )}
+
+          {/* Botón volver menú */}
+          <div className="d-grid gap-3 py-4">
+            <button type="button" className="btn btn-secondary" onClick={onVolver} disabled={loading}>
+              Volver al menú
+            </button>
           </div>
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              guardarCambios({
-                nombreRol: rolSeleccionado.nombreRol,
-                descripcion: rolSeleccionado.descripcion
-              })
-            }}
-          >
-            <div className="mb-3">
-              <label htmlFor="nombreRol" className="form-label text-white">Nombre del Rol *</label>
-              <input
-                type="text"
-                id="nombreRol"
-                className="form-control"
-                value={rolSeleccionado.nombreRol}
-                onChange={(e) => setRolSeleccionado({ ...rolSeleccionado, nombreRol: e.target.value })}
-                disabled={!modoEdicion || loading}
-              />
-            </div>
-            <div className="mb-3">
-              <label htmlFor="descripcion" className="form-label text-white">Descripción</label>
-              <textarea
-                id="descripcion"
-                className="form-control"
-                rows="3"
-                value={rolSeleccionado.descripcion || ''}
-                onChange={(e) => setRolSeleccionado({ ...rolSeleccionado, descripcion: e.target.value })}
-                disabled={!modoEdicion || loading}
-              />
-            </div>
-
-            {modoEdicion && (
-              <button type="submit" className="btn btn-danger w-100 mb-3" disabled={loading}>
-                {loading ? 'Guardando...' : 'Guardar cambios'}
-              </button>
-            )}
-          </form>
         </div>
-      )}
-
-      <div className="text-center mt-4">
-        <button className="btn-volver btn-secondary" onClick={onVolver} disabled={loading}>
-          Volver
-        </button>
       </div>
     </div>
   )
+
 }
 
 export default ConsultarRol

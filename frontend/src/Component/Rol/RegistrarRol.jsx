@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { apiRequest, API_URLS } from '../../config/api'
+import { User, AlertTriangle, User2, FileText, UsersIcon, CreditCard } from 'lucide-react'
 import '../DisenioFormulario/DisenioFormulario.css'
 
 const RegistrarRol = ({ onVolver }) => {
@@ -41,13 +42,13 @@ const RegistrarRol = ({ onVolver }) => {
     try {
       const response = rol
         ? await apiRequest(API_URLS.roles.update(rol.idRol), {
-            method: 'PUT',
-            body: JSON.stringify(formData)
-          })
+          method: 'PUT',
+          body: JSON.stringify(formData)
+        })
         : await apiRequest(API_URLS.roles.create, {
-            method: 'POST',
-            body: JSON.stringify(formData)
-          })
+          method: 'POST',
+          body: JSON.stringify(formData)
+        })
 
       if (response.success) {
         setMessage(rol ? '✅ Rol actualizado correctamente' : '✅ Rol creado correctamente')
@@ -72,64 +73,92 @@ const RegistrarRol = ({ onVolver }) => {
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="formulario-consistente p-4 shadow rounded w-100" style={{ maxWidth: '500px' }}>
-        <h2 className="text-black text-center mb-4">Registrar Nuevo Rol</h2>
-
-        {message && (
-          <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'} mb-3`}>
-            {message}
+    <div className="container-fluid py-5">
+      <div className="text-center mb-4">
+        <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+          <div className='bg-danger p-3 rounded-circle'>
+            <User2 size={32}
+              color="white" />
           </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label htmlFor="nombreRol" className="form-label text-black">
-              Nombre del Rol <span className="text-danger">*</span>
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              id="nombreRol"
-              required
-              value={formData.nombreRol}
-              onChange={handleChange}
-              disabled={loading}
-              placeholder="Ej: Bombero, Administrador, Instructor..."
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="descripcion" className="form-label text-black">
-              Descripción <span className="text-muted">(opcional)</span>
-            </label>
-            <textarea
-              className="form-control"
-              id="descripcion"
-              rows="3"
-              value={formData.descripcion}
-              onChange={handleChange}
-              disabled={loading}
-              placeholder="Describe las responsabilidades y funciones de este rol..."
-            />
-          </div>
-
-          <button type="submit" className="btn btn-danger w-100 mb-3" disabled={loading}>
-            {loading ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                Registrando...
-              </>
-            ) : (
-              'Registrar Rol'
-            )}
-          </button>
-
-          <button type="button" className="btn btn-secondary w-100" onClick={onVolver} disabled={loading}>
-            Volver
-          </button>
-        </form>
+          <h1 className="fw-bold text-white fs-3 mb-0">Crear Rol</h1>
+        </div>
+        <span className="badge bg-danger-subtle text-danger">
+          <AlertTriangle className="me-2" />
+          Sistema de Gestión de Personal - Cuartel de Bomberos
+        </span>
       </div>
-    </div>
+
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+        <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
+          <FileText />
+          <strong>Registrar Rol</strong>
+        </div>
+
+        <div className="card-body">
+          {message && (
+            <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'} mb-3`}>
+              {message}
+            </div>
+          )}
+          <form onSubmit={handleSubmit}>
+            <div className="row mb-3">
+              <div className="col-md-6 py-4">
+                <label htmlFor="nombreRol" className="form-label text-dark d-flex align-items-center gap-2">
+                  <User className="text-danger" />
+                  Nombre del Rol <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="nombreRol"
+                  required
+                  value={formData.nombreRol}
+                  onChange={handleChange}
+                  disabled={loading}
+                  placeholder="Ej: Bombero, Administrador, Instructor..."
+                />
+              </div>
+
+              <div className="col-md-10 py-4">
+                <label htmlFor="descripcion" className="text-dark form-label d-flex align-items-center gap-2">
+                  <CreditCard className="text-warning" />
+                  Descripción <span className="badge bg-secondary text-white text-uppercase">opcional</span>
+                </label>
+                <textarea
+                  className="form-control"
+                  id="descripcion"
+                  rows="3"
+                  value={formData.descripcion}
+                  onChange={handleChange}
+                  disabled={loading}
+                  placeholder="Describe las responsabilidades y funciones de este rol..."
+                />
+              </div>
+
+              <div className="d-grid gap-3">
+                <button type="submit" className="btn btn-danger" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      Registrando...
+                    </>
+                  ) : (
+                    'Registrar Rol'
+                  )}
+                </button>
+                {onVolver && (
+                  <button type="button" className="btn btn-secondary" onClick={onVolver} disabled={loading}>
+                    Volver al menú
+                  </button>
+                )}
+              </div>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+    </div >
   )
 }
 
