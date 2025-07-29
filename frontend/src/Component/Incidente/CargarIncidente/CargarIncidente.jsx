@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './CargarIncidente.css'
 import { Flame, AlertTriangle, FileText, User, Clock, MapPin, Phone } from 'lucide-react'
-import '../../DisenioFormulario/DisenioFormulario.css'
+// import '../../DisenioFormulario/DisenioFormulario.css'
 import { API_URLS, apiRequest } from '../../../config/api'
 
 const CargarIncidente = ({ onVolver, onNotificar }) => {
@@ -11,7 +11,9 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
     .slice(0, 16)
 
   const usuario = JSON.parse(localStorage.getItem('usuario'))
+  console.log('🧾 Usuario cargado desde localStorage:', usuario)
 
+  // Construir nombre completo con fallbacks
   const nombreCompleto = usuario ?
     `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim() ||
     usuario.usuario ||
@@ -57,6 +59,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
     setFormData(prev => ({ ...prev, [id]: value }))
   }
 
+  // Función para verificar si los datos esenciales están completos
   const datosEsencialesCompletos = () => {
     return formData.tipoSiniestro && formData.localizacion && formData.lugar
   }
@@ -83,6 +86,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
         descripcion: formData.lugar
       }
 
+      // Agrega datos del denunciante solo si se completaron
       if (formData.nombreDenunciante || formData.apellidoDenunciante || formData.telefonoDenunciante || formData.dniDenunciante) {
         payload.nombreDenunciante = formData.nombreDenunciante
         payload.apellidoDenunciante = formData.apellidoDenunciante
@@ -98,7 +102,9 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
 
       const data = await response.json()
 
-      if (!response.ok) throw new Error(data.error || 'Error al guardar el incidente')
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al guardar el incidente')
+      }
 
       return data
     } catch (error) {
@@ -109,9 +115,12 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
     try {
       const incidenteGuardado = await guardarIncidente()
       alert('✅ Incidente guardado correctamente')
+
+      // Guardar el incidente creado para referencia
       setIncidenteCreado(incidenteGuardado)
 
       if (onNotificar) {
@@ -129,6 +138,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
         }
         onNotificar(formData.tipoSiniestro, datosParaFormulario)
       }
+
     } catch (error) {
       alert(`Error: ${error.message}`)
     }
@@ -143,11 +153,16 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
     setNotificandoBomberos(true)
 
     try {
+      // Primero guardar el incidente automáticamente
       let incidente = incidenteCreado
       if (!incidente) {
+        console.log('💾 Guardando incidente automáticamente antes de notificar...')
         incidente = await guardarIncidente()
         setIncidenteCreado(incidente)
+        console.log('✅ Incidente guardado:', incidente)
       }
+
+      console.log('📱 Notificando bomberos para incidente:', incidente)
 
       const response = await fetch(`http://localhost:3000/api/incidentes/${incidente.idIncidente}/notificar`, {
         method: 'POST',
@@ -158,16 +173,21 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
 
       if (response.ok && data.success) {
         const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = data.data
+
         let mensaje = `🚨 ALERTA ENVIADA A BOMBEROS:\n\n`
         mensaje += `📍 Tipo: ${formData.tipoSiniestro}\n`
         mensaje += `📍 Ubicación: ${formData.localizacion} - ${formData.lugar}\n`
         mensaje += `📍 Fecha/Hora: ${formData.fechaHora}\n\n`
         mensaje += `📱 Total bomberos contactados: ${totalBomberos}\n`
         mensaje += `✅ Notificaciones exitosas: ${notificacionesExitosas}\n`
-        if (notificacionesFallidas > 0) mensaje += `❌ Notificaciones fallidas: ${notificacionesFallidas}\n`
+
+        if (notificacionesFallidas > 0) {
+          mensaje += `❌ Notificaciones fallidas: ${notificacionesFallidas}\n`
+        }
+
         mensaje += `\n✅ Incidente registrado y bomberos notificados correctamente.`
+
         alert(mensaje)
-        if (onNotificar) onNotificar(formData.tipoSiniestro, incidente)
 
         // Callback para manejar el flujo posterior
         if (onNotificar) {
@@ -188,6 +208,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
       } else {
         throw new Error(data.message || 'Error en la notificación')
       }
+
     } catch (error) {
       console.error('❌ Error al notificar bomberos:', error)
       alert(`❌ Error al notificar bomberos: ${error.message}`)
@@ -232,14 +253,19 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
                   <AlertTriangle className="text-warning" />
                   Tipo de Siniestro
                 </label>
-                <select className="text-dark form-select" id="tipoSiniestro" required onChange={handleChange} defaultValue="">
-                  <option disabled value="">Seleccione tipo</option>
-                  <option>Accidente de Tránsito</option>
-                  <option>Factores Climáticos</option>
-                  <option>Incendio Estructural</option>
-                  <option>Incendio Forestal</option>
-                  <option>Material Peligroso</option>
-                  <option>Rescate</option>
+                <select className="text-dark form-select"
+                  id="tipoSiniestro"
+                  required onChange={handleChange}
+                  defaultValue="">
+                  {loading ? (
+                    <option>Cargando tipos...</option>
+                  ) : (
+                    tiposIncidente.map(tipo => (
+                      <option key={tipo.idTipoIncidente} value={tipo.nombre}>
+                        {tipo.nombre}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
             </div>
@@ -273,7 +299,10 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
                   <MapPin className="text-purple" />
                   Localización
                 </label>
-                <select className="form-select" id="localizacion" required onChange={handleChange} defaultValue="">
+                <select className="form-select"
+                  id="localizacion"
+                  required onChange={handleChange}
+                  defaultValue="">
                   <option disabled value="">Seleccione localización</option>
                   {loading ? (
                     <option>Cargando localizaciones...</option>
@@ -314,17 +343,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
                 <input type="text" id="dniDenunciante" className="form-control" onChange={handleChange} />
               </div>
             </div>
-            <div className="row mb-3">
-              <div className="col">
-                <label htmlFor="telefonoDenunciante" className="text-black form-label">Teléfono</label>
-                <input type="tel" className="form-control" id="telefonoDenunciante" onChange={handleChange} />
-              </div>
-              <div className="col">
-                <label htmlFor="dniDenunciante" className="text-black form-label">dni</label>
-                <input type="text" className="form-control" id="dniDenunciante" onChange={handleChange} />
-              </div>
-            </div>
-
+            
             <div className="d-grid gap-3">
               {datosEsencialesCompletos() && (
                 <button type="button" className="btn btn-warning btn-lg" onClick={notificarBomberos} disabled={notificandoBomberos}>
