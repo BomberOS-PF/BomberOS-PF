@@ -1,9 +1,8 @@
-// Menu.jsx
-import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect, useRef } from 'react'
 import './Menu.css'
 import * as bootstrap from 'bootstrap'
-import logoBomberos from '/img/logo-bomberos.png'
+import { useNavigate } from 'react-router-dom'
+import ParticlesBackground from '../ParticlesBackground/ParticlesBackground'
 
 import CargarIncidente from '../Incidente/CargarIncidente/CargarIncidente'
 import RegistrarBombero from '../Bombero/RegistrarBombero/RegistrarBombero'
@@ -14,81 +13,106 @@ import RegistrarRol from '../Rol/RegistrarRol'
 import ConsultarRol from '../Rol/ConsultarRol'
 import RegistrarGuardia from '../Guardia/RegistrarGuardia/RegistrarGuardia'
 import ConsultarGrupoGuardia from '../Guardia/ConsultarGuardia/ConsultarGrupoGuardia'
-
+import BurbujaFormulario from '../BurbujaFormulario/BurbujaFormulario'
 import AccidenteTransito from '../Incidente/TipoIncidente/AccidenteTransito/AccidenteTransito'
 import FactorClimatico from '../Incidente/TipoIncidente/FactorClimatico/FactorClimatico'
 import IncendioEstructural from '../Incidente/TipoIncidente/IncendioEstructural/IncendioEstructural'
 import IncendioForestal from '../Incidente/TipoIncidente/IncendioForestal/IncendioForestal'
 import MaterialPeligroso from '../Incidente/TipoIncidente/MaterialPeligroso/MaterialPeligroso'
 import Rescate from '../Incidente/TipoIncidente/Rescate/Rescate'
-
 import ParticipacionIncidente from '../Incidente/ParticipacionIncidente/ParticipacionIncidente'
 import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
-import BurbujaFormulario from '../BurbujaFormulario/BurbujaFormulario'
 
-const Menu = ({ user, setUser }) => {
+const Menu = ({user, setUser}) => {
+  const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
+  const [usuario, setUsuario] = useState(null)
+  const [mostrarDropdown, setMostrarDropdown] = useState(false)
+  const [acordeonAbierto, setAcordeonAbierto] = useState(null)
+  const dropdownRef = useRef(null)
   const navigate = useNavigate()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [opcionSeleccionada, setOpcionSeleccionada] = useState(null)
   const [burbujas, setBurbujas] = useState([])
   const [burbujaExpandida, setBurbujaExpandida] = useState(null)
   const [datosFinalizados, setDatosFinalizados] = useState(null)
 
-  const usuarioActual = user || JSON.parse(localStorage.getItem('usuario')) || {}
-  const nombreUsuario = usuarioActual.usuario || 'Usuario'
-  const rol = usuarioActual.rol || 'desconocido'
-
-  const handleLogOut = () => {
-    localStorage.removeItem('usuario')
-    setUser(null)
-    navigate('/login')
-  }
-
   useEffect(() => {
-    const boton = document.getElementById('btnHamburguesa')
-    const sidebar = document.getElementById('sidebarMenu')
-
-    const handleOpen = () => boton.classList.add('abierto')
-    const handleClose = () => boton.classList.remove('abierto')
-
-    if (sidebar && boton) {
-      sidebar.addEventListener('shown.bs.offcanvas', handleOpen)
-      sidebar.addEventListener('hidden.bs.offcanvas', handleClose)
-    }
-
-    return () => {
-      if (sidebar && boton) {
-        sidebar.removeEventListener('shown.bs.offcanvas', handleOpen)
-        sidebar.removeEventListener('hidden.bs.offcanvas', handleClose)
+    const datosUsuario = localStorage.getItem('usuario')
+    if (datosUsuario) {
+      try {
+        setUsuario(JSON.parse(datosUsuario))
+      } catch (e) {
+        console.error('Error al parsear usuario:', e)
       }
     }
   }, [])
 
   useEffect(() => {
-    const backdropClickHandler = (e) => {
-      const sidebar = document.getElementById('sidebarMenu')
-      const isSidebarVisible = sidebar?.classList.contains('show')
-      const isClickOutside = !sidebar?.contains(e.target)
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setMostrarDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
-      if (isSidebarVisible && isClickOutside && !opcionSeleccionada) {
-        cerrarMenuLateral()
+  useEffect(() => {
+    const handleClickOutsideMenu = (event) => {
+      const sidebar = document.getElementById('sidebarMenu')
+      const backdrop = document.querySelector('.offcanvas-backdrop')
+
+      if (sidebar && !sidebar.contains(event.target) && backdrop) {
+        const Offcanvas = bootstrap.Offcanvas
+        const instancia = Offcanvas.getInstance(sidebar) || new Offcanvas(sidebar)
+        instancia.hide()
+
+        const items = document.querySelectorAll('#sidebarAccordion .accordion-collapse.show')
+        items.forEach(item => {
+          const instance = bootstrap.Collapse.getInstance(item)
+          if (instance) instance.hide()
+        })
+
+        setAcordeonAbierto(null)
+
+        setTimeout(() => {
+          const backdrop = document.querySelector('.offcanvas-backdrop')
+          if (backdrop) backdrop.remove()
+          document.body.classList.remove('offcanvas-backdrop', 'modal-open')
+        }, 300)
       }
     }
 
-    document.addEventListener('mousedown', backdropClickHandler)
+    document.addEventListener('mousedown', handleClickOutsideMenu)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutsideMenu)
+    }
+  }, [])
+
+  useEffect(() => {
+    const sidebar = document.getElementById('sidebarMenu')
+
+    const handleOffcanvasHidden = () => {
+      const backdrop = document.querySelector('.offcanvas-backdrop')
+      if (backdrop) backdrop.remove()
+      document.body.classList.remove('offcanvas-backdrop', 'modal-open')
+    }
+
+    if (sidebar) {
+      sidebar.addEventListener('hidden.bs.offcanvas', handleOffcanvasHidden)
+    }
 
     return () => {
-      document.removeEventListener('mousedown', backdropClickHandler)
+      if (sidebar) {
+        sidebar.removeEventListener('hidden.bs.offcanvas', handleOffcanvasHidden)
+      }
     }
-  }, [opcionSeleccionada])
+  }, [])
 
   // Permite abrir una burbuja flotante según el tipo
   const agregarBurbuja = (tipo, datosPrevios) => {
     const id = datosPrevios?.id || Date.now()
     const yaExiste = burbujas.find(b => b.id === id)
     if (!yaExiste) {
-      const nueva = { id, tipo, datosPrevios, minimizada: true }
-      setBurbujas(prev => [...prev, nueva])
+      setBurbujas(prev => [...prev, { id, tipo, datosPrevios, minimizada: true }])
     }
     setOpcionSeleccionada(null)
   }
@@ -121,27 +145,6 @@ const Menu = ({ user, setUser }) => {
     setOpcionSeleccionada('participacion-incidente')
   }
 
-  const cerrarMenuLateral = () => {
-    const sidebar = document.getElementById('sidebarMenu')
-    const Offcanvas = window.bootstrap?.Offcanvas || bootstrap?.Offcanvas
-
-    if (sidebar && Offcanvas) {
-      let instancia = Offcanvas.getInstance(sidebar)
-      if (!instancia) {
-        instancia = new Offcanvas(sidebar)
-      }
-      instancia.hide()
-
-      const backdrop = document.querySelector('.offcanvas-backdrop')
-      if (backdrop) {
-        backdrop.classList.remove('show')
-        backdrop.remove()
-      }
-      document.body.classList.remove('offcanvas-backdrop', 'modal-open')
-    }
-  }
-
-  // Renderiza el formulario expandido según el tipo de incidente
   const renderFormularioExpandido = () => {
     const burbuja = burbujas.find(b => b.id === burbujaExpandida)
     if (!burbuja) return null
@@ -162,122 +165,190 @@ const Menu = ({ user, setUser }) => {
     }
   }
 
+  const usuarioActual = usuario || JSON.parse(localStorage.getItem('usuario')) || {}
+  const rol = usuarioActual.rol || 'desconocido'
+
   const permisos = {
-    administrador: [
-      'cargar-incidente', 'registrar-bombero', 'consultar-bombero',
-      'registrar-usuario', 'consultar-usuario',
-      'registrar-rol', 'consultar-rol',
-      'participacion-incidente', 'vehiculo-involucrado', 'registrar-guardia', 'consultar-grupos-guardia'
-    ],
-    bombero: ['cargar-incidente', 'consultar-bombero', 'participacion-incidente']
+    administrador: [/* todas las opciones */],
+    bombero: ['cargarIncidente', 'consultarBombero', 'participacion-incidente']
+  }
+  const puedeVer = (clave) => permisos[rol]?.includes(clave)
+
+  const toggleAcordeon = (id) => {
+    const target = document.getElementById(id)
+    if (!target) return
+
+    const instancia = bootstrap.Collapse.getInstance(target)
+
+    if (acordeonAbierto === id && instancia) {
+      instancia.hide()
+      setAcordeonAbierto(null)
+    } else {
+      if (!instancia) new bootstrap.Collapse(target, { toggle: true })
+      else instancia.show()
+      setAcordeonAbierto(id)
+    }
   }
 
-  const items = [
-    { key: 'cargar-incidente', label: 'Cargar Incidente' },
-    { key: 'registrar-bombero', label: 'Nuevo Bombero' },
-    { key: 'consultar-bombero', label: 'Consultar Bombero' },
-    { key: 'registrar-usuario', label: 'Nuevo Usuario' },
-    { key: 'consultar-usuario', label: 'Consultar Usuarios' },
-    { key: 'registrar-rol', label: 'Registrar Rol' },
-    { key: 'consultar-rol', label: 'Consultar Rol' },
-    { key: 'participacion-incidente', label: 'Participación del Incidente' },
-    { key: 'vehiculo-involucrado', label: 'Vehículo Involucrado' },
-    { key: 'registrar-guardia', label: 'Registrar Guardia' },
-    { key: 'consultar-grupos-guardia', label: 'Consultar Grupos' }
-  ]
+  const cerrarOffcanvas = () => {
+    const sidebar = document.getElementById('sidebarMenu')
+    const Offcanvas = bootstrap.Offcanvas
+    if (sidebar && Offcanvas) {
+      const instancia = Offcanvas.getInstance(sidebar) || new Offcanvas(sidebar)
+      instancia.hide()
+    }
+  }
 
-  const puedeVer = (key) => permisos[rol]?.includes(key)
+  const cerrarSesion = () => {
+    localStorage.clear()
+    setUser(null)
+    navigate('/login')
+  }
+
+  const renderContenido = () => {
+    switch (opcionSeleccionada) {
+      case 'cargarIncidente': return (<CargarIncidente onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'registrarBombero': return (<RegistrarBombero onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'consultarBombero': return (<ConsultarBombero onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'registrarUsuario': return (<RegistrarUsuario onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'consultarUsuario': return (<ConsultarUsuario onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'registrarRol': return (<RegistrarRol onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'consultarRol': return (<ConsultarRol onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'registrarGuardia': return (<RegistrarGuardia onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'consultarGuardia': return (<ConsultarGrupoGuardia onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'participacion-incidente':
+        return <ParticipacionIncidente
+          datosPrevios={datosFinalizados}
+          onFinalizar={() => setOpcionSeleccionada('vehiculo-involucrado')}
+          onVolver={() => setOpcionSeleccionada(null)}
+        />
+      case 'vehiculo-involucrado':
+        return <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />
+    }
+  }
 
   return (
     <div>
-      {/* Sidebar */}
-      <div className="offcanvas offcanvas-start bg-black text-white" tabIndex="-1" id="sidebarMenu">
-        <div className="offcanvas-header d-flex justify-content-between px-3 py-3 sidebar-header">
+      <ParticlesBackground />
+      <nav className="navbar navbar-dark bg-dark fixed-top">
+        <div className="container-fluid d-flex justify-content-between align-items-center">
           <div className="d-flex align-items-center">
-            <img src={logoBomberos} alt="Logo" style={{ height: 30 }} className="me-2" />
-            <span className="fs-5 fw-semibold text-white">BomberOS</span>
-          </div>
-          <button
-            id="btnCerrarSidebar"
-            className="btn btn-hamburguesa abierto d-flex flex-column justify-content-between align-items-center p-2"
-            type="button"
-            data-bs-dismiss="offcanvas"
-            aria-label="Cerrar menú"
-          >
-            <span className="linea linea-top"></span>
-            <span className="linea linea-middle"></span>
-            <span className="linea linea-bottom"></span>
-          </button>
-        </div>
-        <div className="offcanvas-body p-3 sidebar-body">
-          <nav className="nav flex-column">
-            {items.map(({ key, label }) => puedeVer(key) && (
-              <button
-                key={key}
-                className="btn btn-menu-option text-white text-start w-100 mb-2"
-                onClick={() => {
-                  setOpcionSeleccionada(key)
-                  cerrarMenuLateral()
-                }}
-              >
-                {label}
-              </button>
-            ))}
-            <hr />
-            <button className="btn btn-outline-danger w-100 mt-3" onClick={handleLogOut}>
-              <i className="bi bi-box-arrow-right me-2"></i> Cerrar sesión
+            <button
+              className="navbar-toggler me-3"
+              type="button"
+              onClick={() => {
+                const sidebar = document.getElementById('sidebarMenu')
+                const Offcanvas = bootstrap.Offcanvas
+                if (sidebar && Offcanvas) {
+                  const instancia = Offcanvas.getInstance(sidebar) || new Offcanvas(sidebar)
+                  instancia.show()
+                }
+              }}
+            >
+              <span className="navbar-toggler-icon"></span>
             </button>
-          </nav>
-        </div>
-      </div>
-
-      {/* Topbar */}
-      <header className="bg-dark border-bottom border-secondary p-3 d-flex justify-content-between align-items-center topbar">
-        <button
-          id='btnHamburguesa'
-          className="btn btn-hamburguesa d-flex flex-column justify-content-between align-items-center p-2"
-          type="button"
-          data-bs-toggle="offcanvas"
-          data-bs-target="#sidebarMenu"
-          aria-label="Menú"
-        >
-          <span className="linea linea-top"></span>
-          <span className="linea linea-middle"></span>
-          <span className="linea linea-bottom"></span>
-        </button>
-        <h1 className="h5 m-0">BomberOS - Panel Principal</h1>
-        <div className="text-end">
-          <span className="me-3">{nombreUsuario} - ({rol})</span>
-          <img src="https://i.pravatar.cc/30" className="rounded-circle" alt="user" />
-        </div>
-      </header>
-
-      {/* Contenido principal */}
-      <div className="p-4">
-        {burbujaExpandida ? renderFormularioExpandido() : opcionSeleccionada !== null && (
-          <div className="form-wrapper">
-            {opcionSeleccionada === 'cargar-incidente' && <CargarIncidente onVolver={() => setOpcionSeleccionada(null)} onNotificar={agregarBurbuja} />}
-            {opcionSeleccionada === 'registrar-bombero' && <RegistrarBombero onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'consultar-bombero' && <ConsultarBombero onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'registrar-usuario' && <RegistrarUsuario onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'consultar-usuario' && <ConsultarUsuario onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'registrar-rol' && <RegistrarRol onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'consultar-rol' && <ConsultarRol onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'participacion-incidente' && (
-              <ParticipacionIncidente
-                datosPrevios={datosFinalizados}
-                onFinalizar={() => setOpcionSeleccionada('vehiculo-involucrado')}
-                onVolver={() => setOpcionSeleccionada(null)}
-              />
-            )}
-            {opcionSeleccionada === 'vehiculo-involucrado' && <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'registrar-guardia' && <RegistrarGuardia onVolver={() => setOpcionSeleccionada(null)} />}
-            {opcionSeleccionada === 'consultar-grupos-guardia' && <ConsultarGrupoGuardia onVolver={() => setOpcionSeleccionada(null)} />}
+            <div className="logo-bomberos-container">
+              <img src="/img/logo-bomberos.png" alt="Logo Bomberos" />
+              <span className="navbar-brand mb-0 h1">BomberOS</span>
+            </div>
           </div>
-        )}
+          {usuario && (
+            <div className="d-flex align-items-center position-relative" ref={dropdownRef}>
+              <span className="text-white me-2">{usuario.nombre} {usuario.apellido}</span>
+              <button className="btn btn-light rounded-circle avatar-boton" onClick={() => setMostrarDropdown(!mostrarDropdown)}>
+                <i className="bi bi-person-fill"></i>
+              </button>
+              {mostrarDropdown && (
+                <ul className="dropdown-menu show user-dropdown">
+                  <li><button className="dropdown-item" disabled>Mi perfil</button></li>
+                  <li><button className="dropdown-item" disabled>Configuración</button></li>
+                  <li><hr className="dropdown-divider" /></li>
+                  <li><button className="dropdown-item" onClick={cerrarSesion}><i className="bi bi-box-arrow-right me-2"></i>Cerrar sesión</button></li>
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+      </nav>
+
+      <div className="offcanvas offcanvas-start bg-dark text-white d-flex flex-column" tabIndex="-1" id="sidebarMenu">
+        <div className="offcanvas-header">
+          <h5 className="offcanvas-title">Menú</h5>
+          <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+        </div>
+        <div className="offcanvas-body flex-grow-1">
+          <div className="accordion accordion-flush" id="sidebarAccordion">
+            {[{
+              id: 'collapseIncidente',
+              icono: 'bi-fire',
+              titulo: 'Incidentes',
+              botones: [{ texto: 'Cargar Incidente', accion: 'cargarIncidente' }]
+            }, {
+              id: 'collapseBomberos',
+              icono: 'bi-person-badge',
+              titulo: 'Bomberos',
+              botones: [
+                { texto: 'Registrar Bombero', accion: 'registrarBombero' },
+                { texto: 'Consultar Bombero', accion: 'consultarBombero' }
+              ]
+            }, {
+              id: 'collapseUsuarios',
+              icono: 'bi-person-circle',
+              titulo: 'Usuarios y Roles',
+              botones: [
+                { texto: 'Registrar Usuario', accion: 'registrarUsuario' },
+                { texto: 'Consultar Usuario', accion: 'consultarUsuario' },
+                { texto: 'Registrar Rol', accion: 'registrarRol' },
+                { texto: 'Consultar Rol', accion: 'consultarRol' }
+              ]
+            }, {
+              id: 'collapseGuardias',
+              icono: 'bi-clock-history',
+              titulo: 'Guardias',
+              botones: [
+                { texto: 'Registrar Guardia', accion: 'registrarGuardia' },
+                { texto: 'Consultar Guardia', accion: 'consultarGuardia' }
+              ]
+            }].map(({ id, icono, titulo, botones }) => (
+              <div key={id} className="accordion-item bg-dark border-0">
+                <h2 className="accordion-header">
+                  <button
+                    className={`accordion-button bg-dark text-white ${acordeonAbierto !== id ? 'collapsed' : ''}`}
+                    type="button"
+                    onClick={() => toggleAcordeon(id)}
+                  >
+                    <i className={`bi ${icono} me-2`}></i>{titulo}
+                  </button>
+                </h2>
+                <div
+                  id={id}
+                  className="accordion-collapse collapse"
+                  data-bs-parent="#sidebarAccordion"
+                >
+                  <div className="accordion-body p-0">
+                    {botones.map(b => (
+                      <button
+                        key={b.accion}
+                        className="menu-btn"
+                        onClick={() => {
+                          setOpcionSeleccionada(b.accion)
+                          cerrarOffcanvas()
+                        }}
+                      >
+                        {b.texto}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Burbujas flotantes */}
+      <main className={`container ${opcionSeleccionada || burbujaExpandida ? 'centrado' : ''}`}>
+        {burbujaExpandida ? renderFormularioExpandido() : renderContenido()}
+      </main>
       {burbujas.map((b, i) => (
         <div key={b.id} style={{ position: 'fixed', right: `${20 + i * 370}px`, bottom: 0, zIndex: 9999 }}>
           <BurbujaFormulario {...b} onCerrar={cerrarBurbuja} onToggleMinimizada={toggleMinimizada} />
