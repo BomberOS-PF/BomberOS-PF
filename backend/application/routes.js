@@ -21,8 +21,26 @@ export function setupRoutes(app, container) {
 
   app.get('/', (req, res) => res.redirect('/health'))
 
-  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, recuperarClaveHandler, validarTokenHandler, restablecerClaveHandler,incendioEstructuralHandler, forestalCatalogosHandler, tipoIncidenteHandler, localizacionHandler, causaProbableHandler, materialPeligrosoHandler,categoriaMaterialPeligrosoHandler } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, recuperarClaveHandler, validarTokenHandler, restablecerClaveHandler,incendioEstructuralHandler, forestalCatalogosHandler, tipoIncidenteHandler, localizacionHandler, causaProbableHandler, materialPeligrosoHandler,categoriaMaterialPeligrosoHandler,tipoMatInvolucradoHandler } = container
 
+
+  //Acciones materiales
+  app.get('/api/acciones-material', async (req, res) => {
+    await container.accionMaterialHandler.listar(req, res)
+  })
+
+  app.get('/api/acciones-material/:id', async (req, res) => {
+    await container.accionMaterialHandler.obtenerPorId(req, res)
+  })
+
+  //Tipos de materiales involucrados
+  app.get('/api/tipos-materiales-involucrados', async (req, res) => {
+    await container.tipoMatInvolucradoHandler.listar(req, res)
+  })
+
+  app.get('/api/tipos-materiales-involucrados/:id', async (req, res) => {
+    await container.tipoMatInvolucradoHandler.obtenerPorId(req, res)
+  })
 
   //Categoria Materiales peligrosos
   app.get('/api/categorias-material-peligroso', async (req, res) => {

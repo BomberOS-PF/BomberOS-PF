@@ -56,6 +56,13 @@
   import { CategoriaMaterialPeligrosoHandler } from '../categoriaMaterialPeligroso/handler.js'
   import { CategoriaMatPelService } from '../internal/services/categoriaMaterialPeligroso.service.js'
   import { MySQLCategoriaMaterialPeligrosoRepository } from '../internal/repositories/mysql/categoriaMaterialPeligroso.respository.js'
+  import { TipoMatInvolucradoHandler } from '../tipoMatInvolucrado/handler.js'
+  import { TipoMatInvolucradoService } from '../internal/services/tipoMatInvolucrado.service.js'
+  import { MySQLTipoMatInvolucradoRepository } from '../internal/repositories/mysql/tipoMatInvolucrado.repository.js'
+  import { AccionMaterialHandler } from '../accionMaterial/handler.js'
+  import { AccionMaterialService } from '../internal/services/accionMaterial.service.js'
+  import { MySQLAccionMaterialRepository } from '../internal/repositories/mysql/accionMaterial.repository.js'
+  
 
   import { MySQLRangoRepository } from '../internal/repositories/mysql/rango.repository.js'
   import { RangoService } from '../internal/services/rango.service.js'
@@ -78,6 +85,9 @@
   import { MySQLCausaProbableRepository } from '../internal/repositories/mysql/causaProbable.repository.js'
   import { CausaProbableService } from '../internal/services/causaProbable.service.js'
   import { CausaProbableHandler } from '../causaProbable/handler.js'
+
+
+
 
 
   export async function createServer(config) {
@@ -112,6 +122,8 @@
       const causaProbableRepository = new MySQLCausaProbableRepository()
       const materialPeligrosoRepository = new MySQLMaterialPeligrosoRepository()
       const categoriaMaterialPeligrosoRepository = new MySQLCategoriaMaterialPeligrosoRepository()
+      const tipoMatInvolucradoRepository = new MySQLTipoMatInvolucradoRepository()
+      const accionMaterialRepository = new MySQLAccionMaterialRepository()
 
       // Servicios
       const whatsappService = new WhatsAppService(config)
@@ -148,6 +160,9 @@
         incendioEstructuralRepository
       )
       const categoriaMaterialPeligrosoService = new CategoriaMatPelService(categoriaMaterialPeligrosoRepository)
+      const tipoMatInvolucradoService = new TipoMatInvolucradoService(tipoMatInvolucradoRepository)
+      const accionMaterialService = new AccionMaterialService(accionMaterialRepository)
+
 
       // Handlers
       const bomberoHandler = new BomberoHandler(bomberoService)
@@ -173,9 +188,14 @@
         incendioEstructuralService
       )
       const categoriaMaterialPeligrosoHandler = new CategoriaMaterialPeligrosoHandler(categoriaMaterialPeligrosoService)
+      const tipoMatInvolucradoHandler = new TipoMatInvolucradoHandler(tipoMatInvolucradoService)
+      const accionMaterialHandler = new AccionMaterialHandler(accionMaterialService)
 
       // Contenedor
       const container = {
+        tipoMatInvolucradoHandler,
+        tipoMatInvolucradoService,
+        tipoMatInvolucradoRepository,
         bomberoService,
         bomberoRepository,
         bomberoHandler,
@@ -236,7 +256,10 @@
         materialPeligrosoRepository,
         categoriaMaterialPeligrosoRepository,
         categoriaMaterialPeligrosoService,
-        categoriaMaterialPeligrosoHandler
+        categoriaMaterialPeligrosoHandler,
+        accionMaterialHandler,
+        accionMaterialRepository,
+        accionMaterialService
       }
 
       await validateDependencies(container)
@@ -255,7 +278,9 @@
           'rangoService',
           'incendioEstructuralService',
           'materialPeligrosoService',
-          'categoriaMaterialPeligrosoService'
+          'categoriaMaterialPeligrosoService',
+          'tipoMatInvolucradoService',
+          'accionMaterialService'
         ],
         repositories: [
           'bomberoRepository',
@@ -270,7 +295,9 @@
           'rangoRepository',
           'incendioEstructuralRepository',
           'materialPeligrosoRepository',
-          'categoriaMaterialPeligrosoRepository'
+          'categoriaMaterialPeligrosoRepository',
+          'tipoMatInvolucradoRepository',
+          'accionMaterialRepository'
         ],
         handlers: [
           'bomberoHandler',
@@ -284,7 +311,9 @@
           'rangoHandler',
           'incendioEstructuralHandler',
           'materialPeligrosoHandler',
-          'categoriaMaterialPeligrosoHandler'
+          'categoriaMaterialPeligrosoHandler',
+          'tipoMatInvolucradoHandler',
+          'accionMaterialHandler'
         ],
         infrastructure: ['dbConnection']
       })
@@ -310,6 +339,14 @@
       if (!container.categoriaMaterialPeligrosoService) throw new Error('CategoriaMatPelService no inicializado')
       if (!container.categoriaMaterialPeligrosoRepository) throw new Error('categoriaMaterialPeligrosoRepository no inicializado')
       if (!container.categoriaMaterialPeligrosoHandler) throw new Error('categoriaMaterialPeligrosoHandler no inicializado')
+
+      if (!container.accionMaterialService) throw new Error('accionMaterialService no inicializado')
+      if (!container.accionMaterialRepository) throw new Error('accionMaterialRepository no inicializado')
+      if (!container.accionMaterialHandler) throw new Error('AccionMaterialHandlerno inicializado')
+
+      if (!container.tipoMatInvolucradoService) throw new Error('CategoriaMatPelService no inicializado')
+      if (!container.tipoMatInvolucradoRepository) throw new Error('categoriaMaterialPeligrosoRepository no inicializado')
+      if (!container.tipoMatInvolucradoHandler) throw new Error('categoriaMaterialPeligrosoHandler no inicializado')
 
       if (!container.usuarioService) throw new Error('UsuarioService no inicializado')
       if (!container.usuarioRepository) throw new Error('UsuarioRepository no inicializado')

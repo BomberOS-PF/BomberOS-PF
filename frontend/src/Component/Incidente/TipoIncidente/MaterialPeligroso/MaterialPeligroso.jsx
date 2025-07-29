@@ -17,6 +17,8 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
   const [errorMsg, setErrorMsg] = useState('')
   const toastRef = useRef(null)
   const [categorias, setCategorias] = useState([])  // <-- Agregar esta línea
+  const [tiposMateriales, setTiposMateriales] = useState([])
+  const [accionesMaterial, setAccionesMaterial] = useState([])
 
 
   // Mostrar datos básicos del incidente
@@ -44,6 +46,34 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
       }
     }
     fetchCategorias()
+  }, [])
+
+  useEffect(() => {
+  const fetchAccionesMaterial = async () => {
+    try {
+      const res = await fetch('http://localhost:3000/api/acciones-material')
+      const data = await res.json()
+      if (data.success) setAccionesMaterial(data.data)
+    } catch (error) {
+      console.error('❌ Error al traer acciones sobre el material:', error)
+    }
+  }
+  fetchAccionesMaterial()
+}, [])
+
+  useEffect(() => {
+    const fetchTipos = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/api/tipos-materiales-involucrados')
+        const data = await res.json()
+        if (data.success) {
+          setTiposMateriales(data.data)
+        }
+      } catch (error) {
+        console.error('❌ Error al traer tipos de materiales:', error)
+      }
+    }
+    fetchTipos()
   }, [])
 
   useEffect(() => {
@@ -198,20 +228,17 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
             <div className="col">
               <fieldset>
                 <legend className="text-black fs-6">Tipos de materiales involucrados</legend>
-                {["Gas inflamable", "Sustancia corrosiva", "Explosivo", "Radiación"].map((item, index) => (
-                  <div className="form-check" key={index}>
+                {tiposMateriales.map(tipo => (
+                  <div className="form-check" key={tipo.idTipoMatInvolucrado}>
                     <input
                       className="form-check-input"
                       type="checkbox"
-                      id={`material${index}`}
-                      checked={formData[`material${index}`] || false}
+                      id={`material${tipo.idTipoMatInvolucrado}`}
+                      checked={formData[`material${tipo.idTipoMatInvolucrado}`] || false}
                       onChange={handleChange}
                     />
-                    <label
-                      className="text-black form-check-label"
-                      htmlFor={`material${index}`}
-                    >
-                      {item}
+                    <label className="text-black form-check-label" htmlFor={`material${tipo.idTipoMatInvolucrado}`}>
+                      {tipo.nombre}
                     </label>
                   </div>
                 ))}
@@ -221,16 +248,18 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
             <div className="col">
               <fieldset>
                 <legend className="text-black fs-6">Acciones sobre el material</legend>
-                {["Quema controlada", "Venteo", "Dilución de vapores", "Neutralización", "Trasvase"].map((accion, index) => (
-                  <div className="form-check" key={index}>
+                {accionesMaterial.map(accion => (
+                  <div className="form-check" key={accion.idAccionMaterial}>
                     <input
                       className="form-check-input"
                       type="checkbox"
-                      id={`accion${index}`}
-                      checked={formData[`accion${index}`] || false}
+                      id={`accion${accion.idAccionMaterial}`}
+                      checked={formData[`accion${accion.idAccionMaterial}`] || false}
                       onChange={handleChange}
                     />
-                    <label className="text-black form-check-label" htmlFor={`accion${index}`}>{accion}</label>
+                    <label className="text-black form-check-label" htmlFor={`accion${accion.idAccionMaterial}`}>
+                      {accion.nombre}
+                    </label>
                   </div>
                 ))}
                 <div className="form-check mt-2">
@@ -244,6 +273,7 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                   />
                 </div>
               </fieldset>
+
             </div>
           </div>
 
