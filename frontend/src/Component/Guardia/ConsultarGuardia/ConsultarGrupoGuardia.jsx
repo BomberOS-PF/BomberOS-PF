@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react'
 import { API_URLS } from '../../../config/api'
 import RegistrarGuardia from '../RegistrarGuardia/RegistrarGuardia'
 import '../RegistrarGuardia/RegistrarGuardia.css'
-import '../../DisenioFormulario/DisenioFormulario.css'
+// import '../../DisenioFormulario/DisenioFormulario.css'
 import ConsultarBomberosDelGrupo from './ConsultarBomberosDelGrupo'
 import * as bootstrap from 'bootstrap'
+import { User2, UsersIcon } from 'lucide-react'
 
 const ConsultarGrupoGuardia = ({ onVolver }) => {
   const [busqueda, setBusqueda] = useState('')
@@ -141,75 +142,99 @@ const ConsultarGrupoGuardia = ({ onVolver }) => {
   }
 
   return (
-    <div className="container mt-4 formulario-consistente">
-      <h2 className="text-black mb-3">Grupos de Guardias</h2>
-      {mensaje && <div className="alert alert-warning">{mensaje}</div>}
+    <div className="container-fluid py-5">
+      <div className='text-center mb-4'>
+        <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
+          <div className="bg-danger p-3 rounded-circle">
+            <UsersIcon size={32}
+              color="white" />
+          </div>
+          <h1 className="fw-bold text-white fs-3 mb-0">Grupos de Guardia</h1>
+        </div>
+        <span className="badge bg-danger-subtle text-danger">
+          <i className="bi bi-fire me-2"></i> Sistema de Gestión de Personal - Cuartel de Bomberos
+        </span>
+      </div>
 
-      <input
-        type="text"
-        className="form-control mb-3"
-        placeholder="Buscar por nombre del grupo"
-        value={busqueda}
-        onChange={handleBusqueda}
-      />
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+        <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
+          <User2 />
+          <strong>Listado de Grupos de Guardia</strong>
+        </div>
 
-      <div className="table-responsive">
-        <table className="tabla-bomberos mt-3">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Descripción</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {grupos.map((grupo) => (
-              <tr key={grupo.idGrupo}>
-                <td>{grupo.nombre}</td>
-                <td>{grupo.descripcion}</td>
-                <td>
-                  <button
-                    className="btn btn-outline-light btn-sm me-2"
-                    onClick={() => fetchBomberosDelGrupo(grupo.idGrupo)}
-                    disabled={loading}
-                  >
-                    Ver detalles
-                  </button>
-                  <button
-                    className="btn btn-outline-danger btn-sm"
-                    onClick={() => confirmarEliminacion(grupo)}
-                    disabled={loading}
-                    title="Eliminar grupo"
-                  >
-                    ❌
-                  </button>
-                </td>
-              </tr>
+        <div className="card-body">
+          <div className="mb-3 position-relative">
+            <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+            <input
+              type="text"
+              className="form-control ps-5 py-3 border-secondary"
+              placeholder="Buscar por nombre del grupo"
+              value={busqueda}
+              onChange={handleBusqueda}
+            />
+          </div>
+          {grupos.length === 0 && !loading && (
+            <div className="text-center py-3 text-muted">No hay resultados para la búsqueda.</div>
+          )}
+          <div className="table-responsive rounded border">
+            <table className="table table-hover align-middle mb-0">
+              <thead className="bg-light">
+                <tr>
+                  <th className="border-end text-center">Nombre</th>
+                  <th className="border-end text-center">Descripción</th>
+                  <th className="text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {grupos.map((grupo) => (
+                  <tr key={grupo.idGrupo}>
+                    <td className="border-end px-3">{grupo.nombre}</td>
+                    <td className="border-end px-3">{grupo.descripcion}</td>
+                    <td className="border-end">
+                      <button
+                        className="btn btn-outline-secondary btn-sm me-2"
+                        onClick={() => fetchBomberosDelGrupo(grupo.idGrupo)}
+                        disabled={loading}
+                      >
+                        <i className="bi bi-eye me-1"></i> Ver
+                      </button>
+                      <button
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={() => confirmarEliminacion(grupo)}
+                        disabled={loading}
+                        title="Eliminar grupo"
+                      >
+                        <i className="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="d-flex justify-content-center mb-3 py-2">
+            {Array.from({ length: Math.ceil(total / limite) }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => setPaginaActual(i + 1)}
+                type='button'
+                className={`btn btn-sm me-1 custom-page-btn ${paginaActual === i + 1 ? 'active' : ''
+                  }`}
+              >
+                {i + 1}
+              </button>
             ))}
-          </tbody>
-        </table>
+          </div>
+        </div>
 
-        {grupos.length === 0 && !loading && (
-          <div className="text-black mt-3 text-center">No se encontraron grupos.</div>
-        )}
-      </div>
-
-      <div className="pagination mt-3">
-        {Array.from({ length: Math.ceil(total / limite) }, (_, i) => (
-          <button
-            key={i}
-            className={`btn btn-sm me-1 ${paginaActual === i + 1 ? 'btn-secondary' : 'btn-outline-secondary'}`}
-            onClick={() => setPaginaActual(i + 1)}
-          >
-            {i + 1}
+        <div className="d-grid gap-3">
+          <button 
+          type="button"
+          className="btn btn-secondary" onClick={onVolver} disabled={loading}>
+            Volver al menú
           </button>
-        ))}
-      </div>
-
-      <div className="botones-accion mx-auto" style={{ width: '25%' }}>
-        <button className="btn btn-secondary w-100" onClick={onVolver} disabled={loading}>
-          Volver al menú
-        </button>
+        </div>
       </div>
 
       {/* Modal Confirmación */}
