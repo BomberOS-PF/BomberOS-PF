@@ -220,7 +220,7 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
                             <button
                               onClick={() => agregarAlGrupo(b)}
                               disabled={deshabilitarBtn}
-                              className={`btn btn-sm ${deshabilitarBtn ? 'btn-secondary' : 'btn-success'}`}
+                              className={`btn btn-sm btn-add ${deshabilitarBtn ? 'disabled' : ''}`}
                             >
                               +
                             </button>
@@ -237,7 +237,7 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
                         <td className="border-end px-4">{b.nombre}</td>
                         <td className="border-end px-4">{b.apellido}</td>
                         <td className="border-end px-2">{b.telefono}</td>
-                        <td className="border-end text-primary">{b.email}</td>
+                        <td className="border-end text-secondary">{b.email}</td>
                       </tr>
                     )
                   })}

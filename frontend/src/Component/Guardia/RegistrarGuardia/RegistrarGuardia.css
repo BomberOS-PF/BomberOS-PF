@@ -1,4 +1,3 @@
-
 /* Tooltip */
 /* Contenedor del tooltip */
 /* Estilo para el contenedor del tooltip */
@@ -36,6 +35,35 @@
   visibility: visible;
   opacity: 1;
 }
+
+/* Botón + siempre mismo tamaño y color */
+.btn-add {
+  background-color: #198754; /* verde bootstrap */
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  line-height: 1;
+  font-weight: bold;
+  border-radius: 4px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
+}
+
+/* Estado hover */
+.btn-add:hover:not(.disabled) {
+  background-color: #157347;
+}
+
+/* Estado deshabilitado con mismo color pero más tenue */
+.btn-add.disabled,
+.btn-add:disabled {
+  background-color: #198754;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 
 
 
