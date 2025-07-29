@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
@@ -58,16 +58,18 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   const [horaHasta, setHoraHasta] = useState('')
   const [mensaje, setMensaje] = useState('')
 
-  // 🔹 Actualizar tooltips en el DOM cada vez que cambien los eventos
+  // 🔹 Guardamos tooltips y calendario
+  const tooltipsRef = useRef({})
+  const calendarRef = useRef()
+
+  // 🔹 Actualizar texto del tooltip cuando cambian los eventos
   useEffect(() => {
-    document.querySelectorAll('.fc-event').forEach((el) => {
-      const eventId = el.getAttribute('data-event-id')
-      const evento = eventos.find((ev) => ev.id === eventId)
-      if (evento) {
-        const tooltip = evento.extendedProps.bomberos
+    eventos.forEach((ev) => {
+      const tooltip = tooltipsRef.current[ev.id]
+      if (tooltip) {
+        tooltip.innerText = ev.extendedProps.bomberos
           .map((b) => `${b.nombre} (${b.desde}-${b.hasta})`)
-          .join(' | ')
-        el.setAttribute('data-tooltip', tooltip)
+          .join('\n')
       }
     })
   }, [eventos])
@@ -83,14 +85,11 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       return
     }
 
-    // Calcular lunes de la semana actual
-    const hoy = new Date()
-    const diaHoy = hoy.getDay()
-    const lunesSemana = new Date(hoy)
-    const offset = diaHoy === 0 ? -6 : 1 - diaHoy
-    lunesSemana.setDate(hoy.getDate() + offset)
+    // 🔹 Usar el lunes de la semana visible en el calendario
+    const calendarApi = calendarRef.current?.getApi()
+    const lunesSemana = new Date(calendarApi.view.activeStart)
 
-    // Día seleccionado
+    // Día seleccionado en base a la vista activa
     const fechaObjetivo = new Date(lunesSemana)
     fechaObjetivo.setDate(lunesSemana.getDate() + diaSeleccionado.value)
 
@@ -121,7 +120,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       eventosActualizados = eventosActualizados.map((ev) => {
         const inicioEv = new Date(ev.start)
         const finEv = new Date(ev.end)
-
         const solapan = nuevoInicioDate <= finEv && nuevoFinDate >= inicioEv
 
         if (solapan) {
@@ -147,9 +145,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             ...ev,
             start: nuevoStart,
             end: nuevoEnd,
-            extendedProps: {
-              bomberos: bomberosActualizados
-            }
+            extendedProps: { bomberos: bomberosActualizados }
           }
         }
 
@@ -343,6 +339,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
 
         <div className="col-md-8">
           <FullCalendar
+            ref={calendarRef}
             plugins={[timeGridPlugin, interactionPlugin]}
             initialView="timeGridWeek"
             events={eventos}
@@ -362,15 +359,33 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             }}
             eventContent={() => ({ domNodes: [] })}
             eventDidMount={(info) => {
-              // Inicializa el tooltip
-              const tooltip = info.event.extendedProps.bomberos
+              // Tooltip flotante y guardamos la referencia
+              const tooltip = document.createElement('div')
+              tooltip.className = 'tooltip-dinamico'
+              tooltip.innerText = info.event.extendedProps.bomberos
                 .map((b) => `${b.nombre} (${b.desde}-${b.hasta})`)
-                .join(' | ')
-              info.el.setAttribute('data-event-id', info.event.id)
-              info.el.setAttribute('data-tooltip', tooltip)
-              info.el.style.setProperty('background-color', '#d52b1e', 'important')
-              info.el.style.setProperty('border', '1px solid black', 'important')
-              info.el.style.setProperty('color', 'transparent', 'important')
+                .join('\n')
+              document.body.appendChild(tooltip)
+              tooltipsRef.current[info.event.id] = tooltip
+
+              const showTooltip = (e) => {
+                tooltip.style.display = 'block'
+                tooltip.style.left = `${e.pageX + 10}px`
+                tooltip.style.top = `${e.pageY - 20}px`
+              }
+
+              const moveTooltip = (e) => {
+                tooltip.style.left = `${e.pageX + 10}px`
+                tooltip.style.top = `${e.pageY - 20}px`
+              }
+
+              const hideTooltip = () => {
+                tooltip.style.display = 'none'
+              }
+
+              info.el.addEventListener('mouseenter', showTooltip)
+              info.el.addEventListener('mousemove', moveTooltip)
+              info.el.addEventListener('mouseleave', hideTooltip)
             }}
           />
         </div>
