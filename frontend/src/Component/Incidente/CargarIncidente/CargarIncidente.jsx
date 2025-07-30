@@ -257,6 +257,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
                   id="tipoSiniestro"
                   required onChange={handleChange}
                   defaultValue="">
+                  <option disabled value="">Seleccione tipo de siniestro</option>
                   {loading ? (
                     <option>Cargando tipos...</option>
                   ) : (
@@ -299,7 +300,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
                   <MapPin className="text-purple" />
                   Localización
                 </label>
-                <select className="form-select"
+                <select className="form-select text-dark"
                   id="localizacion"
                   required onChange={handleChange}
                   defaultValue="">
