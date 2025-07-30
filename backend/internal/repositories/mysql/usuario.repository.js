@@ -14,7 +14,7 @@ export class MySQLUsuarioRepository {
 
   async findAll() {
     const query = `
-      SELECT idUsuario, usuario, contrasena, email, idRol
+      SELECT idUsuario, usuario, password, email, idRol
       FROM ${this.tableName}
       ORDER BY usuario ASC
     `
@@ -36,7 +36,7 @@ export class MySQLUsuarioRepository {
 
   async findById(id) {
     const query = `
-      SELECT idUsuario, usuario, contrasena, email, idRol
+      SELECT idUsuario, usuario, password, email, idRol
       FROM ${this.tableName} 
       WHERE idUsuario = ?
     `
@@ -59,7 +59,7 @@ export class MySQLUsuarioRepository {
   async findBomberoByIdUsuario(idUsuario) {
     const connection = getConnection()
     const [rows] = await connection.execute(
-      'SELECT DNI, nombreCompleto FROM bombero WHERE idUsuario = ?',
+      'SELECT dni, nombre, apellido FROM bombero WHERE idUsuario = ?',
       [idUsuario]
     )
     return rows[0] || null
@@ -67,7 +67,7 @@ export class MySQLUsuarioRepository {
 
   async findByUsername(username) {
     const query = `
-      SELECT idUsuario, usuario, contrasena, email, idRol
+      SELECT idUsuario, usuario, password, email, idRol
       FROM ${this.tableName} 
       WHERE usuario = ?
     `
@@ -87,19 +87,41 @@ export class MySQLUsuarioRepository {
     }
   }
 
+  async findByEmail(email) {
+    const query = `
+      SELECT idUsuario, usuario, password, email, idRol
+      FROM ${this.tableName} 
+      WHERE email = ?
+    `
+    
+    const connection = getConnection()
+
+    try {
+      const [rows] = await connection.execute(query, [email])
+      return rows.length > 0 ? Usuario.create(rows[0]) : null
+    } catch (error) {
+      logger.error('Error al buscar usuario por email', {
+        email,
+        error: error.message,
+        code: error.code
+      })
+      throw new Error(`Error al buscar usuario por email: ${error.message}`)
+    }
+  }
+  
   async create(usuario) {
     const data = usuario.toDatabase()
     
     // Hashear la contraseña antes de guardarla
-    let hashedPassword = data.contrasena
-    if (data.contrasena && !PasswordUtils.isHashed(data.contrasena)) {
+    let hashedPassword = data.password
+    if (data.password && !PasswordUtils.isHashed(data.password)) {
       logger.debug('Hasheando contraseña para nuevo usuario', { usuario: data.usuario })
-      hashedPassword = await PasswordUtils.hashPassword(data.contrasena)
+      hashedPassword = await PasswordUtils.hashPassword(data.password)
     }
     
     const query = `
       INSERT INTO ${this.tableName} (
-        usuario, contrasena, email, idRol
+        usuario, password, email, idRol
       ) VALUES (?, ?, ?, ?)
     `
     
@@ -121,7 +143,7 @@ export class MySQLUsuarioRepository {
       })
       
       if (error.code === 'ER_DUP_ENTRY') {
-        throw new Error(`Ya existe un usuario con el nombre "${data.usuario}"`)
+        throw new Error(`Nombre de usuario no disponible`)
       }
       
       throw new Error(`Error al crear usuario: ${error.message}`)
@@ -132,15 +154,15 @@ export class MySQLUsuarioRepository {
     const data = usuario.toDatabase()
     
     // Hashear la contraseña si se está actualizando y no está ya hasheada
-    let hashedPassword = data.contrasena
-    if (data.contrasena && !PasswordUtils.isHashed(data.contrasena)) {
+    let hashedPassword = data.password
+    if (data.password && !PasswordUtils.isHashed(data.password)) {
       logger.debug('Hasheando nueva contraseña para usuario', { id })
-      hashedPassword = await PasswordUtils.hashPassword(data.contrasena)
+      hashedPassword = await PasswordUtils.hashPassword(data.password)
     }
     
     const query = `
       UPDATE ${this.tableName} 
-      SET contrasena = ?, email = ?, idRol = ?
+      SET password = ?, email = ?, idRol = ?
       WHERE idUsuario = ?
     `
     
@@ -185,7 +207,7 @@ export class MySQLUsuarioRepository {
 
   async findByRol(idRol) {
     const query = `
-      SELECT idUsuario, usuario, contrasena, email, idRol
+      SELECT idUsuario, usuario, password, email, idRol
       FROM ${this.tableName} 
       WHERE idRol = ?
       ORDER BY usuario ASC
@@ -209,7 +231,7 @@ export class MySQLUsuarioRepository {
 
   async authenticate(username, password) {
     const query = `
-      SELECT idUsuario, usuario, contrasena, email, idRol
+      SELECT idUsuario, usuario, password, email, idRol
       FROM ${this.tableName} 
       WHERE usuario = ?
     `
@@ -224,8 +246,13 @@ export class MySQLUsuarioRepository {
       
       const usuario = Usuario.create(rows[0])
       
+      logger.info('🔑 Comparando contraseñas', {
+        passwordPlano: password,
+        passwordHash: usuario.password // o como se llame el campo que viene de la DB
+      })
+
       // Verificar contraseña usando bcrypt
-      const isPasswordValid = await PasswordUtils.verifyPassword(password, usuario.contrasena)
+      const isPasswordValid = await PasswordUtils.verifyPassword(password, usuario.password)
       
       if (isPasswordValid) {
         logger.debug('Autenticación exitosa', { username })
@@ -267,4 +294,15 @@ export class MySQLUsuarioRepository {
       throw new Error(`Error al obtener usuarios sin bombero: ${error.message}`)
     }
   }
+
+  async actualizarContrasenaPorEmail(email, nuevaContrasenaHasheada) {
+    const conn = getConnection()
+    const [result] = await conn.execute(
+      'UPDATE usuario SET password = ? WHERE email = ?',
+      [nuevaContrasenaHasheada, email]
+    )
+    logger.debug('Contraseña actualizada por email', { email })
+    return result.affectedRows > 0
+  }
 } 
+

@@ -1,16 +1,13 @@
 import { logger } from '../internal/platform/logger/logger.js'
 
-// Configuración central de rutas
 export function setupRoutes(app, container) {
   logger.info('🛣️ Configurando rutas...')
 
-  // Health check
   app.get('/health', (req, res) => {
     logger.info('Health check solicitado', {
       ip: req.ip,
       userAgent: req.get('User-Agent')
     })
-
     res.json({
       status: 'OK',
       message: 'BomberOS - ABMC Bomberos con Clean Architecture',
@@ -22,12 +19,55 @@ export function setupRoutes(app, container) {
     })
   })
 
-  app.get('/', (req, res) => {
-    res.redirect('/health')
+  app.get('/', (req, res) => res.redirect('/health'))
+
+  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, recuperarClaveHandler, validarTokenHandler, restablecerClaveHandler,incendioEstructuralHandler, forestalCatalogosHandler, tipoIncidenteHandler, localizacionHandler, causaProbableHandler } = container
+
+  // ROLES
+  app.get('/api/roles', async (req, res) => {
+    try {
+      await rolesAdapter.obtenerRoles(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtenerRoles:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
   })
 
-  // Handlers del container
-  const { bomberoHandler, usuarioHandler, incidenteHandler } = container
+  app.get('/api/roles/:id', async (req, res) => {
+    try {
+      await rolesAdapter.obtenerRolPorId(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtenerRolPorId:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.post('/api/roles', async (req, res) => {
+    try {
+      await rolesAdapter.registrarRol(req, res)
+    } catch (error) {
+      logger.error('Error en ruta registrarRol:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.put('/api/roles/:id', async (req, res) => {
+    try {
+      await rolesAdapter.actualizarRol(req, res)
+    } catch (error) {
+      logger.error('Error en ruta actualizarRol:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.delete('/api/roles/:id', async (req, res) => {
+    try {
+      await rolesAdapter.eliminarRol(req, res)
+    } catch (error) {
+      logger.error('Error en ruta eliminarRol:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
 
   // BOMBEROS
   app.get('/api/bomberos/plan', async (req, res) => {
@@ -48,6 +88,15 @@ export function setupRoutes(app, container) {
     }
   })
 
+  app.get('/api/bomberos/buscar', async (req, res) => {
+    try {
+      await bomberoHandler.buscarBomberos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta buscarBomberos:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
   app.post('/api/bomberos', async (req, res) => {
     try {
       await bomberoHandler.createBombero(req, res)
@@ -55,6 +104,15 @@ export function setupRoutes(app, container) {
       logger.error('Error en ruta createBombero:', error)
       res.status(500).json({ error: 'Error interno' })
     }
+  })
+
+  app.post('/api/bomberos/full', async (req, res) => {
+      try {
+        await bomberoHandler.createBomberoConUsuario(req, res)
+      } catch (error) {
+        logger.error('Error en ruta createBomberoConUsuario:', error)
+        res.status(500).json({ error: 'Error interno' })
+      }
   })
 
   app.get('/api/bomberos/:id', async (req, res) => {
@@ -80,15 +138,6 @@ export function setupRoutes(app, container) {
       await bomberoHandler.deleteBombero(req, res)
     } catch (error) {
       logger.error('Error en ruta deleteBombero:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.post('/api/bomberos/full', async (req, res) => {
-    try {
-      await bomberoHandler.createBomberoConUsuario(req, res)
-    } catch (error) {
-      logger.error('Error en ruta createBomberoConUsuario:', error)
       res.status(500).json({ error: 'Error interno' })
     }
   })
@@ -167,6 +216,10 @@ export function setupRoutes(app, container) {
   })
 
   // INCIDENTES
+  app.post('/api/incidentes/incendio-forestal', async (req, res, next) => {
+    await incidenteHandler.crearIncendioForestal(req, res, next)
+  })
+
   app.get('/api/incidentes', async (req, res) => {
     try {
       await incidenteHandler.listar(req, res)
@@ -212,7 +265,6 @@ export function setupRoutes(app, container) {
     }
   })
 
-  // Notificar bomberos sobre un incidente
   app.post('/api/incidentes/:id/notificar', async (req, res) => {
     try {
       await incidenteHandler.notificarBomberos(req, res)
@@ -222,15 +274,246 @@ export function setupRoutes(app, container) {
     }
   })
 
+  // GRUPOS DE GUARDIA
+  app.post('/api/grupos', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.crearGrupo(req, res)
+    } catch (error) {
+      logger.error('Error en ruta crearGrupo:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/grupos', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.listarGrupos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listarGrupos:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/grupos/:id/bomberos', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.obtenerBomberosDelGrupo(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtenerBomberosDelGrupo:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/grupos/buscar', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.buscarGrupos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta buscarGrupos:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.delete('/api/grupos/:id', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.eliminarGrupo(req, res)
+    } catch (error) {
+      logger.error('Error en ruta eliminarGrupo:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.put('/api/grupos/:id', async (req, res) => {
+  try {
+    await grupoGuardiaHandler.actualizarGrupo(req, res)
+  } catch (error) {
+    logger.error('Error en ruta actualizarGrupo:', error)
+    res.status(500).json({ error: 'Error interno' })
+  }
+})
 
 
-  // 404 handler
+
+
+  // ACCIDENTES DE TRÁNSITO
+  app.post('/api/accidentes', async (req, res) => {
+    try {
+      await accidenteTransitoHandler.registrar(req, res)
+    } catch (error) {
+      logger.error('Error en ruta registrar accidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/accidentes', async (req, res) => {
+    try {
+      await accidenteTransitoHandler.listarTodos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listar accidentes:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/accidentes/:id', async (req, res) => {
+    try {
+      await accidenteTransitoHandler.obtenerPorIncidente(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtener accidente por incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // CAUSAS DE ACCIDENTE
+  app.get('/api/causa-accidente', async (req, res) => {
+    try {
+      await causaAccidenteHandler.getTodas(req, res)
+    } catch (error) {
+      logger.error('Error en ruta getTodas causasAccidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // VEHICULOS
+  app.post('/api/vehiculos', async (req, res) => {
+    try {
+      await vehiculoHandler.registrar(req, res)
+    } catch (error) {
+      logger.error('Error en ruta registrar vehiculo:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+  
+
+  // RANGOS
+  app.get('/api/rangos', async (req, res) => {
+    await rangoHandler.getAll(req, res)
+  })
+  
+  // CATÁLOGOS FORESTALES
+  app.get('/api/caracteristicas-lugar', async (req, res) => {
+    await forestalCatalogosHandler.listarCaracteristicasLugar(req, res)
+  })
+  app.get('/api/areas-afectadas', async (req, res) => {
+    await forestalCatalogosHandler.listarAreasAfectadas(req, res)
+  })
+
+  // TIPOS DE INCIDENTE
+  app.get('/api/tipos-incidente', async (req, res) => {
+    try {
+      await tipoIncidenteHandler.listarTiposIncidente(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listarTiposIncidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/tipos-incidente/:id', async (req, res) => {
+    try {
+      await tipoIncidenteHandler.obtenerTipoIncidentePorId(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtenerTipoIncidentePorId:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // LOCALIZACIONES
+  app.get('/api/localizaciones', async (req, res) => {
+    try {
+      await localizacionHandler.listarLocalizaciones(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listarLocalizaciones:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/localizaciones/:id', async (req, res) => {
+    try {
+      await localizacionHandler.obtenerLocalizacionPorId(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtenerLocalizacionPorId:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // CAUSAS PROBABLES
+  app.get('/api/causas-probables', async (req, res) => {
+    try {
+      await causaProbableHandler.listarCausasProbables(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listarCausasProbables:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/causas-probables/:id', async (req, res) => {
+    try {
+      await causaProbableHandler.obtenerCausaProbablePorId(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtenerCausaProbablePorId:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // RECUPERAR Y RESTABLECER CLAVE
+  app.post('/api/recuperar-clave', async (req, res) => {
+    try {
+      await container.recuperarClaveHandler(req, res)
+    } catch (error) {
+      logger.error('Error en ruta recuperarClave:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/validar-token', async (req, res) => {
+    try {
+      await container.validarTokenHandler(req, res)
+    } catch (error) {
+      logger.error('Error en ruta validarToken:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.post('/api/restablecer-clave', async (req, res) => {
+    try {
+      await container.restablecerClaveHandler(req, res)
+    } catch (error) {
+      logger.error('Error en ruta restablecerClave:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+// INCENDIO ESTRUCTURAL
+  app.post('/api/incendio-estructural', async (req, res) => {
+    try {
+      await incendioEstructuralHandler.registrar(req, res)
+    } catch (error) {
+      logger.error('Error en ruta registrar incendio estructural:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/incendio-estructural', async (req, res) => {
+    try {
+      await incendioEstructuralHandler.listarTodos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listar incendios estructurales:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/incendio-estructural/:id', async (req, res) => {
+    try {
+      await incendioEstructuralHandler.obtenerPorIncidente(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtener incendio estructural por incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+
   app.use((req, res) => {
-    logger.warn('Ruta no encontrada', { 
-      method: req.method, 
-      url: req.originalUrl 
+    logger.warn('Ruta no encontrada', {
+      method: req.method,
+      url: req.originalUrl
     })
-    
+
     res.status(404).json({
       success: false,
       message: 'Endpoint no encontrado',
@@ -238,7 +521,13 @@ export function setupRoutes(app, container) {
       method: req.method,
       availableEndpoints: [
         'GET /health',
+        'GET /api/roles',
+        'GET /api/roles/:id',
+        'POST /api/roles',
+        'PUT /api/roles/:id',
+        'DELETE /api/roles/:id',
         'GET /api/bomberos',
+        'GET /api/bomberos/buscar',
         'POST /api/bomberos',
         'GET /api/bomberos/:id',
         'PUT /api/bomberos/:id',
@@ -256,7 +545,26 @@ export function setupRoutes(app, container) {
         'GET /api/incidentes/:id',
         'PUT /api/incidentes/:id',
         'DELETE /api/incidentes/:id',
-        'POST /api/incidentes/:id/notificar'
+        'POST /api/incidentes/:id/notificar',
+        'POST /api/grupos',
+        'GET /api/grupos',
+        'GET /api/grupos/:id/bomberos',
+        'GET /api/grupos/buscar',
+        'DELETE /api/grupos/:id',
+        'POST /api/accidentes',
+        'GET /api/accidentes',
+        'GET /api/accidentes/:id',        
+        'GET /api/causa-accidente',
+        'POST /api/vehiculos',
+        'GET /api/rangos',
+        'GET /api/caracteristicas-lugar',
+        'GET /api/areas-afectadas',
+        'POST /api/recuperar-clave',
+        'GET /api/validar-token',
+        'POST /api/restablecer-clave',
+        'POST /api/incendio-estructural',
+        'GET /api/incendio-estructural',
+        'GET /api/incendio-estructural/:id'
       ]
     })
   })

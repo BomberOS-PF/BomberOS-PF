@@ -5,6 +5,7 @@ export const API_URLS = {
   // Bomberos
   bomberos: {
     getAll: `${API_BASE_URL}/bomberos`,
+    buscar: `${API_BASE_URL}/bomberos/buscar`,
     getById: (id) => `${API_BASE_URL}/bomberos/${id}`,
     create: `${API_BASE_URL}/bomberos`,
     createFull: `${API_BASE_URL}/bomberos/full`,
@@ -24,7 +25,45 @@ export const API_URLS = {
     authenticate: `${API_BASE_URL}/usuarios/auth`,
     libresBombero: `${API_BASE_URL}/usuarios/bomberos/libres`
   },
+
+  // Grupos
+  grupos: {
+    create: `${API_BASE_URL}/grupos`,
+    buscar: `${API_BASE_URL}/grupos/buscar`,
+    delete: (id) => `${API_BASE_URL}/grupos/${id}`,
+    obtenerBomberosDelGrupo: (id) => `${API_BASE_URL}/grupos/${id}/bomberos`,
+    update: (id) => `${API_BASE_URL}/grupos/${id}`
+    
+  },
   
+  // Roles
+  roles: {
+    getAll: `${API_BASE_URL}/roles`,
+    getById: (id) => `${API_BASE_URL}/roles/${id}`,
+    create: `${API_BASE_URL}/roles`,
+    update: (id) => `${API_BASE_URL}/roles/${id}`,
+    delete: (id) => `${API_BASE_URL}/roles/${id}`
+  },
+
+  // Rangos
+  rangos: {
+    getAll: `${API_BASE_URL}/rangos`
+  },
+
+  // Incidentes
+  incidentes: {
+    create: `${API_BASE_URL}/incidentes`,
+    getAll: `${API_BASE_URL}/incidentes`,
+    getById: (id) => `${API_BASE_URL}/incidentes/${id}`,
+    createIncendioForestal: `${API_BASE_URL}/incidentes/incendio-forestal`
+  },
+
+  caracteristicasLugar: `${API_BASE_URL}/caracteristicas-lugar`,
+  areasAfectadas: `${API_BASE_URL}/areas-afectadas`,
+  tiposIncidente: `${API_BASE_URL}/tipos-incidente`,
+  localizaciones: `${API_BASE_URL}/localizaciones`,
+  causasProbables: `${API_BASE_URL}/causas-probables`,
+
   // Health check
   health: 'http://localhost:3000/health'
 }
@@ -43,18 +82,17 @@ export const apiRequest = async (url, options = {}) => {
   }
 
   try {
-    console.log(`🌐 API Request: ${config.method || 'GET'} ${url}`)
     const response = await fetch(url, config)
     const data = await response.json()
 
     if (!response.ok) {
       const error = new Error(data.message || 'Error en la solicitud')
       error.status = response.status
+      error.status = response.status
       error.response = data
       throw error
     }
 
-    console.log(`✅ API Response:`, data)
     return data
   } catch (error) {
     console.error(`❌ API Error:`, error)

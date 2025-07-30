@@ -1,0 +1,96 @@
+/* Tooltip */
+/* Contenedor del tooltip */
+/* Estilo para el contenedor del tooltip */
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+/* Tooltip oculto por defecto */
+.tooltip {
+  visibility: hidden;
+  position: absolute;
+  top: 50%;
+  left: 100%; /* Posicionar a la derecha del botón */
+  transform: translateY(-50%); /* Centrar verticalmente respecto al botón */
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 5px;
+  border-radius: 5px;
+  font-size: 12px;
+  z-index: 10;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* Mostrar el tooltip solo cuando el botón está deshabilitado y al pasar el mouse */
+.tooltip-container button:disabled:hover + .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Cuando el contenedor está siendo hoverado, mostrar el tooltip */
+.tooltip-container:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Botón + siempre mismo tamaño y color */
+.btn-add {
+  background-color: #198754; /* verde bootstrap */
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  line-height: 1;
+  font-weight: bold;
+  border-radius: 4px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
+}
+
+/* Estado hover */
+.btn-add:hover:not(.disabled) {
+  background-color: #157347;
+}
+
+/* Estado deshabilitado con mismo color pero más tenue */
+.btn-add.disabled,
+.btn-add:disabled {
+  background-color: #198754;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+
+/* Estilo base del botón de paginación */
+.custom-page-btn {
+  background-color: #6b7280;     
+  color: #fff;                   
+  border: 1px solid #6b7280;      
+  padding: 0.4rem 0.8rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Hover */
+.custom-page-btn:hover {
+  background-color: #374151;      
+  border-color: #374151;
+  color: #000000 !important;
+}
+
+/* Página activa */
+.custom-page-btn.active {
+  background-color: #374151;
+  border-color: #374151;
+  color: #fff;
+}
+
+
+
+
+

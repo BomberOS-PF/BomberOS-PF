@@ -5,15 +5,6 @@ body {
   padding: 0;
 }
 
-/* .form-abm {
-  background-color: #fff !important;
-  border-top: 5px solid #d52b1e;
-  padding: 2rem 2.5rem;
-  border-radius: 8px;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
-  color: #000;
-} */
-
 .form-label,
 .form-check-label {
   font-weight: 600;
@@ -25,6 +16,7 @@ body {
   background-color: #f8f9fa;
   border: 1px solid #ccc;
   color: #000;
+
 }
 
 .form-control::placeholder {
@@ -37,6 +29,10 @@ body {
   border-color: #d52b1e;
   box-shadow: 0 0 0 0.2rem rgba(213, 43, 30, 0.25);
   color: #000;
+}
+
+.form-control:disabled::placeholder, .form-select:disabled::placeholder {
+  color: #bdc3c7;
 }
 
 .btn-danger {
@@ -87,8 +83,7 @@ body {
 .container {
   width: 100%;
   max-width: 100%;
-  /* margin: 0 auto; */
-  /* padding: 2rem; */
+  padding: 2.5rem;
 }
 
 /* Estilos globales para formularios de BomberOS */
@@ -377,4 +372,37 @@ body {
 .form-check-input:not(:checked) {
   background-color: #ff0000;
   border-color: #000000;
+}
+
+/* Estilo unificado para tablas */
+.tabla-bomberos {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  color: #000000;
+  background-color: #b3b1b1;
+  border: 1px solid #6b6b6b;
+  font-size: 0.9rem;
+}
+
+.tabla-bomberos thead {
+  background-color: #838383;
+}
+
+.tabla-bomberos th,
+.tabla-bomberos td {
+  padding: 8px 12px;
+  border: 1px solid #6b6b6b;
+  text-align: left;
+}
+
+.tabla-bomberos tr:hover {
+  background-color: #a1a0a0;
+}
+
+/* Botones dentro de la tabla */
+.tabla-bomberos .btn {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  line-height: 1;
 }

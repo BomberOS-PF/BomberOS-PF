@@ -110,8 +110,8 @@ const ParticipacionIncidente = ({ datosPrevios, onFinalizar, onVolver }) => {
             >
               <option value="">Seleccione persona</option>
               {bomberos.map((bombero) => (
-                <option key={bombero.dni || bombero.DNI} value={bombero.dni || bombero.DNI}>
-                  {bombero.nombreCompleto}
+                <option key={bombero.dni || bombero.dni} value={bombero.dni || bombero.dni}>
+                  {bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : ''}
                 </option>
               ))}
             </select>
@@ -129,8 +129,8 @@ const ParticipacionIncidente = ({ datosPrevios, onFinalizar, onVolver }) => {
             >
               <option value="">Seleccione persona</option>
               {bomberos.map((bombero) => (
-                <option key={bombero.dni || bombero.DNI} value={bombero.dni || bombero.DNI}>
-                  {bombero.nombreCompleto}
+                <option key={bombero.dni || bombero.dni} value={bombero.dni || bombero.dni}>
+                  {bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : ''}
                 </option>
               ))}
             </select>

@@ -50,10 +50,10 @@ export class BomberoService {
       // Validación básica
       this._validarDatosBombero(datosBombero, true)
       
-      // Verificar si ya existe un bombero con el mismo DNI
-      const existente = await this.bomberoRepository.findById(datosBombero.dni || datosBombero.DNI)
+      // Verificar si ya existe un bombero con el mismo dni
+      const existente = await this.bomberoRepository.findById(datosBombero.dni || datosBombero.dni)
       if (existente) {
-        throw new Error('Ya existe un bombero con ese DNI')
+        throw new Error('Ya existe un bombero con ese dni')
       }
 
       // Verificar si ya existe un bombero con el mismo legajo
@@ -119,7 +119,7 @@ export class BomberoService {
       // Crear bombero actualizado - Los Value Objects se encargan de las validaciones
       const bomberoActualizado = Bombero.create({
         ...datosBombero,
-        dni: id, // Mantener el DNI original
+        dni: id, // Mantener el dni original
         idUsuario: datosBombero.idUsuario || bomberoExistente.idUsuario // Preservar idUsuario existente si no se proporciona
       })
 
@@ -150,6 +150,10 @@ export class BomberoService {
       throw error
     }
   }
+
+  async listarBomberosPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
+  return await this.bomberoRepository.findConPaginado({ pagina, limite, busqueda })
+}
 
   async listarBomberosDelPlan() {
     try {
@@ -203,12 +207,16 @@ export class BomberoService {
 
   // Validación básica de datos - Solo campos requeridos
   _validarDatosBombero(datos, esCreacion = false) {
-    if (!datos.dni && !datos.DNI) {
-      throw new Error('DNI es requerido')
+    if (!datos.dni && !datos.dni) {
+      throw new Error('dni es requerido')
     }
     
-    if (!datos.nombreCompleto) {
-      throw new Error('Nombre completo es requerido')
+    if (!datos.nombre || !datos.apellido) {
+      throw new Error('Los campos nombre y apellido son requeridos')
+    }
+
+    if (!datos.nombre.trim() || !datos.apellido.trim()) {
+      throw new Error('Los campos nombre y apellido no pueden estar vacios')
     }
     
     // idUsuario solo es requerido para creaciones, no para actualizaciones

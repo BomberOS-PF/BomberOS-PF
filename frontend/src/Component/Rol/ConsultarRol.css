@@ -1,0 +1,41 @@
+body {
+  background-color: #121212;
+}
+
+input.form-control,
+textarea.form-control {
+  background-color: #222;
+  border: 1px solid #d52b1e;
+  color: white;
+}
+
+input.form-control::placeholder {
+  color: #aaa;
+}
+
+.table-dark th,
+.table-dark td {
+  vertical-align: middle;
+}
+
+button.btn-sm {
+  padding: 4px 10px;
+  font-size: 0.875rem;
+}
+
+button.btn-outline-danger.btn-sm {
+  font-size: 1rem;
+  padding: 2px 8px;
+  line-height: 1;
+}
+
+.alert-info {
+  background-color: #333;
+  border-color: #444;
+  color: #ccc;
+}
+
+h2 {
+  font-size: 1.8rem;
+  color: #f5f5f5;
+}
