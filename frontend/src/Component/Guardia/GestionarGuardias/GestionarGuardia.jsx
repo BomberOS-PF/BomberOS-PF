@@ -6,6 +6,8 @@ import esLocale from '@fullcalendar/core/locales/es'
 import Select from 'react-select'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
+
+
 const diasSemana = [
   { label: 'Lunes', value: 0 },
   { label: 'Martes', value: 1 },
@@ -61,6 +63,16 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   // tooltips y calendario
   const tooltipsRef = useRef({})
   const calendarRef = useRef()
+
+  // Estados del modal deben ir acá
+  const [modalAbierto, setModalAbierto] = useState(false)
+  const [eventoSeleccionado, setEventoSeleccionado] = useState(null)
+
+  const [modalConfirmar, setModalConfirmar] = useState(false)
+  const [eventoPendiente, setEventoPendiente] = useState(null)
+
+  const [modalConfirmarGuardar, setModalConfirmarGuardar] = useState(false)
+
 
   // Actualiza tooltips cuando cambian eventos
   useEffect(() => {
@@ -182,6 +194,34 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     setBomberoSeleccionado(null)
     setMensaje('Guardia asignada correctamente')
   }
+
+  const eliminarBombero = (idEvento, nombreBombero) => {
+  setEventos((prev) => {
+    return prev
+      .map((ev) => {
+        if (ev.id === idEvento) {
+          const bomberosActualizados = ev.extendedProps.bomberos.filter(b => b.nombre !== nombreBombero)
+          
+          // Si ya no quedan bomberos, se elimina el evento
+          if (bomberosActualizados.length === 0) return null
+
+          return {
+            ...ev,
+            extendedProps: { bomberos: bomberosActualizados }
+          }
+        }
+        return ev
+      })
+      .filter(Boolean)
+  })
+
+  // Si ya no quedan bomberos, cerrar modal
+  const evento = eventos.find(ev => ev.id === idEvento)
+  if (evento && evento.extendedProps.bomberos.length <= 1) {
+    setModalAbierto(false)
+  }
+}
+
 
   if (!idGrupo) {
     return <div className="alert alert-danger">No se encontró el grupo.</div>
@@ -389,8 +429,149 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                 info.el.style.backgroundColor = '#f08080' // Vuelve a claro
                 tooltip.style.display = 'none'
               })
+
+
             }}
+
+            eventClick={(info) => {
+  info.jsEvent.preventDefault()
+
+  // Ocultar tooltip si estaba abierto
+  const tooltip = tooltipsRef.current[info.event.id]
+  if (tooltip) tooltip.style.display = 'none'
+
+  // Guardamos el evento y abrimos el modal de confirmación
+  setEventoPendiente(info.event)
+  setModalConfirmar(true)
+}}
+
+
           />
+
+          {modalConfirmar && eventoPendiente && (
+  <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+    <div className="modal-dialog">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title text-black">Confirmar acción</h5>
+          <button type="button" className="btn-close" onClick={() => setModalConfirmar(false)}></button>
+        </div>
+        <div className="modal-body">
+          <p>¿Desea modificar la guardia seleccionada?</p>
+        </div>
+        <div className="modal-footer">
+          <button
+            className="btn btn-danger"
+            onClick={() => {
+              setEventoSeleccionado(eventoPendiente)
+              setModalConfirmar(false)
+              setModalAbierto(true)
+            }}
+          >
+            Aceptar
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setModalConfirmar(false)}
+          >
+            Cancelar
+          </button>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+          {modalAbierto && eventoSeleccionado && (
+  <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+    <div className="modal-dialog modal-lg">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title text-black">Modificar guardia</h5>
+          <button type="button" className="btn-close" onClick={() => setModalAbierto(false)}></button>
+        </div>
+        <div className="modal-body">
+          <p><strong>Fecha:</strong> {new Date(eventoSeleccionado.start).toLocaleDateString()}</p>
+          <table className="table table-bordered">
+            <thead>
+              <tr>
+                <th>Bombero</th>
+                <th>Horario</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {eventoSeleccionado.extendedProps.bomberos.map((b, idx) => (
+                <tr key={idx}>
+                  <td>{b.nombre}</td>
+                  <td>{b.desde} - {b.hasta}</td>
+                  <td>
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => eliminarBombero(eventoSeleccionado.id, b.nombre)}
+                    >
+                      ❌
+                    </button>
+                    {/* Aquí podemos luego agregar botón editar */}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="modal-footer">
+  <button className="btn btn-danger" onClick={() => setModalConfirmarGuardar(true)}>Guardar cambios</button>
+  <button className="btn btn-secondary" onClick={() => setModalAbierto(false)}>Cerrar</button>
+  
+</div>
+
+      </div>
+    </div>
+  </div>
+          )}
+
+          {modalConfirmarGuardar && eventoSeleccionado && (
+  <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+    <div className="modal-dialog">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title text-black">Confirmar guardado</h5>
+          <button type="button" className="btn-close" onClick={() => setModalConfirmarGuardar(false)}></button>
+        </div>
+        <div className="modal-body">
+          <p>¿Desea guardar los cambios realizados en esta guardia?</p>
+        </div>
+        <div className="modal-footer">
+          
+          <button
+            className="btn btn-danger"
+            onClick={() => {
+              // 🔹 Aquí se confirman los cambios
+              setModalConfirmarGuardar(false)
+              setModalAbierto(false)
+
+              // Ejemplo de lógica si tuviéramos cambios temporales:
+              // setEventos((prev) => prev.map((ev) => ev.id === eventoSeleccionado.id ? eventoSeleccionado : ev))
+
+              alert('✅ Cambios guardados correctamente')
+            }}
+          >
+            Guardar
+          </button>
+
+          <button
+            className="btn btn-secondary"
+            onClick={() => setModalConfirmarGuardar(false)}
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
         </div>
       </div>
     </div>
