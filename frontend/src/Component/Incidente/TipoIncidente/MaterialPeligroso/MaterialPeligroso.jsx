@@ -19,6 +19,7 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
   const [categorias, setCategorias] = useState([])  // <-- Agregar esta línea
   const [tiposMateriales, setTiposMateriales] = useState([])
   const [accionesMaterial, setAccionesMaterial] = useState([])
+  const [accionesPersona, setAccionesPersona] = useState([])
 
 
   // Mostrar datos básicos del incidente
@@ -46,6 +47,19 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
       }
     }
     fetchCategorias()
+  }, [])
+
+  useEffect(() => {
+    const fetchAccionesPersona = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/api/acciones-persona')
+        const data = await res.json()
+        if (data.success) setAccionesPersona(data.data)
+      } catch (error) {
+        console.error('❌ Error al traer acciones sobre personas:', error)
+      }
+    }
+    fetchAccionesPersona()
   }, [])
 
   useEffect(() => {
@@ -280,16 +294,18 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
           {/* Acciones sobre personas */}
           <fieldset className="mb-3">
             <legend className="text-black fs-6">Acciones sobre las personas</legend>
-            {["Evacuación", "Descontaminación", "Confinamiento"].map((accion, index) => (
-              <div className="form-check" key={index}>
+            {accionesPersona.map(accion => (
+              <div className="form-check" key={accion.idAccionPersona}>
                 <input
                   className="form-check-input"
                   type="checkbox"
-                  id={`personaAccion${index}`}
-                  checked={formData[`personaAccion${index}`] || false}
+                  id={`personaAccion${accion.idAccionPersona}`}
+                  checked={formData[`personaAccion${accion.idAccionPersona}`] || false}
                   onChange={handleChange}
                 />
-                <label className="text-black form-check-label" htmlFor={`personaAccion${index}`}>{accion}</label>
+                <label className="text-black form-check-label" htmlFor={`personaAccion${accion.idAccionPersona}`}>
+                  {accion.nombre}
+                </label>
               </div>
             ))}
             <div className="form-check mt-2">

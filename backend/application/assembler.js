@@ -62,6 +62,9 @@
   import { AccionMaterialHandler } from '../accionMaterial/handler.js'
   import { AccionMaterialService } from '../internal/services/accionMaterial.service.js'
   import { MySQLAccionMaterialRepository } from '../internal/repositories/mysql/accionMaterial.repository.js'
+  import { AccionPersonaHandler } from '../accionPersona/handler.js'
+  import { AccionPersonaService } from '../internal/services/accionPersona.service.js'
+  import { MySQLAccionPersonaRepository } from '../internal/repositories/mysql/accionPersona.repository.js'
   
 
   import { MySQLRangoRepository } from '../internal/repositories/mysql/rango.repository.js'
@@ -124,6 +127,7 @@
       const categoriaMaterialPeligrosoRepository = new MySQLCategoriaMaterialPeligrosoRepository()
       const tipoMatInvolucradoRepository = new MySQLTipoMatInvolucradoRepository()
       const accionMaterialRepository = new MySQLAccionMaterialRepository()
+      const accionPersonaRepository = new MySQLAccionPersonaRepository()
 
       // Servicios
       const whatsappService = new WhatsAppService(config)
@@ -162,6 +166,7 @@
       const categoriaMaterialPeligrosoService = new CategoriaMatPelService(categoriaMaterialPeligrosoRepository)
       const tipoMatInvolucradoService = new TipoMatInvolucradoService(tipoMatInvolucradoRepository)
       const accionMaterialService = new AccionMaterialService(accionMaterialRepository)
+      const accionPersonaService = new AccionPersonaService(accionPersonaRepository)
 
 
       // Handlers
@@ -190,6 +195,7 @@
       const categoriaMaterialPeligrosoHandler = new CategoriaMaterialPeligrosoHandler(categoriaMaterialPeligrosoService)
       const tipoMatInvolucradoHandler = new TipoMatInvolucradoHandler(tipoMatInvolucradoService)
       const accionMaterialHandler = new AccionMaterialHandler(accionMaterialService)
+      const accionPersonaHandler = new AccionPersonaHandler(accionPersonaService)
 
       // Contenedor
       const container = {
@@ -259,7 +265,10 @@
         categoriaMaterialPeligrosoHandler,
         accionMaterialHandler,
         accionMaterialRepository,
-        accionMaterialService
+        accionMaterialService,
+        accionPersonaRepository,
+        accionPersonaService,
+        accionPersonaHandler
       }
 
       await validateDependencies(container)
@@ -280,7 +289,8 @@
           'materialPeligrosoService',
           'categoriaMaterialPeligrosoService',
           'tipoMatInvolucradoService',
-          'accionMaterialService'
+          'accionMaterialService',
+          'accionPersonaService'
         ],
         repositories: [
           'bomberoRepository',
@@ -297,7 +307,8 @@
           'materialPeligrosoRepository',
           'categoriaMaterialPeligrosoRepository',
           'tipoMatInvolucradoRepository',
-          'accionMaterialRepository'
+          'accionMaterialRepository',
+          'accionPersonaRepository'
         ],
         handlers: [
           'bomberoHandler',
@@ -313,7 +324,8 @@
           'materialPeligrosoHandler',
           'categoriaMaterialPeligrosoHandler',
           'tipoMatInvolucradoHandler',
-          'accionMaterialHandler'
+          'accionMaterialHandler',
+          'accionPersonaHandler'
         ],
         infrastructure: ['dbConnection']
       })
@@ -343,6 +355,10 @@
       if (!container.accionMaterialService) throw new Error('accionMaterialService no inicializado')
       if (!container.accionMaterialRepository) throw new Error('accionMaterialRepository no inicializado')
       if (!container.accionMaterialHandler) throw new Error('AccionMaterialHandlerno inicializado')
+
+      if (!container.accionPersonaService) throw new Error('accionPersonaService no inicializado')
+      if (!container.accionPersonaRepository) throw new Error('accionPersonaRepository no inicializado')
+      if (!container.accionPersonaHandler) throw new Error('accionPersonaHandler no inicializado')
 
       if (!container.tipoMatInvolucradoService) throw new Error('CategoriaMatPelService no inicializado')
       if (!container.tipoMatInvolucradoRepository) throw new Error('categoriaMaterialPeligrosoRepository no inicializado')

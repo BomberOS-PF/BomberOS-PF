@@ -21,8 +21,17 @@ export function setupRoutes(app, container) {
 
   app.get('/', (req, res) => res.redirect('/health'))
 
-  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, recuperarClaveHandler, validarTokenHandler, restablecerClaveHandler,incendioEstructuralHandler, forestalCatalogosHandler, tipoIncidenteHandler, localizacionHandler, causaProbableHandler, materialPeligrosoHandler,categoriaMaterialPeligrosoHandler,tipoMatInvolucradoHandler } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, recuperarClaveHandler, validarTokenHandler, restablecerClaveHandler,incendioEstructuralHandler, forestalCatalogosHandler, tipoIncidenteHandler, localizacionHandler, causaProbableHandler, materialPeligrosoHandler,categoriaMaterialPeligrosoHandler,tipoMatInvolucradoHandler, accionPersonaHadler } = container
 
+
+  //Acciones personas
+  app.get('/api/acciones-persona', async (req, res) => {
+    await container.accionPersonaHandler.listar(req, res)
+  })
+
+  app.get('/api/acciones-persona/:id', async (req, res) => {
+    await container.accionPersonaHandler.obtenerPorId(req, res)
+  })
 
   //Acciones materiales
   app.get('/api/acciones-material', async (req, res) => {
