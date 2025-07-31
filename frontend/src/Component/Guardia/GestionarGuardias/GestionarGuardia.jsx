@@ -6,8 +6,6 @@ import esLocale from '@fullcalendar/core/locales/es'
 import Select from 'react-select'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
-
-
 const diasSemana = [
   { label: 'Lunes', value: 0 },
   { label: 'Martes', value: 1 },
@@ -17,6 +15,16 @@ const diasSemana = [
   { label: 'Sábado', value: 5 },
   { label: 'Domingo', value: 6 }
 ]
+
+const horas = [...Array(24).keys()].map((h) => ({
+  label: h.toString().padStart(2, '0'),
+  value: h.toString().padStart(2, '0')
+}))
+
+const minutos = [...Array(60).keys()].map((m) => ({
+  label: m.toString().padStart(2, '0'),
+  value: m.toString().padStart(2, '0')
+}))
 
 const customStyles = {
   control: (base, state) => ({
@@ -60,21 +68,51 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   const [horaHasta, setHoraHasta] = useState('')
   const [mensaje, setMensaje] = useState('')
 
-  // tooltips y calendario
   const tooltipsRef = useRef({})
   const calendarRef = useRef()
 
-  // Estados del modal deben ir acá
+  // Estados modal
   const [modalAbierto, setModalAbierto] = useState(false)
-  const [eventoSeleccionado, setEventoSeleccionado] = useState(null)
-
   const [modalConfirmar, setModalConfirmar] = useState(false)
-  const [eventoPendiente, setEventoPendiente] = useState(null)
-
   const [modalConfirmarGuardar, setModalConfirmarGuardar] = useState(false)
+  const [eventoPendiente, setEventoPendiente] = useState(null)
+  const [eventoSeleccionado, setEventoSeleccionado] = useState(null)
+  const [bomberosEditados, setBomberosEditados] = useState([])
 
+  // 🔹 Fusionar bloques si se solapan o se tocan
+  const fusionarEventos = (listaEventos) => {
+    const ordenados = [...listaEventos].sort((a, b) => new Date(a.start) - new Date(b.start))
+    const fusionados = []
 
-  // Actualiza tooltips cuando cambian eventos
+    ordenados.forEach((ev) => {
+      if (fusionados.length === 0) {
+        fusionados.push(ev)
+      } else {
+        const ultimo = fusionados[fusionados.length - 1]
+        // 🔹 Se solapan o se tocan justo en el límite
+        if (new Date(ev.start) <= ultimo.end || new Date(ev.start).getTime() === ultimo.end.getTime()) {
+          ultimo.end = new Date(Math.max(ultimo.end, new Date(ev.end)))
+
+          // 🔹 Eliminar bomberos duplicados por nombre
+          const bomberosUnicos = [
+            ...ultimo.extendedProps.bomberos,
+            ...ev.extendedProps.bomberos
+          ].reduce((acc, b) => {
+            if (!acc.find((x) => x.nombre === b.nombre)) acc.push(b)
+            return acc
+          }, [])
+
+          ultimo.extendedProps.bomberos = bomberosUnicos
+        } else {
+          fusionados.push(ev)
+        }
+      }
+    })
+
+    return fusionados
+  }
+
+  // Actualiza tooltip
   useEffect(() => {
     eventos.forEach((ev) => {
       const tooltip = tooltipsRef.current[ev.id]
@@ -97,11 +135,9 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       return
     }
 
-    // Semana visible en el calendario
     const calendarApi = calendarRef.current?.getApi()
     const lunesSemana = new Date(calendarApi.view.activeStart)
 
-    // Día seleccionado en base a la vista activa
     const fechaObjetivo = new Date(lunesSemana)
     fechaObjetivo.setDate(lunesSemana.getDate() + diaSeleccionado.value)
 
@@ -131,11 +167,11 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       eventosActualizados = eventosActualizados.map((ev) => {
         const inicioEv = new Date(ev.start)
         const finEv = new Date(ev.end)
-        const solapan = nuevoInicioDate <= finEv && nuevoFinDate >= inicioEv
+        const seSolapanOTocan =
+          nuevoInicioDate <= finEv || nuevoInicioDate.getTime() === finEv.getTime()
 
-        if (solapan) {
+        if (seSolapanOTocan) {
           fusionado = true
-
           const nuevoStart = nuevoInicioDate < inicioEv ? nuevoInicioDate : inicioEv
           const nuevoEnd = nuevoFinDate > finEv ? nuevoFinDate : finEv
 
@@ -143,7 +179,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
           const yaExiste = bomberosActualizados.some(
             (b) => b.nombre === bomberoSeleccionado.label
           )
-
           if (!yaExiste) {
             bomberosActualizados.push({
               nombre: bomberoSeleccionado.label,
@@ -169,7 +204,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
           title: '',
           start: nuevoInicioDate,
           end: nuevoFinDate,
-          backgroundColor: '#f08080', // 🔹 Rojo claro por defecto
+          backgroundColor: '#f08080',
           borderColor: '#b30000',
           textColor: 'transparent',
           allDay: false,
@@ -185,7 +220,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
         })
       }
 
-      return [...eventosActualizados]
+      return fusionarEventos(eventosActualizados)
     })
 
     setHoraDesde('')
@@ -194,34 +229,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     setBomberoSeleccionado(null)
     setMensaje('Guardia asignada correctamente')
   }
-
-  const eliminarBombero = (idEvento, nombreBombero) => {
-  setEventos((prev) => {
-    return prev
-      .map((ev) => {
-        if (ev.id === idEvento) {
-          const bomberosActualizados = ev.extendedProps.bomberos.filter(b => b.nombre !== nombreBombero)
-          
-          // Si ya no quedan bomberos, se elimina el evento
-          if (bomberosActualizados.length === 0) return null
-
-          return {
-            ...ev,
-            extendedProps: { bomberos: bomberosActualizados }
-          }
-        }
-        return ev
-      })
-      .filter(Boolean)
-  })
-
-  // Si ya no quedan bomberos, cerrar modal
-  const evento = eventos.find(ev => ev.id === idEvento)
-  if (evento && evento.extendedProps.bomberos.length <= 1) {
-    setModalAbierto(false)
-  }
-}
-
 
   if (!idGrupo) {
     return <div className="alert alert-danger">No se encontró el grupo.</div>
@@ -248,6 +255,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       )}
 
       <div className="row">
+        {/* === Columna izquierda === */}
         <div className="col-md-4 mb-3">
           <h4 className="text-black">Bomberos del grupo</h4>
 
@@ -274,10 +282,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             <label className="mt-2">Desde:</label>
             <div className="d-flex gap-2">
               <Select
-                options={[...Array(24).keys()].map((h) => ({
-                  label: h.toString().padStart(2, '0'),
-                  value: h.toString().padStart(2, '0')
-                }))}
+                options={horas}
                 value={
                   horaDesde
                     ? {
@@ -296,10 +301,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
               />
 
               <Select
-                options={[...Array(60).keys()].map((m) => ({
-                  label: m.toString().padStart(2, '0'),
-                  value: m.toString().padStart(2, '0')
-                }))}
+                options={minutos}
                 value={
                   horaDesde
                     ? {
@@ -322,10 +324,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             <label className="mt-2">Hasta:</label>
             <div className="d-flex gap-2">
               <Select
-                options={[...Array(24).keys()].map((h) => ({
-                  label: h.toString().padStart(2, '0'),
-                  value: h.toString().padStart(2, '0')
-                }))}
+                options={horas}
                 value={
                   horaHasta
                     ? {
@@ -344,10 +343,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
               />
 
               <Select
-                options={[...Array(60).keys()].map((m) => ({
-                  label: m.toString().padStart(2, '0'),
-                  value: m.toString().padStart(2, '0')
-                }))}
+                options={minutos}
                 value={
                   horaHasta
                     ? {
@@ -376,6 +372,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
           </div>
         </div>
 
+        {/* === Columna derecha Calendario + Modales === */}
         <div className="col-md-8">
           <FullCalendar
             ref={calendarRef}
@@ -398,12 +395,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             }}
             eventContent={() => ({ domNodes: [] })}
             eventDidMount={(info) => {
-              // Estilos dinámicos del bloque (eventos)
-              info.el.style.backgroundColor = '#f08080' // Rojo claro
+              info.el.style.backgroundColor = '#f08080'
               info.el.style.border = '1px solid #b30000'
               info.el.style.transition = 'background-color 0.2s ease'
 
-              // Tooltip flotante
               const tooltip = document.createElement('div')
               tooltip.className = 'tooltip-dinamico'
               tooltip.innerText = info.event.extendedProps.bomberos
@@ -412,9 +407,8 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
               document.body.appendChild(tooltip)
               tooltipsRef.current[info.event.id] = tooltip
 
-              // Eventos de hover: color + tooltip
               info.el.addEventListener('mouseenter', (e) => {
-                info.el.style.backgroundColor = '#d52b1e' // Rojo oscuro al hover
+                info.el.style.backgroundColor = '#d52b1e'
                 tooltip.style.display = 'block'
                 tooltip.style.left = `${e.pageX + 10}px`
                 tooltip.style.top = `${e.pageY - 20}px`
@@ -426,151 +420,229 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
               })
 
               info.el.addEventListener('mouseleave', () => {
-                info.el.style.backgroundColor = '#f08080' // Vuelve a claro
+                info.el.style.backgroundColor = '#f08080'
                 tooltip.style.display = 'none'
               })
-
-
             }}
-
             eventClick={(info) => {
-  info.jsEvent.preventDefault()
-
-  // Ocultar tooltip si estaba abierto
-  const tooltip = tooltipsRef.current[info.event.id]
-  if (tooltip) tooltip.style.display = 'none'
-
-  // Guardamos el evento y abrimos el modal de confirmación
-  setEventoPendiente(info.event)
-  setModalConfirmar(true)
-}}
-
-
+              info.jsEvent.preventDefault()
+              const tooltip = tooltipsRef.current[info.event.id]
+              if (tooltip) tooltip.style.display = 'none'
+              setEventoPendiente(info.event)
+              setModalConfirmar(true)
+            }}
           />
 
+          {/* === Modal Confirmar === */}
           {modalConfirmar && eventoPendiente && (
-  <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-    <div className="modal-dialog">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h5 className="modal-title text-black">Confirmar acción</h5>
-          <button type="button" className="btn-close" onClick={() => setModalConfirmar(false)}></button>
-        </div>
-        <div className="modal-body">
-          <p>¿Desea modificar la guardia seleccionada?</p>
-        </div>
-        <div className="modal-footer">
-          <button
-            className="btn btn-danger"
-            onClick={() => {
-              setEventoSeleccionado(eventoPendiente)
-              setModalConfirmar(false)
-              setModalAbierto(true)
-            }}
-          >
-            Aceptar
-          </button>
-          <button
-            className="btn btn-secondary"
-            onClick={() => setModalConfirmar(false)}
-          >
-            Cancelar
-          </button>
-          
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-
-          {modalAbierto && eventoSeleccionado && (
-  <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-    <div className="modal-dialog modal-lg">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h5 className="modal-title text-black">Modificar guardia</h5>
-          <button type="button" className="btn-close" onClick={() => setModalAbierto(false)}></button>
-        </div>
-        <div className="modal-body">
-          <p><strong>Fecha:</strong> {new Date(eventoSeleccionado.start).toLocaleDateString()}</p>
-          <table className="table table-bordered">
-            <thead>
-              <tr>
-                <th>Bombero</th>
-                <th>Horario</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {eventoSeleccionado.extendedProps.bomberos.map((b, idx) => (
-                <tr key={idx}>
-                  <td>{b.nombre}</td>
-                  <td>{b.desde} - {b.hasta}</td>
-                  <td>
+            <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+              <div className="modal-dialog">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title text-black">Confirmar acción</h5>
+                    <button type="button" className="btn-close" onClick={() => setModalConfirmar(false)}></button>
+                  </div>
+                  <div className="modal-body">
+                    <p>¿Desea modificar la guardia seleccionada?</p>
+                  </div>
+                  <div className="modal-footer">
                     <button
-                      className="btn btn-sm btn-danger"
-                      onClick={() => eliminarBombero(eventoSeleccionado.id, b.nombre)}
+                      className="btn btn-danger"
+                      onClick={() => {
+                        setEventoSeleccionado(eventoPendiente)
+                        setBomberosEditados([...eventoPendiente.extendedProps.bomberos])
+                        setModalConfirmar(false)
+                        setModalAbierto(true)
+                      }}
                     >
-                      ❌
+                      Aceptar
                     </button>
-                    {/* Aquí podemos luego agregar botón editar */}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="modal-footer">
-  <button className="btn btn-danger" onClick={() => setModalConfirmarGuardar(true)}>Guardar cambios</button>
-  <button className="btn btn-secondary" onClick={() => setModalAbierto(false)}>Cerrar</button>
-  
-</div>
-
-      </div>
-    </div>
-  </div>
+                    <button className="btn btn-secondary" onClick={() => setModalConfirmar(false)}>Cancelar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
+          {/* === Modal Edición === */}
+          {modalAbierto && eventoSeleccionado && (
+            <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+              <div className="modal-dialog modal-lg">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title text-black">Modificar guardia</h5>
+                    <button type="button" className="btn-close" onClick={() => setModalAbierto(false)}></button>
+                  </div>
+                  <div className="modal-body">
+                    <p><strong>Fecha:</strong> {new Date(eventoSeleccionado.start).toLocaleDateString()}</p>
+                    <table className="table table-bordered">
+                      <thead>
+                        <tr>
+                          <th>Bombero</th>
+                          <th>Hora desde</th>
+                          <th>Hora hasta</th>
+                          <th>Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bomberosEditados.map((b, idx) => (
+                          <tr key={idx}>
+                            <td>{b.nombre}</td>
+                            <td>
+                              <div className="d-flex gap-2">
+                                <Select
+                                  options={horas}
+                                  value={{
+                                    label: b.desde.split(':')[0],
+                                    value: b.desde.split(':')[0]
+                                  }}
+                                  onChange={(selected) => {
+                                    const nuevo = [...bomberosEditados]
+                                    nuevo[idx].desde = `${selected.value}:${b.desde.split(':')[1]}`
+                                    setBomberosEditados(nuevo)
+                                  }}
+                                  styles={customStyles}
+                                  placeholder="HH"
+                                />
+                                <Select
+                                  options={minutos}
+                                  value={{
+                                    label: b.desde.split(':')[1],
+                                    value: b.desde.split(':')[1]
+                                  }}
+                                  onChange={(selected) => {
+                                    const nuevo = [...bomberosEditados]
+                                    nuevo[idx].desde = `${b.desde.split(':')[0]}:${selected.value}`
+                                    setBomberosEditados(nuevo)
+                                  }}
+                                  styles={customStyles}
+                                  placeholder="MM"
+                                />
+                              </div>
+                            </td>
+                            <td>
+                              <div className="d-flex gap-2">
+                                <Select
+                                  options={horas}
+                                  value={{
+                                    label: b.hasta.split(':')[0],
+                                    value: b.hasta.split(':')[0]
+                                  }}
+                                  onChange={(selected) => {
+                                    const nuevo = [...bomberosEditados]
+                                    nuevo[idx].hasta = `${selected.value}:${b.hasta.split(':')[1]}`
+                                    setBomberosEditados(nuevo)
+                                  }}
+                                  styles={customStyles}
+                                  placeholder="HH"
+                                />
+                                <Select
+                                  options={minutos}
+                                  value={{
+                                    label: b.hasta.split(':')[1],
+                                    value: b.hasta.split(':')[1]
+                                  }}
+                                  onChange={(selected) => {
+                                    const nuevo = [...bomberosEditados]
+                                    nuevo[idx].hasta = `${b.hasta.split(':')[0]}:${selected.value}`
+                                    setBomberosEditados(nuevo)
+                                  }}
+                                  styles={customStyles}
+                                  placeholder="MM"
+                                />
+                              </div>
+                            </td>
+                            <td>
+                              <button
+                                className="btn btn-sm btn-danger"
+                                onClick={() => setBomberosEditados(prev => prev.filter((_, i) => i !== idx))}
+                              >
+                                ❌
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="modal-footer">
+                    <button className="btn btn-danger" onClick={() => setModalConfirmarGuardar(true)}>Guardar cambios</button>
+                    <button className="btn btn-secondary" onClick={() => setModalAbierto(false)}>Cerrar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* === Modal Confirmar Guardado === */}
           {modalConfirmarGuardar && eventoSeleccionado && (
-  <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-    <div className="modal-dialog">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h5 className="modal-title text-black">Confirmar guardado</h5>
-          <button type="button" className="btn-close" onClick={() => setModalConfirmarGuardar(false)}></button>
-        </div>
-        <div className="modal-body">
-          <p>¿Desea guardar los cambios realizados en esta guardia?</p>
-        </div>
-        <div className="modal-footer">
-          
-          <button
-            className="btn btn-danger"
-            onClick={() => {
-              // 🔹 Aquí se confirman los cambios
-              setModalConfirmarGuardar(false)
-              setModalAbierto(false)
+            <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+              <div className="modal-dialog">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title text-black">Confirmar guardado</h5>
+                    <button type="button" className="btn-close" onClick={() => setModalConfirmarGuardar(false)}></button>
+                  </div>
+                  <div className="modal-body">
+                    <p>¿Desea guardar los cambios realizados en esta guardia?</p>
+                  </div>
+                  <div className="modal-footer">
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => {
+                        const nuevasHoras = bomberosEditados.map((b) => ({
+                          inicio: b.desde,
+                          fin: b.hasta
+                        }))
 
-              // Ejemplo de lógica si tuviéramos cambios temporales:
-              // setEventos((prev) => prev.map((ev) => ev.id === eventoSeleccionado.id ? eventoSeleccionado : ev))
+                        const nuevoInicio = nuevasHoras.reduce(
+                          (min, b) => (b.inicio < min ? b.inicio : min),
+                          nuevasHoras[0].inicio
+                        )
+                        const nuevoFin = nuevasHoras.reduce(
+                          (max, b) => (b.fin > max ? b.fin : max),
+                          nuevasHoras[0].fin
+                        )
 
-              alert('✅ Cambios guardados correctamente')
-            }}
-          >
-            Guardar
-          </button>
+                        setEventos((prev) => {
+                          const actualizados = prev.map((ev) =>
+                            ev.id === eventoSeleccionado.id
+                              ? {
+                                  ...ev,
+                                  start: new Date(
+                                    ev.start.getFullYear(),
+                                    ev.start.getMonth(),
+                                    ev.start.getDate(),
+                                    parseInt(nuevoInicio.split(':')[0]),
+                                    parseInt(nuevoInicio.split(':')[1])
+                                  ),
+                                  end: new Date(
+                                    ev.start.getFullYear(),
+                                    ev.start.getMonth(),
+                                    ev.start.getDate(),
+                                    parseInt(nuevoFin.split(':')[0]),
+                                    parseInt(nuevoFin.split(':')[1])
+                                  ),
+                                  extendedProps: { bomberos: bomberosEditados }
+                                }
+                              : ev
+                          )
+                          return fusionarEventos(actualizados)
+                        })
 
-          <button
-            className="btn btn-secondary"
-            onClick={() => setModalConfirmarGuardar(false)}
-          >
-            Cancelar
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
+                        setModalConfirmarGuardar(false)
+                        setModalAbierto(false)
+                        alert('✅ Cambios guardados correctamente')
+                      }}
+                    >
+                      Guardar
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => setModalConfirmarGuardar(false)}>Cancelar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
       </div>
