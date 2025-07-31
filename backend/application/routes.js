@@ -555,6 +555,10 @@ export function setupRoutes(app, container) {
   })
 
     // ===================== MATERIALES PELIGROSOS =====================
+    app.post('/api/materiales-peligrosos', async (req, res) => {
+  await container.materialPeligrosoHandler.registrar(req, res)
+})
+
   app.post('/api/materiales-peligrosos', async (req, res) => {
     try {
       await materialPeligrosoHandler.registrar(req, res)

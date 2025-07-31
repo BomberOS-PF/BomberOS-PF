@@ -48,6 +48,31 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
     }
     fetchCategorias()
   }, [])
+  useEffect(() => {
+  const fetchCatalogos = async () => {
+    try {
+      const [catRes, tipoRes, accMatRes, accPerRes] = await Promise.all([
+        fetch('http://localhost:3000/api/categorias-material-peligroso'),
+        fetch('http://localhost:3000/api/tipos-material'),
+        fetch('http://localhost:3000/api/acciones-material'),
+        fetch('http://localhost:3000/api/acciones-persona')
+      ])
+
+      const [catData, tipoData, accMatData, accPerData] = await Promise.all([
+        catRes.json(), tipoRes.json(), accMatRes.json(), accPerRes.json()
+      ])
+
+      setCategorias(catData.data)
+      setTiposMaterial(tipoData.data)
+      setAccionesMaterial(accMatData.data)
+      setAccionesPersona(accPerData.data)
+    } catch (error) {
+      console.error('❌ Error al cargar catálogos:', error)
+    }
+  }
+  fetchCatalogos()
+}, [])
+
 
   useEffect(() => {
     const fetchAccionesPersona = async () => {
@@ -159,7 +184,7 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
       const dto = buildDto()
       console.log('📤 Enviando DTO:', dto)
 
-      const res = await fetch('http://localhost:3000/api/material-peligroso', {
+      const res = await fetch('http://localhost:3000/api/materiales-peligrosos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dto)

@@ -30,7 +30,26 @@ export class MaterialPeligrosoService {
       }
       if (matPel.damnificados?.length) {
         await this.damnificadoRepository.asociarDamnificados(idMatPel, matPel.damnificados)
-}
+      }
+      // Guardar relaciones
+      if (matPel.tiposMateriales?.length) {
+        await this.tipoMatInvolucradoRepository.asociarTipos(idMatPel, matPel.tiposMateriales)
+      }
+      if (matPel.accionesMaterial?.length) {
+        await this.accionMaterialRepository.asociarAcciones(idMatPel, matPel.accionesMaterial)
+      }
+      if (matPel.accionesPersona?.length) {
+        await this.accionPersonaRepository.asociarAcciones(idMatPel, matPel.accionesPersona)
+      }
+      if (matPel.tiposMateriales?.length) {
+        await this.tipoMatInvolucradoRepository.asociarTipos(idMatPel, matPel.tiposMateriales)
+      }
+      if (matPel.accionesMaterial?.length) {
+        await this.accionMaterialRepository.asociarAcciones(idMatPel, matPel.accionesMaterial)
+      }
+      if (matPel.accionesPersona?.length) {
+        await this.accionPersonaRepository.asociarAcciones(idMatPel, matPel.accionesPersona)
+      }
 
       return idMatPel
     } catch (error) {

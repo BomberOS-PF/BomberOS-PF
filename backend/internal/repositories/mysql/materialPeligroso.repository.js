@@ -2,6 +2,10 @@ import { getConnection } from '../../platform/database/connection.js'
 import { logger } from '../../platform/logger/logger.js'
 
 export class MySQLMaterialPeligrosoRepository {
+  constructor(){
+    this.damnificadoTable = 'damnificado'
+  }
+
   /**
    * Guarda un registro de material peligroso
    */
