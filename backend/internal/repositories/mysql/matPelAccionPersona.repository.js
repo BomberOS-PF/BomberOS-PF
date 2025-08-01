@@ -5,19 +5,19 @@ export class MySQLMatPelAccionPersonaRepository {
   /**
    * Inserta las relaciones entre MaterialPeligroso y Acciones sobre Personas
    */
-  async asociarAcciones(idMaterialPeligroso, accionesIds = []) {
+  async asociarAcciones(idMatPel, accionesIds = []) {
     if (!accionesIds.length) return
 
     const connection = await getConnection()
-    const values = accionesIds.map(idAccion => [idMaterialPeligroso, idAccion])
+    const values = accionesIds.map(idAccion => [idMatPel, idAccion])
 
     try {
       await connection.query(
-        'INSERT INTO matPelAccionPersona (idMaterialPeligroso, idAccionPersona) VALUES ?',
+        'INSERT INTO matPelAccionPersona (idMatPel, idAccionPersona) VALUES ?',
         [values]
       )
       logger.debug('✅ Asociadas acciones sobre personas:', {
-        idMaterialPeligroso,
+        idMatPel,
         accionesIds
       })
     } catch (error) {
@@ -29,15 +29,16 @@ export class MySQLMatPelAccionPersonaRepository {
   /**
    * Obtiene las acciones asociadas a un material peligroso
    */
-  async obtenerPorMaterialPeligroso(idMaterialPeligroso) {
+  async obtenerPorMaterialPeligroso(idMatPel) {
     const connection = await getConnection()
     try {
       const [rows] = await connection.execute(
         `SELECT a.idAccionPersona, a.nombre
          FROM accionPersona a
-         INNER JOIN matPelAccionPersona mpap ON mpap.idAccionPersona = a.idAccionPersona
-         WHERE mpap.idMaterialPeligroso = ?`,
-        [idMaterialPeligroso]
+         INNER JOIN matPelAccionPersona mpap 
+           ON mpap.idAccionPersona = a.idAccionPersona
+         WHERE mpap.idMatPel = ?`,
+        [idMatPel]
       )
       return rows
     } catch (error) {
@@ -49,14 +50,14 @@ export class MySQLMatPelAccionPersonaRepository {
   /**
    * Elimina todas las relaciones de un material peligroso
    */
-  async eliminarPorMaterialPeligroso(idMaterialPeligroso) {
+  async eliminarPorMaterialPeligroso(idMatPel) {
     const connection = await getConnection()
     try {
       await connection.execute(
-        'DELETE FROM matPelAccionPersona WHERE idMaterialPeligroso = ?',
-        [idMaterialPeligroso]
+        'DELETE FROM matPelAccionPersona WHERE idMatPel = ?',
+        [idMatPel]
       )
-      logger.debug('🗑️ Eliminadas relaciones de acciones sobre personas', { idMaterialPeligroso })
+      logger.debug('🗑️ Eliminadas relaciones de acciones sobre personas', { idMatPel })
     } catch (error) {
       logger.error('❌ Error al eliminar acciones sobre personas:', error)
       throw error

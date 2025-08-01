@@ -28,4 +28,14 @@ export class MySQLAccionPersonaRepository {
       throw error
     }
   }
+  async asociarAcciones(idMatPel, acciones) {
+    const connection = await getConnection()
+    for (const accionId of acciones) {
+      await connection.execute(
+        `INSERT INTO matPelAccionPersona (idMatPel, idAccionPersona)
+         VALUES (?, ?)`,
+        [idMatPel, accionId]
+      )
+    }
+  }
 }

@@ -2,9 +2,8 @@ import { logger } from '../internal/platform/logger/logger.js'
 import { crearMaterialPeligrosoDto } from './dto/create-materialPeligroso.dto.js'
 
 export class MaterialPeligrosoHandler {
-  constructor(materialPeligrosoService, damnificadoService) {
+  constructor(materialPeligrosoService) {
     this.materialPeligrosoService = materialPeligrosoService
-    this.damnificadoService = damnificadoService
   }
 
   /**
@@ -15,18 +14,8 @@ export class MaterialPeligrosoHandler {
       // Validamos la data con el DTO
       const dto = crearMaterialPeligrosoDto(req.body)
 
-      // Guardar material peligroso y sus relaciones
+      // Guardar material peligroso y sus relaciones (incluye damnificados)
       const idMatPel = await this.materialPeligrosoService.registrarMaterialPeligroso(dto)
-
-      // Guardar damnificados asociados
-      if (dto.damnificados?.length > 0) {
-        for (const d of dto.damnificados) {
-          await this.damnificadoService.insertarDamnificado({
-            ...d,
-            idIncidente: dto.idIncidente
-          })
-        }
-      }
 
       res.status(201).json({
         success: true,

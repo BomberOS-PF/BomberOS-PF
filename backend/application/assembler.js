@@ -166,12 +166,11 @@ export async function createServer(config) {
     const forestalCatalogosHandler = new ForestalCatalogosHandler(caracteristicasLugarService, areaAfectadaService);
 
     const tokenService = new TokenService(tokenRepository, usuarioRepository)
-    const materialPeligrosoService = new MaterialPeligrosoService(materialPeligrosoRepository,
+    const materialPeligrosoService = new MaterialPeligrosoService( materialPeligrosoRepository,
       matPelTipoMatPelRepository,
-      accionMaterialRepository,
-      accionPersonaRepository,
       matPelAccionMaterialRepository,
-      matPelAccionPersonaRepository)
+      matPelAccionPersonaRepository,
+      damnificadoRepository)        // ✅ damnificados)
     const incendioEstructuralService = new IncendioEstructuralService(
       incendioEstructuralRepository
     )
@@ -194,7 +193,7 @@ export async function createServer(config) {
     const tipoIncidenteHandler = new TipoIncidenteHandler(tipoIncidenteService)
     const localizacionHandler = new LocalizacionHandler(localizacionService)
     const causaProbableHandler = new CausaProbableHandler(causaProbableService)
-    const materialPeligrosoHandler = new MaterialPeligrosoHandler(materialPeligrosoService,damnificadoService)
+    const materialPeligrosoHandler = new MaterialPeligrosoHandler(materialPeligrosoService)
     const { recuperarClaveHandler, validarTokenHandler } =
       construirRecuperarClaveHandlers(tokenService)
     const { restablecerClaveHandler } = construirRestablecerClaveHandler(
@@ -209,56 +208,74 @@ export async function createServer(config) {
     const accionMaterialHandler = new AccionMaterialHandler(accionMaterialService)
     const accionPersonaHandler = new AccionPersonaHandler(accionPersonaService)
 
-    // Contenedor
     const container = {
-      tipoMatInvolucradoHandler,
-      tipoMatInvolucradoService,
-      tipoMatInvolucradoRepository,
-      bomberoService,
+      // Repositorios principales
       bomberoRepository,
-      bomberoHandler,
-      usuarioService,
       usuarioRepository,
-      usuarioHandler,
-      incidenteService,
       incidenteRepository,
-      incidenteHandler,
-      grupoGuardiaRepository,
-      grupoGuardiaService,
-      grupoGuardiaHandler,
       denuncianteRepository,
-      whatsappService,
-      rolService,
+      grupoGuardiaRepository,
       rolRepository,
-      rolesAdapter,
-      damnificadoService,
-      accidenteVehiculoService,
+      damnificadoRepository,
       accidenteTransitoRepository,
-      accidenteTransitoService,
-      accidenteTransitoHandler,
-      causaAccidenteHandler,
       causaAccidenteRepository,
-      causaAccidenteService,
       vehiculoRepository,
-      vehiculoService,
-      vehiculoHandler,
       accidenteDamnificadoRepository,
       accidenteVehiculoRepository,
-      rangoHandler,
       rangoRepository,
-      rangoService,
-      tipoIncidenteHandler,
       tipoIncidenteRepository,
-      tipoIncidenteService,
-      localizacionHandler,
       localizacionRepository,
-      localizacionService,
-      causaProbableHandler,
       causaProbableRepository,
+      materialPeligrosoRepository,
+      categoriaMaterialPeligrosoRepository,
+      tipoMatInvolucradoRepository,
+      accionMaterialRepository,
+      accionPersonaRepository,
+      matPelTipoMatPelRepository,
+      matPelAccionMaterialRepository,
+      matPelAccionPersonaRepository,
+
+      // Servicios
+      bomberoService,
+      usuarioService,
+      incidenteService,
+      grupoGuardiaService,
+      whatsappService,
+      rolService,
+      causaAccidenteService,
+      accidenteTransitoService,
+      vehiculoService,
+      damnificadoService,
+      accidenteVehiculoService,
+      rangoService,
+      localizacionService,
       causaProbableService,
-      recuperarClaveHandler,
-      validarTokenHandler,
-      restablecerClaveHandler,
+      materialPeligrosoService,
+      categoriaMaterialPeligrosoService,
+      tipoMatInvolucradoService,
+      accionMaterialService,
+      accionPersonaService,
+
+      // Handlers
+      bomberoHandler,
+      usuarioHandler,
+      incidenteHandler,
+      grupoGuardiaHandler,
+      rolesAdapter,
+      causaAccidenteHandler,
+      accidenteTransitoHandler,
+      vehiculoHandler,
+      rangoHandler,
+      tipoIncidenteHandler,
+      localizacionHandler,
+      causaProbableHandler,
+      materialPeligrosoHandler,
+      categoriaMaterialPeligrosoHandler,
+      tipoMatInvolucradoHandler,
+      accionMaterialHandler,
+      accionPersonaHandler,
+
+      // Infraestructura
       dbConnection,
       config,
       forestalCatalogosHandler,
@@ -269,21 +286,11 @@ export async function createServer(config) {
       incendioEstructuralRepository,
       incendioEstructuralService,
       incendioEstructuralHandler,
-      materialPeligrosoHandler,
-      materialPeligrosoService,
-      materialPeligrosoRepository,
-      categoriaMaterialPeligrosoRepository,
-      categoriaMaterialPeligrosoService,
-      categoriaMaterialPeligrosoHandler,
-      accionMaterialHandler,
-      accionMaterialRepository,
-      accionMaterialService,
-      accionPersonaRepository,
-      accionPersonaService,
-      accionPersonaHandler,
-      matPelTipoMatPelRepository,
-      matPelAccionMaterialRepository
+      recuperarClaveHandler,
+      validarTokenHandler,
+      restablecerClaveHandler
     }
+
 
     await validateDependencies(container)
 
@@ -383,6 +390,8 @@ async function validateDependencies(container) {
     if (!container.usuarioService) throw new Error('UsuarioService no inicializado')
     if (!container.usuarioRepository) throw new Error('UsuarioRepository no inicializado')
     if (!container.usuarioHandler) throw new Error('UsuarioHandler no inicializado')
+    if (!container.damnificadoRepository) throw new Error('DamnificadoRepository no inicializado')
+
 
     if (!container.incidenteService) throw new Error('IncidenteService no inicializado')
     if (!container.incidenteRepository) throw new Error('IncidenteRepository no inicializado')

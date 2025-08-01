@@ -120,15 +120,15 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
 
       tiposMateriales: Object.keys(formData)
         .filter((key) => key.startsWith('material') && formData[key] === true)
-        .map((key, i) => i + 1),
+        .map((key) => parseInt(key.replace('material', ''))),
 
       accionesMaterial: Object.keys(formData)
         .filter((key) => key.startsWith('accion') && formData[key] === true)
-        .map((key, i) => i + 1),
+        .map((key) => parseInt(key.replace('accion', ''))),
 
       accionesPersona: Object.keys(formData)
         .filter((key) => key.startsWith('personaAccion') && formData[key] === true)
-        .map((key, i) => i + 1),
+        .map((key) => parseInt(key.replace('personaAccion', ''))),
 
       damnificados: (formData.damnificados || []).map(d => ({
         nombre: d.nombre || null,

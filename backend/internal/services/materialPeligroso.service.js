@@ -3,24 +3,23 @@ import { logger } from '../platform/logger/logger.js'
 export class MaterialPeligrosoService {
   constructor(
     materialPeligrosoRepository,
-    tipoMatInvolucradoRepository,
-    accionMaterialRepository,
-    accionPersonaRepository,
+    matPelTipoMatPelRepository,
+    matPelAccionMaterialRepository,
+    matPelAccionPersonaRepository,
     damnificadoRepository
   ) {
     this.materialPeligrosoRepository = materialPeligrosoRepository
-    this.tipoMatInvolucradoRepository = tipoMatInvolucradoRepository
-    this.accionMaterialRepository = accionMaterialRepository
-    this.accionPersonaRepository = accionPersonaRepository
+    this.matPelTipoMatPelRepository = matPelTipoMatPelRepository
+    this.matPelAccionMaterialRepository = matPelAccionMaterialRepository
+    this.matPelAccionPersonaRepository = matPelAccionPersonaRepository
     this.damnificadoRepository = damnificadoRepository
   }
 
   async registrarMaterialPeligroso(matPel) {
     try {
-      // Limpiar valores undefined => null
       const limpio = {
         idIncidente: matPel.idIncidente,
-        idCategoria: matPel.idCategoria, // corregido
+        categoria: matPel.categoria,
         cantidadMateriales: matPel.cantidadMateriales ?? 0,
         otraAccionMaterial: matPel.otraAccionMaterial ?? null,
         otraAccionPersona: matPel.otraAccionPersona ?? null,
@@ -38,17 +37,17 @@ export class MaterialPeligrosoService {
 
       // Relación con tipos de materiales
       if (limpio.tiposMateriales.length) {
-        await this.tipoMatInvolucradoRepository.asociarTipos(idMatPel, limpio.tiposMateriales)
+        await this.matPelTipoMatPelRepository.asociarTipos(idMatPel, limpio.tiposMateriales)
       }
 
       // Relación con acciones sobre material
       if (limpio.accionesMaterial.length) {
-        await this.accionMaterialRepository.asociarAcciones(idMatPel, limpio.accionesMaterial)
+        await this.matPelAccionMaterialRepository.asociarAcciones(idMatPel, limpio.accionesMaterial)
       }
 
       // Relación con acciones sobre persona
       if (limpio.accionesPersona.length) {
-        await this.accionPersonaRepository.asociarAcciones(idMatPel, limpio.accionesPersona)
+        await this.matPelAccionPersonaRepository.asociarAcciones(idMatPel, limpio.accionesPersona)
       }
 
       // Damnificados vinculados al incidente

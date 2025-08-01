@@ -23,7 +23,8 @@ export class MySQLDamnificadoRepository {
       damnificado.fallecio === true ? 1 : 0
     ]
 
-    const connection = getConnection()
+    // 🔹 IMPORTANTE: await
+    const connection = await getConnection()
     try {
       const [result] = await connection.execute(query, params)
       logger.debug('🧍 Damnificado insertado', { idDamnificado: result.insertId })

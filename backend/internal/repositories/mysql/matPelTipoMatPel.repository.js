@@ -4,22 +4,22 @@ import { logger } from '../../platform/logger/logger.js'
 export class MySQLMatPelTipoMatPelRepository {
   /**
    * Inserta las relaciones entre MaterialPeligroso y Tipos de Materiales
-   * @param {number} idMaterialPeligroso 
+   * @param {number} idMatPel 
    * @param {number[]} tiposIds 
    */
-  async asociarTipos(idMaterialPeligroso, tiposIds = []) {
+  async asociarTipos(idMatPel, tiposIds = []) {
     if (!tiposIds.length) return
 
     const connection = await getConnection()
-    const values = tiposIds.map(idTipo => [idMaterialPeligroso, idTipo])
+    const values = tiposIds.map(idTipo => [idMatPel, idTipo])
 
     try {
       await connection.query(
-        'INSERT INTO matPelTipoMatPel (idMaterialPeligroso, idTipoMaterial) VALUES ?',
+        'INSERT INTO matPelTipoMatPel (idMatPel, idTipoMatInvolucrado) VALUES ?',
         [values]
       )
       logger.debug('✅ Asociados tipos de material:', {
-        idMaterialPeligroso,
+        idMatPel,
         tiposIds
       })
     } catch (error) {
@@ -31,15 +31,16 @@ export class MySQLMatPelTipoMatPelRepository {
   /**
    * Obtiene todos los tipos asociados a un material peligroso
    */
-  async obtenerPorMaterialPeligroso(idMaterialPeligroso) {
+  async obtenerPorMaterialPeligroso(idMatPel) {
     const connection = await getConnection()
     try {
       const [rows] = await connection.execute(
-        `SELECT t.idTipoMaterial, t.nombre 
+        `SELECT t.idTipoMatInvolucrado, t.nombre 
          FROM tipoMatInvolucrado t
-         INNER JOIN matPelTipoMatPel mtt ON mtt.idTipoMaterial = t.idTipoMaterial
-         WHERE mtt.idMaterialPeligroso = ?`,
-        [idMaterialPeligroso]
+         INNER JOIN matPelTipoMatPel mtt 
+           ON mtt.idTipoMatInvolucrado = t.idTipoMatInvolucrado
+         WHERE mtt.idMatPel = ?`,
+        [idMatPel]
       )
       return rows
     } catch (error) {
@@ -51,14 +52,14 @@ export class MySQLMatPelTipoMatPelRepository {
   /**
    * Elimina todas las relaciones de un material peligroso
    */
-  async eliminarPorMaterialPeligroso(idMaterialPeligroso) {
+  async eliminarPorMaterialPeligroso(idMatPel) {
     const connection = await getConnection()
     try {
       await connection.execute(
-        'DELETE FROM matPelTipoMatPel WHERE idMaterialPeligroso = ?',
-        [idMaterialPeligroso]
+        'DELETE FROM matPelTipoMatPel WHERE idMatPel = ?',
+        [idMatPel]
       )
-      logger.debug('🗑️ Eliminadas relaciones de tipos de material', { idMaterialPeligroso })
+      logger.debug('🗑️ Eliminadas relaciones de tipos de material', { idMatPel })
     } catch (error) {
       logger.error('❌ Error al eliminar tipos asociados al material peligroso:', error)
       throw error
