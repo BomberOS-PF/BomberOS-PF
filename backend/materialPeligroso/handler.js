@@ -2,60 +2,76 @@ import { logger } from '../internal/platform/logger/logger.js'
 import { crearMaterialPeligrosoDto } from './dto/create-materialPeligroso.dto.js'
 
 export class MaterialPeligrosoHandler {
-  constructor(materialPeligrosoService) {
+  constructor(materialPeligrosoService, damnificadoService) {
     this.materialPeligrosoService = materialPeligrosoService
+    this.damnificadoService = damnificadoService
   }
 
-  /** 
+  /**
    * POST /api/materiales-peligrosos
    */
   async registrar(req, res) {
     try {
-      const datos = crearMaterialPeligrosoDto(req.body)
-      const resultado = await this.materialPeligrosoService.registrarMaterialPeligroso(datos)
+      // Validamos la data con el DTO
+      const dto = crearMaterialPeligrosoDto(req.body)
+
+      // Guardar material peligroso y sus relaciones
+      const idMatPel = await this.materialPeligrosoService.registrarMaterialPeligroso(dto)
+
+      // Guardar damnificados asociados
+      if (dto.damnificados?.length > 0) {
+        for (const d of dto.damnificados) {
+          await this.damnificadoService.insertarDamnificado({
+            ...d,
+            idIncidente: dto.idIncidente
+          })
+        }
+      }
+
       res.status(201).json({
         success: true,
-        message: 'Material peligroso registrado correctamente',
-        data: resultado
+        message: '✅ Material peligroso registrado correctamente',
+        idMatPel
       })
     } catch (error) {
-      logger.error('❌ Error en MaterialPeligrosoHandler.registrar', { error: error.message })
+      logger.error('❌ Error en registrar material peligroso:', error)
       res.status(400).json({ success: false, message: error.message })
     }
   }
 
   /**
-   * GET /api/materiales-peligrosos/:id
+   * GET /api/materiales-peligrosos/:idIncidente
    */
   async obtenerPorIncidente(req, res) {
     try {
-      const id = parseInt(req.params.id)
-      if (isNaN(id)) {
+      const idIncidente = parseInt(req.params.idIncidente)
+      if (isNaN(idIncidente)) {
         return res.status(400).json({ success: false, message: 'ID inválido' })
       }
 
-      const data = await this.materialPeligrosoService.obtenerPorIncidente(id)
-      if (!data) {
-        return res.status(404).json({ success: false, message: 'No se encontró el registro' })
+      const material = await this.materialPeligrosoService.obtenerPorIncidente(idIncidente)
+
+      if (!material) {
+        return res.status(404).json({ success: false, message: 'No encontrado' })
       }
 
-      res.status(200).json({ success: true, data })
+      res.status(200).json({ success: true, data: material })
     } catch (error) {
-      logger.error('❌ Error en MaterialPeligrosoHandler.obtenerPorIncidente', { error: error.message })
-      res.status(500).json({ success: false, message: 'Error interno al consultar el material peligroso' })
+      logger.error('❌ Error al obtener material peligroso:', error)
+      res.status(500).json({ success: false, message: 'Error interno' })
     }
   }
 
   /**
    * GET /api/materiales-peligrosos
    */
-  async listarTodos(req, res) {
+  async listar(req, res) {
     try {
-      const lista = await this.materialPeligrosoService.obtenerTodos()
-      res.status(200).json({ success: true, data: lista })
+      const materiales = await this.materialPeligrosoService.obtenerTodos()
+      res.status(200).json({ success: true, data: materiales })
     } catch (error) {
-      logger.error('❌ Error al listar materiales peligrosos', { error: error.message })
-      res.status(500).json({ success: false, message: 'Error interno al listar materiales peligrosos' })
+      logger.error('❌ Error al listar materiales peligrosos:', error)
+      res.status(500).json({ success: false, message: 'Error interno' })
     }
   }
 }

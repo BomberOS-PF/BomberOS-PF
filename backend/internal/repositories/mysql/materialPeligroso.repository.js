@@ -2,7 +2,7 @@ import { getConnection } from '../../platform/database/connection.js'
 import { logger } from '../../platform/logger/logger.js'
 
 export class MySQLMaterialPeligrosoRepository {
-  constructor(){
+  constructor() {
     this.damnificadoTable = 'damnificado'
   }
 
@@ -14,18 +14,18 @@ export class MySQLMaterialPeligrosoRepository {
     try {
       const [result] = await connection.execute(
         `INSERT INTO materialPeligroso (
-          idIncidente, idCategoria, cantidadMateriales, otraAccionMaterial,
-          otraAccionPersona, detalleOtrasAccionesPersona, cantidadSuperficieEvacuada, detalle
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        idIncidente, categoria, cantidadMatInvolucrado, otraAccionMaterial,
+        otraAccionPersona, detalleOtrasAccionesPersona, cantidadSuperficieEvacuada, detalle
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           data.idIncidente,
-          data.idCategoria,
-          data.cantidadMateriales,
-          data.otraAccionMaterial,
-          data.otraAccionPersona,
-          data.detalleOtrasAccionesPersona,
-          data.cantidadSuperficieEvacuada,
-          data.detalle
+          data.categoria ?? null,
+          data.cantidadMateriales ?? 0,
+          data.otraAccionMaterial ?? null,
+          data.otraAccionPersona ?? null,
+          data.detalleOtrasAccionesPersona ?? null,
+          data.cantidadSuperficieEvacuada ?? null,
+          data.detalle ?? null
         ]
       )
       logger.debug(`🧯 MaterialPeligroso guardado. ID: ${result.insertId}`)

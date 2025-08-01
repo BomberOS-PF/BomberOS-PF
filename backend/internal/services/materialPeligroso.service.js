@@ -5,50 +5,60 @@ export class MaterialPeligrosoService {
     materialPeligrosoRepository,
     tipoMatInvolucradoRepository,
     accionMaterialRepository,
-    accionPersonaRepository
+    accionPersonaRepository,
+    damnificadoRepository
   ) {
     this.materialPeligrosoRepository = materialPeligrosoRepository
     this.tipoMatInvolucradoRepository = tipoMatInvolucradoRepository
     this.accionMaterialRepository = accionMaterialRepository
     this.accionPersonaRepository = accionPersonaRepository
+    this.damnificadoRepository = damnificadoRepository
   }
 
   async registrarMaterialPeligroso(matPel) {
     try {
-      const idMatPel = await this.materialPeligrosoRepository.guardar(matPel)
-
-      if (matPel.tiposMateriales?.length) {
-        await this.tipoMatInvolucradoRepository.asociarTipos(idMatPel, matPel.tiposMateriales)
+      // Limpiar valores undefined => null
+      const limpio = {
+        idIncidente: matPel.idIncidente,
+        idCategoria: matPel.idCategoria, // corregido
+        cantidadMateriales: matPel.cantidadMateriales ?? 0,
+        otraAccionMaterial: matPel.otraAccionMaterial ?? null,
+        otraAccionPersona: matPel.otraAccionPersona ?? null,
+        detalleOtrasAccionesPersona: matPel.detalleOtrasAccionesPersona ?? null,
+        cantidadSuperficieEvacuada: matPel.cantidadSuperficieEvacuada ?? null,
+        detalle: matPel.detalle ?? null,
+        tiposMateriales: matPel.tiposMateriales || [],
+        accionesMaterial: matPel.accionesMaterial || [],
+        accionesPersona: matPel.accionesPersona || [],
+        damnificados: matPel.damnificados || []
       }
 
-      if (matPel.accionesMaterial?.length) {
-        await this.accionMaterialRepository.asociarAcciones(idMatPel, matPel.accionesMaterial)
+      // Guardar material peligroso principal
+      const idMatPel = await this.materialPeligrosoRepository.guardar(limpio)
+
+      // Relación con tipos de materiales
+      if (limpio.tiposMateriales.length) {
+        await this.tipoMatInvolucradoRepository.asociarTipos(idMatPel, limpio.tiposMateriales)
       }
 
-      if (matPel.accionesPersona?.length) {
-        await this.accionPersonaRepository.asociarAcciones(idMatPel, matPel.accionesPersona)
+      // Relación con acciones sobre material
+      if (limpio.accionesMaterial.length) {
+        await this.accionMaterialRepository.asociarAcciones(idMatPel, limpio.accionesMaterial)
       }
-      if (matPel.damnificados?.length) {
-        await this.damnificadoRepository.asociarDamnificados(idMatPel, matPel.damnificados)
+
+      // Relación con acciones sobre persona
+      if (limpio.accionesPersona.length) {
+        await this.accionPersonaRepository.asociarAcciones(idMatPel, limpio.accionesPersona)
       }
-      // Guardar relaciones
-      if (matPel.tiposMateriales?.length) {
-        await this.tipoMatInvolucradoRepository.asociarTipos(idMatPel, matPel.tiposMateriales)
-      }
-      if (matPel.accionesMaterial?.length) {
-        await this.accionMaterialRepository.asociarAcciones(idMatPel, matPel.accionesMaterial)
-      }
-      if (matPel.accionesPersona?.length) {
-        await this.accionPersonaRepository.asociarAcciones(idMatPel, matPel.accionesPersona)
-      }
-      if (matPel.tiposMateriales?.length) {
-        await this.tipoMatInvolucradoRepository.asociarTipos(idMatPel, matPel.tiposMateriales)
-      }
-      if (matPel.accionesMaterial?.length) {
-        await this.accionMaterialRepository.asociarAcciones(idMatPel, matPel.accionesMaterial)
-      }
-      if (matPel.accionesPersona?.length) {
-        await this.accionPersonaRepository.asociarAcciones(idMatPel, matPel.accionesPersona)
+
+      // Damnificados vinculados al incidente
+      if (limpio.damnificados.length) {
+        for (const d of limpio.damnificados) {
+          await this.damnificadoRepository.insertarDamnificado({
+            ...d,
+            idIncidente: limpio.idIncidente
+          })
+        }
       }
 
       return idMatPel

@@ -194,7 +194,7 @@ export async function createServer(config) {
     const tipoIncidenteHandler = new TipoIncidenteHandler(tipoIncidenteService)
     const localizacionHandler = new LocalizacionHandler(localizacionService)
     const causaProbableHandler = new CausaProbableHandler(causaProbableService)
-    const materialPeligrosoHandler = new MaterialPeligrosoHandler(materialPeligrosoService)
+    const materialPeligrosoHandler = new MaterialPeligrosoHandler(materialPeligrosoService,damnificadoService)
     const { recuperarClaveHandler, validarTokenHandler } =
       construirRecuperarClaveHandlers(tokenService)
     const { restablecerClaveHandler } = construirRestablecerClaveHandler(

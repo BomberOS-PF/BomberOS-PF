@@ -647,7 +647,9 @@ export function setupRoutes(app, container) {
         'GET /api/categorias-material-peligroso/:id',
         'POST /api/materiales-peligrosos',
         'GET /api/materiales-peligrosos',
-        'GET /api/materiales-peligrosos/:id'
+        'GET /api/materiales-peligrosos/:id',
+        'GET /api/acciones-persona',
+        'GET /api/acciones-material'
 
       ]
     })

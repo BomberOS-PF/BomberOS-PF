@@ -2,119 +2,68 @@ import { useState, useEffect, useRef } from 'react'
 import './MaterialPeligroso.css'
 import '../../../DisenioFormulario/DisenioFormulario.css'
 
-  
 const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
   const incidenteId = datosPrevios.idIncidente || datosPrevios.id || 'temp'
   const storageKey = `materialPeligroso-${incidenteId}`
 
   const [formData, setFormData] = useState(() => {
     const guardado = localStorage.getItem(storageKey)
-    return guardado ? JSON.parse(guardado) : { ...datosPrevios }
+    return guardado
+      ? JSON.parse(guardado)
+      : { ...datosPrevios, damnificados: [] }
   })
 
   const [loading, setLoading] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const toastRef = useRef(null)
-  const [categorias, setCategorias] = useState([])  // <-- Agregar esta línea
-  const [tiposMateriales, setTiposMateriales] = useState([])
+
+  const [categorias, setCategorias] = useState([])
+  const [tiposMaterial, setTiposMaterial] = useState([])
   const [accionesMaterial, setAccionesMaterial] = useState([])
   const [accionesPersona, setAccionesPersona] = useState([])
 
+  // Datos básicos del incidente
+  const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id
+    ? {
+      id: datosPrevios.idIncidente || datosPrevios.id,
+      tipo: datosPrevios.tipoSiniestro,
+      fecha: datosPrevios.fechaHora || datosPrevios.fecha,
+      localizacion: datosPrevios.localizacion,
+      lugar: datosPrevios.lugar
+    }
+    : null
 
-  // Mostrar datos básicos del incidente
-  const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id ? {
-    id: datosPrevios.idIncidente || datosPrevios.id,
-    tipo: datosPrevios.tipoSiniestro,
-    fecha: datosPrevios.fechaHora || datosPrevios.fecha,
-    localizacion: datosPrevios.localizacion,
-    lugar: datosPrevios.lugar
-  } : null
-
-    // Cargar categorías desde el backend
+  // Cargar catálogos
   useEffect(() => {
-    const fetchCategorias = async () => {
+    const fetchCatalogos = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/categorias-material-peligroso') 
-        const data = await res.json()
-        if (data.success) {
-          setCategorias(data.data)
-        } else {
-          console.error('Error cargando categorías:', data.message)
-        }
+        const [catRes, tipoRes, accMatRes, accPerRes] = await Promise.all([
+          fetch('http://localhost:3000/api/categorias-material-peligroso'),
+          fetch('http://localhost:3000/api/tipos-materiales-involucrados'),
+          fetch('http://localhost:3000/api/acciones-material'),
+          fetch('http://localhost:3000/api/acciones-persona')
+        ])
+
+        const [catData, tipoData, accMatData, accPerData] = await Promise.all([
+          catRes.json(),
+          tipoRes.json(),
+          accMatRes.json(),
+          accPerRes.json()
+        ])
+
+        if (catData.success) setCategorias(catData.data)
+        if (tipoData.success) setTiposMaterial(tipoData.data)
+        if (accMatData.success) setAccionesMaterial(accMatData.data)
+        if (accPerData.success) setAccionesPersona(accPerData.data)
       } catch (error) {
-        console.error('❌ Error al traer categorías:', error)
+        console.error('❌ Error al cargar catálogos:', error)
       }
     }
-    fetchCategorias()
-  }, [])
-  useEffect(() => {
-  const fetchCatalogos = async () => {
-    try {
-      const [catRes, tipoRes, accMatRes, accPerRes] = await Promise.all([
-        fetch('http://localhost:3000/api/categorias-material-peligroso'),
-        fetch('http://localhost:3000/api/tipos-material'),
-        fetch('http://localhost:3000/api/acciones-material'),
-        fetch('http://localhost:3000/api/acciones-persona')
-      ])
-
-      const [catData, tipoData, accMatData, accPerData] = await Promise.all([
-        catRes.json(), tipoRes.json(), accMatRes.json(), accPerRes.json()
-      ])
-
-      setCategorias(catData.data)
-      setTiposMaterial(tipoData.data)
-      setAccionesMaterial(accMatData.data)
-      setAccionesPersona(accPerData.data)
-    } catch (error) {
-      console.error('❌ Error al cargar catálogos:', error)
-    }
-  }
-  fetchCatalogos()
-}, [])
-
-
-  useEffect(() => {
-    const fetchAccionesPersona = async () => {
-      try {
-        const res = await fetch('http://localhost:3000/api/acciones-persona')
-        const data = await res.json()
-        if (data.success) setAccionesPersona(data.data)
-      } catch (error) {
-        console.error('❌ Error al traer acciones sobre personas:', error)
-      }
-    }
-    fetchAccionesPersona()
+    fetchCatalogos()
   }, [])
 
-  useEffect(() => {
-  const fetchAccionesMaterial = async () => {
-    try {
-      const res = await fetch('http://localhost:3000/api/acciones-material')
-      const data = await res.json()
-      if (data.success) setAccionesMaterial(data.data)
-    } catch (error) {
-      console.error('❌ Error al traer acciones sobre el material:', error)
-    }
-  }
-  fetchAccionesMaterial()
-}, [])
-
-  useEffect(() => {
-    const fetchTipos = async () => {
-      try {
-        const res = await fetch('http://localhost:3000/api/tipos-materiales-involucrados')
-        const data = await res.json()
-        if (data.success) {
-          setTiposMateriales(data.data)
-        }
-      } catch (error) {
-        console.error('❌ Error al traer tipos de materiales:', error)
-      }
-    }
-    fetchTipos()
-  }, [])
-
+  // Actualizar formData cuando cambian datosPrevios
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
@@ -130,16 +79,38 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
     }))
   }
 
+  // --- Damnificados ---
+  const handleDamnificadoChange = (index, field, value) => {
+    const nuevos = [...formData.damnificados]
+    nuevos[index][field] = value
+    setFormData(prev => ({ ...prev, damnificados: nuevos }))
+  }
+
+  const agregarDamnificado = () => {
+    setFormData(prev => ({
+      ...prev,
+      damnificados: [
+        ...(prev.damnificados || []),
+        { nombre: '', apellido: '', domicilio: '', telefono: '', dni: '', fallecio: false }
+      ]
+    }))
+  }
+
+  const eliminarDamnificado = (index) => {
+    const nuevos = formData.damnificados.filter((_, i) => i !== index)
+    setFormData(prev => ({ ...prev, damnificados: nuevos }))
+  }
+
   const guardarLocalmente = () => {
     localStorage.setItem(storageKey, JSON.stringify(formData))
     alert('Datos guardados localmente. Podés continuar después.')
   }
 
+  // --- Construir DTO ---
   const buildDto = () => {
-    // Construir el objeto como lo espera el backend
     return {
-      idIncidente: incidenteBasico?.id,
-      idCategoria: parseInt(formData.categoria) || null,
+      idIncidente: Number(incidenteBasico?.id), // 🔹 Forzamos número
+      categoria: parseInt(formData.categoria) || null,
       cantidadMateriales: parseInt(formData.cantidadMateriales) || 0,
       otraAccionMaterial: formData.otraAccionMaterial || null,
       otraAccionPersona: formData.otraAccionPersona || null,
@@ -147,7 +118,6 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
       cantidadSuperficieEvacuada: formData.superficieEvacuada || null,
       detalle: formData.detalle || null,
 
-      // Arrays de IDs de ejemplo (simples por ahora)
       tiposMateriales: Object.keys(formData)
         .filter((key) => key.startsWith('material') && formData[key] === true)
         .map((key, i) => i + 1),
@@ -160,20 +130,18 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
         .filter((key) => key.startsWith('personaAccion') && formData[key] === true)
         .map((key, i) => i + 1),
 
-      // Damnificados como array único por ahora
-      damnificados: [
-        {
-          nombre: formData.nombre || null,
-          apellido: formData.apellido || null,
-          domicilio: formData.domicilio || null,
-          telefono: formData.telefono || null,
-          dni: formData.dni || null,
-          fallecio: formData.fallecio || false
-        }
-      ]
+      damnificados: (formData.damnificados || []).map(d => ({
+        nombre: d.nombre || null,
+        apellido: d.apellido || null,
+        domicilio: d.domicilio || null,
+        telefono: d.telefono || null,
+        dni: d.dni || null,
+        fallecio: !!d.fallecio
+      }))
     }
   }
 
+  // --- Enviar al backend ---
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -190,6 +158,7 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
         body: JSON.stringify(dto)
       })
 
+      // 🔹 Aseguramos que data exista
       const data = await res.json()
 
       if (!res.ok || !data.success) {
@@ -231,8 +200,8 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
             </div>
           </div>
         )}
-
         <form onSubmit={handleSubmit}>
+          {/* Categoría */}
           <div className="row mb-3">
             <div className="col">
               <label className="text-black form-label">Categoría</label>
@@ -267,7 +236,7 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
             <div className="col">
               <fieldset>
                 <legend className="text-black fs-6">Tipos de materiales involucrados</legend>
-                {tiposMateriales.map(tipo => (
+                {tiposMaterial.map(tipo => (
                   <div className="form-check" key={tipo.idTipoMatInvolucrado}>
                     <input
                       className="form-check-input"
@@ -276,7 +245,10 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                       checked={formData[`material${tipo.idTipoMatInvolucrado}`] || false}
                       onChange={handleChange}
                     />
-                    <label className="text-black form-check-label" htmlFor={`material${tipo.idTipoMatInvolucrado}`}>
+                    <label
+                      className="text-black form-check-label"
+                      htmlFor={`material${tipo.idTipoMatInvolucrado}`}
+                    >
                       {tipo.nombre}
                     </label>
                   </div>
@@ -284,6 +256,7 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
               </fieldset>
             </div>
 
+            {/* Acciones sobre el material */}
             <div className="col">
               <fieldset>
                 <legend className="text-black fs-6">Acciones sobre el material</legend>
@@ -296,7 +269,10 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                       checked={formData[`accion${accion.idAccionMaterial}`] || false}
                       onChange={handleChange}
                     />
-                    <label className="text-black form-check-label" htmlFor={`accion${accion.idAccionMaterial}`}>
+                    <label
+                      className="text-black form-check-label"
+                      htmlFor={`accion${accion.idAccionMaterial}`}
+                    >
                       {accion.nombre}
                     </label>
                   </div>
@@ -312,7 +288,6 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                   />
                 </div>
               </fieldset>
-
             </div>
           </div>
 
@@ -328,7 +303,10 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                   checked={formData[`personaAccion${accion.idAccionPersona}`] || false}
                   onChange={handleChange}
                 />
-                <label className="text-black form-check-label" htmlFor={`personaAccion${accion.idAccionPersona}`}>
+                <label
+                  className="text-black form-check-label"
+                  htmlFor={`personaAccion${accion.idAccionPersona}`}
+                >
                   {accion.nombre}
                 </label>
               </div>
@@ -381,77 +359,86 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
 
           {/* Damnificados */}
           <h5 className="text-black mt-4">Personas damnificadas</h5>
-          <div className="row mb-3">
-            <div className="col">
-              <label className="text-black form-label">Nombre</label>
-              <input
-                type="text"
-                className="form-control"
-                id="nombre"
-                value={formData.nombre || ''}
-                onChange={handleChange}
-              />
+          {formData.damnificados.map((d, index) => (
+            <div key={index} className="border rounded p-3 mb-3">
+              <div className="row mb-2">
+                <div className="col">
+                  <label className="text-black form-label">Nombre</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={d.nombre}
+                    onChange={(e) => handleDamnificadoChange(index, 'nombre', e.target.value)}
+                  />
+                </div>
+                <div className="col">
+                  <label className="text-black form-label">Apellido</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={d.apellido}
+                    onChange={(e) => handleDamnificadoChange(index, 'apellido', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="mb-2">
+                <label className="text-black form-label">Domicilio</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={d.domicilio}
+                  onChange={(e) => handleDamnificadoChange(index, 'domicilio', e.target.value)}
+                />
+              </div>
+              <div className="row mb-2">
+                <div className="col">
+                  <label className="text-black form-label">Teléfono</label>
+                  <input
+                    type="tel"
+                    className="form-control"
+                    value={d.telefono}
+                    onChange={(e) => handleDamnificadoChange(index, 'telefono', e.target.value)}
+                  />
+                </div>
+                <div className="col">
+                  <label className="text-black form-label">DNI</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={d.dni}
+                    onChange={(e) => handleDamnificadoChange(index, 'dni', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="form-check mb-2">
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  checked={d.fallecio}
+                  onChange={(e) => handleDamnificadoChange(index, 'fallecio', e.target.checked)}
+                />
+                <label className="form-check-label text-black">¿Falleció?</label>
+              </div>
+              <button
+                type="button"
+                className="btn btn-outline-danger btn-sm"
+                onClick={() => eliminarDamnificado(index)}
+              >
+                ❌ Eliminar damnificado
+              </button>
             </div>
-            <div className="col">
-              <label className="text-black form-label">Apellido</label>
-              <input
-                type="text"
-                className="form-control"
-                id="apellido"
-                value={formData.apellido || ''}
-                onChange={handleChange}
-              />
-            </div>
+          ))}
+
+          <div className="d-flex justify-content-end mb-3">
+            <button type="button" className="btn btn-sm btn-success" onClick={agregarDamnificado}>
+              + Agregar damnificado
+            </button>
           </div>
 
-          <div className="row mb-3">
-            <div className="col">
-              <label className="text-black form-label">Domicilio</label>
-              <input
-                type="text"
-                className="form-control"
-                id="domicilio"
-                value={formData.domicilio || ''}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="col">
-              <label className="text-black form-label">Teléfono</label>
-              <input
-                type="tel"
-                className="form-control"
-                id="telefono"
-                value={formData.telefono || ''}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="col">
-              <label className="text-black form-label">DNI</label>
-              <input
-                type="text"
-                className="form-control"
-                id="dni"
-                value={formData.dni || ''}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          <div className="mb-3 form-check">
-            <input
-              type="checkbox"
-              className="form-check-input"
-              id="fallecio"
-              checked={formData.fallecio || false}
-              onChange={handleChange}
-            />
-            <label className="text-black form-check-label" htmlFor="fallecio">¿Falleció?</label>
-          </div>
-
-          {/* Botones */} 
           <button type="submit" className="btn btn-danger w-100 mt-3" disabled={loading}>
             {loading ? 'Cargando...' : 'Finalizar carga'}
           </button>
+
           <button
             type="button"
             className="btn btn-secondary w-100 mt-2"
@@ -462,12 +449,15 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
           </button>
         </form>
 
-
         {errorMsg && (
-          <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">{errorMsg}</div>
+          <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">
+            {errorMsg}
+          </div>
         )}
         {successMsg && (
-          <div ref={toastRef} tabIndex={-1} className="alert alert-success mt-3" role="alert">{successMsg}</div>
+          <div ref={toastRef} tabIndex={-1} className="alert alert-success mt-3" role="alert">
+            {successMsg}
+          </div>
         )}
       </div>
     </div>
