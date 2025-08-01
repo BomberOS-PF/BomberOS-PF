@@ -78,6 +78,30 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   const [eventoPendiente, setEventoPendiente] = useState(null)
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null)
   const [bomberosEditados, setBomberosEditados] = useState([])
+  const [bomberosOriginales, setBomberosOriginales] = useState([])
+
+  // Estado para detectar cambios
+  const [tieneCambios, setTieneCambios] = useState(false)
+
+  // 🔹 Detectar cambios en bomberosEditados vs bomberosOriginales
+  useEffect(() => {
+    if (bomberosEditados.length !== bomberosOriginales.length) {
+      setTieneCambios(true)
+      return
+    }
+
+    const originalesMap = bomberosOriginales.reduce((acc, b) => {
+      acc[b.nombre] = { desde: b.desde, hasta: b.hasta }
+      return acc
+    }, {})
+
+    const cambios = bomberosEditados.some((b) => {
+      const original = originalesMap[b.nombre]
+      return !original || original.desde !== b.desde || original.hasta !== b.hasta
+    })
+
+    setTieneCambios(cambios)
+  }, [bomberosEditados, bomberosOriginales])
 
   // 🔹 Fusionar bloques si se solapan o se tocan
   const fusionarEventos = (listaEventos) => {
@@ -89,11 +113,9 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
         fusionados.push(ev)
       } else {
         const ultimo = fusionados[fusionados.length - 1]
-        // 🔹 Se solapan o se tocan justo en el límite
         if (new Date(ev.start) <= ultimo.end || new Date(ev.start).getTime() === ultimo.end.getTime()) {
           ultimo.end = new Date(Math.max(ultimo.end, new Date(ev.end)))
 
-          // 🔹 Eliminar bomberos duplicados por nombre
           const bomberosUnicos = [
             ...ultimo.extendedProps.bomberos,
             ...ev.extendedProps.bomberos
@@ -137,7 +159,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
 
     const calendarApi = calendarRef.current?.getApi()
     const lunesSemana = new Date(calendarApi.view.activeStart)
-
     const fechaObjetivo = new Date(lunesSemana)
     fechaObjetivo.setDate(lunesSemana.getDate() + diaSeleccionado.value)
 
@@ -292,8 +313,8 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                     : null
                 }
                 onChange={(selected) => {
-                  const nuevaHora = selected?.value || ''
-                  setHoraDesde(`${nuevaHora}:${horaDesde.split(':')[1] || '00'}`)
+                  const nuevo = selected?.value || ''
+                  setHoraDesde(`${nuevo}:${horaDesde.split(':')[1] || '00'}`)
                 }}
                 styles={customStyles}
                 placeholder="HH"
@@ -334,8 +355,8 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                     : null
                 }
                 onChange={(selected) => {
-                  const nuevaHora = selected?.value || ''
-                  setHoraHasta(`${nuevaHora}:${horaHasta.split(':')[1] || '00'}`)
+                  const nueva = selected?.value || ''
+                  setHoraHasta(`${nueva}:${horaHasta.split(':')[1] || '00'}`)
                 }}
                 styles={customStyles}
                 placeholder="HH"
@@ -451,6 +472,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                       onClick={() => {
                         setEventoSeleccionado(eventoPendiente)
                         setBomberosEditados([...eventoPendiente.extendedProps.bomberos])
+                        setBomberosOriginales([...eventoPendiente.extendedProps.bomberos])
                         setModalConfirmar(false)
                         setModalAbierto(true)
                       }}
@@ -497,8 +519,11 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                     value: b.desde.split(':')[0]
                                   }}
                                   onChange={(selected) => {
-                                    const nuevo = [...bomberosEditados]
-                                    nuevo[idx].desde = `${selected.value}:${b.desde.split(':')[1]}`
+                                    const nuevo = bomberosEditados.map((item, i) =>
+                                      i === idx
+                                        ? { ...item, desde: `${selected.value}:${b.desde.split(':')[1]}` }
+                                        : item
+                                    )
                                     setBomberosEditados(nuevo)
                                   }}
                                   styles={customStyles}
@@ -511,8 +536,11 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                     value: b.desde.split(':')[1]
                                   }}
                                   onChange={(selected) => {
-                                    const nuevo = [...bomberosEditados]
-                                    nuevo[idx].desde = `${b.desde.split(':')[0]}:${selected.value}`
+                                    const nuevo = bomberosEditados.map((item, i) =>
+                                      i === idx
+                                        ? { ...item, desde: `${b.desde.split(':')[0]}:${selected.value}` }
+                                        : item
+                                    )
                                     setBomberosEditados(nuevo)
                                   }}
                                   styles={customStyles}
@@ -529,8 +557,11 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                     value: b.hasta.split(':')[0]
                                   }}
                                   onChange={(selected) => {
-                                    const nuevo = [...bomberosEditados]
-                                    nuevo[idx].hasta = `${selected.value}:${b.hasta.split(':')[1]}`
+                                    const nuevo = bomberosEditados.map((item, i) =>
+                                      i === idx
+                                        ? { ...item, hasta: `${selected.value}:${b.hasta.split(':')[1]}` }
+                                        : item
+                                    )
                                     setBomberosEditados(nuevo)
                                   }}
                                   styles={customStyles}
@@ -543,8 +574,11 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                     value: b.hasta.split(':')[1]
                                   }}
                                   onChange={(selected) => {
-                                    const nuevo = [...bomberosEditados]
-                                    nuevo[idx].hasta = `${b.hasta.split(':')[0]}:${selected.value}`
+                                    const nuevo = bomberosEditados.map((item, i) =>
+                                      i === idx
+                                        ? { ...item, hasta: `${b.hasta.split(':')[0]}:${selected.value}` }
+                                        : item
+                                    )
                                     setBomberosEditados(nuevo)
                                   }}
                                   styles={customStyles}
@@ -566,8 +600,14 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                     </table>
                   </div>
                   <div className="modal-footer">
-                    <button className="btn btn-danger" onClick={() => setModalConfirmarGuardar(true)}>Guardar cambios</button>
-                    <button className="btn btn-secondary" onClick={() => setModalAbierto(false)}>Cerrar</button>
+                    <button 
+                      className="btn btn-danger" 
+                      onClick={() => setModalConfirmarGuardar(true)}
+                      disabled={!tieneCambios}
+                    >
+                      Confirmar
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => setModalAbierto(false)}>Volver</button>
                   </div>
                 </div>
               </div>
@@ -635,7 +675,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                         alert('✅ Cambios guardados correctamente')
                       }}
                     >
-                      Guardar
+                      Aceptar
                     </button>
                     <button className="btn btn-secondary" onClick={() => setModalConfirmarGuardar(false)}>Cancelar</button>
                   </div>
