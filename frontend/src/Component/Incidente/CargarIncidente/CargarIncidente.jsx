@@ -83,7 +83,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
         idTipoIncidente: tipoSeleccionado.idTipoIncidente,
         fecha: formData.fechaHora,
         idLocalizacion: localizacionSeleccionada.idLocalizacion,
-        direccion: formData.lugar
+        descripcion: formData.lugar
       }
 
       // Agrega datos del denunciante solo si se completaron
@@ -144,7 +144,80 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
     }
   }
 
-  const notificarBomberos = async () => {
+  // const notificarBomberos = async () => {
+  //   if (!datosEsencialesCompletos()) {
+  //     alert('❌ Debe completar al menos el tipo de siniestro, localización y lugar del incidente')
+  //     return
+  //   }
+
+  //   setNotificandoBomberos(true)
+
+  //   try {
+  //     // Primero guardar el incidente automáticamente
+  //     let incidente = incidenteCreado
+  //     if (!incidente) {
+  //       console.log('💾 Guardando incidente automáticamente antes de notificar...')
+  //       incidente = await guardarIncidente()
+  //       setIncidenteCreado(incidente)
+  //       console.log('✅ Incidente guardado:', incidente)
+  //     }
+
+  //     console.log('📱 Notificando bomberos para incidente:', incidente)
+
+  //     const response = await fetch(`http://localhost:3000/api/incidentes/${incidente.idIncidente}/notificar`, {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' }
+  //     })
+
+  //     const data = await response.json()
+
+  //     if (response.ok && data.success) {
+  //       const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = data.data
+
+  //       let mensaje = `🚨 ALERTA ENVIADA A BOMBEROS:\n\n`
+  //       mensaje += `📍 Tipo: ${formData.tipoSiniestro}\n`
+  //       mensaje += `📍 Ubicación: ${formData.localizacion} - ${formData.lugar}\n`
+  //       mensaje += `📍 Fecha/Hora: ${formData.fechaHora}\n\n`
+  //       mensaje += `📱 Total bomberos contactados: ${totalBomberos}\n`
+  //       mensaje += `✅ Notificaciones exitosas: ${notificacionesExitosas}\n`
+
+  //       if (notificacionesFallidas > 0) {
+  //         mensaje += `❌ Notificaciones fallidas: ${notificacionesFallidas}\n`
+  //       }
+
+  //       mensaje += `\n✅ Incidente registrado y bomberos notificados correctamente.`
+
+  //       alert(mensaje)
+
+  //       // Callback para manejar el flujo posterior
+  //       if (onNotificar) {
+  //         // Pasar datos más completos al formulario específico
+  //         const datosParaFormulario = {
+  //           ...incidente,
+  //           tipoSiniestro: formData.tipoSiniestro,
+  //           fechaHora: formData.fechaHora,
+  //           localizacion: formData.localizacion,
+  //           lugar: formData.lugar,
+  //           nombreDenunciante: formData.nombreDenunciante,
+  //           apellidoDenunciante: formData.apellidoDenunciante,
+  //           telefonoDenunciante: formData.telefonoDenunciante,
+  //           dniDenunciante: formData.dniDenunciante
+  //         }
+  //         onNotificar(formData.tipoSiniestro, datosParaFormulario)
+  //       }
+  //     } else {
+  //       throw new Error(data.message || 'Error en la notificación')
+  //     }
+
+  //   } catch (error) {
+  //     console.error('❌ Error al notificar bomberos:', error)
+  //     alert(`❌ Error al notificar bomberos: ${error.message}`)
+  //   } finally {
+  //     setNotificandoBomberos(false)
+  //   }
+  // }
+
+  const notificarPorWhatsapp = async () => {
     if (!datosEsencialesCompletos()) {
       alert('❌ Debe completar al menos el tipo de siniestro, localización y lugar del incidente')
       return
@@ -153,7 +226,6 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
     setNotificandoBomberos(true)
 
     try {
-      // Primero guardar el incidente automáticamente
       let incidente = incidenteCreado
       if (!incidente) {
         console.log('💾 Guardando incidente automáticamente antes de notificar...')
@@ -162,60 +234,48 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
         console.log('✅ Incidente guardado:', incidente)
       }
 
-      console.log('📱 Notificando bomberos para incidente:', incidente)
+      const mensaje = `🚨 EMERGENCIA DETECTADA
+    📍 Tipo: ${formData.tipoSiniestro}
+    📍 Ubicación: ${formData.localizacion} - ${formData.lugar}
+    📅 Fecha/Hora: ${formData.fechaHora}`
 
-      const response = await fetch(`http://localhost:3000/api/incidentes/${incidente.idIncidente}/notificar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+      const numeros = [
+        "5493547669771",
+        "5493513279054"
+      ]
+
+      const resp = await fetch("http://localhost:3001/alerta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: numeros, mensaje })
       })
 
-      const data = await response.json()
+      if (!resp.ok) throw new Error("Error al enviar alerta por WhatsApp")
 
-      if (response.ok && data.success) {
-        const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = data.data
+      alert(`🚨 ALERTA ENVIADA POR WHATSAPP a ${numeros.length} bomberos ✅`)
 
-        let mensaje = `🚨 ALERTA ENVIADA A BOMBEROS:\n\n`
-        mensaje += `📍 Tipo: ${formData.tipoSiniestro}\n`
-        mensaje += `📍 Ubicación: ${formData.localizacion} - ${formData.lugar}\n`
-        mensaje += `📍 Fecha/Hora: ${formData.fechaHora}\n\n`
-        mensaje += `📱 Total bomberos contactados: ${totalBomberos}\n`
-        mensaje += `✅ Notificaciones exitosas: ${notificacionesExitosas}\n`
-
-        if (notificacionesFallidas > 0) {
-          mensaje += `❌ Notificaciones fallidas: ${notificacionesFallidas}\n`
+      if (onNotificar) {
+        const datosParaFormulario = {
+          ...incidente,
+          tipoSiniestro: formData.tipoSiniestro,
+          fechaHora: formData.fechaHora,
+          localizacion: formData.localizacion,
+          lugar: formData.lugar,
+          nombreDenunciante: formData.nombreDenunciante,
+          apellidoDenunciante: formData.apellidoDenunciante,
+          telefonoDenunciante: formData.telefonoDenunciante,
+          dniDenunciante: formData.dniDenunciante
         }
-
-        mensaje += `\n✅ Incidente registrado y bomberos notificados correctamente.`
-
-        alert(mensaje)
-
-        // Callback para manejar el flujo posterior
-        if (onNotificar) {
-          // Pasar datos más completos al formulario específico
-          const datosParaFormulario = {
-            ...incidente,
-            tipoSiniestro: formData.tipoSiniestro,
-            fechaHora: formData.fechaHora,
-            localizacion: formData.localizacion,
-            lugar: formData.lugar,
-            nombreDenunciante: formData.nombreDenunciante,
-            apellidoDenunciante: formData.apellidoDenunciante,
-            telefonoDenunciante: formData.telefonoDenunciante,
-            dniDenunciante: formData.dniDenunciante
-          }
-          onNotificar(formData.tipoSiniestro, datosParaFormulario)
-        }
-      } else {
-        throw new Error(data.message || 'Error en la notificación')
+        onNotificar(formData.tipoSiniestro, datosParaFormulario)
       }
-
     } catch (error) {
-      console.error('❌ Error al notificar bomberos:', error)
-      alert(`❌ Error al notificar bomberos: ${error.message}`)
+      console.error("❌ Error al notificar por WhatsApp:", error)
+      alert(`❌ Error al notificar por WhatsApp: ${error.message}`)
     } finally {
       setNotificandoBomberos(false)
     }
   }
+
 
   return (
     <div className='container'>
@@ -344,17 +404,25 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
                 <input type="text" id="dniDenunciante" className="form-control" onChange={handleChange} />
               </div>
             </div>
-            
+
             <div className="d-grid gap-3">
               {datosEsencialesCompletos() && (
-                <button type="button" className="btn btn-warning btn-lg" onClick={notificarBomberos} disabled={notificandoBomberos}>
+                <button
+                  type="button"
+                  className="btn btn-warning btn-lg"
+                  onClick={notificarPorWhatsapp}
+                  disabled={notificandoBomberos}
+                  style={{ fontWeight: 'bold', width: '100%' }}
+                >
                   {notificandoBomberos ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Enviando alerta...
+                      🚨 Enviando alerta a bomberos...
                     </>
                   ) : (
-                    <>🚨 Notificar emergencia a bomberos</>
+                    <>
+                      🚨 NOTIFICAR EMERGENCIA A BOMBEROS
+                    </>
                   )}
                 </button>
               )}
