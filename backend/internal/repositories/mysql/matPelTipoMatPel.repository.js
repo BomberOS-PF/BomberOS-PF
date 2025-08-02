@@ -11,22 +11,21 @@ export class MySQLMatPelTipoMatPelRepository {
     if (!tiposIds.length) return
 
     const connection = await getConnection()
-    const values = tiposIds.map(idTipo => [idMatPel, idTipo])
+    const placeholders = tiposIds.map(() => '(?, ?)').join(', ')
+    const flatValues = tiposIds.flatMap(idTipo => [idMatPel, idTipo])
 
     try {
-      await connection.query(
-        'INSERT INTO matPelTipoMatPel (idMatPel, idTipoMatInvolucrado) VALUES ?',
-        [values]
+      await connection.execute(
+        `INSERT INTO matPelTipoMatPel (idMatPel, idTipoMatInvolucrado) VALUES ${placeholders}`,
+        flatValues
       )
-      logger.debug('✅ Asociados tipos de material:', {
-        idMatPel,
-        tiposIds
-      })
+      logger.debug('✅ Asociados tipos de material:', { idMatPel, tiposIds })
     } catch (error) {
       logger.error('❌ Error al asociar tipos de material peligroso:', error)
       throw error
     }
   }
+
 
   /**
    * Obtiene todos los tipos asociados a un material peligroso

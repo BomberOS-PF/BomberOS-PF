@@ -309,8 +309,8 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
                     <option>Cargando localizaciones...</option>
                   ) : (
                     localizaciones.map(loc => (
-                      <option key={loc.idLocalizacion} value={loc.descripcion}>
-                        {loc.descripcion}
+                      <option key={loc.idLocalizacion} value={loc.direccion}>
+                        {loc.direccion}
                       </option>
                     ))
                   )}
