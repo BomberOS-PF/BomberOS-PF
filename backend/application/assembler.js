@@ -49,6 +49,28 @@ import { IncendioEstructuralHandler } from '../incendioEstructural/handler.js'
 import { IncendioEstructuralService } from '../internal/services/incendioEstructural.service.js'
 import { MySQLIncendioEstructuralRepository } from '../internal/repositories/mysql/incendioEstructural.repository.js'
 
+//Material peligroso
+import { MaterialPeligrosoHandler } from '../materialPeligroso/handler.js'
+import { MaterialPeligrosoService } from '../internal/services/materialPeligroso.service.js'
+import { MySQLMaterialPeligrosoRepository } from '../internal/repositories/mysql/materialPeligroso.repository.js'
+import { CategoriaMaterialPeligrosoHandler } from '../categoriaMaterialPeligroso/handler.js'
+import { CategoriaMatPelService } from '../internal/services/categoriaMaterialPeligroso.service.js'
+import { MySQLCategoriaMaterialPeligrosoRepository } from '../internal/repositories/mysql/categoriaMaterialPeligroso.respository.js'
+import { TipoMatInvolucradoHandler } from '../tipoMatInvolucrado/handler.js'
+import { TipoMatInvolucradoService } from '../internal/services/tipoMatInvolucrado.service.js'
+import { MySQLTipoMatInvolucradoRepository } from '../internal/repositories/mysql/tipoMatInvolucrado.repository.js'
+import { AccionMaterialHandler } from '../accionMaterial/handler.js'
+import { AccionMaterialService } from '../internal/services/accionMaterial.service.js'
+import { MySQLAccionMaterialRepository } from '../internal/repositories/mysql/accionMaterial.repository.js'
+import { AccionPersonaHandler } from '../accionPersona/handler.js'
+import { AccionPersonaService } from '../internal/services/accionPersona.service.js'
+import { MySQLAccionPersonaRepository } from '../internal/repositories/mysql/accionPersona.repository.js'
+import { MySQLMatPelTipoMatPelRepository } from '../internal/repositories/mysql/matPelTipoMatPel.repository.js'
+import { MySQLMatPelAccionMaterialRepository } from '../internal/repositories/mysql/matPelAccionMaterial.repository.js'
+import { MySQLMatPelAccionPersonaRepository } from '../internal/repositories/mysql/matPelAccionPersona.repository.js'
+
+
+
 import { MySQLRangoRepository } from '../internal/repositories/mysql/rango.repository.js'
 import { RangoService } from '../internal/services/rango.service.js'
 import { RangoHandler } from '../rangos/handler.js'
@@ -70,6 +92,9 @@ import { LocalizacionHandler } from '../localizacion/handler.js'
 import { MySQLCausaProbableRepository } from '../internal/repositories/mysql/causaProbable.repository.js'
 import { CausaProbableService } from '../internal/services/causaProbable.service.js'
 import { CausaProbableHandler } from '../causaProbable/handler.js'
+
+
+
 
 
 export async function createServer(config) {
@@ -102,11 +127,19 @@ export async function createServer(config) {
     const tipoIncidenteRepository = new MySQLTipoIncidenteRepository()
     const localizacionRepository = new MySQLLocalizacionRepository()
     const causaProbableRepository = new MySQLCausaProbableRepository()
+    const materialPeligrosoRepository = new MySQLMaterialPeligrosoRepository()
+    const categoriaMaterialPeligrosoRepository = new MySQLCategoriaMaterialPeligrosoRepository()
+    const tipoMatInvolucradoRepository = new MySQLTipoMatInvolucradoRepository()
+    const accionMaterialRepository = new MySQLAccionMaterialRepository()
+    const accionPersonaRepository = new MySQLAccionPersonaRepository()
+    const matPelTipoMatPelRepository = new MySQLMatPelTipoMatPelRepository()
+    const matPelAccionMaterialRepository = new MySQLMatPelAccionMaterialRepository()
+    const matPelAccionPersonaRepository = new MySQLMatPelAccionPersonaRepository()
 
     // Servicios
     const whatsappService = new WhatsAppService(config)
     logger.info('📱 Servicio WhatsApp inicializado')
-    
+
     const bomberoService = new BomberoService(bomberoRepository, usuarioRepository)
     const usuarioService = new UsuarioService(usuarioRepository, bomberoRepository)
     const tipoIncidenteService = new TipoIncidenteService(tipoIncidenteRepository)
@@ -133,9 +166,19 @@ export async function createServer(config) {
     const forestalCatalogosHandler = new ForestalCatalogosHandler(caracteristicasLugarService, areaAfectadaService);
 
     const tokenService = new TokenService(tokenRepository, usuarioRepository)
+    const materialPeligrosoService = new MaterialPeligrosoService( materialPeligrosoRepository,
+      matPelTipoMatPelRepository,
+      matPelAccionMaterialRepository,
+      matPelAccionPersonaRepository,
+      damnificadoRepository)        // ✅ damnificados)
     const incendioEstructuralService = new IncendioEstructuralService(
       incendioEstructuralRepository
     )
+    const categoriaMaterialPeligrosoService = new CategoriaMatPelService(categoriaMaterialPeligrosoRepository)
+    const tipoMatInvolucradoService = new TipoMatInvolucradoService(tipoMatInvolucradoRepository)
+    const accionMaterialService = new AccionMaterialService(accionMaterialRepository)
+    const accionPersonaService = new AccionPersonaService(accionPersonaRepository)
+
 
     // Handlers
     const bomberoHandler = new BomberoHandler(bomberoService)
@@ -150,6 +193,7 @@ export async function createServer(config) {
     const tipoIncidenteHandler = new TipoIncidenteHandler(tipoIncidenteService)
     const localizacionHandler = new LocalizacionHandler(localizacionService)
     const causaProbableHandler = new CausaProbableHandler(causaProbableService)
+    const materialPeligrosoHandler = new MaterialPeligrosoHandler(materialPeligrosoService)
     const { recuperarClaveHandler, validarTokenHandler } =
       construirRecuperarClaveHandlers(tokenService)
     const { restablecerClaveHandler } = construirRestablecerClaveHandler(
@@ -159,54 +203,79 @@ export async function createServer(config) {
     const incendioEstructuralHandler = new IncendioEstructuralHandler(
       incendioEstructuralService
     )
+    const categoriaMaterialPeligrosoHandler = new CategoriaMaterialPeligrosoHandler(categoriaMaterialPeligrosoService)
+    const tipoMatInvolucradoHandler = new TipoMatInvolucradoHandler(tipoMatInvolucradoService)
+    const accionMaterialHandler = new AccionMaterialHandler(accionMaterialService)
+    const accionPersonaHandler = new AccionPersonaHandler(accionPersonaService)
 
-    // Contenedor
     const container = {
-      bomberoService,
+      // Repositorios principales
       bomberoRepository,
-      bomberoHandler,
-      usuarioService,
       usuarioRepository,
-      usuarioHandler,
-      incidenteService,
       incidenteRepository,
-      incidenteHandler,
-      grupoGuardiaRepository,
-      grupoGuardiaService,
-      grupoGuardiaHandler,
       denuncianteRepository,
-      whatsappService,
-      rolService,
+      grupoGuardiaRepository,
       rolRepository,
-      rolesAdapter,
-      damnificadoService,
-      accidenteVehiculoService,
+      damnificadoRepository,
       accidenteTransitoRepository,
-      accidenteTransitoService,
-      accidenteTransitoHandler,
-      causaAccidenteHandler,
       causaAccidenteRepository,
-      causaAccidenteService,
       vehiculoRepository,
-      vehiculoService,
-      vehiculoHandler,
       accidenteDamnificadoRepository,
       accidenteVehiculoRepository,
-      rangoHandler,
       rangoRepository,
-      rangoService,
-      tipoIncidenteHandler,
       tipoIncidenteRepository,
-      tipoIncidenteService,
-      localizacionHandler,
       localizacionRepository,
-      localizacionService,
-      causaProbableHandler,
       causaProbableRepository,
+      materialPeligrosoRepository,
+      categoriaMaterialPeligrosoRepository,
+      tipoMatInvolucradoRepository,
+      accionMaterialRepository,
+      accionPersonaRepository,
+      matPelTipoMatPelRepository,
+      matPelAccionMaterialRepository,
+      matPelAccionPersonaRepository,
+
+      // Servicios
+      bomberoService,
+      usuarioService,
+      incidenteService,
+      grupoGuardiaService,
+      whatsappService,
+      rolService,
+      causaAccidenteService,
+      accidenteTransitoService,
+      vehiculoService,
+      damnificadoService,
+      accidenteVehiculoService,
+      rangoService,
+      localizacionService,
       causaProbableService,
-      recuperarClaveHandler,
-      validarTokenHandler,
-      restablecerClaveHandler,
+      materialPeligrosoService,
+      categoriaMaterialPeligrosoService,
+      tipoMatInvolucradoService,
+      accionMaterialService,
+      accionPersonaService,
+
+      // Handlers
+      bomberoHandler,
+      usuarioHandler,
+      incidenteHandler,
+      grupoGuardiaHandler,
+      rolesAdapter,
+      causaAccidenteHandler,
+      accidenteTransitoHandler,
+      vehiculoHandler,
+      rangoHandler,
+      tipoIncidenteHandler,
+      localizacionHandler,
+      causaProbableHandler,
+      materialPeligrosoHandler,
+      categoriaMaterialPeligrosoHandler,
+      tipoMatInvolucradoHandler,
+      accionMaterialHandler,
+      accionPersonaHandler,
+
+      // Infraestructura
       dbConnection,
       config,
       forestalCatalogosHandler,
@@ -216,8 +285,12 @@ export async function createServer(config) {
       areaAfectadaRepository,
       incendioEstructuralRepository,
       incendioEstructuralService,
-      incendioEstructuralHandler
+      incendioEstructuralHandler,
+      recuperarClaveHandler,
+      validarTokenHandler,
+      restablecerClaveHandler
     }
+
 
     await validateDependencies(container)
 
@@ -233,7 +306,12 @@ export async function createServer(config) {
         'causaAccidenteService',
         'vehiculoService',
         'rangoService',
-        'incendioEstructuralService'
+        'incendioEstructuralService',
+        'materialPeligrosoService',
+        'categoriaMaterialPeligrosoService',
+        'tipoMatInvolucradoService',
+        'accionMaterialService',
+        'accionPersonaService'
       ],
       repositories: [
         'bomberoRepository',
@@ -246,7 +324,14 @@ export async function createServer(config) {
         'causaAccidenteRepository',
         'vehiculoRepository',
         'rangoRepository',
-        'incendioEstructuralRepository'
+        'incendioEstructuralRepository',
+        'materialPeligrosoRepository',
+        'categoriaMaterialPeligrosoRepository',
+        'tipoMatInvolucradoRepository',
+        'accionMaterialRepository',
+        'accionPersonaRepository',
+        'matPelTipoMatPelRepository',
+        'matPelAccionMaterialRepository'
       ],
       handlers: [
         'bomberoHandler',
@@ -258,7 +343,12 @@ export async function createServer(config) {
         'causaAccidenteHandler',
         'vehiculoHandler',
         'rangoHandler',
-        'incendioEstructuralHandler'
+        'incendioEstructuralHandler',
+        'materialPeligrosoHandler',
+        'categoriaMaterialPeligrosoHandler',
+        'tipoMatInvolucradoHandler',
+        'accionMaterialHandler',
+        'accionPersonaHandler'
       ],
       services: ['bomberoService', 'usuarioService', 'incidenteService', 'grupoGuardiaService', 'whatsappService', 'rolService', 'accidenteTransitoService' ,'causaAccidenteService', 'vehiculoService', 'rangoService'],
       repositories: ['bomberoRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository', 'grupoGuardiaRepository', 'rolRepository', 'rolRepository', 'accidenteTransitoRepository', 'causaAccidenteRepository', 'vehiculoRepository', 'rangoRepository'],
@@ -284,9 +374,27 @@ async function validateDependencies(container) {
     if (!container.bomberoRepository) throw new Error('BomberoRepository no inicializado')
     if (!container.bomberoHandler) throw new Error('BomberoHandler no inicializado')
 
+    if (!container.categoriaMaterialPeligrosoService) throw new Error('CategoriaMatPelService no inicializado')
+    if (!container.categoriaMaterialPeligrosoRepository) throw new Error('categoriaMaterialPeligrosoRepository no inicializado')
+    if (!container.categoriaMaterialPeligrosoHandler) throw new Error('categoriaMaterialPeligrosoHandler no inicializado')
+
+    if (!container.accionMaterialService) throw new Error('accionMaterialService no inicializado')
+    if (!container.accionMaterialRepository) throw new Error('accionMaterialRepository no inicializado')
+    if (!container.accionMaterialHandler) throw new Error('AccionMaterialHandlerno inicializado')
+
+    if (!container.accionPersonaService) throw new Error('accionPersonaService no inicializado')
+    if (!container.accionPersonaRepository) throw new Error('accionPersonaRepository no inicializado')
+    if (!container.accionPersonaHandler) throw new Error('accionPersonaHandler no inicializado')
+
+    if (!container.tipoMatInvolucradoService) throw new Error('CategoriaMatPelService no inicializado')
+    if (!container.tipoMatInvolucradoRepository) throw new Error('categoriaMaterialPeligrosoRepository no inicializado')
+    if (!container.tipoMatInvolucradoHandler) throw new Error('categoriaMaterialPeligrosoHandler no inicializado')
+
     if (!container.usuarioService) throw new Error('UsuarioService no inicializado')
     if (!container.usuarioRepository) throw new Error('UsuarioRepository no inicializado')
     if (!container.usuarioHandler) throw new Error('UsuarioHandler no inicializado')
+    if (!container.damnificadoRepository) throw new Error('DamnificadoRepository no inicializado')
+
 
     if (!container.incidenteService) throw new Error('IncidenteService no inicializado')
     if (!container.incidenteRepository) throw new Error('IncidenteRepository no inicializado')
@@ -324,6 +432,12 @@ async function validateDependencies(container) {
     if (!container.rangoService) throw new Error('RangoService no inicializado')
     if (!container.rangoRepository) throw new Error('RangoRepository no inicializado')
     if (!container.rangoHandler) throw new Error('RangoHandler no inicializado')
+
+
+    if (!container.materialPeligrosoService) throw new Error('MaterialPeligrosoService no inicializado')
+    if (!container.materialPeligrosoRepository) throw new Error('MaterialPeligrosoRepository no inicializado')
+    if (!container.materialPeligrosoHandler) throw new Error('MaterialPeligrosoHadler no inicializado')
+    if (!container.matPelTipoMatPelRepository) throw new Error('matPelTipoMatPelRepository no inicializado')
 
     if (!container.incendioEstructuralRepository)
       throw new Error('IncendioEstructuralRepository no inicializado')
