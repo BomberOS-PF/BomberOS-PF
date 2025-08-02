@@ -50,6 +50,28 @@ legend,
   background-color: #b02118;
   border-color: #a11c15;
 }
+.toggle-btn {
+  min-width: 180px;
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border: 1px solid #6c757d;
+  background-color: #fff;
+  color: #6c757d;
+  transition: all 0.2s ease-in-out;
+}
+
+.toggle-btn:hover {
+  border: 1px solid #5499e9;
+  background-color: #fff;
+  background-color: #f8f9fa;
+}
+
+.toggle-btn.selected {
+  background-color: #dc3545; /* rojo */
+  color: #fff;
+  border: 2px solid #dc3545;
+}
 
 .btn-secondary {
   background-color: #6c757d;

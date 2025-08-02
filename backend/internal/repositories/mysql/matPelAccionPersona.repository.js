@@ -9,22 +9,21 @@ export class MySQLMatPelAccionPersonaRepository {
     if (!accionesIds.length) return
 
     const connection = await getConnection()
-    const values = accionesIds.map(idAccion => [idMatPel, idAccion])
+    const placeholders = accionesIds.map(() => '(?, ?)').join(', ')
+    const flatValues = accionesIds.flatMap(idAccion => [idMatPel, idAccion])
 
     try {
-      await connection.query(
-        'INSERT INTO matPelAccionPersona (idMatPel, idAccionPersona) VALUES ?',
-        [values]
+      await connection.execute(
+        `INSERT INTO matPelAccionPersona (idMatPel, idAccionPersona) VALUES ${placeholders}`,
+        flatValues
       )
-      logger.debug('✅ Asociadas acciones sobre personas:', {
-        idMatPel,
-        accionesIds
-      })
+      logger.debug('✅ Asociadas acciones sobre personas:', { idMatPel, accionesIds })
     } catch (error) {
       logger.error('❌ Error al asociar acciones sobre personas:', error)
       throw error
     }
   }
+
 
   /**
    * Obtiene las acciones asociadas a un material peligroso
