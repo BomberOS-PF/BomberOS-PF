@@ -73,7 +73,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
       }
 
       // Buscar el ID de la localización seleccionada
-      const localizacionSeleccionada = localizaciones.find(loc => loc.descripcion === formData.localizacion)
+      const localizacionSeleccionada = localizaciones.find(loc => loc.direccion === formData.localizacion)
       if (!localizacionSeleccionada) {
         throw new Error('Localización no válida')
       }
@@ -83,7 +83,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
         idTipoIncidente: tipoSeleccionado.idTipoIncidente,
         fecha: formData.fechaHora,
         idLocalizacion: localizacionSeleccionada.idLocalizacion,
-        descripcion: formData.lugar
+        direccion: formData.lugar
       }
 
       // Agrega datos del denunciante solo si se completaron

@@ -253,9 +253,11 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                 />
               </div>
             </div>
-
+            
+            <hr className="border-1 border-black mb-2" />
+            
             {/* Tipos de materiales involucrados */}
-            <h5 className="fw-bold text-dark mb-3">
+            <h5 className="fw-bold text-dark mb-3 my-3">
               Tipos de materiales involucrados
             </h5>
             <div className="d-flex flex-wrap gap-3">
@@ -281,8 +283,10 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
               </div>
             </div>
 
+            <hr className="border-1 border-black mb-2" />
+
             {/* Acciones sobre el material */}
-            <h5 className="fw-bold text-dark mb-3">
+            <h5 className="fw-bold text-dark mb-3 my-3">
               Acciones sobre el material
             </h5>
             <div className="d-flex flex-wrap gap-3">
@@ -307,7 +311,7 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                 })}
               </div>
 
-              <div className="form-check mt-2">
+              <div className="col-md-8">
                 <label className="form-label text-dark d-flex align-items-center gap-2">Otra acción sobre el material</label>
                 <input
                   type="text"
@@ -318,9 +322,11 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                 />
               </div>
             </div>
+            
+            <hr className="border-1 border-black mb-2" />
 
             {/* Acciones sobre las personas */}
-            <h5 className="fw-bold text-dark mb-3">
+            <h5 className="fw-bold text-dark mb-3 my-3">
               Acciones sobre las personas
             </h5>
             <div className="d-flex flex-wrap gap-3">
@@ -344,8 +350,8 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                   )
                 })}
               </div>
-
-              <div className="form-check mt-2">
+                           
+              <div className="col-md-8">
                 <label className="form-label text-dark d-flex align-items-center gap-2">Otra acción sobre las personas</label>
                 <input
                   type="text"
@@ -390,6 +396,9 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                 onChange={handleChange}
               ></textarea>
             </div>
+
+            <hr className="border-1 border-black mb-2" />
+            
             {/* Damnificados */}
             <h5 className="text-black mt-4">Personas damnificadas</h5>
             {
