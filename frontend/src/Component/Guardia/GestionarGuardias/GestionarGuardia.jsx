@@ -67,6 +67,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   const [horaDesde, setHoraDesde] = useState('')
   const [horaHasta, setHoraHasta] = useState('')
   const [mensaje, setMensaje] = useState('')
+  const [mensajesModal, setMensajesModal] = useState([])
 
   const tooltipsRef = useRef({})
   const calendarRef = useRef()
@@ -79,11 +80,9 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null)
   const [bomberosEditados, setBomberosEditados] = useState([])
   const [bomberosOriginales, setBomberosOriginales] = useState([])
-
-  // Estado para detectar cambios
   const [tieneCambios, setTieneCambios] = useState(false)
 
-  // 🔹 Detectar cambios en bomberosEditados vs bomberosOriginales
+  // Detectar cambios
   useEffect(() => {
     if (bomberosEditados.length !== bomberosOriginales.length) {
       setTieneCambios(true)
@@ -103,7 +102,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     setTieneCambios(cambios)
   }, [bomberosEditados, bomberosOriginales])
 
-  // 🔹 Fusionar bloques si se solapan o se tocan
+  // Fusionar eventos
   const fusionarEventos = (listaEventos) => {
     const ordenados = [...listaEventos].sort((a, b) => new Date(a.start) - new Date(b.start))
     const fusionados = []
@@ -134,7 +133,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     return fusionados
   }
 
-  // Actualiza tooltip
+  // Actualiza tooltips
   useEffect(() => {
     eventos.forEach((ev) => {
       const tooltip = tooltipsRef.current[ev.id]
@@ -146,14 +145,17 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     })
   }, [eventos])
 
+  // Asignar nueva guardia
   const asignarGuardia = () => {
     if (!bomberoSeleccionado || !horaDesde || !horaHasta || diaSeleccionado === null) {
       setMensaje('Debes completar todos los campos obligatorios para asignar una guardia.')
+      setTimeout(() => setMensaje(''), 3000)
       return
     }
 
     if (horaHasta <= horaDesde) {
       setMensaje('La hora de fin debe ser posterior a la hora de inicio.')
+      setTimeout(() => setMensaje(''), 3000)
       return
     }
 
@@ -249,6 +251,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     setDiaSeleccionado(null)
     setBomberoSeleccionado(null)
     setMensaje('Guardia asignada correctamente')
+    setTimeout(() => setMensaje(''), 3000)
   }
 
   if (!idGrupo) {
@@ -496,6 +499,18 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                     <button type="button" className="btn-close" onClick={() => setModalAbierto(false)}></button>
                   </div>
                   <div className="modal-body">
+
+                    {/* Alertas de validación por bombero */}
+                    {mensajesModal.length > 0 && (
+                      <div>
+                        {mensajesModal.map((mensaje, idx) => (
+                          <div key={idx} className="alert alert-warning">
+                            {mensaje}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     <p><strong>Fecha:</strong> {new Date(eventoSeleccionado.start).toLocaleDateString()}</p>
                     <table className="table table-bordered">
                       <thead>
@@ -600,10 +615,28 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                     </table>
                   </div>
                   <div className="modal-footer">
-                    <button 
-                      className="btn btn-danger" 
-                      onClick={() => setModalConfirmarGuardar(true)}
+                    <button
+                      className="btn btn-danger"
                       disabled={!tieneCambios}
+                      onClick={() => {
+                        const errores = []
+
+                        bomberosEditados.forEach((b) => {
+                          if (!b.desde || !b.hasta) {
+                            errores.push(`Debes completar todos los horarios (desde y hasta) (${b.nombre})`)
+                          } else if (b.hasta <= b.desde) {
+                            errores.push(`La hora de fin debe ser posterior a la de inicio (${b.nombre})`)
+                          }
+                        })
+
+                        if (errores.length > 0) {
+                          setMensajesModal(errores)
+                          return
+                        }
+
+                        setMensajesModal([])
+                        setModalConfirmarGuardar(true)
+                      }}
                     >
                       Confirmar
                     </button>
@@ -630,49 +663,79 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                     <button
                       className="btn btn-danger"
                       onClick={() => {
-                        const nuevasHoras = bomberosEditados.map((b) => ({
-                          inicio: b.desde,
-                          fin: b.hasta
-                        }))
-
-                        const nuevoInicio = nuevasHoras.reduce(
-                          (min, b) => (b.inicio < min ? b.inicio : min),
-                          nuevasHoras[0].inicio
-                        )
-                        const nuevoFin = nuevasHoras.reduce(
-                          (max, b) => (b.fin > max ? b.fin : max),
-                          nuevasHoras[0].fin
+                        // 1. Ordenamos bomberos
+                        const bomberosOrdenados = [...bomberosEditados].sort(
+                          (a, b) => a.desde.localeCompare(b.desde)
                         )
 
+                        // 2. Creamos bloques según huecos
+                        const nuevosBloques = []
+                        let bloqueActual = {
+                          start: bomberosOrdenados[0].desde,
+                          end: bomberosOrdenados[0].hasta,
+                          bomberos: [bomberosOrdenados[0]]
+                        }
+
+                        for (let i = 1; i < bomberosOrdenados.length; i++) {
+                          const b = bomberosOrdenados[i]
+                          if (b.desde > bloqueActual.end) {
+                            // cerramos bloque y empezamos otro
+                            nuevosBloques.push(bloqueActual)
+                            bloqueActual = {
+                              start: b.desde,
+                              end: b.hasta,
+                              bomberos: [b]
+                            }
+                          } else {
+                            // se solapan o se tocan
+                            bloqueActual.end = b.hasta > bloqueActual.end ? b.hasta : bloqueActual.end
+                            bloqueActual.bomberos.push(b)
+                          }
+                        }
+                        nuevosBloques.push(bloqueActual)
+
+                        // 3. Actualizamos eventos en el estado
                         setEventos((prev) => {
-                          const actualizados = prev.map((ev) =>
-                            ev.id === eventoSeleccionado.id
-                              ? {
-                                  ...ev,
-                                  start: new Date(
-                                    ev.start.getFullYear(),
-                                    ev.start.getMonth(),
-                                    ev.start.getDate(),
-                                    parseInt(nuevoInicio.split(':')[0]),
-                                    parseInt(nuevoInicio.split(':')[1])
-                                  ),
-                                  end: new Date(
-                                    ev.start.getFullYear(),
-                                    ev.start.getMonth(),
-                                    ev.start.getDate(),
-                                    parseInt(nuevoFin.split(':')[0]),
-                                    parseInt(nuevoFin.split(':')[1])
-                                  ),
-                                  extendedProps: { bomberos: bomberosEditados }
-                                }
-                              : ev
-                          )
-                          return fusionarEventos(actualizados)
+                          const sinEvento = prev.filter((ev) => ev.id !== eventoSeleccionado.id)
+
+                          // Creamos eventos por bloque
+                          const nuevosEventos = nuevosBloques.map((bloque, idx) => {
+                            const fechaBase = new Date(eventoSeleccionado.start)
+                            const [hStart, mStart] = bloque.start.split(':').map(Number)
+                            const [hEnd, mEnd] = bloque.end.split(':').map(Number)
+
+                            return {
+                              id: `${eventoSeleccionado.id}-split-${idx}`,
+                              title: '',
+                              start: new Date(
+                                fechaBase.getFullYear(),
+                                fechaBase.getMonth(),
+                                fechaBase.getDate(),
+                                hStart,
+                                mStart
+                              ),
+                              end: new Date(
+                                fechaBase.getFullYear(),
+                                fechaBase.getMonth(),
+                                fechaBase.getDate(),
+                                hEnd,
+                                mEnd
+                              ),
+                              backgroundColor: '#f08080',
+                              borderColor: '#b30000',
+                              textColor: 'transparent',
+                              allDay: false,
+                              extendedProps: { bomberos: bloque.bomberos }
+                            }
+                          })
+
+                          return fusionarEventos([...sinEvento, ...nuevosEventos])
                         })
 
                         setModalConfirmarGuardar(false)
                         setModalAbierto(false)
-                        alert('✅ Cambios guardados correctamente')
+                        setMensaje('Cambios guardados correctamente y bloques divididos si hubo huecos')
+                        setTimeout(() => setMensaje(''), 3000)
                       }}
                     >
                       Aceptar
