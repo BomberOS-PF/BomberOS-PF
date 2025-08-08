@@ -584,6 +584,63 @@ export function setupRoutes(app, container) {
     }
   })
 
+  // ===================== FACTOR CLIMÁTICO =====================
+    app.post('/api/factor-climatico', async (req, res) => {
+    console.log('🌍 [ROUTES] Entrando a /api/factor-climatico...')
+    try {
+      await container.factorClimaticoHandler.registrar(req, res)
+      console.log('✅ [ROUTES] Salida OK de handler')
+    } catch (error) {
+      console.error('❌ [ROUTES] Error ANTES del handler:', error.message)
+      res.status(500).json({ error: 'Error interno en routes', detalle: error.message })
+    }
+  })
+
+    app.get('/api/factor-climatico', async (req, res) => {
+      try {
+        await factorClimaticoHandler.listarTodos(req, res)
+      } catch (error) {
+        logger.error('Error en ruta listar factores climáticos:', error)
+        res.status(500).json({ error: 'Error interno' })
+      }
+    })
+
+    app.get('/api/factor-climatico/:idIncidente', async (req, res) => {
+      try {
+        await factorClimaticoHandler.obtenerPorIncidente(req, res)
+      } catch (error) {
+        logger.error('Error en ruta obtener factor climático por incidente:', error)
+        res.status(500).json({ error: 'Error interno' })
+      }
+    })
+
+    // RESCATE
+    app.post('/api/rescate', async (req, res) => {
+      try {
+        await container.rescateHandler.registrar(req, res)
+      } catch (error) {
+        logger.error('Error en ruta registrar rescate:', error)
+        res.status(500).json({ error: 'Error interno' })
+      }
+    })
+
+    app.get('/api/rescate', async (req, res) => {
+      try {
+        await container.rescateHandler.listarTodos(req, res)
+      } catch (error) {
+        logger.error('Error en ruta listar rescate:', error)
+        res.status(500).json({ error: 'Error interno' })
+      }
+    })
+
+    app.get('/api/rescate/:id', async (req, res) => {
+      try {
+        await container.rescateHandler.obtenerPorIncidente(req, res)
+      } catch (error) {
+        logger.error('Error en ruta obtener rescate por incidente:', error)
+        res.status(500).json({ error: 'Error interno' })
+      }
+    })
 
 
   app.use((req, res) => {
@@ -648,8 +705,14 @@ export function setupRoutes(app, container) {
         'POST /api/materiales-peligrosos',
         'GET /api/materiales-peligrosos',
         'GET /api/materiales-peligrosos/:id',
+        'POST /api/factor-climatico',
+        'GET /api/factor-climatico',
+        'GET /api/factor-climatico/:idIncidente',
         'GET /api/acciones-persona',
-        'GET /api/acciones-material'
+        'GET /api/acciones-material',
+        'POST /api/rescate',
+        'GET /api/rescate',
+        'GET /api/rescate/:id'
 
       ]
     })
