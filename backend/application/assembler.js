@@ -69,6 +69,15 @@ import { MySQLMatPelTipoMatPelRepository } from '../internal/repositories/mysql/
 import { MySQLMatPelAccionMaterialRepository } from '../internal/repositories/mysql/matPelAccionMaterial.repository.js'
 import { MySQLMatPelAccionPersonaRepository } from '../internal/repositories/mysql/matPelAccionPersona.repository.js'
 
+// Factor Climático
+import { FactorClimaticoHandler } from '../factorClimatico/handler.js'
+import { FactorClimaticoService } from '../internal/services/factorClimatico.service.js'
+import { MySQLFactorClimaticoRepository } from '../internal/repositories/mysql/factorClimatico.repository.js'
+
+//Rescate
+import { MySQLRescateRepository } from '../internal/repositories/mysql/rescate.repository.js'
+import { RescateService } from '../internal/services/rescate.service.js'
+import { RescateHandler } from '../rescate/handler.js'
 
 
 import { MySQLRangoRepository } from '../internal/repositories/mysql/rango.repository.js'
@@ -135,6 +144,11 @@ export async function createServer(config) {
     const matPelTipoMatPelRepository = new MySQLMatPelTipoMatPelRepository()
     const matPelAccionMaterialRepository = new MySQLMatPelAccionMaterialRepository()
     const matPelAccionPersonaRepository = new MySQLMatPelAccionPersonaRepository()
+    const factorClimaticoRepository = new MySQLFactorClimaticoRepository()
+    const rescateRepository = new MySQLRescateRepository()
+    
+    
+
 
     // Servicios
     const whatsappService = new WhatsAppService(config)
@@ -178,7 +192,11 @@ export async function createServer(config) {
     const tipoMatInvolucradoService = new TipoMatInvolucradoService(tipoMatInvolucradoRepository)
     const accionMaterialService = new AccionMaterialService(accionMaterialRepository)
     const accionPersonaService = new AccionPersonaService(accionPersonaRepository)
-
+    const factorClimaticoService = new FactorClimaticoService(
+      factorClimaticoRepository,
+      damnificadoRepository
+    )
+    const rescateService = new RescateService(rescateRepository, damnificadoRepository)
 
     // Handlers
     const bomberoHandler = new BomberoHandler(bomberoService)
@@ -207,7 +225,8 @@ export async function createServer(config) {
     const tipoMatInvolucradoHandler = new TipoMatInvolucradoHandler(tipoMatInvolucradoService)
     const accionMaterialHandler = new AccionMaterialHandler(accionMaterialService)
     const accionPersonaHandler = new AccionPersonaHandler(accionPersonaService)
-
+    const factorClimaticoHandler = new FactorClimaticoHandler(factorClimaticoService)
+    const rescateHandler = new RescateHandler(rescateService)
     const container = {
       // Repositorios principales
       bomberoRepository,
@@ -234,6 +253,8 @@ export async function createServer(config) {
       matPelTipoMatPelRepository,
       matPelAccionMaterialRepository,
       matPelAccionPersonaRepository,
+      factorClimaticoRepository,
+      rescateRepository,
 
       // Servicios
       bomberoService,
@@ -255,6 +276,8 @@ export async function createServer(config) {
       tipoMatInvolucradoService,
       accionMaterialService,
       accionPersonaService,
+      factorClimaticoService,
+      rescateService,
 
       // Handlers
       bomberoHandler,
@@ -274,6 +297,8 @@ export async function createServer(config) {
       tipoMatInvolucradoHandler,
       accionMaterialHandler,
       accionPersonaHandler,
+      factorClimaticoHandler,
+      rescateHandler,
 
       // Infraestructura
       dbConnection,
@@ -445,6 +470,13 @@ async function validateDependencies(container) {
       throw new Error('IncendioEstructuralService no inicializado')
     if (!container.incendioEstructuralHandler)
       throw new Error('IncendioEstructuralHandler no inicializado')
+
+    if (!container.factorClimaticoRepository)
+      throw new Error('FactorClimaticoRepository no inicializado')
+    if (!container.factorClimaticoService)
+      throw new Error('FactorClimaticoService no inicializado')
+    if (!container.factorClimaticoHandler)
+      throw new Error('FactorClimaticoHandler no inicializado')
 
     if (!container.dbConnection) throw new Error('Database connection no inicializada')
 
