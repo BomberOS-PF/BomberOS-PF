@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import './FormularioBombero.css'
 import '../../../Component/DisenioFormulario/DisenioFormulario.css'
-import { User, Phone, Mail, Shield, UserPlus, AlertTriangle, Home, CreditCard, TriangleAlert, Bone, PillIcon, FileText } from 'lucide-react'
+import { User, Phone, Mail, Shield, CreditCard, PillIcon } from 'lucide-react'
+import { API_URLS, apiRequest } from '../../../config/api'
 
 const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVolver, loading = false, ocultarTitulo = false }) => {
   const [rangosDisponibles, setRangosDisponibles] = useState([])
@@ -25,70 +26,61 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
     idUsuario: null
   })
 
-  useEffect(() => {
-
-    if (modo !== 'alta' && datosIniciales && rangosDisponibles.length > 0) {
-      const idRango = datosIniciales.idRango || datosIniciales.id_rango
-      const descripcionRango = rangosDisponibles.find(
-        r => r.idRango === (datosIniciales.idRango || datosIniciales.id_rango)
-      )?.descripcion || ''
-
-      const datosFormateados = {
-        dni: datosIniciales.dni || '',
-        nombre: datosIniciales.nombre || '',
-        apellido: datosIniciales.apellido || '',
-        correo: datosIniciales.correo || datosIniciales.email || '',
-        telefono: datosIniciales.telefono || datosIniciales.phone || '',
-        domicilio: datosIniciales.domicilio || datosIniciales.direccion || '',
-        legajo: datosIniciales.legajo || '',
-        antiguedad: datosIniciales.antiguedad || 0,
-        rango: idRango,
-        esDelPlan: datosIniciales.esDelPlan || datosIniciales.es_del_plan || false,
-        aptoPsicologico: datosIniciales.aptoPsicologico !== undefined ? datosIniciales.aptoPsicologico : true,
-        grupoSanguineo: datosIniciales.grupoSanguineo || datosIniciales.grupo_sanguineo || '',
-        fichaMedica: datosIniciales.fichaMedicaArchivo || datosIniciales.ficha_medica_archivo || null,
-        fichaMedicaArchivo: datosIniciales.fichaMedicaArchivo || datosIniciales.ficha_medica_archivo || null,
-        fechaFichaMedica: datosIniciales.fechaFichaMedica || datosIniciales.fecha_ficha_medica || new Date().toISOString().split('T')[0],
-        idUsuario: datosIniciales.idUsuario || datosIniciales.id_usuario || null
-      }
-
-      setFormData(datosFormateados)
-    }
-  }, [datosIniciales, modo, rangosDisponibles])
-
-
-  const handleChange = (e) => {
-    const { id, value, type, checked, files } = e.target
-    const newValue = type === 'checkbox' ? checked : type === 'file' ? files[0] : value
-
-    setFormData(prev => ({
-      ...prev,
-      [id]: newValue
-    }))
-  }
+  // Cargar rangos desde backend (apiRequest ya devuelve JSON parseado)
   useEffect(() => {
     const fetchRangos = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/rangos')
-        const data = await res.json()
-        if (res.ok && data.success) {
-          setRangosDisponibles(data.data)
+        const resp = await apiRequest(API_URLS.rangos)
+        if (resp?.success) {
+          setRangosDisponibles(resp.data || [])
         } else {
-          console.error('Error al obtener rangos:', data)
+          console.error('Error al obtener rangos:', resp)
         }
       } catch (error) {
         console.error('Error de conexión al obtener rangos:', error)
       }
     }
-
     fetchRangos()
   }, [])
 
+  // Cargar datos iniciales cuando hay modo distinto de alta y ya tenemos rangos
+  useEffect(() => {
+    if (modo !== 'alta' && datosIniciales) {
+      const idRango = datosIniciales.idRango || datosIniciales.id_rango || ''
+      setFormData(prev => ({
+        ...prev,
+        dni: datosIniciales.dni ?? prev.dni,
+        nombre: datosIniciales.nombre ?? prev.nombre,
+        apellido: datosIniciales.apellido ?? prev.apellido,
+        correo: datosIniciales.correo ?? datosIniciales.email ?? prev.correo,
+        telefono: datosIniciales.telefono ?? datosIniciales.phone ?? prev.telefono,
+        domicilio: datosIniciales.domicilio ?? datosIniciales.direccion ?? prev.domicilio,
+        legajo: datosIniciales.legajo ?? prev.legajo,
+        antiguedad: datosIniciales.antiguedad ?? prev.antiguedad ?? 0,
+        rango: idRango,
+        esDelPlan: datosIniciales.esDelPlan ?? datosIniciales.es_del_plan ?? prev.esDelPlan ?? false,
+        aptoPsicologico: datosIniciales.aptoPsicologico ?? prev.aptoPsicologico ?? true,
+        grupoSanguineo: datosIniciales.grupoSanguineo ?? datosIniciales.grupo_sanguineo ?? prev.grupoSanguineo,
+        fichaMedica: datosIniciales.fichaMedicaArchivo ?? datosIniciales.ficha_medica_archivo ?? prev.fichaMedica,
+        fichaMedicaArchivo: datosIniciales.fichaMedicaArchivo ?? datosIniciales.ficha_medica_archivo ?? prev.fichaMedicaArchivo,
+        fechaFichaMedica: datosIniciales.fechaFichaMedica ?? datosIniciales.fecha_ficha_medica ?? prev.fechaFichaMedica,
+        idUsuario: datosIniciales.idUsuario ?? datosIniciales.id_usuario ?? prev.idUsuario
+      }))
+    }
+  }, [modo, datosIniciales])
+
+  const handleChange = (e) => {
+    const { id, value, type, checked, files } = e.target
+    const newValue = type === 'checkbox' ? checked : type === 'file' ? files[0] : value
+    setFormData(prev => ({
+      ...prev,
+      [id]: newValue
+    }))
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
 
-    // Preparar datos para enviar al backend
     const dataToSend = {
       dni: formData.dni,
       nombre: formData.nombre,
@@ -103,10 +95,13 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
       aptoPsicologico: formData.aptoPsicologico,
       grupoSanguineo: formData.grupoSanguineo,
       fichaMedica: formData.fichaMedica ? 1 : null,
-      fichaMedicaArchivo: formData.fichaMedica ? (typeof formData.fichaMedica === 'string' ? formData.fichaMedica : formData.fichaMedica.name) : null, // Nombre del archivo
+      fichaMedicaArchivo: formData.fichaMedica
+        ? (typeof formData.fichaMedica === 'string' ? formData.fichaMedica : formData.fichaMedica.name)
+        : null,
       fechaFichaMedica: formData.fechaFichaMedica || null,
       idUsuario: formData.idUsuario || null
     }
+
     onSubmit(dataToSend)
   }
 
@@ -122,17 +117,11 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
         )}
 
         <form onSubmit={handleSubmit}>
-
           {modo === 'edicion' && formData.idUsuario && (
-            <input
-              type="hidden"
-              id="idUsuario"
-              value={formData.idUsuario}
-              onChange={handleChange}
-            />
+            <input type="hidden" id="idUsuario" value={formData.idUsuario} onChange={handleChange} />
           )}
 
-          {/* dni - Nombre Completo */}
+          {/* Nombre, Apellido, DNI */}
           <div className="row mb-3">
             <div className="col-md-4">
               <label htmlFor="nombre" className="form-label text-white d-flex align-items-center gap-2">
@@ -167,7 +156,8 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="dni" className="form-label text-white d-flex align-items-center gap-2"><CreditCard className="text-primary" />
+              <label htmlFor="dni" className="form-label text-white d-flex align-items-center gap-2">
+                <CreditCard className="text-primary" />
                 DNI
               </label>
               <input
@@ -188,7 +178,6 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           <div className="row mb-3 py-4">
             <div className="col-md-4">
               <label htmlFor="domicilio" className="form-label text-white d-flex align-items-center gap-2">
-                <Home className="text-purple" />
                 Domicilio
               </label>
               <input
@@ -205,7 +194,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             <div className="col-md-4">
               <label htmlFor="telefono" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
                 <Phone size={16} className="text-primary" />
-                Telefono
+                Teléfono
               </label>
               <input
                 type="tel"
@@ -221,7 +210,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="email" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
+              <label htmlFor="correo" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
                 <Mail className="text-primary" />
                 Correo electrónico
               </label>
@@ -240,11 +229,8 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           {/* Información Profesional */}
           <div className="row mb-3">
             <div className="col-md-4">
-              <label htmlFor="legajo" className="form-label text-white fw-semibold d-flex align-items-center gap-2
-                ">
-                <Mail className="text-primary" />
-                Legajo
-                <span className="badge bg-secondary text-white text-uppercase">opcional</span>
+              <label htmlFor="legajo" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
+                Legajo <span className="badge bg-secondary text-white text-uppercase ms-2">opcional</span>
               </label>
               <input
                 type="text"
@@ -258,7 +244,6 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
 
             <div className="col-md-4">
               <label htmlFor="antiguedad" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
-                <Mail className="text-primary" />
                 Antigüedad (años)
               </label>
               <input
@@ -299,9 +284,10 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           {/* Información Médica */}
           <div className="row mb-3 py-4">
             <div className="col-md-4">
-              <label htmlFor="fichaMedica" className="form-label text-white fw-semibold d-flex align-items-center gap-2">Ficha médica (PDF)</label>
+              <label htmlFor="fichaMedica" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
+                Ficha médica (PDF)
+              </label>
 
-              {/* Mostrar archivo cargado con botón ❌ */}
               {formData.fichaMedicaArchivo && typeof formData.fichaMedicaArchivo === 'string' ? (
                 <div className="d-flex align-items-center justify-content-between border rounded p-2 bg-light">
                   <small className="text-muted me-2" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -328,7 +314,6 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
                   )}
                 </div>
               ) : (
-                // Input de carga solo si no hay archivo
                 <input
                   type="file"
                   className="form-control"
@@ -341,7 +326,9 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="fechaFicha" className="form-label text-white fw-semibold d-flex align-items-center gap-2">Fecha de carga</label>
+              <label htmlFor="fechaFichaMedica" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
+                Fecha de carga
+              </label>
               <input
                 type="date"
                 className="form-control"
@@ -355,7 +342,8 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             <div className="col-md-4">
               <label htmlFor="grupoSanguineo" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
                 <PillIcon className="text-warning" />
-                Grupo Sanguíneo</label>
+                Grupo Sanguíneo
+              </label>
               <select
                 className="form-select form-control bg-secondary text-dark border-0"
                 id="grupoSanguineo"
@@ -377,7 +365,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
           </div>
 
-          {/* Checkboxes */}
+          {/* Switches */}
           <div className="row mb-3 py-4">
             <div className="col-md-6">
               <div className="form-check form-switch">
@@ -389,7 +377,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
                   onChange={handleChange}
                   disabled={soloLectura || loading}
                 />
-                <label className="form-label text-white d-flex align-items-center gap-2" htmlFor="aptoPsico">
+                <label className="form-label text-white d-flex align-items-center gap-2" htmlFor="aptoPsicologico">
                   Apto psicológico
                 </label>
               </div>
@@ -405,7 +393,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
                   onChange={handleChange}
                   disabled={soloLectura || loading}
                 />
-                <label className="form-label text-white d-flex align-items-center gap-2" htmlFor="esPlan">
+                <label className="form-label text-white d-flex align-items-center gap-2" htmlFor="esDelPlan">
                   Es del plan (guardias pagas)
                 </label>
               </div>
@@ -415,8 +403,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           {/* Botones */}
           <div className="d-grid gap-3">
             {!soloLectura && (
-              <button type="submit" className="btn btn-danger 
-              btn-lg" disabled={loading}>
+              <button type="submit" className="btn btn-danger btn-lg" disabled={loading}>
                 {loading ? 'Procesando...' : modo === 'alta' ? 'Registrar Bombero' : 'Guardar Cambios'}
               </button>
             )}

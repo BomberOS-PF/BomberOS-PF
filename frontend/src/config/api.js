@@ -55,9 +55,16 @@ export const API_URLS = {
     create: `${API_BASE_URL}/incidentes`,
     getAll: `${API_BASE_URL}/incidentes`,
     getById: (id) => `${API_BASE_URL}/incidentes/${id}`,
-    createIncendioForestal: `${API_BASE_URL}/incidentes/incendio-forestal`
+    createIncendioForestal: `${API_BASE_URL}/incidentes/incendio-forestal`,
+    createFactorClimatico: `${API_BASE_URL}/factor-climatico`,
+    createIncendioEstructural: `${API_BASE_URL}/incendio-estructural`,
+    createMaterialPeligroso: `${API_BASE_URL}/materiales-peligrosos`,
+    createRescate: `${API_BASE_URL}/rescate`,
   },
-
+  categoriasMaterialPeligroso: `${API_BASE_URL}/categorias-material-peligroso`,
+  tiposMaterialesInvolucrados: `${API_BASE_URL}/tipos-materiales-involucrados`,
+  accionesMaterial: `${API_BASE_URL}/acciones-material`,
+  accionesPersona: `${API_BASE_URL}/acciones-persona`,
   caracteristicasLugar: `${API_BASE_URL}/caracteristicas-lugar`,
   areasAfectadas: `${API_BASE_URL}/areas-afectadas`,
   tiposIncidente: `${API_BASE_URL}/tipos-incidente`,
