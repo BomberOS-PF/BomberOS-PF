@@ -32,33 +32,39 @@ const customStyles = {
     backgroundColor: '#ffffff',
     borderColor: '#dc3545',
     boxShadow: state.isFocused ? '0 0 0 2px rgba(220, 53, 69, 0.3)' : 'none',
-    '&:hover': {
-      borderColor: '#dc3545'
-    }
+    '&:hover': { borderColor: '#dc3545' }
   }),
-  singleValue: (base) => ({
-    ...base,
-    color: '#000000'
-  }),
-  menu: (base) => ({
-    ...base,
-    backgroundColor: '#ffffff',
-    zIndex: 9999
-  }),
+  singleValue: (base) => ({ ...base, color: '#000000' }),
+  menu: (base) => ({ ...base, backgroundColor: '#ffffff', zIndex: 9999 }),
   option: (base, state) => ({
     ...base,
-    backgroundColor: state.isSelected
-      ? '#dc3545'
-      : state.isFocused
-      ? '#ff6b6b'
-      : '#ffffff',
+    backgroundColor: state.isSelected ? '#dc3545' : state.isFocused ? '#ff6b6b' : '#ffffff',
     color: '#000000',
     cursor: 'pointer',
-    '&:active': {
-      backgroundColor: '#dc3545'
-    }
+    '&:active': { backgroundColor: '#dc3545' }
   })
 }
+
+// Helpers
+const isSameDay = (a, b) =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate()
+
+const overlapOrTouch = (startA, endA, startB, endB) =>
+  startA <= endB && endA >= startB
+
+const normalizarBomberos = (lista) =>
+  [...lista]
+    .map(({ nombre, desde, hasta }) => ({ nombre, desde, hasta }))
+    .sort((a, b) => {
+      const ka = `${a.nombre}#${a.desde}#${a.hasta}`
+      const kb = `${b.nombre}#${b.desde}#${b.hasta}`
+      return ka.localeCompare(kb)
+    })
+
+const igualesProfundo = (a, b) =>
+  JSON.stringify(normalizarBomberos(a)) === JSON.stringify(normalizarBomberos(b))
 
 const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) => {
   const [eventos, setEventos] = useState([])
@@ -82,58 +88,52 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   const [bomberosOriginales, setBomberosOriginales] = useState([])
   const [tieneCambios, setTieneCambios] = useState(false)
 
-  // Detectar cambios
+  // Detectar cambios (modal)
   useEffect(() => {
-    if (bomberosEditados.length !== bomberosOriginales.length) {
-      setTieneCambios(true)
-      return
-    }
-
-    const originalesMap = bomberosOriginales.reduce((acc, b) => {
-      acc[b.nombre] = { desde: b.desde, hasta: b.hasta }
-      return acc
-    }, {})
-
-    const cambios = bomberosEditados.some((b) => {
-      const original = originalesMap[b.nombre]
-      return !original || original.desde !== b.desde || original.hasta !== b.hasta
-    })
-
-    setTieneCambios(cambios)
+    setTieneCambios(!igualesProfundo(bomberosEditados, bomberosOriginales))
   }, [bomberosEditados, bomberosOriginales])
 
-  // Fusionar eventos
+  // Fusionar eventos (solo mismo día y si se solapan/tocan)
   const fusionarEventos = (listaEventos) => {
     const ordenados = [...listaEventos].sort((a, b) => new Date(a.start) - new Date(b.start))
     const fusionados = []
 
-    ordenados.forEach((ev) => {
+    for (const ev of ordenados) {
       if (fusionados.length === 0) {
-        fusionados.push(ev)
-      } else {
-        const ultimo = fusionados[fusionados.length - 1]
-        if (new Date(ev.start) <= ultimo.end || new Date(ev.start).getTime() === ultimo.end.getTime()) {
-          ultimo.end = new Date(Math.max(ultimo.end, new Date(ev.end)))
+        fusionados.push({ ...ev })
+        continue
+      }
+      const ultimo = fusionados[fusionados.length - 1]
+      const startEv = new Date(ev.start)
+      const endEv = new Date(ev.end)
+      const startUlt = new Date(ultimo.start)
+      const endUlt = new Date(ultimo.end)
 
-          const bomberosUnicos = [
-            ...ultimo.extendedProps.bomberos,
-            ...ev.extendedProps.bomberos
-          ].reduce((acc, b) => {
-            if (!acc.find((x) => x.nombre === b.nombre)) acc.push(b)
+      const mismoDia = isSameDay(startEv, startUlt)
+      const seSolapanOTocan = overlapOrTouch(startEv, endEv, startUlt, endUlt)
+
+      if (mismoDia && seSolapanOTocan) {
+        const nuevoStart = startEv < startUlt ? startEv : startUlt
+        const nuevoEnd = endEv > endUlt ? endEv : endUlt
+
+        const bomberosUnicos = [...ultimo.extendedProps.bomberos, ...ev.extendedProps.bomberos]
+          .reduce((acc, b) => {
+            if (!acc.find((x) => x.nombre === b.nombre && x.desde === b.desde && x.hasta === b.hasta)) acc.push(b)
             return acc
           }, [])
 
-          ultimo.extendedProps.bomberos = bomberosUnicos
-        } else {
-          fusionados.push(ev)
-        }
+        ultimo.start = nuevoStart
+        ultimo.end = nuevoEnd
+        ultimo.extendedProps = { bomberos: bomberosUnicos }
+      } else {
+        fusionados.push({ ...ev })
       }
-    })
+    }
 
     return fusionados
   }
 
-  // Actualiza tooltips
+  // Actualiza tooltips cuando cambian eventos
   useEffect(() => {
     eventos.forEach((ev) => {
       const tooltip = tooltipsRef.current[ev.id]
@@ -190,17 +190,19 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       eventosActualizados = eventosActualizados.map((ev) => {
         const inicioEv = new Date(ev.start)
         const finEv = new Date(ev.end)
-        const seSolapanOTocan =
-          nuevoInicioDate <= finEv || nuevoInicioDate.getTime() === finEv.getTime()
 
-        if (seSolapanOTocan) {
+        const mismoDia = isSameDay(nuevoInicioDate, inicioEv)
+        const seSolapanOTocan = overlapOrTouch(nuevoInicioDate, nuevoFinDate, inicioEv, finEv)
+
+        if (mismoDia && seSolapanOTocan) {
           fusionado = true
+
           const nuevoStart = nuevoInicioDate < inicioEv ? nuevoInicioDate : inicioEv
           const nuevoEnd = nuevoFinDate > finEv ? nuevoFinDate : finEv
 
           const bomberosActualizados = [...ev.extendedProps.bomberos]
           const yaExiste = bomberosActualizados.some(
-            (b) => b.nombre === bomberoSeleccionado.label
+            (b) => b.nombre === bomberoSeleccionado.label && b.desde === horaDesde && b.hasta === horaHasta
           )
           if (!yaExiste) {
             bomberosActualizados.push({
@@ -222,8 +224,9 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       })
 
       if (!fusionado) {
+        const id = `${fechaObjetivo.toISOString().slice(0,10)}-${horaDesde}-${horaHasta}-${bomberoSeleccionado.value}`
         eventosActualizados.push({
-          id: `${fechaObjetivo.toISOString()}-${horaDesde}`,
+          id,
           title: '',
           start: nuevoInicioDate,
           end: nuevoFinDate,
@@ -233,11 +236,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
           allDay: false,
           extendedProps: {
             bomberos: [
-              {
-                nombre: bomberoSeleccionado.label,
-                desde: horaDesde,
-                hasta: horaHasta
-              }
+              { nombre: bomberoSeleccionado.label, desde: horaDesde, hasta: horaHasta }
             ]
           }
         })
@@ -269,17 +268,13 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       <h2 className="text-black mb-4">Gestión de guardias - {nombreGrupo}</h2>
 
       {mensaje && (
-        <div
-          className={`alert ${
-            mensaje.includes('correctamente') ? 'alert-success' : 'alert-warning'
-          }`}
-        >
+        <div className={`alert ${mensaje.includes('correctamente') ? 'alert-success' : 'alert-warning'}`}>
           {mensaje}
         </div>
       )}
 
       <div className="row">
-        {/* === Columna izquierda === */}
+        {/* Columna izquierda */}
         <div className="col-md-4 mb-3">
           <h4 className="text-black">Bomberos del grupo</h4>
 
@@ -309,10 +304,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                 options={horas}
                 value={
                   horaDesde
-                    ? {
-                        label: horaDesde.split(':')[0],
-                        value: horaDesde.split(':')[0]
-                      }
+                    ? { label: horaDesde.split(':')[0], value: horaDesde.split(':')[0] }
                     : null
                 }
                 onChange={(selected) => {
@@ -323,15 +315,11 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                 placeholder="HH"
                 isClearable
               />
-
               <Select
                 options={minutos}
                 value={
                   horaDesde
-                    ? {
-                        label: horaDesde.split(':')[1],
-                        value: horaDesde.split(':')[1]
-                      }
+                    ? { label: horaDesde.split(':')[1], value: horaDesde.split(':')[1] }
                     : null
                 }
                 onChange={(selected) => {
@@ -351,10 +339,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                 options={horas}
                 value={
                   horaHasta
-                    ? {
-                        label: horaHasta.split(':')[0],
-                        value: horaHasta.split(':')[0]
-                      }
+                    ? { label: horaHasta.split(':')[0], value: horaHasta.split(':')[0] }
                     : null
                 }
                 onChange={(selected) => {
@@ -365,15 +350,11 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                 placeholder="HH"
                 isClearable
               />
-
               <Select
                 options={minutos}
                 value={
                   horaHasta
-                    ? {
-                        label: horaHasta.split(':')[1],
-                        value: horaHasta.split(':')[1]
-                      }
+                    ? { label: horaHasta.split(':')[1], value: horaHasta.split(':')[1] }
                     : null
                 }
                 onChange={(selected) => {
@@ -396,7 +377,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
           </div>
         </div>
 
-        {/* === Columna derecha Calendario + Modales === */}
+        {/* Columna derecha: Calendario + Modales */}
         <div className="col-md-8">
           <FullCalendar
             ref={calendarRef}
@@ -405,22 +386,14 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             events={eventos}
             locale={esLocale}
             firstDay={1}
-            headerToolbar={{
-              left: 'prev,next today',
-              center: 'title',
-              right: ''
-            }}
+            headerToolbar={{ left: 'prev,next today', center: 'title', right: '' }}
             allDaySlot={false}
             slotDuration="00:30:00"
-            slotLabelFormat={{
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: false
-            }}
+            slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
             eventContent={() => ({ domNodes: [] })}
             eventDidMount={(info) => {
               info.el.style.backgroundColor = '#f08080'
-              info.el.style.border = '1px solid #b30000'
+              info.el.style.border = '1px solid #b30000' // ← FIX de comillas
               info.el.style.transition = 'background-color 0.2s ease'
 
               const tooltip = document.createElement('div')
@@ -437,12 +410,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                 tooltip.style.left = `${e.pageX + 10}px`
                 tooltip.style.top = `${e.pageY - 20}px`
               })
-
               info.el.addEventListener('mousemove', (e) => {
                 tooltip.style.left = `${e.pageX + 10}px`
                 tooltip.style.top = `${e.pageY - 20}px`
               })
-
               info.el.addEventListener('mouseleave', () => {
                 info.el.style.backgroundColor = '#f08080'
                 tooltip.style.display = 'none'
@@ -457,7 +428,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             }}
           />
 
-          {/* === Modal Confirmar === */}
+          {/* Modal Confirmar */}
           {modalConfirmar && eventoPendiente && (
             <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
               <div className="modal-dialog">
@@ -474,8 +445,11 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                       className="btn btn-danger"
                       onClick={() => {
                         setEventoSeleccionado(eventoPendiente)
-                        setBomberosEditados([...eventoPendiente.extendedProps.bomberos])
-                        setBomberosOriginales([...eventoPendiente.extendedProps.bomberos])
+                        const base = [...eventoPendiente.extendedProps.bomberos]
+                        setBomberosEditados(base)
+                        setBomberosOriginales(base)
+                        setMensajesModal([])
+                        setTieneCambios(false)
                         setModalConfirmar(false)
                         setModalAbierto(true)
                       }}
@@ -489,7 +463,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             </div>
           )}
 
-          {/* === Modal Edición === */}
+          {/* Modal Edición */}
           {modalAbierto && eventoSeleccionado && (
             <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
               <div className="modal-dialog modal-lg">
@@ -499,8 +473,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                     <button type="button" className="btn-close" onClick={() => setModalAbierto(false)}></button>
                   </div>
                   <div className="modal-body">
-
-                    {/* Alertas de validación por bombero */}
                     {mensajesModal.length > 0 && (
                       <div>
                         {mensajesModal.map((mensaje, idx) => (
@@ -529,15 +501,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                               <div className="d-flex gap-2">
                                 <Select
                                   options={horas}
-                                  value={{
-                                    label: b.desde.split(':')[0],
-                                    value: b.desde.split(':')[0]
-                                  }}
+                                  value={{ label: b.desde.split(':')[0], value: b.desde.split(':')[0] }}
                                   onChange={(selected) => {
                                     const nuevo = bomberosEditados.map((item, i) =>
-                                      i === idx
-                                        ? { ...item, desde: `${selected.value}:${b.desde.split(':')[1]}` }
-                                        : item
+                                      i === idx ? { ...item, desde: `${selected.value}:${b.desde.split(':')[1]}` } : item
                                     )
                                     setBomberosEditados(nuevo)
                                   }}
@@ -546,15 +513,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                 />
                                 <Select
                                   options={minutos}
-                                  value={{
-                                    label: b.desde.split(':')[1],
-                                    value: b.desde.split(':')[1]
-                                  }}
+                                  value={{ label: b.desde.split(':')[1], value: b.desde.split(':')[1] }}
                                   onChange={(selected) => {
                                     const nuevo = bomberosEditados.map((item, i) =>
-                                      i === idx
-                                        ? { ...item, desde: `${b.desde.split(':')[0]}:${selected.value}` }
-                                        : item
+                                      i === idx ? { ...item, desde: `${b.desde.split(':')[0]}:${selected.value}` } : item
                                     )
                                     setBomberosEditados(nuevo)
                                   }}
@@ -567,15 +529,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                               <div className="d-flex gap-2">
                                 <Select
                                   options={horas}
-                                  value={{
-                                    label: b.hasta.split(':')[0],
-                                    value: b.hasta.split(':')[0]
-                                  }}
+                                  value={{ label: b.hasta.split(':')[0], value: b.hasta.split(':')[0] }}
                                   onChange={(selected) => {
                                     const nuevo = bomberosEditados.map((item, i) =>
-                                      i === idx
-                                        ? { ...item, hasta: `${selected.value}:${b.hasta.split(':')[1]}` }
-                                        : item
+                                      i === idx ? { ...item, hasta: `${selected.value}:${b.hasta.split(':')[1]}` } : item
                                     )
                                     setBomberosEditados(nuevo)
                                   }}
@@ -584,15 +541,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                 />
                                 <Select
                                   options={minutos}
-                                  value={{
-                                    label: b.hasta.split(':')[1],
-                                    value: b.hasta.split(':')[1]
-                                  }}
+                                  value={{ label: b.hasta.split(':')[1], value: b.hasta.split(':')[1] }}
                                   onChange={(selected) => {
                                     const nuevo = bomberosEditados.map((item, i) =>
-                                      i === idx
-                                        ? { ...item, hasta: `${b.hasta.split(':')[0]}:${selected.value}` }
-                                        : item
+                                      i === idx ? { ...item, hasta: `${b.hasta.split(':')[0]}:${selected.value}` } : item
                                     )
                                     setBomberosEditados(nuevo)
                                   }}
@@ -620,7 +572,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                       disabled={!tieneCambios}
                       onClick={() => {
                         const errores = []
-
                         bomberosEditados.forEach((b) => {
                           if (!b.desde || !b.hasta) {
                             errores.push(`Debes completar todos los horarios (desde y hasta) (${b.nombre})`)
@@ -628,12 +579,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                             errores.push(`La hora de fin debe ser posterior a la de inicio (${b.nombre})`)
                           }
                         })
-
                         if (errores.length > 0) {
                           setMensajesModal(errores)
                           return
                         }
-
                         setMensajesModal([])
                         setModalConfirmarGuardar(true)
                       }}
@@ -647,7 +596,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             </div>
           )}
 
-          {/* === Modal Confirmar Guardado === */}
+          {/* Modal Confirmar Guardado */}
           {modalConfirmarGuardar && eventoSeleccionado && (
             <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
               <div className="modal-dialog">
@@ -663,12 +612,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                     <button
                       className="btn btn-danger"
                       onClick={() => {
-                        // 1. Ordenamos bomberos
                         const bomberosOrdenados = [...bomberosEditados].sort(
                           (a, b) => a.desde.localeCompare(b.desde)
                         )
 
-                        // 2. Creamos bloques según huecos
                         const nuevosBloques = []
                         let bloqueActual = {
                           start: bomberosOrdenados[0].desde,
@@ -679,26 +626,18 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                         for (let i = 1; i < bomberosOrdenados.length; i++) {
                           const b = bomberosOrdenados[i]
                           if (b.desde > bloqueActual.end) {
-                            // cerramos bloque y empezamos otro
                             nuevosBloques.push(bloqueActual)
-                            bloqueActual = {
-                              start: b.desde,
-                              end: b.hasta,
-                              bomberos: [b]
-                            }
+                            bloqueActual = { start: b.desde, end: b.hasta, bomberos: [b] }
                           } else {
-                            // se solapan o se tocan
-                            bloqueActual.end = b.hasta > bloqueActual.end ? b.hasta : bloqueActual.end
+                            if (b.hasta > bloqueActual.end) bloqueActual.end = b.hasta
                             bloqueActual.bomberos.push(b)
                           }
                         }
                         nuevosBloques.push(bloqueActual)
 
-                        // 3. Actualizamos eventos en el estado
                         setEventos((prev) => {
                           const sinEvento = prev.filter((ev) => ev.id !== eventoSeleccionado.id)
 
-                          // Creamos eventos por bloque
                           const nuevosEventos = nuevosBloques.map((bloque, idx) => {
                             const fechaBase = new Date(eventoSeleccionado.start)
                             const [hStart, mStart] = bloque.start.split(':').map(Number)
