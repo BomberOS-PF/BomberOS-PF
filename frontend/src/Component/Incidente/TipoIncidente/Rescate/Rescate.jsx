@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import './Rescate.css'
 import '../../../DisenioFormulario/DisenioFormulario.css'
+import { API_URLS, apiRequest } from '../../../../config/api'
 
 const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
   const incidenteId = datosPrevios.idIncidente || datosPrevios.id || 'temp'
@@ -8,12 +9,14 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
 
   const [formData, setFormData] = useState(() => {
     const guardado = localStorage.getItem(storageKey)
-    return guardado ? JSON.parse(guardado) : {
-      lugar: '',
-      otroLugar: '',
-      detalle: '',
-      damnificados: []
-    }
+    return guardado
+      ? JSON.parse(guardado)
+      : {
+          lugar: '',
+          otroLugar: '',
+          detalle: '',
+          damnificados: []
+        }
   })
 
   const [mostrarOtroLugar, setMostrarOtroLugar] = useState(formData.lugar === 'Otro')
@@ -22,59 +25,58 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
   const [errorMsg, setErrorMsg] = useState('')
   const toastRef = useRef(null)
 
-  const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id ? {
-    id: datosPrevios.idIncidente || datosPrevios.id,
-    tipo: datosPrevios.tipoSiniestro,
-    fecha: datosPrevios.fechaHora || datosPrevios.fecha,
-    localizacion: datosPrevios.localizacion,
-    lugar: datosPrevios.lugar
-  } : null
+  // Información del incidente base
+  const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id
+    ? {
+        id: datosPrevios.idIncidente || datosPrevios.id,
+        tipo: datosPrevios.tipoSiniestro,
+        fecha: datosPrevios.fechaHora || datosPrevios.fecha,
+        localizacion: datosPrevios.localizacion,
+        lugar: datosPrevios.lugar
+      }
+    : null
 
+  // Merge con datosPrevios sin pisar damnificados ya cargados
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
       ...datosPrevios,
-      damnificados: datosPrevios.damnificados || prev.damnificados || []
+      damnificados: Array.isArray(prev.damnificados) ? prev.damnificados : []
     }))
   }, [datosPrevios])
 
+  // Mantener en sync el toggle "Otro"
+  useEffect(() => {
+    setMostrarOtroLugar((formData.lugar || '') === 'Otro')
+  }, [formData.lugar])
+
+  // Handlers
   const handleChange = (e) => {
     const { id, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [id]: value
-    }))
-    if (id === 'lugar') {
-      setMostrarOtroLugar(value === 'Otro')
-    }
+    setFormData(prev => ({ ...prev, [id]: value }))
   }
 
   const handleDamnificadoChange = (index, e) => {
     const { id, value, type, checked } = e.target
-    const updatedDamnificados = [...formData.damnificados]
-    updatedDamnificados[index][id] = type === 'checkbox' ? checked : value
-    setFormData(prev => ({
-      ...prev,
-      damnificados: updatedDamnificados
-    }))
+    const updated = [...(formData.damnificados || [])]
+    updated[index] = { ...updated[index], [id]: type === 'checkbox' ? checked : value }
+    setFormData(prev => ({ ...prev, damnificados: updated }))
   }
 
   const agregarDamnificado = () => {
     setFormData(prev => ({
       ...prev,
       damnificados: [
-        ...prev.damnificados,
+        ...(prev.damnificados || []),
         { nombre: '', apellido: '', domicilio: '', telefono: '', dni: '', fallecio: false }
       ]
     }))
   }
 
   const eliminarDamnificado = (index) => {
-    const updated = [...formData.damnificados]
-    updated.splice(index, 1)
     setFormData(prev => ({
       ...prev,
-      damnificados: updated
+      damnificados: (prev.damnificados || []).filter((_, i) => i !== index)
     }))
   }
 
@@ -83,7 +85,6 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
     alert('Datos guardados localmente. Podés continuar después.')
   }
 
-  // AHORA sí, POST al backend
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -91,32 +92,31 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
     setErrorMsg('')
 
     try {
-      // Armamos el body con los campos correctos para el backend
+      // Snapshot local
+      localStorage.setItem(storageKey, JSON.stringify(formData))
+
       const body = {
-        idIncidente: datosPrevios.idIncidente || datosPrevios.id,
+        idIncidente: incidenteId,
         lugar: formData.lugar === 'Otro' ? formData.otroLugar : formData.lugar,
         detalle: formData.detalle,
         damnificados: formData.damnificados
       }
 
-      // Mandamos el POST al backend (URL COMPLETA)
-      console.log('Enviando rescate:', body)
-      const resp = await fetch('http://localhost:3000/api/rescate', {
+      const resp = await apiRequest(API_URLS.incidentes.createRescate, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       })
 
-      const data = await resp.json()
-      if (resp.ok && data.success) {
-        setSuccessMsg('Rescate registrado correctamente')
-        setErrorMsg('')
-        localStorage.removeItem(storageKey)
-        if (onFinalizar) onFinalizar()
-      } else {
-        setErrorMsg(data.error || data.message || 'Error al registrar rescate')
-        setSuccessMsg('')
+      if (!resp?.success) {
+        throw new Error(resp?.message || 'Error al registrar rescate')
       }
+
+      const esActualizacion = !!(datosPrevios.idIncidente || datosPrevios.id)
+      setSuccessMsg(esActualizacion ? 'Rescate actualizado correctamente' : '✅ Rescate registrado correctamente')
+      setErrorMsg('')
+      localStorage.removeItem(storageKey)
+      onFinalizar?.({ idIncidente: incidenteId })
     } catch (error) {
       setErrorMsg('Error al conectar con backend: ' + error.message)
       setSuccessMsg('')
@@ -150,8 +150,13 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
 
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
-            <label className="text-black form-label">Lugar</label>
-            <select className="form-select" id="lugar" value={formData.lugar || ''} onChange={handleChange}>
+            <label htmlFor="lugar" className="text-black form-label">Lugar</label>
+            <select
+              className="form-select"
+              id="lugar"
+              value={formData.lugar || ''}
+              onChange={handleChange}
+            >
               <option disabled value="">Seleccione</option>
               <option>Arroyo</option>
               <option>Lago</option>
@@ -165,62 +170,80 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
 
           {mostrarOtroLugar && (
             <div className="mb-3">
-              <label className="text-black form-label">Describa el otro tipo de lugar</label>
-              <input type="text" className="form-control" id="otroLugar" value={formData.otroLugar || ''} onChange={handleChange} />
+              <label htmlFor="otroLugar" className="text-black form-label">Describa el otro tipo de lugar</label>
+              <input
+                type="text"
+                className="form-control"
+                id="otroLugar"
+                value={formData.otroLugar || ''}
+                onChange={handleChange}
+              />
             </div>
           )}
 
           <div className="mb-3">
-            <label className="text-black form-label">Detalle de lo sucedido</label>
-            <textarea className="form-control" rows="3" id="detalle" value={formData.detalle || ''} onChange={handleChange}></textarea>
+            <label htmlFor="detalle" className="text-black form-label">Detalle de lo sucedido</label>
+            <textarea
+              className="form-control"
+              rows="3"
+              id="detalle"
+              value={formData.detalle || ''}
+              onChange={handleChange}
+            ></textarea>
           </div>
 
           <h5 className="text-white mt-4">Personas damnificadas</h5>
 
-          {formData.damnificados.map((dam, index) => (
-            <div key={index} className="border rounded p-3 mb-3 bg-light-subtle">
-              <div className="row mb-2">
-                <div className="col">
-                  <label className="form-label text-black">Nombre</label>
-                  <input type="text" className="form-control" id="nombre" value={dam.nombre || ''} onChange={(e) => handleDamnificadoChange(index, e)} />
+          {(formData.damnificados || []).map((dam, index) => {
+            const base = `dam-${index}`
+            return (
+              <div key={index} className="border rounded p-3 mb-3 bg-light-subtle">
+                <div className="row mb-2">
+                  <div className="col">
+                    <label htmlFor={`${base}-nombre`} className="form-label text-black">Nombre</label>
+                    <input type="text" className="form-control" id="nombre" value={dam.nombre || ''} onChange={(e) => handleDamnificadoChange(index, e)} />
+                  </div>
+                  <div className="col">
+                    <label htmlFor={`${base}-apellido`} className="form-label text-black">Apellido</label>
+                    <input type="text" className="form-control" id="apellido" value={dam.apellido || ''} onChange={(e) => handleDamnificadoChange(index, e)} />
+                  </div>
                 </div>
-                <div className="col">
-                  <label className="form-label text-black">Apellido</label>
-                  <input type="text" className="form-control" id="apellido" value={dam.apellido || ''} onChange={(e) => handleDamnificadoChange(index, e)} />
+
+                <div className="row mb-2">
+                  <div className="col">
+                    <label htmlFor={`${base}-domicilio`} className="form-label text-black">Domicilio</label>
+                    <input type="text" className="form-control" id="domicilio" value={dam.domicilio || ''} onChange={(e) => handleDamnificadoChange(index, e)} />
+                  </div>
+                  <div className="col">
+                    <label htmlFor={`${base}-telefono`} className="form-label text-black">Teléfono</label>
+                    <input type="text" className="form-control" id="telefono" value={dam.telefono || ''} onChange={(e) => handleDamnificadoChange(index, e)} />
+                  </div>
+                  <div className="col">
+                    <label htmlFor={`${base}-dni`} className="form-label text-black">DNI</label>
+                    <input type="text" className="form-control" id="dni" value={dam.dni || ''} onChange={(e) => handleDamnificadoChange(index, e)} />
+                  </div>
+                </div>
+
+                <div className="form-check mb-2">
+                  <input type="checkbox" className="form-check-input" id="fallecio" checked={dam.fallecio || false} onChange={(e) => handleDamnificadoChange(index, e)} />
+                  <label className="form-check-label text-black" htmlFor="fallecio">¿Falleció?</label>
+                </div>
+
+                <div className="text-end">
+                  <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => eliminarDamnificado(index)}>❌ Eliminar</button>
                 </div>
               </div>
+            )
+          })}
 
-              <div className="row mb-2">
-                <div className="col">
-                  <label className="form-label text-black">Domicilio</label>
-                  <input type="text" className="form-control" id="domicilio" value={dam.domicilio || ''} onChange={(e) => handleDamnificadoChange(index, e)} />
-                </div>
-                <div className="col">
-                  <label className="form-label text-black">Teléfono</label>
-                  <input type="text" className="form-control" id="telefono" value={dam.telefono || ''} onChange={(e) => handleDamnificadoChange(index, e)} />
-                </div>
-                <div className="col">
-                  <label className="form-label text-black">DNI</label>
-                  <input type="text" className="form-control" id="dni" value={dam.dni || ''} onChange={(e) => handleDamnificadoChange(index, e)} />
-                </div>
-              </div>
-
-              <div className="form-check mb-2">
-                <input type="checkbox" className="form-check-input" id="fallecio" checked={dam.fallecio || false} onChange={(e) => handleDamnificadoChange(index, e)} />
-                <label className="form-check-label text-black" htmlFor="fallecio">¿Falleció?</label>
-              </div>
-
-              <div className="text-end">
-                <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => eliminarDamnificado(index)}>❌ Eliminar</button>
-              </div>
-            </div>
-          ))}
-
-          <button type="button" className="btn btn-sm btn-outline-primary mb-3" onClick={agregarDamnificado}>➕ Agregar damnificado</button>
+          <button type="button" className="btn btn-sm btn-outline-primary mb-3" onClick={agregarDamnificado}>
+            ➕ Agregar damnificado
+          </button>
 
           <button type="submit" className="btn btn-danger w-100 mt-3" disabled={loading}>
             {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Actualizar rescate' : 'Finalizar carga')}
           </button>
+
           <button type="button" className="btn btn-secondary w-100 mt-2" onClick={guardarLocalmente} disabled={loading}>
             Guardar y continuar después
           </button>

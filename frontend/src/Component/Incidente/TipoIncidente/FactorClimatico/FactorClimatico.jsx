@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import './FactorClimatico.css'
 import '../../../DisenioFormulario/DisenioFormulario.css'
+import { API_URLS, apiRequest } from '../../../../config/api'
 
 const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
   const incidenteId = datosPrevios.idIncidente || datosPrevios.id || 'temp'
@@ -97,25 +98,23 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
         damnificados: formData.damnificados
       }
 
-      const response = await fetch('http://localhost:3000/api/factor-climatico', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
+      const resp = await apiRequest(API_URLS.incidentes.createFactorClimatico, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
 
-      const data = await response.json()
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Error al registrar factor climático')
-      }
+    if (!resp?.success) {
+      throw new Error(resp?.message || 'Error al registrar factor climático')
+    }
 
-      const esActualizacion = datosPrevios.idIncidente || datosPrevios.id
-      setSuccessMsg(esActualizacion
-        ? 'Factor climático actualizado con éxito'
-        : '✅ Factor climático registrado correctamente'
-      )
-      setErrorMsg('')
-      localStorage.removeItem(storageKey)
-      if (onFinalizar) onFinalizar({ idIncidente: incidenteId })
+  const esActualizacion = !!(datosPrevios.idIncidente || datosPrevios.id)
+  setSuccessMsg(esActualizacion
+    ? 'Factor climático actualizado con éxito'
+    : '✅ Factor climático registrado correctamente'
+  )
+localStorage.removeItem(storageKey)
+onFinalizar?.({ idIncidente: incidenteId })
     } catch (error) {
       setErrorMsg(`❌ Error al registrar factor climático: ${error.message}`)
       setSuccessMsg('')
