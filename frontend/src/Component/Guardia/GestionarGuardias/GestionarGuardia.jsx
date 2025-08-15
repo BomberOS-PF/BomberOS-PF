@@ -380,60 +380,71 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
         {/* Columna derecha: Calendario + Modales */}
         <div className="col-md-8">
           <FullCalendar
-            ref={calendarRef}
-            plugins={[timeGridPlugin, interactionPlugin]}
-            initialView="timeGridWeek"
-            events={eventos}
-            locale={esLocale}
-            firstDay={1}
-            headerToolbar={{ left: 'prev,next today', center: 'title', right: '' }}
-            allDaySlot={false}
-            slotDuration="00:30:00"
-            slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
-            eventContent={() => ({ domNodes: [] })}
-            eventDidMount={(info) => {
-              // === LÓGICA ORIGINAL DE TUS TOOLTIPS (sin cambios visuales) ===
-              info.el.style.backgroundColor = '#f08080'
-              info.el.style.border = '1px solid #b30000'
-              info.el.style.transition = 'background-color 0.2s ease'
+  ref={calendarRef}
+  plugins={[timeGridPlugin, interactionPlugin]}
+  initialView="timeGridWeek"
+  events={eventos}
+  locale={esLocale}
 
-              const tooltip = document.createElement('div')
-              tooltip.className = 'tooltip-dinamico'
-              tooltip.innerText = info.event.extendedProps.bomberos
-                .map((b) => `${b.nombre} (${b.desde}-${b.hasta})`)
-                .join('\n')
-              document.body.appendChild(tooltip)
-              tooltipsRef.current[info.event.id] = tooltip
+  /* 👇 agregado: hace que arranque en 00:00 */
+  scrollTime="00:00:00"      // NEW
+  slotMinTime="00:00:00"     // NEW (opcional, muestra desde las 00:00)
 
-              info.el.addEventListener('mouseenter', (e) => {
-                info.el.style.backgroundColor = '#d52b1e'
-                tooltip.style.display = 'block'
-                tooltip.style.left = `${e.pageX + 10}px`
-                tooltip.style.top = `${e.pageY - 20}px`
-              })
-              info.el.addEventListener('mousemove', (e) => {
-                tooltip.style.left = `${e.pageX + 10}px`
-                tooltip.style.top = `${e.pageY - 20}px`
-              })
-              info.el.addEventListener('mouseleave', () => {
-                info.el.style.backgroundColor = '#f08080'
-                tooltip.style.display = 'none'
-              })
-            }}
-            eventWillUnmount={(info) => {
-              // Limpieza (no altera el comportamiento visual)
-              const tooltip = tooltipsRef.current[info.event.id]
-              if (tooltip && tooltip.parentNode) tooltip.parentNode.removeChild(tooltip)
-              delete tooltipsRef.current[info.event.id]
-            }}
-            eventClick={(info) => {
-              info.jsEvent.preventDefault()
-              const tooltip = tooltipsRef.current[info.event.id]
-              if (tooltip) tooltip.style.display = 'none'
-              setEventoPendiente(info.event)
-              setModalConfirmar(true)
-            }}
-          />
+  /* si querés, podés dejar tu datesSet, pero ya no es necesario */
+  // datesSet={() => {
+  //   const el = document.querySelector('.fc-scroller-harness .fc-scroller')
+  //   if (el) el.scrollTop = 0
+  // }}
+
+  firstDay={1}
+  headerToolbar={{ left: 'prev,next today', center: 'title', right: '' }}
+  allDaySlot={false}
+  slotDuration="00:30:00"
+  slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
+  eventContent={() => ({ domNodes: [] })}
+  eventDidMount={(info) => {
+    // === LÓGICA ORIGINAL DE TUS TOOLTIPS (sin cambios) ===
+    info.el.style.backgroundColor = '#f08080'
+    info.el.style.border = '1px solid #b30000'
+    info.el.style.transition = 'background-color 0.2s ease'
+
+    const tooltip = document.createElement('div')
+    tooltip.className = 'tooltip-dinamico'
+    tooltip.innerText = info.event.extendedProps.bomberos
+      .map((b) => `${b.nombre} (${b.desde}-${b.hasta})`)
+      .join('\n')
+    document.body.appendChild(tooltip)
+    tooltipsRef.current[info.event.id] = tooltip
+
+    info.el.addEventListener('mouseenter', (e) => {
+      info.el.style.backgroundColor = '#d52b1e'
+      tooltip.style.display = 'block'
+      tooltip.style.left = `${e.pageX + 10}px`
+      tooltip.style.top = `${e.pageY - 20}px`
+    })
+    info.el.addEventListener('mousemove', (e) => {
+      tooltip.style.left = `${e.pageX + 10}px`
+      tooltip.style.top = `${e.pageY - 20}px`
+    })
+    info.el.addEventListener('mouseleave', () => {
+      info.el.style.backgroundColor = '#f08080'
+      tooltip.style.display = 'none'
+    })
+  }}
+  eventWillUnmount={(info) => {
+    const tooltip = tooltipsRef.current[info.event.id]
+    if (tooltip && tooltip.parentNode) tooltip.parentNode.removeChild(tooltip)
+    delete tooltipsRef.current[info.event.id]
+  }}
+  eventClick={(info) => {
+    info.jsEvent.preventDefault()
+    const tooltip = tooltipsRef.current[info.event.id]
+    if (tooltip) tooltip.style.display = 'none'
+    setEventoPendiente(info.event)
+    setModalConfirmar(true)
+  }}
+/>
+
 
           {/* Modal Confirmar */}
           {modalConfirmar && eventoPendiente && (
