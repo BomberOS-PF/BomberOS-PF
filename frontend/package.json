@@ -12,11 +12,16 @@
   "dependencies": {
     "@fullcalendar/bootstrap5": "^6.1.18",
     "@fullcalendar/common": "^5.11.5",
-    "@fullcalendar/core": "^6.1.18",
+    "@fullcalendar/core": "^6.1.19",
+    "@fullcalendar/interaction": "^6.1.19",
+    "@fullcalendar/react": "^6.1.19",
+    "@fullcalendar/timegrid": "^6.1.19",
     "bootstrap": "^5.3.6",
+    "fullcalendar": "^6.1.19",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.6.0"
+    "react-router-dom": "^7.6.0",
+    "react-select": "^5.10.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

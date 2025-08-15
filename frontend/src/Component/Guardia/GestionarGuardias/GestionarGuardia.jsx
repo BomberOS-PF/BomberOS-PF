@@ -133,7 +133,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     return fusionados
   }
 
-  // Actualiza tooltips cuando cambian eventos
+  // Actualiza tooltips cuando cambian eventos (mantiene tu lógica)
   useEffect(() => {
     eventos.forEach((ev) => {
       const tooltip = tooltipsRef.current[ev.id]
@@ -160,7 +160,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     }
 
     const calendarApi = calendarRef.current?.getApi()
-    const lunesSemana = new Date(calendarApi.view.activeStart)
+    const lunesSemana = new Date(calendarApi.view.activeStart) // con firstDay=1 ya es lunes
     const fechaObjetivo = new Date(lunesSemana)
     fechaObjetivo.setDate(lunesSemana.getDate() + diaSeleccionado.value)
 
@@ -224,7 +224,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       })
 
       if (!fusionado) {
-        const id = `${fechaObjetivo.toISOString().slice(0,10)}-${horaDesde}-${horaHasta}-${bomberoSeleccionado.value}`
+        const id = `${fechaObjetivo.toISOString().slice(0,10)}-${horaDesde}-${horaHasta}-${bomberoSeleccionado.value}-${Date.now()}`
         eventosActualizados.push({
           id,
           title: '',
@@ -392,8 +392,9 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
             eventContent={() => ({ domNodes: [] })}
             eventDidMount={(info) => {
+              // === LÓGICA ORIGINAL DE TUS TOOLTIPS (sin cambios visuales) ===
               info.el.style.backgroundColor = '#f08080'
-              info.el.style.border = '1px solid #b30000' // ← FIX de comillas
+              info.el.style.border = '1px solid #b30000'
               info.el.style.transition = 'background-color 0.2s ease'
 
               const tooltip = document.createElement('div')
@@ -418,6 +419,12 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                 info.el.style.backgroundColor = '#f08080'
                 tooltip.style.display = 'none'
               })
+            }}
+            eventWillUnmount={(info) => {
+              // Limpieza (no altera el comportamiento visual)
+              const tooltip = tooltipsRef.current[info.event.id]
+              if (tooltip && tooltip.parentNode) tooltip.parentNode.removeChild(tooltip)
+              delete tooltipsRef.current[info.event.id]
             }}
             eventClick={(info) => {
               info.jsEvent.preventDefault()
@@ -571,6 +578,16 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                       className="btn btn-danger"
                       disabled={!tieneCambios}
                       onClick={() => {
+                        // Si no queda ningún bombero -> eliminar evento completo
+                        if (bomberosEditados.length === 0) {
+                          setEventos(prev => prev.filter(ev => ev.id !== eventoSeleccionado.id))
+                          setModalAbierto(false)
+                          setMensaje('Guardia eliminada porque no quedaron bomberos asignados')
+                          setTimeout(() => setMensaje(''), 3000)
+                          return
+                        }
+
+                        // Validaciones
                         const errores = []
                         bomberosEditados.forEach((b) => {
                           if (!b.desde || !b.hasta) {
@@ -644,7 +661,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                             const [hEnd, mEnd] = bloque.end.split(':').map(Number)
 
                             return {
-                              id: `${eventoSeleccionado.id}-split-${idx}`,
+                              id: `${eventoSeleccionado.id}-split-${idx}-${Date.now()}`,
                               title: '',
                               start: new Date(
                                 fechaBase.getFullYear(),
