@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import './MaterialPeligroso.css'
 import '../../../DisenioFormulario/DisenioFormulario.css'
 import { API_URLS, apiRequest } from '../../../../config/api'
+import { Flame, AlertTriangle, FileText, User } from 'lucide-react'
 
 const safeRead = (key, fallback) => {
   try {
@@ -20,9 +21,9 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
     safeRead(storageKey, {
       categoria: '',
       cantidadMateriales: '',
-      otraAccionMaterial: '',           // textarea (material)
-      otraAccionPersona: '',            // input (personas)
-      detalleAccionesPersona: '',       // textarea (personas)
+      otraAccionMaterial: '',
+      otraAccionPersona: '',
+      detalleAccionesPersona: '',
       superficieEvacuada: '',
       detalle: '',
       damnificados: []
@@ -89,11 +90,6 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
     setFormData(prev => ({ ...prev, [id]: type === 'checkbox' ? checked : value }))
   }
 
-  const toggleKey = (key) => {
-    setFormData(prev => ({ ...prev, [key]: !prev[key] }))
-  }
-
-  // ---------- DAMNIFICADOS ----------
   const handleDamnificadoChange = (index, field, value) => {
     setFormData(prev => {
       const nuevos = [...prev.damnificados]
@@ -140,29 +136,20 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
     idIncidente: Number(incidenteBasico?.id) || Number(incidenteId),
     categoria: toIntOrNull(formData.categoria),
     cantidadMateriales: toIntOrNull(formData.cantidadMateriales) ?? 0,
-
-    // material
     otraAccionMaterial: formData.otraAccionMaterial?.trim() || null,
-
-    // personas
     otraAccionPersona: formData.otraAccionPersona?.trim() || null,
     detalleOtrasAccionesPersona: formData.detalleAccionesPersona?.trim() || null,
-
     cantidadSuperficieEvacuada: formData.superficieEvacuada?.toString().trim() || null,
     detalle: formData.detalle?.trim() || null,
-
     tiposMateriales: Object.keys(formData)
       .filter((k) => k.startsWith('material') && formData[k] === true)
       .map((k) => parseInt(k.replace('material', ''), 10)),
-
     accionesMaterial: Object.keys(formData)
       .filter((k) => k.startsWith('accion') && formData[k] === true)
       .map((k) => parseInt(k.replace('accion', ''), 10)),
-
     accionesPersona: Object.keys(formData)
       .filter((k) => k.startsWith('personaAccion') && formData[k] === true)
       .map((k) => parseInt(k.replace('personaAccion', ''), 10)),
-
     damnificados: (formData.damnificados || []).map(d => ({
       nombre: d.nombre?.trim() || null,
       apellido: d.apellido?.trim() || null,
@@ -215,219 +202,233 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
     }
   }
 
-  const selectedTiposCount = tiposMaterial.filter(t => !!formData[`material${t.idTipoMatInvolucrado}`]).length
-  const selectedAccMatCount = accionesMaterial.filter(a => !!formData[`accion${a.idAccionMaterial}`]).length
-  const selectedAccPerCount = accionesPersona.filter(a => !!formData[`personaAccion${a.idAccionPersona}`]).length
-
   return (
-    <div className="container d-flex justify-content-center align-items-center">
-      <div className="formulario-consistente p-4 shadow rounded">
-        <h2 className="text-black text-center mb-4">Material Peligroso</h2>
-
-        {incidenteBasico && (
-          <div className="alert alert-info mb-4">
-            <h6 className="alert-heading">📋 Incidente Base Registrado</h6>
-            <div className="row">
-              <div className="col-md-6">
-                <strong>ID:</strong> {incidenteBasico.id}<br />
-                <strong>Tipo:</strong> {incidenteBasico.tipo}<br />
-                <strong>Fecha:</strong> {incidenteBasico.fecha}
-              </div>
-              <div className="col-md-6">
-                <strong>Localización:</strong> {incidenteBasico.localizacion}<br />
-                <strong>Lugar:</strong> {incidenteBasico.lugar}
-              </div>
-            </div>
+    <div className="container-fluid py-5">
+      <div className="text-center mb-4">
+        <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
+          <div className='bg-danger p-3 rounded-circle'>
+            <Flame size={32} color="white" />
           </div>
-        )}
+          <h1 className="fw-bold text-white fs-3 mb-0">Material Peligroso</h1>
+        </div>
+        <span className="badge bg-danger-subtle text-danger">
+          <AlertTriangle className="me-2" /> Sistema de Emergencias - Cuartel de Bomberos
+        </span>
+      </div>
 
-        <form onSubmit={handleFinalizar}>
-          {/* Categoría y cantidad */}
-          <div className="row mb-3">
-            <div className="col">
-              <label htmlFor="categoria" className="form-label text-black">Categoría</label>
-              <select
-                className="form-select"
-                id="categoria"
-                value={formData.categoria || ''}
-                onChange={handleChange}
-              >
-                <option disabled value="">Seleccione</option>
-                {categorias.map(cat => (
-                  <option key={cat.idCategoria} value={cat.idCategoria}>
-                    {cat.descripcion}
-                  </option>
-                ))}
-              </select>
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+        <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
+          <FileText />
+          <strong>Datos del incidente</strong>
+        </div>
+
+        <div className="card-body">
+          {/* Información del incidente */}
+          {incidenteBasico && (
+            <div className="alert alert-info mb-4">
+              <h6 className="alert-heading">📋 Incidente Base Registrado</h6>
+              <div className="row">
+                <div className="col-md-6">
+                  <strong>ID:</strong> {incidenteBasico.id}<br />
+                  <strong>Tipo:</strong> {incidenteBasico.tipo}<br />
+                  <strong>Fecha:</strong> {incidenteBasico.fecha}
+                </div>
+                <div className="col-md-6">
+                  <strong>Localización:</strong> {incidenteBasico.localizacion}<br />
+                  <strong>Lugar:</strong> {incidenteBasico.lugar}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleFinalizar}>
+            {/* Categoría y cantidad*/}
+            <div className="row mb-3">
+              <div className="col-md-6 py-4">
+                <label className="form-label text-dark d-flex align-items-center gap-2">
+                  <User className="text-danger" />
+                  Categoría
+                </label>
+                <select
+                  className="text-dark form-select"
+                  id="categoria"
+                  onChange={handleChange}
+                  value={formData.categoria || ''}
+                >
+                  <option disabled value="">Seleccione categoria</option>
+                  {categorias.map(cat => (
+                    <option key={cat.idCategoria} value={cat.idCategoria}>
+                      {cat.descripcion}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="col-md-6 py-4">
+                <label className="text-dark form-label">Cantidad de materiales involucrados</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  id="cantidadMateriales"
+                  value={formData.cantidadMateriales || ''}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
 
-            <div className="col">
-              <label htmlFor="cantidadMateriales" className="form-label text-black">Cantidad de materiales involucrados</label>
-              <input
-                type="number"
+            <hr className="border-1 border-black mb-2" />
+
+            {/* Tipos de materiales involucrados */}
+            <h5 className="fw-bold text-dark mb-3 my-3">
+              Tipos de materiales involucrados
+            </h5>
+            <div className="d-flex flex-wrap gap-3">
+              <div>
+                {tiposMaterial.map((tipo, index) => {
+                  const icons = ['🔥', '⚗️', '💥', '☢️', '🛢️', '🧪']
+                  const selected = formData[`material${tipo.idTipoMatInvolucrado}`]
+                  return (
+                    <button
+                      key={tipo.idTipoMatInvolucrado}
+                      type='button'
+                      className={`btn btn-lg toggle-btn me-2 mb-2 ${selected ? 'selected' : ''}`}
+                      onClick={() => setFormData(prev => ({
+                        ...prev,
+                        [`material${tipo.idTipoMatInvolucrado}`]: !selected
+                      }))}
+                    >
+                      <span className="me-2" aria-hidden="true">{icons[index % icons.length]}</span>
+                      {tipo.nombre}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <hr className="border-1 border-black mb-2" />
+
+            {/* Acciones sobre el material */}
+            <h5 className="fw-bold text-dark mb-3 my-3">
+              Acciones sobre el material
+            </h5>
+            <div className="d-flex flex-wrap gap-3">
+              <div>
+                {accionesMaterial.map((accion, index) => {
+                  const icons = ['🔥', '💨', '💧', '⚖️', '🚛']
+                  const selected = formData[`accion${accion.idAccionMaterial}`]
+                  return (
+                    <button
+                      key={accion.idAccionMaterial}
+                      type="button"
+                      className={`btn btn-lg toggle-btn me-2 mb-2 ${selected ? 'selected' : ''}`}
+                      onClick={() => setFormData(prev => ({
+                        ...prev,
+                        [`accion${accion.idAccionMaterial}`]: !selected
+                      }))}
+                    >
+                      <span className="me-2" aria-hidden="true">{icons[index % icons.length]}</span>
+                      {accion.nombre}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="col-md-8">
+                <label className="form-label text-dark d-flex align-items-center gap-2">Otra acción sobre el material</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="otraAccionMaterial"
+                  value={formData.otraAccionMaterial || ''}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            <hr className="border-1 border-black mb-2" />
+
+            {/* Acciones sobre las personas */}
+            <h5 className="fw-bold text-dark mb-3 my-3">
+              Acciones sobre las personas
+            </h5>
+            <div className="d-flex flex-wrap gap-3">
+              <div>
+                {accionesPersona.map((accion, index) => {
+                  const icons = ['🚨', '🧼', '🏠']
+                  const selected = formData[`personaAccion${accion.idAccionPersona}`]
+                  return (
+                    <button
+                      key={accion.idAccionPersona}
+                      type="button"
+                      className={`btn btn-lg toggle-btn me-2 mb-2 ${selected ? 'selected' : ''}`}
+                      onClick={() => setFormData(prev => ({
+                        ...prev,
+                        [`personaAccion${accion.idAccionPersona}`]: !selected
+                      }))}
+                    >
+                      <span className="me-2" aria-hidden="true">{icons[index % icons.length]}</span>
+                      {accion.nombre}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="col-md-8">
+                <label className="form-label text-dark d-flex align-items-center gap-2">Otra acción sobre las personas</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="otraAccionPersona"
+                  value={formData.otraAccionPersona || ''}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            {/* Detalles */}
+            <div className="mb-3">
+              <label className="text-black form-label">Detalle sobre otras acciones sobre personas</label>
+              <textarea
                 className="form-control"
-                id="cantidadMateriales"
-                value={formData.cantidadMateriales || ''}
+                rows="2"
+                id="detalleAccionesPersona"
+                value={formData.detalleAccionesPersona || ''}
                 onChange={handleChange}
-                min="1"
               />
             </div>
-          </div>
 
-          {/* Tipos de materiales (énfasis) */}
-          <div className="mb-3">
-            <div className="d-flex align-items-center justify-content-between mb-2">
-              <h5 className="fw-bold text-dark mb-0 border-start border-4 border-danger ps-2">
-                Tipos de materiales involucrados
-              </h5>
-            </div>
-            <div className="d-flex flex-wrap gap-2">
-              {tiposMaterial.map((t) => {
-                const key = `material${t.idTipoMatInvolucrado}`
-                const selected = !!formData[key]
-                return (
-                  <button
-                    key={t.idTipoMatInvolucrado}
-                    type="button"
-                    className={`btn toggle-btn ${selected ? 'selected' : ''}`}
-                    onClick={() => toggleKey(key)}
-                  >
-                    {t.nombre}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Acciones sobre el material (igual + detalle debajo) */}
-          <div className="mb-3">
-            <div className="d-flex align-items-center justify-content-between mb-2">
-              <h5 className="fw-bold text-dark mb-0 border-start border-4 border-danger ps-2">
-                Acciones sobre el material
-              </h5>
-
-            </div>
-            <div className="d-flex flex-wrap gap-2 mb-2">
-              {accionesMaterial.map((a) => {
-                const key = `accion${a.idAccionMaterial}`
-                const selected = !!formData[key]
-                return (
-                  <button
-                    key={a.idAccionMaterial}
-                    type="button"
-                    className={`btn toggle-btn ${selected ? 'selected' : ''}`}
-                    onClick={() => toggleKey(key)}
-                  >
-                    {a.nombre}
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* Detalle MATERIAL debajo */}
-            <label htmlFor="otraAccionMaterial" className="form-label text-black mt-2">
-              Detalle sobre otras acciones (material)
-            </label>
-            <textarea
-              id="otraAccionMaterial"
-              className="form-control"
-              rows="2"
-              placeholder="Describí otras acciones realizadas sobre el material…"
-              value={formData.otraAccionMaterial || ''}
-              onChange={handleChange}
-            ></textarea>
-          </div>
-
-          {/* Acciones sobre las personas (igual + detalle abajo) */}
-          <div className="mb-3">
-            <div className="d-flex align-items-center justify-content-between mb-2">
-              <h5 className="fw-bold text-dark mb-0 border-start border-4 border-danger ps-2">
-                Acciones sobre las personas
-              </h5>
-
-            </div>
-
-            <div className="d-flex flex-wrap gap-2 mb-2">
-              {accionesPersona.map((a) => {
-                const key = `personaAccion${a.idAccionPersona}`
-                const selected = !!formData[key]
-                return (
-                  <button
-                    key={a.idAccionPersona}
-                    type="button"
-                    className={`btn toggle-btn ${selected ? 'selected' : ''}`}
-                    onClick={() => toggleKey(key)}
-                  >
-                    {a.nombre}
-                  </button>
-                )
-              })}
-            </div>
-
-            <label htmlFor="otraAccionPersona" className="form-label text-black">Otra acción sobre las personas</label>
-            <input
-              type="text"
-              className="form-control"
-              id="otraAccionPersona"
-              value={formData.otraAccionPersona || ''}
-              onChange={handleChange}
-            />
-
-            {/* Detalle PERSONAS debajo */}
-            <label htmlFor="detalleAccionesPersona" className="form-label text-black mt-2">
-              Detalle sobre otras acciones (personas)
-            </label>
-            <textarea
-              className="form-control"
-              rows="2"
-              id="detalleAccionesPersona"
-              value={formData.detalleAccionesPersona || ''}
-              onChange={handleChange}
-            ></textarea>
-          </div>
-
-          {/* Superficie y detalle general */}
-          <div className="row mb-3">
-            <div className="col">
-              <label htmlFor="superficie" className="text-black form-label">
-                Superficie evacuada
-              </label>
-              <select
-                className="form-select"
-                id="superficie"
-                value={formData.superficie || ''}
+            <div className="mb-3">
+              <label className="text-black form-label">Cantidad de superficie evacuada</label>
+              <input
+                type="text"
+                className="form-control"
+                id="superficieEvacuada"
+                value={formData.superficieEvacuada || ''}
                 onChange={handleChange}
-              >
-                <option disabled value="">Seleccione</option>
-                <option>Menos de 100 m²</option>
-                <option>100 - 500 m²</option>
-                <option>500 - 1000 m²</option>
-                <option>Más de 1000 m²</option>
-              </select>
+              />
             </div>
-            <div className="col">
-              <label htmlFor="detalle" className="form-label text-black">Detalle de lo sucedido</label>
+
+            <div className="mb-3">
+              <label className="text-black form-label">Detalle de lo sucedido</label>
               <textarea
                 className="form-control"
                 rows="3"
                 id="detalle"
                 value={formData.detalle || ''}
                 onChange={handleChange}
-              ></textarea>
+              />
             </div>
-          </div>
 
-          {/* Damnificados */}
-          <h5 className="text-white mt-4">Personas damnificadas</h5>
-          {(formData.damnificados || []).map((d, index) => {
-            const base = `dam-${index}`
-            return (
+            <hr className="border-1 border-black mb-2" />
+
+            {/* Damnificados */}
+            <h5 className="text-black mt-4">Personas damnificadas</h5>
+            {formData.damnificados.map((d, index) => (
               <div key={index} className="border rounded p-3 mb-3">
                 <div className="row mb-2">
                   <div className="col">
-                    <label htmlFor={`${base}-nombre`} className="text-black form-label">Nombre</label>
+                    <label className="text-black form-label">Nombre</label>
                     <input
-                      id={`${base}-nombre`}
                       type="text"
                       className="form-control"
                       value={d.nombre}
@@ -435,9 +436,8 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                     />
                   </div>
                   <div className="col">
-                    <label htmlFor={`${base}-apellido`} className="text-black form-label">Apellido</label>
+                    <label className="text-black form-label">Apellido</label>
                     <input
-                      id={`${base}-apellido`}
                       type="text"
                       className="form-control"
                       value={d.apellido}
@@ -445,32 +445,28 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                     />
                   </div>
                 </div>
-
+                <div className="mb-2">
+                  <label className="text-black form-label">Domicilio</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={d.domicilio}
+                    onChange={(e) => handleDamnificadoChange(index, 'domicilio', e.target.value)}
+                  />
+                </div>
                 <div className="row mb-2">
                   <div className="col">
-                    <label htmlFor={`${base}-dom`} className="text-black form-label">Domicilio</label>
+                    <label className="text-black form-label">Teléfono</label>
                     <input
-                      id={`${base}-dom`}
-                      type="text"
-                      className="form-control"
-                      value={d.domicilio}
-                      onChange={(e) => handleDamnificadoChange(index, 'domicilio', e.target.value)}
-                    />
-                  </div>
-                  <div className="col">
-                    <label htmlFor={`${base}-tel`} className="text-black form-label">Teléfono</label>
-                    <input
-                      id={`${base}-tel`}
-                      type="text"
+                      type="tel"
                       className="form-control"
                       value={d.telefono}
                       onChange={(e) => handleDamnificadoChange(index, 'telefono', e.target.value)}
                     />
                   </div>
                   <div className="col">
-                    <label htmlFor={`${base}-dni`} className="text-black form-label">DNI</label>
+                    <label className="text-black form-label">DNI</label>
                     <input
-                      id={`${base}-dni`}
                       type="text"
                       className="form-control"
                       value={d.dni}
@@ -478,69 +474,56 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                     />
                   </div>
                 </div>
-
-                <div className="form-check">
+                <div className="form-check mb-2">
                   <input
-                    id={`${base}-fall`}
                     type="checkbox"
                     className="form-check-input"
                     checked={!!d.fallecio}
                     onChange={(e) => handleDamnificadoChange(index, 'fallecio', e.target.checked)}
                   />
-                  <label htmlFor={`${base}-fall`} className="text-black form-check-label">¿Falleció?</label>
+                  <label className="form-check-label text-black">¿Falleció?</label>
                 </div>
-
                 <button
                   type="button"
-                  className="btn btn-outline-danger btn-sm mt-2"
+                  className="btn btn-outline-danger btn-sm"
                   onClick={() => eliminarDamnificado(index)}
                 >
                   ❌ Eliminar damnificado
                 </button>
               </div>
-            )
-          })}
+            ))}
 
-          <button
-            type="button"
-            className="btn btn-outline-primary w-100 mb-3"
-            onClick={agregarDamnificado}
-          >
-            ➕ Agregar damnificado
-          </button>
+            <div className="d-flex justify-content-end mb-3">
+              <button type="button" className="btn btn-sm btn-success" onClick={agregarDamnificado}>
+                + Agregar damnificado
+              </button>
+            </div>
 
-          {/* BOTONES */}
-          <button
-            type="submit"
-            className="btn btn-danger w-100 mt-3"
-            disabled={loading}
-          >
-            {loading
-              ? 'Enviando...'
-              : (datosPrevios.idIncidente || datosPrevios.id)
-                ? 'Actualizar material peligroso'
-                : 'Finalizar carga'}
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary w-100 mt-2"
-            onClick={guardarLocalmente}
-            disabled={loading}
-          >
-            Guardar y continuar después
-          </button>
-        </form>
+            <button type="submit" className="btn btn-danger w-100 mt-3" disabled={loading}>
+              {loading ? 'Cargando...' : 'Finalizar carga'}
+            </button>
 
-        {errorMsg && (
-          <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">
-            {errorMsg}
-          </div>
-        )}
-        {successMsg && (
-          <div ref={toastRef} tabIndex={-1} className="alert alert-success mt-3" role="alert">
-            {successMsg}
-          </div>
-        )}
+            <button
+              type="button"
+              className="btn btn-secondary w-100 mt-2"
+              onClick={guardarLocalmente}
+              disabled={loading}
+            >
+              Guardar y continuar después
+            </button>
+          </form>
+
+          {errorMsg && (
+            <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">
+              {errorMsg}
+            </div>
+          )}
+          {successMsg && (
+            <div ref={toastRef} tabIndex={-1} className="alert alert-success mt-3" role="alert">
+              {successMsg}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

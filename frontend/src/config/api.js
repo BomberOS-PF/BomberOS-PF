@@ -1,5 +1,5 @@
-// Configuración de URLs de la API
-const API_BASE_URL = 'http://localhost:3000/api'
+// Arriba del archivo
+const API_BASE_URL =  'http://localhost:3000/api'
 
 export const API_URLS = {
   // Bomberos
@@ -25,7 +25,6 @@ export const API_URLS = {
     authenticate: `${API_BASE_URL}/usuarios/auth`,
     libresBombero: `${API_BASE_URL}/usuarios/bomberos/libres`
   },
-
   // Grupos
   grupos: {
     create: `${API_BASE_URL}/grupos`,
@@ -33,7 +32,6 @@ export const API_URLS = {
     delete: (id) => `${API_BASE_URL}/grupos/${id}`,
     obtenerBomberosDelGrupo: (id) => `${API_BASE_URL}/grupos/${id}/bomberos`,
     update: (id) => `${API_BASE_URL}/grupos/${id}`
-    
   },
   
   // Roles
@@ -50,6 +48,7 @@ export const API_URLS = {
     getAll: `${API_BASE_URL}/rangos`
   },
 
+  
   // Incidentes
   incidentes: {
     create: `${API_BASE_URL}/incidentes`,
@@ -70,6 +69,7 @@ export const API_URLS = {
   tiposIncidente: `${API_BASE_URL}/tipos-incidente`,
   localizaciones: `${API_BASE_URL}/localizaciones`,
   causasProbables: `${API_BASE_URL}/causas-probables`,
+  recuperarClave: `${API_BASE_URL}/recuperar-clave`,
 
   // Health check
   health: 'http://localhost:3000/health'
