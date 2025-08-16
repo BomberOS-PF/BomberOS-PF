@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import '../DisenioFormulario/DisenioFormulario.css'
 
+
 const RestablecerClave = ({ onVolver }) => {
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')

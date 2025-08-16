@@ -30,7 +30,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
   useEffect(() => {
     const fetchRangos = async () => {
       try {
-        const resp = await apiRequest(API_URLS.rangos)
+        const resp = await apiRequest(API_URLS.rangos.getAll)
         if (resp?.success) {
           setRangosDisponibles(resp.data || [])
         } else {
