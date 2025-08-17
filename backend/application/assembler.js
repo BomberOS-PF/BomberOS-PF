@@ -15,6 +15,10 @@ import { buildGrupoHandlers } from '../grupos/handler.js'
 import { GrupoGuardiaService } from '../internal/services/grupo-guardia.service.js'
 import { MySQLGrupoGuardiaRepository } from '../internal/repositories/mysql/grupo-guardia.repository.js'
 
+import { MySQLGuardiaAsignacionRepository } from '../internal/repositories/mysql/guardia-asignacion.repository.js'
+import { GuardiaAsignacionService } from '../internal/services/guardia-asignacion.service.js'
+import { buildGuardiaHandlers } from '../guardias/handler.js'
+
 import { MySQLDenuncianteRepository } from '../internal/repositories/mysql/denunciante.repository.js'
 import { WhatsAppService } from '../internal/services/whatsapp.service.js'
 
@@ -65,7 +69,8 @@ export async function createServer(config) {
     const vehiculoRepository = new MySQLVehiculoRepository()
     const accidenteDamnificadoRepository = new MySQLAccidenteDamnificadoRepository()
     const accidenteVehiculoRepository = new MySQLAccidenteVehiculoRepository()
-    
+    const guardiaAsignacionRepository = new MySQLGuardiaAsignacionRepository()
+
     // Servicios
     const whatsappService = new WhatsAppService(config)
     const bomberoService = new BomberoService(bomberoRepository, usuarioRepository)
@@ -84,6 +89,7 @@ export async function createServer(config) {
     const vehiculoService = new VehiculoService(vehiculoRepository)
     const damnificadoService = new DamnificadoService(damnificadoRepository)
     const accidenteVehiculoService = new AccidenteVehiculoService(accidenteVehiculoRepository)
+    const guardiaAsignacionService = new GuardiaAsignacionService(guardiaAsignacionRepository)
 
     // Handlers
     const bomberoHandler = new BomberoHandler(bomberoService)
@@ -94,7 +100,7 @@ export async function createServer(config) {
     const causaAccidenteHandler = new CausaAccidenteHandler(causaAccidenteService)
     const accidenteTransitoHandler = new AccidenteTransitoHandler(accidenteTransitoService)
     const vehiculoHandler = new VehiculoHandler(vehiculoService)
-    
+    const guardiaHandlers = buildGuardiaHandlers(guardiaAsignacionService)
 
     // Contenedor
     const container = {
@@ -110,6 +116,9 @@ export async function createServer(config) {
       grupoGuardiaRepository,
       grupoGuardiaService,
       grupoGuardiaHandler,
+      guardiaAsignacionRepository,
+      guardiaAsignacionService,
+      guardiaHandlers,
       denuncianteRepository,
       whatsappService,
       rolService,
@@ -171,6 +180,10 @@ async function validateDependencies(container) {
     if (!container.grupoGuardiaRepository) throw new Error('GrupoGuardiaRepository no inicializado')
     if (!container.grupoGuardiaService) throw new Error('GrupoGuardiaService no inicializado')
     if (!container.grupoGuardiaHandler) throw new Error('GrupoGuardiaHandler no inicializado')
+    
+    if (!container.guardiaAsignacionRepository) throw new Error('GuardiaAsignacionRepository no inicializado')
+    if (!container.guardiaAsignacionService) throw new Error('GuardiaAsignacionService no inicializado')
+    if (!container.guardiaHandlers) throw new Error('GuardiaHandlers no inicializado')
 
     if (!container.denuncianteRepository) throw new Error('DenuncianteRepository no inicializado')
     if (!container.whatsappService) throw new Error('WhatsAppService no inicializado')

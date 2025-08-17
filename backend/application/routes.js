@@ -21,7 +21,7 @@ export function setupRoutes(app, container) {
 
   app.get('/', (req, res) => res.redirect('/health'))
 
-  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler,causaAccidenteHandler, vehiculoHandler } = container
+  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler,causaAccidenteHandler, vehiculoHandler, guardiaHandlers } = container
 
   // ROLES
   app.get('/api/roles', async (req, res) => {
@@ -325,6 +325,14 @@ export function setupRoutes(app, container) {
   }
 })
 
+  // ASIGNACION DE GUARDIAS
+
+  app.post('/api/grupos/:id/guardias', guardiaHandlers.crearAsignaciones)
+  app.get('/api/grupos/:id/guardias', guardiaHandlers.obtenerAsignaciones)
+  app.delete('/api/grupos/:id/guardias', guardiaHandlers.eliminarAsignaciones)
+
+  // opcional
+  app.put('/api/grupos/:id/guardias/dia', guardiaHandlers.reemplazarDia)
 
 
 

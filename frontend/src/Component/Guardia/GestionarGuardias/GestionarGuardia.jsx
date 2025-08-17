@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
+
+import { API_URLS, apiRequest } from '../../../config/api'
+
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
@@ -45,26 +48,201 @@ const customStyles = {
   })
 }
 
+// =====================
 // Helpers
+// =====================
+
+const mergeBomberosByIdentity = (arrA = [], arrB = []) => {
+  const out = []
+  const seen = new Set()
+  for (const b of [...arrA, ...arrB]) {
+    const dniStr = b.dni != null ? String(b.dni) : ''
+    const key = `${dniStr}|${b.desde}|${b.hasta}`
+    if (!seen.has(key)) {
+      seen.add(key)
+      out.push({ ...b, dni: b.dni != null ? Number(b.dni) : b.dni })
+    }
+  }
+  return out
+}
+
 const isSameDay = (a, b) =>
   a.getFullYear() === b.getFullYear() &&
   a.getMonth() === b.getMonth() &&
   a.getDate() === b.getDate()
 
-const overlapOrTouch = (startA, endA, startB, endB) =>
-  startA <= endB && endA >= startB
+// solape estricto (no cuenta “tocan”)
+const overlaps = (startA, endA, startB, endB) => startA < endB && endA > startB
 
 const normalizarBomberos = (lista) =>
-  [...lista]
-    .map(({ nombre, desde, hasta }) => ({ nombre, desde, hasta }))
-    .sort((a, b) => {
-      const ka = `${a.nombre}#${a.desde}#${a.hasta}`
-      const kb = `${b.nombre}#${b.desde}#${b.hasta}`
-      return ka.localeCompare(kb)
-    })
+  [...(lista || [])]
+    .map(({ dni, nombre, desde, hasta }) => ({
+      dni: (dni != null ? Number(dni) : null),
+      nombre: nombre || '',
+      desde,
+      hasta
+    }))
+    .sort((a, b) =>
+      (a.dni ?? 0) - (b.dni ?? 0) ||
+      a.nombre.localeCompare(b.nombre) ||
+      a.desde.localeCompare(b.desde) ||
+      a.hasta.localeCompare(b.hasta)
+    )
 
 const igualesProfundo = (a, b) =>
   JSON.stringify(normalizarBomberos(a)) === JSON.stringify(normalizarBomberos(b))
+
+const yyyyMmDd = (d) => {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+// TOMA TODAS las asignaciones de un día desde los eventos (para el PUT /dia)
+const asignacionesDelDiaDesdeEventos = (eventos, fechaStr) => {
+  const out = []
+  for (const ev of eventos) {
+    const f = new Date(ev.start)
+    if (yyyyMmDd(f) !== fechaStr) continue
+    const lista = ev.extendedProps?.bomberos || []
+    for (const b of lista) {
+      if (!b?.dni) continue
+      out.push({ dni: Number(b.dni), desde: b.desde, hasta: b.hasta })
+    }
+  }
+  // dedupe (dni|desde|hasta)
+  const seen = new Set()
+  return out.filter(a => {
+    const k = `${a.dni}|${a.desde}|${a.hasta}`
+    if (seen.has(k)) return false
+    seen.add(k)
+    return true
+  })
+}
+
+// Eventos (front) -> asignaciones (API) (batch opcional)
+const eventosAAsignaciones = (listaEventos) => {
+  const out = []
+  for (const ev of listaEventos) {
+    const f = new Date(ev.start)
+    const fechaStr = yyyyMmDd(f)
+    for (const b of ev.extendedProps?.bomberos || []) {
+      const dni = Number(b.dni ?? b.value)
+      if (!dni) continue
+      out.push({ fecha: fechaStr, dni, desde: b.desde, hasta: b.hasta })
+    }
+  }
+  return out
+}
+
+// Asignaciones (API) -> eventos (front) en bloques disjuntos por día
+const asignacionesAEventos = (rows, nombreByDni = new Map()) => {
+  if (!Array.isArray(rows)) return []
+
+  const norm = rows.map((a) => {
+    let fechaStr
+    if (a.fecha instanceof Date) fechaStr = a.fecha.toISOString().slice(0, 10)
+    else if (typeof a.fecha === 'string') fechaStr = a.fecha.slice(0, 10)
+    else {
+      const d = new Date(a.fecha)
+      fechaStr = isNaN(d) ? '' : d.toISOString().slice(0, 10)
+    }
+
+    const hDesde = (a.hora_desde || a.desde || '').toString().slice(0, 5)
+    const hHasta = (a.hora_hasta || a.hasta || '').toString().slice(0, 5)
+
+    return {
+      idGrupo: Number(a.idGrupo ?? a.id_grupo ?? a.grupoId ?? a.grupo_id),
+      fecha: fechaStr,
+      dni: Number(a.dni),
+      hora_desde: hDesde,
+      hora_hasta: hHasta
+    }
+  }).filter(x =>
+    x.idGrupo && x.fecha && x.hora_desde && x.hora_hasta && !Number.isNaN(x.dni)
+  )
+
+  const porDia = {}
+  for (const a of norm) {
+    const key = `${a.idGrupo}-${a.fecha}`
+    if (!porDia[key]) porDia[key] = []
+    porDia[key].push(a)
+  }
+
+  const eventos = []
+  for (const key in porDia) {
+    const arr = porDia[key].sort((x, y) => x.hora_desde.localeCompare(y.hora_desde))
+    const [y, m, d] = arr[0].fecha.split('-').map(Number)
+
+    let bloqueStart = arr[0].hora_desde
+    let bloqueEnd   = arr[0].hora_hasta
+    let bloqueBom   = [{
+      nombre: nombreByDni.get(arr[0].dni) || '',
+      dni: arr[0].dni,
+      desde: arr[0].hora_desde,
+      hasta: arr[0].hora_hasta
+    }]
+
+    for (let i = 1; i < arr.length; i++) {
+      const a = arr[i]
+      const overlapEstricto = a.hora_desde < bloqueEnd // NO une si solo "tocan"
+
+      if (overlapEstricto) {
+        if (a.hora_hasta > bloqueEnd) bloqueEnd = a.hora_hasta
+        bloqueBom.push({
+          nombre: nombreByDni.get(a.dni) || '',
+          dni: a.dni,
+          desde: a.hora_desde,
+          hasta: a.hora_hasta
+        })
+      } else {
+        const [hs, ms] = bloqueStart.split(':').map(Number)
+        const [he, me] = bloqueEnd.split(':').map(Number)
+        eventos.push({
+          id: `srv-${key}-${bloqueStart}-${bloqueEnd}`,
+          title: '',
+          start: new Date(y, (m || 1) - 1, d || 1, hs || 0, ms || 0),
+          end:   new Date(y, (m || 1) - 1, d || 1, he || 0, me || 0),
+          backgroundColor: '#f08080',
+          borderColor: '#b30000',
+          textColor: 'transparent',
+          allDay: false,
+          extendedProps: { bomberos: bloqueBom }
+        })
+
+        bloqueStart = a.hora_desde
+        bloqueEnd   = a.hora_hasta
+        bloqueBom   = [{
+          nombre: nombreByDni.get(a.dni) || '',
+          dni: a.dni,
+          desde: a.hora_desde,
+          hasta: a.hora_hasta
+        }]
+      }
+    }
+
+    const [hs, ms] = bloqueStart.split(':').map(Number)
+    const [he, me] = bloqueEnd.split(':').map(Number)
+    eventos.push({
+      id: `srv-${key}-${eventos.length}`,
+      title: '',
+      start: new Date(y, (m || 1) - 1, d || 1, hs || 0, ms || 0),
+      end:   new Date(y, (m || 1) - 1, d || 1, he || 0, me || 0),
+      backgroundColor: '#f08080',
+      borderColor: '#b30000',
+      textColor: 'transparent',
+      allDay: false,
+      extendedProps: { bomberos: bloqueBom }
+    })
+  }
+
+  return eventos
+}
+
+// =====================
+// Componente
+// =====================
 
 const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) => {
   const [eventos, setEventos] = useState([])
@@ -75,8 +253,13 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   const [mensaje, setMensaje] = useState('')
   const [mensajesModal, setMensajesModal] = useState([])
 
+  const [cargandoSemana, setCargandoSemana] = useState(false)
+  const [guardando, setGuardando] = useState(false)
+
   const tooltipsRef = useRef({})
   const calendarRef = useRef()
+  const ultimaConsultaRef = useRef('')
+  const ultimoRangoRef = useRef({ start: null, end: null })
 
   // Estados modal
   const [modalAbierto, setModalAbierto] = useState(false)
@@ -93,7 +276,13 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     setTieneCambios(!igualesProfundo(bomberosEditados, bomberosOriginales))
   }, [bomberosEditados, bomberosOriginales])
 
-  // Fusionar eventos (solo mismo día y si se solapan/tocan)
+  const nombrePorDni = useMemo(() => {
+    const m = new Map()
+    for (const b of bomberos) m.set(Number(b.dni), `${b.nombre} ${b.apellido}`)
+    return m
+  }, [bomberos])
+
+  // Fusionar eventos (solo si se solapan)
   const fusionarEventos = (listaEventos) => {
     const ordenados = [...listaEventos].sort((a, b) => new Date(a.start) - new Date(b.start))
     const fusionados = []
@@ -110,17 +299,19 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       const endUlt = new Date(ultimo.end)
 
       const mismoDia = isSameDay(startEv, startUlt)
-      const seSolapanOTocan = overlapOrTouch(startEv, endEv, startUlt, endUlt)
+      const seSolapan = overlaps(startEv, endEv, startUlt, endUlt)
 
-      if (mismoDia && seSolapanOTocan) {
+      if (mismoDia && seSolapan) {
         const nuevoStart = startEv < startUlt ? startEv : startUlt
         const nuevoEnd = endEv > endUlt ? endEv : endUlt
 
-        const bomberosUnicos = [...ultimo.extendedProps.bomberos, ...ev.extendedProps.bomberos]
-          .reduce((acc, b) => {
-            if (!acc.find((x) => x.nombre === b.nombre && x.desde === b.desde && x.hasta === b.hasta)) acc.push(b)
-            return acc
-          }, [])
+        const bomberosUnicos = mergeBomberosByIdentity(
+          ultimo.extendedProps.bomberos,
+          ev.extendedProps.bomberos
+        ).sort((a,b) =>
+          a.desde.localeCompare(b.desde) ||
+          (Number(a.dni) - Number(b.dni))
+        )
 
         ultimo.start = nuevoStart
         ultimo.end = nuevoEnd
@@ -133,19 +324,21 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     return fusionados
   }
 
-  // Actualiza tooltips cuando cambian eventos (mantiene tu lógica)
+  // Actualiza tooltips cuando cambian eventos
   useEffect(() => {
     eventos.forEach((ev) => {
       const tooltip = tooltipsRef.current[ev.id]
       if (tooltip) {
-        tooltip.innerText = ev.extendedProps.bomberos
-          .map((b) => `${b.nombre} (${b.desde}-${b.hasta})`)
+        tooltip.innerText = (ev.extendedProps.bomberos || [])
+          .slice()
+          .sort((a,b)=> a.desde.localeCompare(b.desde) || (Number(a.dni)-Number(b.dni)))
+          .map((b) => `${b.nombre || nombrePorDni.get(Number(b.dni)) || b.dni} (${b.desde}-${b.hasta})`)
           .join('\n')
       }
     })
-  }, [eventos])
+  }, [eventos, nombrePorDni])
 
-  // Asignar nueva guardia
+  // Asignar nueva guardia (y persistir 1 asignación)
   const asignarGuardia = () => {
     if (!bomberoSeleccionado || !horaDesde || !horaHasta || diaSeleccionado === null) {
       setMensaje('Debes completar todos los campos obligatorios para asignar una guardia.')
@@ -190,11 +383,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       eventosActualizados = eventosActualizados.map((ev) => {
         const inicioEv = new Date(ev.start)
         const finEv = new Date(ev.end)
-
         const mismoDia = isSameDay(nuevoInicioDate, inicioEv)
-        const seSolapanOTocan = overlapOrTouch(nuevoInicioDate, nuevoFinDate, inicioEv, finEv)
+        const seSolapan = overlaps(nuevoInicioDate, nuevoFinDate, inicioEv, finEv)
 
-        if (mismoDia && seSolapanOTocan) {
+        if (mismoDia && seSolapan) {
           fusionado = true
 
           const nuevoStart = nuevoInicioDate < inicioEv ? nuevoInicioDate : inicioEv
@@ -202,11 +394,13 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
 
           const bomberosActualizados = [...ev.extendedProps.bomberos]
           const yaExiste = bomberosActualizados.some(
-            (b) => b.nombre === bomberoSeleccionado.label && b.desde === horaDesde && b.hasta === horaHasta
+            (b) => Number(b.dni) === Number(bomberoSeleccionado.value) &&
+                   b.desde === horaDesde && b.hasta === horaHasta
           )
           if (!yaExiste) {
             bomberosActualizados.push({
               nombre: bomberoSeleccionado.label,
+              dni: bomberoSeleccionado.value,
               desde: horaDesde,
               hasta: horaHasta
             })
@@ -219,7 +413,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             extendedProps: { bomberos: bomberosActualizados }
           }
         }
-
         return ev
       })
 
@@ -236,7 +429,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
           allDay: false,
           extendedProps: {
             bomberos: [
-              { nombre: bomberoSeleccionado.label, desde: horaDesde, hasta: horaHasta }
+              { nombre: bomberoSeleccionado.label,
+                dni: bomberoSeleccionado.value,
+                desde: horaDesde,
+                hasta: horaHasta }
             ]
           }
         })
@@ -245,12 +441,98 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       return fusionarEventos(eventosActualizados)
     })
 
+    // Persisto esa única asignación
+    const fechaStr = yyyyMmDd(fechaObjetivo)
+
+    setGuardando(true)
+    apiRequest(API_URLS.grupos.guardias.crear(idGrupo), {
+      method: 'POST',
+      body: JSON.stringify({
+        asignaciones: [{
+          fecha: fechaStr,
+          dni: Number(bomberoSeleccionado.value),
+          desde: horaDesde,
+          hasta: horaHasta
+        }]
+      })
+    })
+      .then(() => {
+        setMensaje('Guardia asignada y guardada en el servidor')
+        const api = calendarRef.current?.getApi()
+        if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
+        setTimeout(() => setMensaje(''), 3000)
+      })
+      .catch((e) => {
+        console.error(e)
+        setMensaje(`Se creó en pantalla, pero falló al guardar en el servidor: ${e.message}`)
+        const api = calendarRef.current?.getApi()
+        if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
+        setTimeout(() => setMensaje(''), 5000)
+      })
+      .finally(() => setGuardando(false))
+
     setHoraDesde('')
     setHoraHasta('')
     setDiaSeleccionado(null)
     setBomberoSeleccionado(null)
-    setMensaje('Guardia asignada correctamente')
-    setTimeout(() => setMensaje(''), 3000)
+  }
+
+  const bomberoNombreByDni = useMemo(() => {
+    const m = new Map()
+    for (const b of bomberos) m.set(Number(b.dni), `${b.nombre} ${b.apellido}`)
+    return m
+  }, [bomberos])
+
+  const cargarSemanaServidor = async (startDate, endDate) => {
+    if (!idGrupo) return
+    try {
+      setCargandoSemana(true)
+      const start = yyyyMmDd(startDate)
+      const end = yyyyMmDd(endDate) // exclusivo en backend
+      const clave = `${idGrupo}|${start}|${end}`
+      ultimaConsultaRef.current = clave
+
+      const resp = await apiRequest(API_URLS.grupos.guardias.listar(idGrupo, start, end))
+      const rows = resp?.data || []
+      const nuevos = asignacionesAEventos(rows, nombrePorDni)
+
+      if (ultimaConsultaRef.current === clave) {
+        setEventos(nuevos)
+      }
+    } catch (e) {
+      setMensaje(`Error al cargar semana: ${e.message}`)
+      setTimeout(() => setMensaje(''), 4000)
+    } finally {
+      setCargandoSemana(false)
+    }
+  }
+
+  // (helper manual)
+  const guardarEnServidor = async () => {
+    try {
+      if (!idGrupo) return
+      setGuardando(true)
+      const asignaciones = eventosAAsignaciones(eventos)
+      if (asignaciones.length === 0) {
+        setMensaje('No hay asignaciones para guardar')
+        setTimeout(() => setMensaje(''), 3000)
+        return
+      }
+
+      const resp = await apiRequest(API_URLS.grupos.guardias.crear(idGrupo), {
+        method: 'POST',
+        body: JSON.stringify({ asignaciones })
+      })
+
+      if (!resp?.success) throw new Error(resp?.error || 'Error al guardar')
+      setMensaje('Guardias guardadas en el servidor correctamente')
+      setTimeout(() => setMensaje(''), 3000)
+    } catch (e) {
+      setMensaje(`Error al guardar: ${e.message}`)
+      setTimeout(() => setMensaje(''), 4000)
+    } finally {
+      setGuardando(false)
+    }
   }
 
   if (!idGrupo) {
@@ -268,7 +550,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       <h2 className="text-black mb-4">Gestión de guardias - {nombreGrupo}</h2>
 
       {mensaje && (
-        <div className={`alert ${mensaje.includes('correctamente') ? 'alert-success' : 'alert-warning'}`}>
+        <div className={`alert ${mensaje.includes('correctamente') || mensaje.includes('servidor') ? 'alert-success' : 'alert-warning'}`}>
           {mensaje}
         </div>
       )}
@@ -368,8 +650,8 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
               />
             </div>
 
-            <button className="btn btn-danger me-3 w-100 mt-3" onClick={asignarGuardia}>
-              Guardar
+            <button className="btn btn-danger me-3 w-100 mt-3" onClick={asignarGuardia} disabled={guardando}>
+              {guardando ? 'Guardando…' : 'Guardar'}
             </button>
             <button className="btn btn-secondary mt-2 w-100" onClick={onVolver}>
               Volver
@@ -380,71 +662,72 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
         {/* Columna derecha: Calendario + Modales */}
         <div className="col-md-8">
           <FullCalendar
-  ref={calendarRef}
-  plugins={[timeGridPlugin, interactionPlugin]}
-  initialView="timeGridWeek"
-  events={eventos}
-  locale={esLocale}
+            ref={calendarRef}
+            plugins={[timeGridPlugin, interactionPlugin]}
+            initialView="timeGridWeek"
+            events={eventos}
+            locale={esLocale}
+            scrollTime="00:00:00"
+            slotMinTime="00:00:00"
+            firstDay={1}
+            headerToolbar={{ left: 'prev,next today', center: 'title', right: '' }}
+            allDaySlot={false}
+            slotDuration="00:30:00"
+            slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
+            eventContent={() => ({ domNodes: [] })}
+            eventDidMount={(info) => {
+              info.el.style.backgroundColor = '#f08080'
+              info.el.style.border = '1px solid #b30000'
+              info.el.style.transition = 'background-color 0.2s ease'
 
-  /* 👇 agregado: hace que arranque en 00:00 */
-  scrollTime="00:00:00"      // NEW
-  slotMinTime="00:00:00"     // NEW (opcional, muestra desde las 00:00)
+              const tooltip = document.createElement('div')
+              tooltip.className = 'tooltip-dinamico'
 
-  /* si querés, podés dejar tu datesSet, pero ya no es necesario */
-  // datesSet={() => {
-  //   const el = document.querySelector('.fc-scroller-harness .fc-scroller')
-  //   if (el) el.scrollTop = 0
-  // }}
+              document.body.appendChild(tooltip)
+              tooltipsRef.current[info.event.id] = tooltip
+              const lista = info.event.extendedProps?.bomberos || []
+              tooltip.innerText = lista
+                .slice()
+                .sort((a,b)=> a.desde.localeCompare(b.desde) || (Number(a.dni)-Number(b.dni)))
+                .map((b) => `${b.nombre || nombrePorDni.get(Number(b.dni)) || b.dni} (${b.desde}-${b.hasta})`)
+                .join('\n')
 
-  firstDay={1}
-  headerToolbar={{ left: 'prev,next today', center: 'title', right: '' }}
-  allDaySlot={false}
-  slotDuration="00:30:00"
-  slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
-  eventContent={() => ({ domNodes: [] })}
-  eventDidMount={(info) => {
-    // === LÓGICA ORIGINAL DE TUS TOOLTIPS (sin cambios) ===
-    info.el.style.backgroundColor = '#f08080'
-    info.el.style.border = '1px solid #b30000'
-    info.el.style.transition = 'background-color 0.2s ease'
-
-    const tooltip = document.createElement('div')
-    tooltip.className = 'tooltip-dinamico'
-    tooltip.innerText = info.event.extendedProps.bomberos
-      .map((b) => `${b.nombre} (${b.desde}-${b.hasta})`)
-      .join('\n')
-    document.body.appendChild(tooltip)
-    tooltipsRef.current[info.event.id] = tooltip
-
-    info.el.addEventListener('mouseenter', (e) => {
-      info.el.style.backgroundColor = '#d52b1e'
-      tooltip.style.display = 'block'
-      tooltip.style.left = `${e.pageX + 10}px`
-      tooltip.style.top = `${e.pageY - 20}px`
-    })
-    info.el.addEventListener('mousemove', (e) => {
-      tooltip.style.left = `${e.pageX + 10}px`
-      tooltip.style.top = `${e.pageY - 20}px`
-    })
-    info.el.addEventListener('mouseleave', () => {
-      info.el.style.backgroundColor = '#f08080'
-      tooltip.style.display = 'none'
-    })
-  }}
-  eventWillUnmount={(info) => {
-    const tooltip = tooltipsRef.current[info.event.id]
-    if (tooltip && tooltip.parentNode) tooltip.parentNode.removeChild(tooltip)
-    delete tooltipsRef.current[info.event.id]
-  }}
-  eventClick={(info) => {
-    info.jsEvent.preventDefault()
-    const tooltip = tooltipsRef.current[info.event.id]
-    if (tooltip) tooltip.style.display = 'none'
-    setEventoPendiente(info.event)
-    setModalConfirmar(true)
-  }}
-/>
-
+              info.el.addEventListener('mouseenter', (e) => {
+                info.el.style.backgroundColor = '#d52b1e'
+                tooltip.style.display = 'block'
+                tooltip.style.left = `${e.pageX + 10}px`
+                tooltip.style.top = `${e.pageY - 20}px`
+              })
+              info.el.addEventListener('mousemove', (e) => {
+                tooltip.style.left = `${e.pageX + 10}px`
+                tooltip.style.top = `${e.pageY - 20}px`
+              })
+              info.el.addEventListener('mouseleave', () => {
+                info.el.style.backgroundColor = '#f08080'
+                tooltip.style.display = 'none'
+              })
+            }}
+            eventWillUnmount={(info) => {
+              const tooltip = tooltipsRef.current[info.event.id]
+              if (tooltip && tooltip.parentNode) tooltip.parentNode.removeChild(tooltip)
+              delete tooltipsRef.current[info.event.id]
+            }}
+            eventClick={(info) => {
+              info.jsEvent.preventDefault()
+              const tooltip = tooltipsRef.current[info.event.id]
+              if (tooltip) tooltip.style.display = 'none'
+              setEventoPendiente(info.event)
+              setModalConfirmar(true)
+            }}
+            datesSet={(arg) => {
+              const s = arg.start?.toISOString?.() || ''
+              const e = arg.end?.toISOString?.() || ''
+              if (ultimoRangoRef.current.start !== s || ultimoRangoRef.current.end !== e) {
+                ultimoRangoRef.current = { start: s, end: e }
+                cargarSemanaServidor(arg.start, arg.end)
+              }
+            }}
+          />
 
           {/* Modal Confirmar */}
           {modalConfirmar && eventoPendiente && (
@@ -463,7 +746,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                       className="btn btn-danger"
                       onClick={() => {
                         setEventoSeleccionado(eventoPendiente)
-                        const base = [...eventoPendiente.extendedProps.bomberos]
+                        const base = eventoPendiente.extendedProps.bomberos.map(b => ({
+                          ...b,
+                          nombre: b.nombre || nombrePorDni.get(Number(b.dni)) || String(b.dni)
+                        }))
                         setBomberosEditados(base)
                         setBomberosOriginales(base)
                         setMensajesModal([])
@@ -589,7 +875,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                       className="btn btn-danger"
                       disabled={!tieneCambios}
                       onClick={() => {
-                        // Si no queda ningún bombero -> eliminar evento completo
                         if (bomberosEditados.length === 0) {
                           setEventos(prev => prev.filter(ev => ev.id !== eventoSeleccionado.id))
                           setModalAbierto(false)
@@ -598,7 +883,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                           return
                         }
 
-                        // Validaciones
                         const errores = []
                         bomberosEditados.forEach((b) => {
                           if (!b.desde || !b.hasta) {
@@ -639,7 +923,8 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                   <div className="modal-footer">
                     <button
                       className="btn btn-danger"
-                      onClick={() => {
+                      onClick={async () => {
+                        // Recalcular bloques para el evento editado
                         const bomberosOrdenados = [...bomberosEditados].sort(
                           (a, b) => a.desde.localeCompare(b.desde)
                         )
@@ -663,46 +948,62 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                         }
                         nuevosBloques.push(bloqueActual)
 
-                        setEventos((prev) => {
-                          const sinEvento = prev.filter((ev) => ev.id !== eventoSeleccionado.id)
+                        // ===> 1) Construyo los nuevos eventos COMPLETOS primero (fuera del setState)
+                        const fechaBase = new Date(eventoSeleccionado.start)
+                        const sinEvento = eventos.filter((ev) => ev.id !== eventoSeleccionado.id)
 
-                          const nuevosEventos = nuevosBloques.map((bloque, idx) => {
-                            const fechaBase = new Date(eventoSeleccionado.start)
-                            const [hStart, mStart] = bloque.start.split(':').map(Number)
-                            const [hEnd, mEnd] = bloque.end.split(':').map(Number)
-
-                            return {
-                              id: `${eventoSeleccionado.id}-split-${idx}-${Date.now()}`,
-                              title: '',
-                              start: new Date(
-                                fechaBase.getFullYear(),
-                                fechaBase.getMonth(),
-                                fechaBase.getDate(),
-                                hStart,
-                                mStart
-                              ),
-                              end: new Date(
-                                fechaBase.getFullYear(),
-                                fechaBase.getMonth(),
-                                fechaBase.getDate(),
-                                hEnd,
-                                mEnd
-                              ),
-                              backgroundColor: '#f08080',
-                              borderColor: '#b30000',
-                              textColor: 'transparent',
-                              allDay: false,
-                              extendedProps: { bomberos: bloque.bomberos }
-                            }
-                          })
-
-                          return fusionarEventos([...sinEvento, ...nuevosEventos])
+                        const nuevosEventos = nuevosBloques.map((bloque, idx) => {
+                          const [hStart, mStart] = bloque.start.split(':').map(Number)
+                          const [hEnd, mEnd] = bloque.end.split(':').map(Number)
+                          return {
+                            id: `${eventoSeleccionado.id}-split-${idx}-${Date.now()}`,
+                            title: '',
+                            start: new Date(
+                              fechaBase.getFullYear(),
+                              fechaBase.getMonth(),
+                              fechaBase.getDate(),
+                              hStart, mStart
+                            ),
+                            end: new Date(
+                              fechaBase.getFullYear(),
+                              fechaBase.getMonth(),
+                              fechaBase.getDate(),
+                              hEnd, mEnd
+                            ),
+                            backgroundColor: '#f08080',
+                            borderColor: '#b30000',
+                            textColor: 'transparent',
+                            allDay: false,
+                            extendedProps: { bomberos: bloque.bomberos }
+                          }
                         })
+
+                        const merged = fusionarEventos([...sinEvento, ...nuevosEventos])
+
+                        // ===> 2) Actualizo UI con 'merged'
+                        setEventos(merged)
+
+                        // ===> 3) Persisto TODO el día con lo que hay en 'merged'
+                        const fechaStr = yyyyMmDd(fechaBase)
+                        const asignacionesDia = asignacionesDelDiaDesdeEventos(merged, fechaStr)
+
+                        try {
+                          await apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
+                            method: 'PUT',
+                            body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDia })
+                          })
+                          setMensaje('Cambios guardados en el servidor para ese día')
+                          const api = calendarRef.current?.getApi()
+                          if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
+                          setTimeout(() => setMensaje(''), 3000)
+                        } catch (e) {
+                          console.error(e)
+                          setMensaje(`Se actualizó en pantalla, pero falló al guardar en el servidor: ${e.message}`)
+                          setTimeout(() => setMensaje(''), 5000)
+                        }
 
                         setModalConfirmarGuardar(false)
                         setModalAbierto(false)
-                        setMensaje('Cambios guardados correctamente y bloques divididos si hubo huecos')
-                        setTimeout(() => setMensaje(''), 3000)
                       }}
                     >
                       Aceptar

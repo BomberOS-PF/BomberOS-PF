@@ -25,14 +25,26 @@ export const API_URLS = {
     authenticate: `${API_BASE_URL}/usuarios/auth`,
     libresBombero: `${API_BASE_URL}/usuarios/bomberos/libres`
   },
+
   grupos: {
     create: `${API_BASE_URL}/grupos`,
     buscar: `${API_BASE_URL}/grupos/buscar`,
     delete: (id) => `${API_BASE_URL}/grupos/${id}`,
     obtenerBomberosDelGrupo: (id) => `${API_BASE_URL}/grupos/${id}/bomberos`,
-    update: (id) => `${API_BASE_URL}/grupos/${id}`
+    update: (id) => `${API_BASE_URL}/grupos/${id}`,
+
+    guardias: {
+      crear: (idGrupo) => `${API_BASE_URL}/grupos/${idGrupo}/guardias`,
+      listar: (idGrupo, start, end) =>
+        `${API_BASE_URL}/grupos/${idGrupo}/guardias?start=${start}&end=${end}`,
+      eliminar: (idGrupo) => `${API_BASE_URL}/grupos/${idGrupo}/guardias`,
+      reemplazarDia: (idGrupo) => `${API_BASE_URL}/grupos/${idGrupo}/guardias/dia` // opcional
+    },
     
   },
+
+  
+  
   
   roles: {
     getAll: `${API_BASE_URL}/roles`,
@@ -64,7 +76,8 @@ export const apiRequest = async (url, options = {}) => {
     const data = await response.json()
 
     if (!response.ok) {
-      const error = new Error(data.message || 'Error en la solicitud')
+      //const error = new Error(data.message || 'Error en la solicitud')
+      const error = new Error(data.error || data.message || 'Error en la solicitud')
       error.status = response.status
       error.response = data
       throw error
