@@ -479,13 +479,13 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
         method: 'PUT',
         body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDia })
       })
-      setMensaje('Guardia asignada. Día actualizado en el servidor.')
+      setMensaje('Guardia asignada. Día actualizado con exito.')
       const api = calendarRef.current?.getApi()
       if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
       setTimeout(() => setMensaje(''), 3000)
     } catch (e) {
       console.error(e)
-      setMensaje(`Se actualizó en pantalla, pero falló al guardar en el servidor: ${e.message}`)
+      setMensaje(`Error al guardar: ${e.message}`)
       setTimeout(() => setMensaje(''), 5000)
     } finally {
       setGuardando(false)
@@ -539,7 +539,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       })
 
       if (!resp?.success) throw new Error(resp?.error || 'Error al guardar')
-      setMensaje('Guardias guardadas en el servidor correctamente')
+      setMensaje('Guardias guardadas con exito')
       setTimeout(() => setMensaje(''), 3000)
     } catch (e) {
       setMensaje(`Error al guardar: ${e.message}`)
@@ -889,13 +889,43 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                       className="btn btn-danger"
                       disabled={!tieneCambios}
                       onClick={() => {
-                        if (bomberosEditados.length === 0) {
-                          setEventos(prev => prev.filter(ev => ev.id !== eventoSeleccionado.id))
-                          setModalAbierto(false)
-                          setMensaje('Guardia eliminada porque no quedaron bomberos asignados')
-                          setTimeout(() => setMensaje(''), 3000)
-                          return
-                        }
+                        // Si no queda ningún bombero -> eliminar bloque y persistir el día
+if (bomberosEditados.length === 0) {
+  const fechaBase = new Date(eventoSeleccionado.start)
+  const fechaStr = yyyyMmDd(fechaBase)
+
+  // 1) UI: quitar este evento y re-fusionar
+  const nextEventos = fusionarEventos(
+    eventos.filter(ev => ev.id !== eventoSeleccionado.id)
+  )
+  setEventos(nextEventos)
+  setModalAbierto(false)
+
+  // 2) Construir el payload del DÍA restante (del resto de eventos de esa fecha)
+  const asignacionesDia = asignacionesDelDiaDesdeEventos(nextEventos, fechaStr)
+
+  // 3) Persistir con PUT reemplazarDia
+  setGuardando(true)
+  apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
+    method: 'PUT',
+    body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDia })
+  })
+  .then(() => {
+    setMensaje('Guardia eliminada y actualizada con exito')
+    const api = calendarRef.current?.getApi()
+    if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
+    setTimeout(() => setMensaje(''), 3000)
+  })
+  .catch((e) => {
+    console.error(e)
+    setMensaje(`Error al guardar: ${e.message}`)
+    setTimeout(() => setMensaje(''), 5000)
+  })
+  .finally(() => setGuardando(false))
+
+  return
+}
+
 
                         const errores = []
                         bomberosEditados.forEach((b) => {
@@ -1009,13 +1039,13 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                             method: 'PUT',
                             body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDia })
                           })
-                          setMensaje('Cambios guardados en el servidor para ese día')
+                          setMensaje('Cambios guardados para ese día con exito')
                           const api = calendarRef.current?.getApi()
                           if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
                           setTimeout(() => setMensaje(''), 3000)
                         } catch (e) {
                           console.error(e)
-                          setMensaje(`Se actualizó en pantalla, pero falló al guardar en el servidor: ${e.message}`)
+                          setMensaje(`Error al guardar: ${e.message}`)
                           setTimeout(() => setMensaje(''), 5000)
                         }
 
