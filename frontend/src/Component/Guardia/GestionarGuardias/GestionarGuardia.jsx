@@ -52,12 +52,39 @@ const customStyles = {
 // Helpers
 // =====================
 
+// Une intervalos por DNI (solapados o tocando) y devuelve una lista sin solapes por bombero
+const mergeByDni = (lista = []) => {
+  const by = new Map()
+  for (const b of lista) {
+    const dni = Number(b.dni)
+    const nombre = b.nombre || ''
+    if (!by.has(dni)) by.set(dni, [])
+    by.get(dni).push({ dni, nombre, desde: b.desde, hasta: b.hasta })
+  }
+  const out = []
+  for (const [dni, arr] of by) {
+    arr.sort((a, b) => a.desde.localeCompare(b.desde))
+    let cur = { ...arr[0] }
+    for (let i = 1; i < arr.length; i++) {
+      const x = arr[i]
+      if (x.desde <= cur.hasta) {
+        // une si solapan o tocan
+        if (x.hasta > cur.hasta) cur.hasta = x.hasta
+      } else {
+        out.push({ dni, nombre: cur.nombre, desde: cur.desde, hasta: cur.hasta })
+        cur = { ...x }
+      }
+    }
+    out.push({ dni, nombre: cur.nombre, desde: cur.desde, hasta: cur.hasta })
+  }
+  return out.sort((a, b) => a.desde.localeCompare(b.desde) || (a.dni - b.dni))
+}
+
 const mergeBomberosByIdentity = (arrA = [], arrB = []) => {
   const out = []
   const seen = new Set()
   for (const b of [...arrA, ...arrB]) {
-    const dniStr = b.dni != null ? String(b.dni) : ''
-    const key = `${dniStr}|${b.desde}|${b.hasta}`
+    const key = `${Number(b.dni)}|${b.desde}|${b.hasta}`
     if (!seen.has(key)) {
       seen.add(key)
       out.push({ ...b, dni: b.dni != null ? Number(b.dni) : b.dni })
@@ -99,7 +126,7 @@ const yyyyMmDd = (d) => {
   return `${y}-${m}-${day}`
 }
 
-// TOMA TODAS las asignaciones de un día desde los eventos (para el PUT /dia)
+// Recolecta TODAS las asignaciones de un día desde los eventos y consolida por DNI
 const asignacionesDelDiaDesdeEventos = (eventos, fechaStr) => {
   const out = []
   for (const ev of eventos) {
@@ -111,14 +138,28 @@ const asignacionesDelDiaDesdeEventos = (eventos, fechaStr) => {
       out.push({ dni: Number(b.dni), desde: b.desde, hasta: b.hasta })
     }
   }
-  // dedupe (dni|desde|hasta)
-  const seen = new Set()
-  return out.filter(a => {
-    const k = `${a.dni}|${a.desde}|${a.hasta}`
-    if (seen.has(k)) return false
-    seen.add(k)
-    return true
-  })
+  // consolido por DNI (merge de solapes o “tocan”)
+  const by = new Map()
+  for (const a of out) {
+    if (!by.has(a.dni)) by.set(a.dni, [])
+    by.get(a.dni).push({ desde: a.desde, hasta: a.hasta })
+  }
+  const res = []
+  for (const [dni, arr] of by) {
+    arr.sort((x, y) => x.desde.localeCompare(y.desde))
+    let cur = { ...arr[0] }
+    for (let i = 1; i < arr.length; i++) {
+      const x = arr[i]
+      if (x.desde <= cur.hasta) {
+        if (x.hasta > cur.hasta) cur.hasta = x.hasta
+      } else {
+        res.push({ dni, desde: cur.desde, hasta: cur.hasta })
+        cur = { ...x }
+      }
+    }
+    res.push({ dni, desde: cur.desde, hasta: cur.hasta })
+  }
+  return res
 }
 
 // Eventos (front) -> asignaciones (API) (batch opcional)
@@ -186,7 +227,7 @@ const asignacionesAEventos = (rows, nombreByDni = new Map()) => {
 
     for (let i = 1; i < arr.length; i++) {
       const a = arr[i]
-      const overlapEstricto = a.hora_desde < bloqueEnd // NO une si solo "tocan"
+      const overlapEstricto = a.hora_desde < bloqueEnd // NO une si solo “tocan”
 
       if (overlapEstricto) {
         if (a.hora_hasta > bloqueEnd) bloqueEnd = a.hora_hasta
@@ -208,7 +249,7 @@ const asignacionesAEventos = (rows, nombreByDni = new Map()) => {
           borderColor: '#b30000',
           textColor: 'transparent',
           allDay: false,
-          extendedProps: { bomberos: bloqueBom }
+          extendedProps: { bomberos: mergeByDni(bloqueBom) } // <<< consolido por DNI
         })
 
         bloqueStart = a.hora_desde
@@ -233,7 +274,7 @@ const asignacionesAEventos = (rows, nombreByDni = new Map()) => {
       borderColor: '#b30000',
       textColor: 'transparent',
       allDay: false,
-      extendedProps: { bomberos: bloqueBom }
+      extendedProps: { bomberos: mergeByDni(bloqueBom) } // <<< consolido por DNI
     })
   }
 
@@ -282,14 +323,14 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     return m
   }, [bomberos])
 
-  // Fusionar eventos (solo si se solapan)
+  // Fusionar eventos (solo si se solapan) + consolidar por DNI
   const fusionarEventos = (listaEventos) => {
     const ordenados = [...listaEventos].sort((a, b) => new Date(a.start) - new Date(b.start))
     const fusionados = []
 
     for (const ev of ordenados) {
       if (fusionados.length === 0) {
-        fusionados.push({ ...ev })
+        fusionados.push({ ...ev, extendedProps: { bomberos: mergeByDni(ev.extendedProps?.bomberos || []) } })
         continue
       }
       const ultimo = fusionados[fusionados.length - 1]
@@ -307,17 +348,15 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
 
         const bomberosUnicos = mergeBomberosByIdentity(
           ultimo.extendedProps.bomberos,
-          ev.extendedProps.bomberos
-        ).sort((a,b) =>
-          a.desde.localeCompare(b.desde) ||
-          (Number(a.dni) - Number(b.dni))
+          ev.extendedProps?.bomberos || []
         )
+        const bomberosConsolidados = mergeByDni(bomberosUnicos)
 
         ultimo.start = nuevoStart
         ultimo.end = nuevoEnd
-        ultimo.extendedProps = { bomberos: bomberosUnicos }
+        ultimo.extendedProps = { bomberos: bomberosConsolidados }
       } else {
-        fusionados.push({ ...ev })
+        fusionados.push({ ...ev, extendedProps: { bomberos: mergeByDni(ev.extendedProps?.bomberos || []) } })
       }
     }
 
@@ -338,14 +377,13 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     })
   }, [eventos, nombrePorDni])
 
-  // Asignar nueva guardia (y persistir 1 asignación)
-  const asignarGuardia = () => {
+  // Asignar nueva guardia -> actualiza UI y hace PUT del día (consolidado) para no romper por solapes
+  const asignarGuardia = async () => {
     if (!bomberoSeleccionado || !horaDesde || !horaHasta || diaSeleccionado === null) {
       setMensaje('Debes completar todos los campos obligatorios para asignar una guardia.')
       setTimeout(() => setMensaje(''), 3000)
       return
     }
-
     if (horaHasta <= horaDesde) {
       setMensaje('La hora de fin debe ser posterior a la hora de inicio.')
       setTimeout(() => setMensaje(''), 3000)
@@ -361,50 +399,33 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     const [horaF, minF] = horaHasta.split(':').map(Number)
 
     const nuevoInicioDate = new Date(
-      fechaObjetivo.getFullYear(),
-      fechaObjetivo.getMonth(),
-      fechaObjetivo.getDate(),
-      horaI,
-      minI
+      fechaObjetivo.getFullYear(), fechaObjetivo.getMonth(), fechaObjetivo.getDate(), horaI, minI
     )
-
     const nuevoFinDate = new Date(
-      fechaObjetivo.getFullYear(),
-      fechaObjetivo.getMonth(),
-      fechaObjetivo.getDate(),
-      horaF,
-      minF
+      fechaObjetivo.getFullYear(), fechaObjetivo.getMonth(), fechaObjetivo.getDate(), horaF, minF
     )
 
-    setEventos((prevEventos) => {
-      let eventosActualizados = [...prevEventos]
-      let fusionado = false
-
-      eventosActualizados = eventosActualizados.map((ev) => {
+    // --- previsualizamos nextEventos y actualizamos estado
+    const nextEventos = (() => {
+      let eventosActualizados = eventos.map((ev) => {
         const inicioEv = new Date(ev.start)
         const finEv = new Date(ev.end)
         const mismoDia = isSameDay(nuevoInicioDate, inicioEv)
         const seSolapan = overlaps(nuevoInicioDate, nuevoFinDate, inicioEv, finEv)
 
         if (mismoDia && seSolapan) {
-          fusionado = true
-
           const nuevoStart = nuevoInicioDate < inicioEv ? nuevoInicioDate : inicioEv
           const nuevoEnd = nuevoFinDate > finEv ? nuevoFinDate : finEv
 
-          const bomberosActualizados = [...ev.extendedProps.bomberos]
-          const yaExiste = bomberosActualizados.some(
-            (b) => Number(b.dni) === Number(bomberoSeleccionado.value) &&
-                   b.desde === horaDesde && b.hasta === horaHasta
-          )
-          if (!yaExiste) {
-            bomberosActualizados.push({
+          const bomberosActualizados = mergeByDni([
+            ...(ev.extendedProps?.bomberos || []),
+            {
               nombre: bomberoSeleccionado.label,
-              dni: bomberoSeleccionado.value,
+              dni: Number(bomberoSeleccionado.value),
               desde: horaDesde,
               hasta: horaHasta
-            })
-          }
+            }
+          ])
 
           return {
             ...ev,
@@ -413,10 +434,15 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             extendedProps: { bomberos: bomberosActualizados }
           }
         }
-        return ev
+        return { ...ev, extendedProps: { bomberos: mergeByDni(ev.extendedProps?.bomberos || []) } }
       })
 
-      if (!fusionado) {
+      // si no tocó ninguno, agrego un evento nuevo
+      const touched = eventosActualizados.some(ev =>
+        isSameDay(nuevoInicioDate, new Date(ev.start)) &&
+        overlaps(nuevoInicioDate, nuevoFinDate, new Date(ev.start), new Date(ev.end))
+      )
+      if (!touched) {
         const id = `${fechaObjetivo.toISOString().slice(0,10)}-${horaDesde}-${horaHasta}-${bomberoSeleccionado.value}-${Date.now()}`
         eventosActualizados.push({
           id,
@@ -428,60 +454,48 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
           textColor: 'transparent',
           allDay: false,
           extendedProps: {
-            bomberos: [
-              { nombre: bomberoSeleccionado.label,
-                dni: bomberoSeleccionado.value,
-                desde: horaDesde,
-                hasta: horaHasta }
-            ]
+            bomberos: mergeByDni([{
+              nombre: bomberoSeleccionado.label,
+              dni: Number(bomberoSeleccionado.value),
+              desde: horaDesde,
+              hasta: horaHasta
+            }])
           }
         })
       }
 
       return fusionarEventos(eventosActualizados)
-    })
+    })()
 
-    // Persisto esa única asignación
+    setEventos(nextEventos)
+
+    // --- persistimos TODO el día con consolidación por DNI para evitar error por solapes
     const fechaStr = yyyyMmDd(fechaObjetivo)
+    const asignacionesDia = asignacionesDelDiaDesdeEventos(nextEventos, fechaStr)
 
     setGuardando(true)
-    apiRequest(API_URLS.grupos.guardias.crear(idGrupo), {
-      method: 'POST',
-      body: JSON.stringify({
-        asignaciones: [{
-          fecha: fechaStr,
-          dni: Number(bomberoSeleccionado.value),
-          desde: horaDesde,
-          hasta: horaHasta
-        }]
+    try {
+      await apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
+        method: 'PUT',
+        body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDia })
       })
-    })
-      .then(() => {
-        setMensaje('Guardia asignada y guardada en el servidor')
-        const api = calendarRef.current?.getApi()
-        if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
-        setTimeout(() => setMensaje(''), 3000)
-      })
-      .catch((e) => {
-        console.error(e)
-        setMensaje(`Se creó en pantalla, pero falló al guardar en el servidor: ${e.message}`)
-        const api = calendarRef.current?.getApi()
-        if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
-        setTimeout(() => setMensaje(''), 5000)
-      })
-      .finally(() => setGuardando(false))
+      setMensaje('Guardia asignada. Día actualizado en el servidor.')
+      const api = calendarRef.current?.getApi()
+      if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
+      setTimeout(() => setMensaje(''), 3000)
+    } catch (e) {
+      console.error(e)
+      setMensaje(`Se actualizó en pantalla, pero falló al guardar en el servidor: ${e.message}`)
+      setTimeout(() => setMensaje(''), 5000)
+    } finally {
+      setGuardando(false)
+    }
 
     setHoraDesde('')
     setHoraHasta('')
     setDiaSeleccionado(null)
     setBomberoSeleccionado(null)
   }
-
-  const bomberoNombreByDni = useMemo(() => {
-    const m = new Map()
-    for (const b of bomberos) m.set(Number(b.dni), `${b.nombre} ${b.apellido}`)
-    return m
-  }, [bomberos])
 
   const cargarSemanaServidor = async (startDate, endDate) => {
     if (!idGrupo) return
@@ -550,7 +564,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       <h2 className="text-black mb-4">Gestión de guardias - {nombreGrupo}</h2>
 
       {mensaje && (
-        <div className={`alert ${mensaje.includes('correctamente') || mensaje.includes('servidor') ? 'alert-success' : 'alert-warning'}`}>
+        <div className={`alert ${mensaje.includes('servidor') || mensaje.includes('actualizado') ? 'alert-success' : 'alert-warning'}`}>
           {mensaje}
         </div>
       )}
@@ -746,7 +760,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                       className="btn btn-danger"
                       onClick={() => {
                         setEventoSeleccionado(eventoPendiente)
-                        const base = eventoPendiente.extendedProps.bomberos.map(b => ({
+                        const base = (eventoPendiente.extendedProps?.bomberos || []).map(b => ({
                           ...b,
                           nombre: b.nombre || nombrePorDni.get(Number(b.dni)) || String(b.dni)
                         }))
@@ -924,8 +938,11 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                     <button
                       className="btn btn-danger"
                       onClick={async () => {
-                        // Recalcular bloques para el evento editado
-                        const bomberosOrdenados = [...bomberosEditados].sort(
+                        // 1) Consolido por DNI antes de recalcular bloques
+                        const bomberosNormalizados = mergeByDni(bomberosEditados)
+
+                        // 2) Recalculo bloques (por solape en tiempo)
+                        const bomberosOrdenados = [...bomberosNormalizados].sort(
                           (a, b) => a.desde.localeCompare(b.desde)
                         )
 
@@ -939,16 +956,16 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                         for (let i = 1; i < bomberosOrdenados.length; i++) {
                           const b = bomberosOrdenados[i]
                           if (b.desde > bloqueActual.end) {
-                            nuevosBloques.push(bloqueActual)
+                            nuevosBloques.push({ ...bloqueActual, bomberos: mergeByDni(bloqueActual.bomberos) })
                             bloqueActual = { start: b.desde, end: b.hasta, bomberos: [b] }
                           } else {
                             if (b.hasta > bloqueActual.end) bloqueActual.end = b.hasta
                             bloqueActual.bomberos.push(b)
                           }
                         }
-                        nuevosBloques.push(bloqueActual)
+                        nuevosBloques.push({ ...bloqueActual, bomberos: mergeByDni(bloqueActual.bomberos) })
 
-                        // ===> 1) Construyo los nuevos eventos COMPLETOS primero (fuera del setState)
+                        // 3) Construyo 'merged' completo de la UI
                         const fechaBase = new Date(eventoSeleccionado.start)
                         const sinEvento = eventos.filter((ev) => ev.id !== eventoSeleccionado.id)
 
@@ -974,16 +991,16 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                             borderColor: '#b30000',
                             textColor: 'transparent',
                             allDay: false,
-                            extendedProps: { bomberos: bloque.bomberos }
+                            extendedProps: { bomberos: mergeByDni(bloque.bomberos) }
                           }
                         })
 
                         const merged = fusionarEventos([...sinEvento, ...nuevosEventos])
 
-                        // ===> 2) Actualizo UI con 'merged'
+                        // 4) UI
                         setEventos(merged)
 
-                        // ===> 3) Persisto TODO el día con lo que hay en 'merged'
+                        // 5) Persisto TODO el día consolidado (por DNI)
                         const fechaStr = yyyyMmDd(fechaBase)
                         const asignacionesDia = asignacionesDelDiaDesdeEventos(merged, fechaStr)
 
