@@ -559,15 +559,39 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
     ...b
   }))
 
+  // === Mensajería: clase de alerta por contenido ===
+// === Mensajería: clase de alerta por contenido ===
+const mensajeClass = useMemo(() => {
+  if (!mensaje) return 'alert-info'
+  const m = mensaje.toLowerCase()
+
+  // 1) Errores -> rojo
+  if (/(falló|fallo|error|no se guard|no pudo|rechazad|inválid|invalido)/.test(m)) {
+    return 'alert-danger'
+  }
+
+  // 2) Éxitos -> verde (cubre "con exito/éxito", "correctamente",
+  //    y algunos verbos típicos junto a "con" o "en")
+  if (/(éxito|exito|correctamente|guardad[oa]s? (en|con)|actualizad[oa] (en|con))/.test(m)) {
+    return 'alert-success'
+  }
+
+  // 3) Avisos / validaciones -> amarillo
+  return 'alert-warning'
+}, [mensaje])
+
+
+
   return (
     <div className="container formulario-consistente">
       <h2 className="text-black mb-4">Gestión de guardias - {nombreGrupo}</h2>
 
       {mensaje && (
-        <div className={`alert ${mensaje.includes('servidor') || mensaje.includes('actualizado') ? 'alert-success' : 'alert-warning'}`}>
-          {mensaje}
-        </div>
-      )}
+  <div className={`alert ${mensajeClass}`} role="alert">
+    {mensaje}
+  </div>
+)}
+
 
       <div className="row">
         {/* Columna izquierda */}
@@ -922,6 +946,8 @@ if (bomberosEditados.length === 0) {
     setTimeout(() => setMensaje(''), 5000)
   })
   .finally(() => setGuardando(false))
+
+
 
   return
 }
