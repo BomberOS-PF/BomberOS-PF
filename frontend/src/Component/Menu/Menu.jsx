@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import ParticlesBackground from '../ParticlesBackground/ParticlesBackground'
 
 import CargarIncidente from '../Incidente/CargarIncidente/CargarIncidente'
+import ConsultarIncidente from '../Incidente/ConsultarIncidente/ConsultarIncidente'
 import RegistrarBombero from '../Bombero/RegistrarBombero/RegistrarBombero'
 import ConsultarBombero from '../Bombero/ConsultarBombero/ConsultarBombero'
 import RegistrarUsuario from '../Usuario/RegistrarUsuario/RegistrarUsuario'
@@ -23,7 +24,7 @@ import Rescate from '../Incidente/TipoIncidente/Rescate/Rescate'
 import ParticipacionIncidente from '../Incidente/ParticipacionIncidente/ParticipacionIncidente'
 import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
 
-const Menu = ({user, setUser}) => {
+const Menu = ({ user, setUser }) => {
   const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
   const [usuario, setUsuario] = useState(null)
   const [mostrarDropdown, setMostrarDropdown] = useState(false)
@@ -133,14 +134,14 @@ const Menu = ({user, setUser}) => {
 
   const manejarFinalizarCarga = (datos) => {
     if (burbujaExpandida) cerrarBurbuja(burbujaExpandida)
-    
+
     // Combinar datos del incidente básico con los específicos
     const datosCompletos = {
       ...datosFinalizados, // Datos del incidente básico
       ...datos, // Datos específicos del tipo de incidente
       incidenteCompleto: true
     }
-    
+
     setDatosFinalizados(datosCompletos)
     setOpcionSeleccionada('participacion-incidente')
   }
@@ -207,15 +208,15 @@ const Menu = ({user, setUser}) => {
 
   const renderContenido = () => {
     switch (opcionSeleccionada) {
-      case 'cargarIncidente': return (<CargarIncidente onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
-      case 'registrarBombero': return (<RegistrarBombero onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
-      case 'consultarBombero': return (<ConsultarBombero onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
-      case 'registrarUsuario': return (<RegistrarUsuario onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
-      case 'consultarUsuario': return (<ConsultarUsuario onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
-      case 'registrarRol': return (<RegistrarRol onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
-      case 'consultarRol': return (<ConsultarRol onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
-      case 'registrarGuardia': return (<RegistrarGuardia onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
-      case 'consultarGuardia': return (<ConsultarGrupoGuardia onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja}/>)
+      case 'cargarIncidente': return (<CargarIncidente onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja} />)
+      case 'registrarBombero': return (<RegistrarBombero onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja} />)
+      case 'consultarBombero': return (<ConsultarBombero onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja} />)
+      case 'registrarUsuario': return (<RegistrarUsuario onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja} />)
+      case 'consultarUsuario': return (<ConsultarUsuario onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja} />)
+      case 'registrarRol': return (<RegistrarRol onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja} />)
+      case 'consultarRol': return (<ConsultarRol onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja} />)
+      case 'registrarGuardia': return (<RegistrarGuardia onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja} />)
+      case 'consultarGuardia': return (<ConsultarGrupoGuardia onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja} />)
       case 'participacion-incidente':
         return <ParticipacionIncidente
           datosPrevios={datosFinalizados}
@@ -224,6 +225,8 @@ const Menu = ({user, setUser}) => {
         />
       case 'vehiculo-involucrado':
         return <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />
+      case 'consultarIncidente': // << NUEVO
+        return <ConsultarIncidente onVolverMenu={() => setOpcionSeleccionada('')} />
     }
   }
 
@@ -282,8 +285,11 @@ const Menu = ({user, setUser}) => {
               id: 'collapseIncidente',
               icono: 'bi-fire',
               titulo: 'Incidentes',
-              botones: [{ texto: 'Cargar Incidente', accion: 'cargarIncidente' }]
-            }, {
+              botones: [{ texto: 'Cargar Incidente', accion: 'cargarIncidente' },
+                { texto: 'Consultar Incidente', accion: 'consultarIncidente' } // << NUEVO
+              ]
+            },
+            {
               id: 'collapseBomberos',
               icono: 'bi-person-badge',
               titulo: 'Bomberos',

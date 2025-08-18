@@ -24,6 +24,24 @@ export function setupRoutes(app, container) {
   const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, recuperarClaveHandler, validarTokenHandler, restablecerClaveHandler,incendioEstructuralHandler, forestalCatalogosHandler, tipoIncidenteHandler, localizacionHandler, causaProbableHandler, materialPeligrosoHandler,categoriaMaterialPeligrosoHandler,tipoMatInvolucradoHandler, accionPersonaHadler } = container
 
 
+  app.get('/api/incidentes', async (req, res) => {
+    try {
+      await incidenteHandler.listar(req, res)   // soporta filtros y paginado
+    } catch (error) {
+      logger.error('Error en ruta listar incidentes:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+app.get('/api/incidentes/:id/detalle', async (req, res) => {
+  try {
+    await container.incidenteHandler.obtenerDetalle(req, res)
+  } catch (error) {
+    logger.error('Error en ruta detalle incidente:', error)
+    res.status(500).json({ error: 'Error interno' })
+  }
+})
+
   //Acciones personas
   app.get('/api/acciones-persona', async (req, res) => {
     await container.accionPersonaHandler.listar(req, res)
@@ -293,6 +311,14 @@ export function setupRoutes(app, container) {
       res.status(500).json({ error: 'Error interno' })
     }
   })
+  app.get('/api/incidentes/:id/detalle', async (req, res) => {
+  try {
+    await incidenteHandler.obtenerDetalle(req, res) // implementalo en el handler
+  } catch (error) {
+    res.status(500).json({ error: 'Error interno' })
+  }
+})
+
 
   app.put('/api/incidentes/:id', async (req, res) => {
     try {
@@ -675,6 +701,7 @@ export function setupRoutes(app, container) {
         'DELETE /api/usuarios/:id',
         'GET /api/usuarios/rol/:rol',
         'POST /api/usuarios/auth',
+        'GET /api/incidentes (filtros: pagina, limite, busqueda, tipo, desde, hasta)',
         'GET /api/incidentes',
         'POST /api/incidentes',
         'GET /api/incidentes/:id',
@@ -712,7 +739,8 @@ export function setupRoutes(app, container) {
         'GET /api/acciones-material',
         'POST /api/rescate',
         'GET /api/rescate',
-        'GET /api/rescate/:id'
+        'GET /api/rescate/:id',
+        'GET /api/incidentes/:id/detalle'
 
       ]
     })
