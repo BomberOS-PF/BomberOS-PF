@@ -1,5 +1,5 @@
-// Arriba del archivo
-const API_BASE_URL =  'http://localhost:3000/api'
+// Config API
+const API_BASE_URL = 'http://localhost:3000/api'
 
 export const API_URLS = {
   // Bomberos
@@ -13,7 +13,7 @@ export const API_URLS = {
     delete: (id) => `${API_BASE_URL}/bomberos/${id}`,
     getPlan: `${API_BASE_URL}/bomberos/plan`
   },
-  
+
   // Usuarios
   usuarios: {
     getAll: `${API_BASE_URL}/usuarios`,
@@ -25,15 +25,24 @@ export const API_URLS = {
     authenticate: `${API_BASE_URL}/usuarios/auth`,
     libresBombero: `${API_BASE_URL}/usuarios/bomberos/libres`
   },
+
   // Grupos
   grupos: {
     create: `${API_BASE_URL}/grupos`,
     buscar: `${API_BASE_URL}/grupos/buscar`,
     delete: (id) => `${API_BASE_URL}/grupos/${id}`,
     obtenerBomberosDelGrupo: (id) => `${API_BASE_URL}/grupos/${id}/bomberos`,
-    update: (id) => `${API_BASE_URL}/grupos/${id}`
+    update: (id) => `${API_BASE_URL}/grupos/${id}`,
+    guardias: {
+      crear: (idGrupo) => `${API_BASE_URL}/grupos/${idGrupo}/guardias`,
+      listar: (idGrupo, start, end) =>
+        `${API_BASE_URL}/grupos/${idGrupo}/guardias?start=${start}&end=${end}`,
+      eliminar: (idGrupo) => `${API_BASE_URL}/grupos/${idGrupo}/guardias`,
+      // opcional
+      reemplazarDia: (idGrupo) => `${API_BASE_URL}/grupos/${idGrupo}/guardias/dia`
+    }
   },
-  
+
   // Roles
   roles: {
     getAll: `${API_BASE_URL}/roles`,
@@ -75,13 +84,13 @@ export const API_URLS = {
   health: 'http://localhost:3000/health'
 }
 
-// Configuración de headers por defecto
+// Headers por defecto
 export const DEFAULT_HEADERS = {
   'Content-Type': 'application/json',
   'Accept': 'application/json'
 }
 
-// Función helper para hacer peticiones
+// Helper fetch robusto
 export const apiRequest = async (url, options = {}) => {
   const config = {
     headers: DEFAULT_HEADERS,
@@ -90,19 +99,34 @@ export const apiRequest = async (url, options = {}) => {
 
   try {
     const response = await fetch(url, config)
-    const data = await response.json()
+
+    // 204 No Content
+    if (response.status === 204) {
+      return { success: true, data: null }
+    }
+
+    // Intentar texto y luego parsear JSON si corresponde
+    const raw = await response.text()
+    let data = null
+    try {
+      data = raw ? JSON.parse(raw) : null
+    } catch {
+      // si no es JSON, dejamos data como null y seguimos
+    }
 
     if (!response.ok) {
-      const error = new Error(data.message || 'Error en la solicitud')
+      const error = new Error(
+        (data && (data.error || data.message)) || `Error en la solicitud (${response.status})`
+      )
       error.status = response.status
-      error.status = response.status
-      error.response = data
+      error.response = data || raw
       throw error
     }
 
-    return data
+    // Devolver lo que haya: objeto JSON o texto
+    return data ?? { success: true, data: raw }
   } catch (error) {
-    console.error(`❌ API Error:`, error)
+    console.error('❌ API Error:', error)
     throw error
   }
 }

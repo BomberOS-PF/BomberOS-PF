@@ -7,7 +7,7 @@ import ConsultarBomberosDelGrupo from './ConsultarBomberosDelGrupo'
 import * as bootstrap from 'bootstrap'
 import { User2, UsersIcon } from 'lucide-react'
 
-const ConsultarGrupoGuardia = ({ onVolver }) => {
+const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
   const [busqueda, setBusqueda] = useState('')
   const [paginaActual, setPaginaActual] = useState(1)
   const [limite] = useState(10)
@@ -137,6 +137,7 @@ const ConsultarGrupoGuardia = ({ onVolver }) => {
         mensaje={mensaje}
         loading={loading}
         onEditar={editarGrupo}
+        onIrAGestionarGuardias={onIrAGestionarGuardias}
       />
     )
   }

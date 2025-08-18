@@ -4,7 +4,13 @@ import './RegistrarGuardia.css'
 import { Users, AlertTriangle, Plus, Trash2, FileText } from 'lucide-react'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
-const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial = '', bomberosIniciales = [], onVolver }) => {
+const RegistrarGuardia = ({
+  idGrupo,
+  nombreGrupoInicial = '',
+  descripcionInicial = '',
+  bomberosIniciales = [],
+  onVolver
+}) => {
   const [nombreGrupo, setNombreGrupo] = useState(nombreGrupoInicial)
   const [descripcion, setDescripcion] = useState('')
   const [busqueda, setBusqueda] = useState('')
@@ -14,7 +20,6 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
   const [bomberos, setBomberos] = useState([])
   const [grupo, setGrupo] = useState([])
   const [mensaje, setMensaje] = useState('')
-  const [loading, setLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const modoEdicion = Boolean(idGrupo)
 
@@ -36,13 +41,14 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
       const data = await res.json()
       if (res.ok && data.success) {
         const bomberosAgrupados = data.data.reduce((acc, bombero) => {
-          const grupo = bombero.grupoGuardia?.length ? bombero.grupoGuardia.join(', ') : 'No asignado'
-          if (!acc[bombero.dni]) acc[bombero.dni] = { ...bombero, grupos: grupo }
-          else acc[bombero.dni].grupos += `, ${grupo}`
+          const grupos = bombero.grupoGuardia?.length ? bombero.grupoGuardia.join(', ') : 'No asignado'
+          if (!acc[bombero.dni]) acc[bombero.dni] = { ...bombero, grupos }
+          else acc[bombero.dni].grupos += `, ${grupos}`
           return acc
         }, {})
         setBomberos(Object.values(bomberosAgrupados))
         setTotal(data.total)
+        setMensaje('')
       } else {
         setMensaje(data.message || 'Error al cargar bomberos')
         setBomberos([])
@@ -61,14 +67,14 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
   }
 
   const agregarAlGrupo = (bombero) => {
-    if (!grupo.find((b) => b.dni === bombero.dni)) {
+    if (!grupo.find(b => b.dni === bombero.dni)) {
       setGrupo([...grupo, bombero])
       setMensaje('')
     }
   }
 
   const quitarDelGrupo = (dni) => {
-    setGrupo(grupo.filter((b) => b.dni !== dni))
+    setGrupo(grupo.filter(b => b.dni !== dni))
   }
 
   const guardarGrupo = async () => {
@@ -87,15 +93,16 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
       const res = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombreGrupo, descripcion, bomberos: grupo.map((b) => b.dni) })
+        body: JSON.stringify({ nombreGrupo, descripcion, bomberos: grupo.map(b => b.dni) })
       })
       const data = await res.json()
       if (res.ok && data.success) {
-        setSuccessMessage(modoEdicion ? 'Grupo actualizado correctamente' : 'Grupo creado con éxito')
-        setTimeout(() => {
-          setSuccessMessage('')
-          onVolver()
-        }, 2000)
+        // Mensajes unificados
+        setSuccessMessage(modoEdicion
+          ? `✅ Grupo "${data.data.nombre}" actualizado correctamente`
+          : `✅ Grupo "${data.data.nombre}" guardado con éxito`
+        )
+        setMensaje('')
         if (!modoEdicion) {
           setNombreGrupo('')
           setDescripcion('')
@@ -103,6 +110,10 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
         }
         setMensaje('')
         fetchBomberos()
+        setTimeout(() => {
+          setSuccessMessage('')
+          onVolver && onVolver()
+        }, 1500)
       } else {
         setMensaje(data.message || 'Error al guardar el grupo')
       }
@@ -116,12 +127,13 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
   return (
     <div className="container-fluid py-5">
       <div className="text-center mb-4">
-        {/* Header */}
         <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
           <div className="bg-danger p-3 rounded-circle">
             <Users size={32} color="white" />
           </div>
-          <h1 className="fw-bold text-white fs-3 mb-0">Crear Grupo de Guardia</h1>
+          <h1 className="fw-bold text-white fs-3 mb-0">
+            {modoEdicion ? 'Editar Grupo de Guardia' : 'Crear Grupo de Guardia'}
+          </h1>
         </div>
         <span className="badge bg-danger-subtle text-danger">
           <AlertTriangle className="me-2" />
@@ -132,11 +144,11 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
       <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
         <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <FileText />
-          <strong>Registrar Grupo de Guardia</strong>
+          <strong>{modoEdicion ? 'Registrar cambios del grupo' : 'Registrar Grupo de Guardia'}</strong>
         </div>
 
-        {mensaje && <div className="alert alert-warning text-center">{mensaje}</div>}
-        {successMessage && <div className="alert alert-success text-center">{successMessage}</div>}
+        {mensaje && <div className="alert alert-warning text-center mb-0">{mensaje}</div>}
+        {successMessage && <div className="alert alert-success text-center mb-0">{successMessage}</div>}
 
         {/* Card principal */}
         <div className="card-body">
@@ -210,8 +222,8 @@ const RegistrarGuardia = ({ idGrupo, nombreGrupoInicial = '', descripcionInicial
                       perteneceAOtroGrupo = true
                     }
 
-                    const deshabilitarBtn = yaEstaEnGrupoActual || perteneceAOtroGrupo
-                    const mostrarTooltip = asignado
+                  const deshabilitarBtn = yaEstaEnGrupoActual || perteneceAOtroGrupo
+                  const title = asignado ? `Pertenece a: ${b.grupos}` : ''
 
                     return (
                       <tr key={b.dni}>
