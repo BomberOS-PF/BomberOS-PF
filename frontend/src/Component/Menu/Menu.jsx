@@ -336,7 +336,7 @@ const Menu = ({ user, setUser }) => {
               icono: 'bi-fire',
               titulo: 'Incidentes',
               botones: [{ texto: 'Cargar Incidente', accion: 'cargarIncidente' },
-                { texto: 'Consultar Incidente', accion: 'consultarIncidente' } // << NUEVO
+                { texto: 'Consultar Incidente', accion: 'consultarIncidente' }
               ]
             },
             {
