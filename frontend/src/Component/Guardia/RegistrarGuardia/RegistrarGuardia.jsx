@@ -21,6 +21,8 @@ const RegistrarGuardia = ({
   const [grupo, setGrupo] = useState([])
   const [mensaje, setMensaje] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  const [loading, setLoading] = useState(false)
+
   const modoEdicion = Boolean(idGrupo)
 
   useEffect(() => {
@@ -224,7 +226,8 @@ const RegistrarGuardia = ({
 
                   const deshabilitarBtn = yaEstaEnGrupoActual || perteneceAOtroGrupo
                   const title = asignado ? `Pertenece a: ${b.grupos}` : ''
-
+                  const mostrarTooltip = asignado
+                  
                     return (
                       <tr key={b.dni}>
                         <td className="border-end px-3 text-center">
@@ -275,7 +278,7 @@ const RegistrarGuardia = ({
 
             {/* Bomberos seleccionados */}
             <div className="mt-4">
-              <div mb-3 d-flex align-items-center gap-2>
+              <div className= "mb-3 d-flex align-items-center gap-2">
                 <h5 className="mb-2 text-dark">Bomberos en el Grupo</h5>
               </div>
 
