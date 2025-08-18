@@ -68,20 +68,6 @@ const ConsultarBomberosDelGrupo = ({
 
           <div className="mt-4">
             <div className="d-flex align-items-center justify-content-between mb-3">
-              <div>
-                <button className="btn btn-warning btn-sm me-2 d-flex align-items-center gap-1"
-                  onClick={() => onEditar({ idGrupo, nombre: nombreGrupo, descripcion })}>
-                  <i className="bi bi-pencil-square"></i>
-                  Editar grupo
-                </button>
-                <button
-                  className="btn btn-danger me-sm-2 mb-2 mb-sm-0 w-100"
-                  onClick={() => onIrAGestionarGuardias?.({ idGrupo, nombreGrupo, bomberos })}
-                >
-                  <i className="bi bi-calendar2-week me-1"></i>
-                  Gestionar guardias
-                </button>
-              </div>
               <button
                 className="btn btn-warning me-sm-2 mb-2 mb-sm-0 w-100"
                 onClick={() => onEditar?.({ idGrupo, nombre: nombreGrupo, descripcion })}
