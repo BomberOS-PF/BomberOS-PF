@@ -40,28 +40,39 @@ export class IncidenteService extends IncidenteServiceInterface {
   async crearIncidente(data) {
     let idDenunciante = null
 
-    const hayDatosDenunciante =
-      data.nombreDenunciante || data.apellidoDenunciante || data.telefonoDenunciante || data.dniDenunciante
-
-    if (hayDatosDenunciante) {
-      const denunciante = {
-        nombre: data.nombreDenunciante || null,
-        apellido: data.apellidoDenunciante || null,
-        telefono: data.telefonoDenunciante || null,
-        dni: data.dniDenunciante || null
+    const den = data.denunciante
+    if (den && (den.dni || den.nombre || den.apellido || den.telefono)) {
+      const repo = this.denuncianteRepository
+      if (typeof repo.insertarDenunciante === 'function') {
+        idDenunciante = await repo.insertarDenunciante({
+          dni: den.dni ?? null,
+          nombre: den.nombre ?? null,
+          apellido: den.apellido ?? null,
+          telefono: den.telefono ?? null
+        })
+      } else if (typeof repo.crear === 'function') {
+        idDenunciante = await repo.crear({
+          dni: den.dni ?? null,
+          nombre: den.nombre ?? null,
+          apellido: den.apellido ?? null,
+          telefono: den.telefono ?? null
+        })
+      } else {
+        throw new Error('Repositorio de denunciante no implementa insertarDenunciante/crear')
       }
-      idDenunciante = await this.denuncianteRepository.crear(denunciante)
     }
 
-    const nuevoIncidente = new Incidente({
+    const dataIncidente = {
       idTipoIncidente: data.idTipoIncidente,
       fecha: data.fecha,
       idLocalizacion: data.idLocalizacion,
       descripcion: data.descripcion,
       idDenunciante
-    })
+    }
 
-    const incidenteCreado = await this.incidenteRepository.create(nuevoIncidente)
+    logger.debug('➡️ INSERT incidente', dataIncidente)
+    const incidenteCreado = await this.incidenteRepository.create(dataIncidente)
+
 
     if (Array.isArray(data.damnificados) && this.damnificadoRepository) {
       for (const damnificado of data.damnificados) {
@@ -72,10 +83,9 @@ export class IncidenteService extends IncidenteServiceInterface {
       }
     }
 
-    logger.info('📋 Incidente creado exitosamente', {
+    logger.info('📋 Incidente creado', {
       id: incidenteCreado.idIncidente || incidenteCreado.id,
-      tipo: incidenteCreado.idTipoIncidente,
-      fecha: incidenteCreado.fecha
+      idDenunciante
     })
 
     return incidenteCreado
@@ -122,12 +132,12 @@ export class IncidenteService extends IncidenteServiceInterface {
 
   // ================== LISTADOS / CONSULTAS ==================
   // ✅ nuevo: soporta filtros + paginado para el frontend
-// application/services/incidente.service.js
-async listarConFiltros(filtros) {
-  const data = await this.incidenteRepository.buscarConFiltros(filtros)
-  const total = await this.incidenteRepository.contarConFiltros(filtros)
-  return { data, total }
-}
+  // application/services/incidente.service.js
+  async listarConFiltros(filtros) {
+    const data = await this.incidenteRepository.buscarConFiltros(filtros)
+    const total = await this.incidenteRepository.contarConFiltros(filtros)
+    return { data, total }
+  }
 
 
   // mantenemos por compatibilidad si lo usás en otros lados
@@ -230,7 +240,7 @@ async listarConFiltros(filtros) {
     return tipo ? tipo.nombre : `Tipo ${idTipo}`
   }
 
-   async obtenerDetalleCompleto(idIncidente) {
+  async obtenerDetalleCompleto(idIncidente) {
     const cn = getConnection()
 
     // 1) Datos base (unificados)

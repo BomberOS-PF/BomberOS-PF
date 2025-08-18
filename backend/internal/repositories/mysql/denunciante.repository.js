@@ -1,4 +1,4 @@
-// internal/repositories/mysql/denunciante.repository.js (o ruta equivalente)
+// internal/repositories/mysql/denunciante.repository.js
 import { getConnection } from '../../platform/database/connection.js'
 import { logger } from '../../platform/logger/logger.js'
 
@@ -8,36 +8,35 @@ export class MySQLDenuncianteRepository {
   }
 
   /**
-   * @param {{ nombre?:string, apellido?:string, telefono?:string, dni?:string|number, idIncidente?: number|null }} denunciante
+   * Inserta un denunciante
+   * @param {{ dni?: string|number, nombre?: string, apellido?: string, telefono?: string }} denunciante
    * @returns {Promise<number>} insertId
    */
-  async crear(denunciante) {
+  async insertarDenunciante(denunciante) {
     const query = `
-      INSERT INTO ${this.tableName} (nombre, apellido, telefono, dni, idIncidente)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO ${this.tableName}
+        (dni, nombre, apellido, telefono)
+      VALUES (?, ?, ?, ?)
     `
 
     const params = [
+      denunciante.dni ?? null,
       denunciante.nombre ?? null,
       denunciante.apellido ?? null,
-      denunciante.telefono ?? null,
-      denunciante.dni ?? null,
-      denunciante.idIncidente ?? null
+      denunciante.telefono ?? null
     ]
 
-    const connection = getConnection()
+    // Mantener el mismo patrón que en Damnificado
+    const connection = await getConnection()
 
     try {
       const [result] = await connection.execute(query, params)
-      const nuevoId = result.insertId
-      logger.debug('📌 Denunciante insertado correctamente', { id: nuevoId, idIncidente: denunciante.idIncidente ?? null })
-      return nuevoId
+      const idDenunciante = result.insertId
+      logger.debug('🧾 Denunciante insertado', { idDenunciante })
+      return idDenunciante
     } catch (error) {
-      logger.error('❌ Error al insertar denunciante', {
-        error: error.message,
-        code: error.code
-      })
-      throw new Error(`Error al insertar denunciante: ${error.message}`)
+      logger.error('❌ Error al insertar denunciante', { error: error.message, code: error.code })
+      throw new Error('Error al insertar denunciante')
     }
   }
 }

@@ -25,7 +25,6 @@ import { GuardiaAsignacionService } from '../internal/services/guardia-asignacio
 import { buildGuardiaHandlers } from '../guardias/handler.js'
 
 // --- Infraestructura y varios ---
-import { MySQLDenuncianteRepository } from '../internal/repositories/mysql/denunciante.repository.js'
 import { WhatsAppService } from '../internal/services/whatsapp.service.js'
 
 // --- Roles ---
@@ -123,6 +122,11 @@ import { MySQLCausaProbableRepository } from '../internal/repositories/mysql/cau
 import { CausaProbableService } from '../internal/services/causaProbable.service.js'
 import { CausaProbableHandler } from '../causaProbable/handler.js'
 
+// --- Denunciantes ---
+import { MySQLDenuncianteRepository } from '../internal/repositories/mysql/denunciante.repository.js'
+import { DenuncianteService } from '../internal/services/denunciante.service.js'
+import { buildDenuncianteHandler } from '../denunciante/handler.js'
+
 export async function createServer(config) {
   try {
     logger.info('🏗️ Iniciando assembler de dependencias...')
@@ -174,6 +178,7 @@ export async function createServer(config) {
     const bomberoService = new BomberoService(bomberoRepository, usuarioRepository)
     const usuarioService = new UsuarioService(usuarioRepository, bomberoRepository)
     const tipoIncidenteService = new TipoIncidenteService(tipoIncidenteRepository)
+    const denuncianteService = new DenuncianteService(denuncianteRepository)
     const incidenteService = new IncidenteService(
       incidenteRepository,
       denuncianteRepository,
@@ -252,6 +257,7 @@ export async function createServer(config) {
     const factorClimaticoHandler = new FactorClimaticoHandler(factorClimaticoService)
     const rescateHandler = new RescateHandler(rescateService)
     const guardiaHandlers = buildGuardiaHandlers(guardiaAsignacionService)
+    const denuncianteHandler = buildDenuncianteHandler(denuncianteService)
 
     // --- Contenedor a exponer a las rutas ---
     const container = {
@@ -340,6 +346,7 @@ export async function createServer(config) {
       incendioEstructuralHandler,
       forestalCatalogosHandler,
       guardiaHandlers,
+      denuncianteHandler,
       recuperarClaveHandler,
       validarTokenHandler,
       restablecerClaveHandler,
@@ -380,7 +387,8 @@ export async function createServer(config) {
         'categoriaMaterialPeligrosoService',
         'tipoMatInvolucradoService',
         'accionMaterialService',
-        'accionPersonaService'
+        'accionPersonaService',
+        'denuncianteService'
       ],
       repositories: [
         'bomberoRepository',
@@ -417,11 +425,10 @@ export async function createServer(config) {
         'categoriaMaterialPeligrosoHandler',
         'tipoMatInvolucradoHandler',
         'accionMaterialHandler',
-        'accionPersonaHandler'
+        'accionPersonaHandler',
+        'denuncianteHandler'
       ],
-      services: ['bomberoService', 'usuarioService', 'incidenteService', 'grupoGuardiaService', 'whatsappService', 'rolService', 'accidenteTransitoService' ,'causaAccidenteService', 'vehiculoService', 'rangoService'],
-      repositories: ['bomberoRepository', 'usuarioRepository', 'incidenteRepository', 'denuncianteRepository', 'grupoGuardiaRepository', 'rolRepository', 'rolRepository', 'accidenteTransitoRepository', 'causaAccidenteRepository', 'vehiculoRepository', 'rangoRepository'],
-      handlers: ['bomberoHandler', 'usuarioHandler', 'incidenteHandler', 'grupoGuardiaHandler', 'rolesAdapter', 'accidenteTransitoHandler' ,'causaAccidenteHandler', 'vehiculoHandler', 'rangoHandler'],
+
       infrastructure: ['dbConnection']
     })
 
