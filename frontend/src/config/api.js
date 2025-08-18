@@ -57,17 +57,34 @@ export const API_URLS = {
     getAll: `${API_BASE_URL}/rangos`
   },
 
-  
+
   // Incidentes
   incidentes: {
     create: `${API_BASE_URL}/incidentes`,
     getAll: `${API_BASE_URL}/incidentes`,
     getById: (id) => `${API_BASE_URL}/incidentes/${id}`,
-    createIncendioForestal: `${API_BASE_URL}/incidentes/incendio-forestal`,
+    getDetalle: (id) => `${API_BASE_URL}/incidentes/${id}/detalle`, // 👈io-forestal`,
     createFactorClimatico: `${API_BASE_URL}/factor-climatico`,
     createIncendioEstructural: `${API_BASE_URL}/incendio-estructural`,
     createMaterialPeligroso: `${API_BASE_URL}/materiales-peligrosos`,
     createRescate: `${API_BASE_URL}/rescate`,
+    getAll: `${API_BASE_URL}/incidentes`,              // simple (sin filtros)
+    listar: params => `${API_BASE_URL}/incidentes${toQS(params)}`, // con filtros/paginado
+    detallePorTipo: {
+      accidenteTransito: (idIncidente) => `${API_BASE_URL}/accidentes/${idIncidente}`,
+      factorClimatico: (idIncidente) => `${API_BASE_URL}/factor-climatico/${idIncidente}`,
+      incendioEstructural: (idIncidente) => `${API_BASE_URL}/incendio-estructural/${idIncidente}`,
+      incendioForestal: (idIncidente) => `${API_BASE_URL}/incendio-forestal/${idIncidente}`, // <-- si lo tenés como GET; si no, omite
+      materialesPeligrosos: (idIncidente) => `${API_BASE_URL}/materiales-peligrosos/${idIncidente}`,
+      rescate: (idIncidente) => `${API_BASE_URL}/rescate/${idIncidente}`,
+    },
+    detallePorTipo: {
+      accidenteTransito: (idIncidente) => `${API_BASE_URL}/accidentes/${idIncidente}`,
+      factorClimatico: (idIncidente) => `${API_BASE_URL}/factor-climatico/${idIncidente}`,
+      incendioEstructural: (idIncidente) => `${API_BASE_URL}/incendio-estructural/${idIncidente}`,
+      materialesPeligrosos: (idIncidente) => `${API_BASE_URL}/materiales-peligrosos/${idIncidente}`,
+      rescate: (idIncidente) => `${API_BASE_URL}/rescate/${idIncidente}`
+    }
   },
   categoriasMaterialPeligroso: `${API_BASE_URL}/categorias-material-peligroso`,
   tiposMaterialesInvolucrados: `${API_BASE_URL}/tipos-materiales-involucrados`,
@@ -130,3 +147,4 @@ export const apiRequest = async (url, options = {}) => {
     throw error
   }
 }
+

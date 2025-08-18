@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import ParticlesBackground from '../ParticlesBackground/ParticlesBackground'
 
 import CargarIncidente from '../Incidente/CargarIncidente/CargarIncidente'
+import ConsultarIncidente from '../Incidente/ConsultarIncidente/ConsultarIncidente'
 import RegistrarBombero from '../Bombero/RegistrarBombero/RegistrarBombero'
 import ConsultarBombero from '../Bombero/ConsultarBombero/ConsultarBombero'
 import RegistrarUsuario from '../Usuario/RegistrarUsuario/RegistrarUsuario'
@@ -24,7 +25,7 @@ import Rescate from '../Incidente/TipoIncidente/Rescate/Rescate'
 import ParticipacionIncidente from '../Incidente/ParticipacionIncidente/ParticipacionIncidente'
 import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
 
-const Menu = ({user, setUser}) => {
+const Menu = ({ user, setUser }) => {
   const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
   const [usuario, setUsuario] = useState(null)
   const [mostrarDropdown, setMostrarDropdown] = useState(false)
@@ -136,6 +137,8 @@ const Menu = ({user, setUser}) => {
 
   const manejarFinalizarCarga = (datos) => {
     if (burbujaExpandida) cerrarBurbuja(burbujaExpandida)
+
+    // Combinar datos del incidente básico con los específicos
     const datosCompletos = {
       ...datosFinalizados,
       ...datos,
@@ -261,8 +264,8 @@ const Menu = ({user, setUser}) => {
         )
       case 'vehiculo-involucrado':
         return <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />
-      default:
-        return null
+      case 'consultarIncidente': // << NUEVO
+        return <ConsultarIncidente onVolverMenu={() => setOpcionSeleccionada('')} />
     }
   }
 
@@ -328,43 +331,41 @@ const Menu = ({user, setUser}) => {
 
         <div className="offcanvas-body flex-grow-1">
           <div className="accordion accordion-flush" id="sidebarAccordion">
-            {[
-              {
-                id: 'collapseIncidente',
-                icono: 'bi-fire',
-                titulo: 'Incidentes',
-                botones: [{ texto: 'Cargar Incidente', accion: 'cargar-incidente' }]
-              },
-              {
-                id: 'collapseBomberos',
-                icono: 'bi-person-badge',
-                titulo: 'Bomberos',
-                botones: [
-                  { texto: 'Registrar Bombero', accion: 'registrar-bombero' },
-                  { texto: 'Consultar Bombero', accion: 'consultar-bombero' }
-                ]
-              },
-              {
-                id: 'collapseUsuarios',
-                icono: 'bi-person-circle',
-                titulo: 'Usuarios y Roles',
-                botones: [
-                  { texto: 'Registrar Usuario', accion: 'registrar-usuario' },
-                  { texto: 'Consultar Usuario', accion: 'consultar-usuario' },
-                  { texto: 'Registrar Rol', accion: 'registrar-rol' },
-                  { texto: 'Consultar Rol', accion: 'consultar-rol' }
-                ]
-              },
-              {
-                id: 'collapseGuardias',
-                icono: 'bi-clock-history',
-                titulo: 'Guardias',
-                botones: [
-                  { texto: 'Registrar Guardia', accion: 'registrar-guardia' },
-                  { texto: 'Consultar Grupos', accion: 'consultar-grupos-guardia' }
-                ]
-              }
-            ].map(({ id, icono, titulo, botones }) => (
+            {[{
+              id: 'collapseIncidente',
+              icono: 'bi-fire',
+              titulo: 'Incidentes',
+              botones: [{ texto: 'Cargar Incidente', accion: 'cargarIncidente' },
+                { texto: 'Consultar Incidente', accion: 'consultarIncidente' } // << NUEVO
+              ]
+            },
+            {
+              id: 'collapseBomberos',
+              icono: 'bi-person-badge',
+              titulo: 'Bomberos',
+              botones: [
+                { texto: 'Registrar Bombero', accion: 'registrarBombero' },
+                { texto: 'Consultar Bombero', accion: 'consultarBombero' }
+              ]
+            }, {
+              id: 'collapseUsuarios',
+              icono: 'bi-person-circle',
+              titulo: 'Usuarios y Roles',
+              botones: [
+                { texto: 'Registrar Usuario', accion: 'registrarUsuario' },
+                { texto: 'Consultar Usuario', accion: 'consultarUsuario' },
+                { texto: 'Registrar Rol', accion: 'registrarRol' },
+                { texto: 'Consultar Rol', accion: 'consultarRol' }
+              ]
+            }, {
+              id: 'collapseGuardias',
+              icono: 'bi-clock-history',
+              titulo: 'Guardias',
+              botones: [
+                { texto: 'Registrar Guardia', accion: 'registrarGuardia' },
+                { texto: 'Consultar Guardia', accion: 'consultarGuardia' }
+              ]
+            }].map(({ id, icono, titulo, botones }) => (
               <div key={id} className="accordion-item bg-dark border-0">
                 <h2 className="accordion-header">
                   <button
