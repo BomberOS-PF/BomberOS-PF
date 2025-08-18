@@ -187,7 +187,6 @@ export async function createServer(config) {
     const grupoGuardiaService = new GrupoGuardiaService(grupoGuardiaRepository, bomberoRepository)
     const rolService = new RolService(rolRepository)
     const causaAccidenteService = new CausaAccidenteService(causaAccidenteRepository)
-    const causaAccidenteService = new CausaAccidenteService(causaAccidenteRepository)
     const accidenteTransitoService = new AccidenteTransitoService({
       accidenteTransitoRepository,
       vehiculoRepository,
