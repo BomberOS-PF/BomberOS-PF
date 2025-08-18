@@ -203,32 +203,23 @@ const Menu = ({ user, setUser }) => {
 
   const renderContenido = () => {
     switch (opcionSeleccionada) {
-      case 'cargar-incidente':
+      case 'cargarIncidente':
         return <CargarIncidente onVolver={() => setOpcionSeleccionada(null)} onNotificar={agregarBurbuja} />
-      case 'registrar-bombero':
+      case 'registrarBombero':
         return <RegistrarBombero onVolver={() => setOpcionSeleccionada(null)} />
-      case 'consultar-bombero':
+      case 'consultarBombero':
         return <ConsultarBombero onVolver={() => setOpcionSeleccionada(null)} />
-      case 'registrar-usuario':
+      case 'registrarUsuario':
         return <RegistrarUsuario onVolver={() => setOpcionSeleccionada(null)} />
-      case 'consultar-usuario':
+      case 'consultarUsuario':
         return <ConsultarUsuario onVolver={() => setOpcionSeleccionada(null)} />
-      case 'registrar-rol':
+      case 'registrarRol':
         return <RegistrarRol onVolver={() => setOpcionSeleccionada(null)} />
-      case 'consultar-rol':
+      case 'consultarRol':
         return <ConsultarRol onVolver={() => setOpcionSeleccionada(null)} />
-      case 'registrar-guardia':
+      case 'registrarGuardia':
         return <RegistrarGuardia onVolver={() => setOpcionSeleccionada(null)} />
-      case 'consultar-grupos-guardia':
-        return (
-          <ConsultarGrupoGuardia
-            onVolver={() => setOpcionSeleccionada(null)}
-            onIrAGestionarGuardias={(grupo) => {
-              setGrupoSeleccionado(grupo)
-              setOpcionSeleccionada('gestionar-guardias')
-            }}
-          />
-        )
+      case 'consultarGuardia': return (<ConsultarGrupoGuardia onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja} />)
       case 'gestionar-guardias':
         return grupoSeleccionado
           ? (
@@ -336,7 +327,7 @@ const Menu = ({ user, setUser }) => {
               icono: 'bi-fire',
               titulo: 'Incidentes',
               botones: [{ texto: 'Cargar Incidente', accion: 'cargarIncidente' },
-                { texto: 'Consultar Incidente', accion: 'consultarIncidente' }
+              { texto: 'Consultar Incidente', accion: 'consultarIncidente' }
               ]
             },
             {
