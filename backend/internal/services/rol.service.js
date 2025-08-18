@@ -12,7 +12,7 @@ export class RolService {
     }
 
     const existe = await this.rolRepository.obtenerPorNombre(data.nombreRol)
-    if (existe) throw new Error('Ya existe un rol con ese nombre')
+    if (existe) throw new Error('Nombre de rol no disponible')
 
     const nuevoRol = new Rol(data)
     const resultado = await this.rolRepository.guardar(nuevoRol)
@@ -32,6 +32,13 @@ export class RolService {
   async actualizarRol(id, data) {
     if (data.nombreRol && data.nombreRol.length < 3) {
       throw new Error('El nombre del rol debe tener al menos 3 caracteres')
+    }
+
+    if (data.nombreRol) {
+      const existente = await this.rolRepository.obtenerPorNombre(data.nombreRol)
+      if (existente && existente.idRol !== parseInt(id)) {
+        throw new Error('Nombre de rol ya registrado')
+      }
     }
 
     return await this.rolRepository.actualizarPorId(id, data)

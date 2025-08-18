@@ -4,8 +4,8 @@
   "description": "Sistema de Gestión de Bomberos - Proyecto Final con Arquitectura Hexagonal",
   "type": "module",
   "scripts": {
-    "start": "npm run dev",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "start": "concurrently --kill-others --prefix-colors \"blue.bold,green.bold\" --prefix \"[{name}]\" --names \"BACKEND,FRONTEND\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev": "concurrently --kill-others --prefix-colors \"blue.bold,green.bold\" --prefix \"[{name}]\" --names \"BACKEND,FRONTEND\" \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd backend && npm start",
     "dev:frontend": "cd frontend && npm run dev",
     "stop": "echo 🛑 Para detener los servicios, presioná Ctrl + C",
@@ -15,6 +15,7 @@
     "test:api": "curl http://localhost:3000/health",
     "test:frontend": "curl http://localhost:5173 > nul && echo ✅ Frontend OK || echo ❌ Frontend no disponible",
     "test:all": "npm run test:api && npm run test:frontend",
+    "test:services": "node -e \"const http = require('http'); const services = [{name: 'Backend API', url: 'http://localhost:3000/health'}, {name: 'Frontend', url: 'http://localhost:5173'}]; Promise.all(services.map(s => new Promise(resolve => {const req = http.get(s.url, res => resolve({...s, status: res.statusCode, healthy: res.statusCode === 200})); req.on('error', () => resolve({...s, status: 'ERROR', healthy: false})); req.setTimeout(3000, () => {req.destroy(); resolve({...s, status: 'TIMEOUT', healthy: false});});}))).then(results => {console.log('\\n🔍 Probando servicios de BomberOS...\\n'); results.forEach(r => {const status = r.healthy ? '✅' : '❌'; const color = r.healthy ? '\\x1b[32m' : '\\x1b[31m'; const reset = '\\x1b[0m'; console.log(`${status} ${color}${r.name}${reset} - ${r.url} (${r.status})`);}); console.log('\\n' + '='.repeat(60) + '\\n');});\"",
     "logs:backend": "npm run dev:backend",
     "logs:frontend": "npm run dev:frontend"
   },
@@ -42,6 +43,9 @@
     "@fullcalendar/timegrid": "^6.1.19",
     "bcrypt": "^6.0.0",
     "react-select": "^5.10.2",
-    "react-time-picker": "^7.0.0"
+    "react-time-picker": "^7.0.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "nodemailer": "^7.0.5"
   }
 }

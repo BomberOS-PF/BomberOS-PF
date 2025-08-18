@@ -2,20 +2,35 @@ html, body, #root {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
-  font-family: "Work Sans", "Noto Sans", sans-serif;
-  background-color: #111;
+  height: auto;
+  font-family: "Segoe UI", "Noto Sans", sans-serif;
   overflow-x: hidden;
+}
+
+body {
+  overflow-y: auto;
 }
 
 main {
   padding: 0;
   margin: 0;
-  background-color: #a0a0a0; /* Color del fondo */
   min-height: 100vh;
   width: 100%;
-  max-width: 100%; /*cambie esto y se agrando el contenedor, pero quiero que se adapte al tamaño de la pantalla de forma automatica*/
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  /* background-color: #f8f9fa; */
+}
+
+.container-custom {
+  width: 100%;
+  max-width: 1140px;
+  padding: 2rem;
+}
+
+canvas {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  z-index: -1 !important;
 }

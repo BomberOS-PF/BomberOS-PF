@@ -87,6 +87,28 @@ export class MySQLUsuarioRepository {
     }
   }
 
+  async findByEmail(email) {
+    const query = `
+      SELECT idUsuario, usuario, password, email, idRol
+      FROM ${this.tableName} 
+      WHERE email = ?
+    `
+    
+    const connection = getConnection()
+
+    try {
+      const [rows] = await connection.execute(query, [email])
+      return rows.length > 0 ? Usuario.create(rows[0]) : null
+    } catch (error) {
+      logger.error('Error al buscar usuario por email', {
+        email,
+        error: error.message,
+        code: error.code
+      })
+      throw new Error(`Error al buscar usuario por email: ${error.message}`)
+    }
+  }
+  
   async create(usuario) {
     const data = usuario.toDatabase()
     
@@ -121,7 +143,7 @@ export class MySQLUsuarioRepository {
       })
       
       if (error.code === 'ER_DUP_ENTRY') {
-        throw new Error(`Ya existe un usuario con el nombre "${data.usuario}"`)
+        throw new Error(`Nombre de usuario no disponible`)
       }
       
       throw new Error(`Error al crear usuario: ${error.message}`)
@@ -272,4 +294,15 @@ export class MySQLUsuarioRepository {
       throw new Error(`Error al obtener usuarios sin bombero: ${error.message}`)
     }
   }
+
+  async actualizarContrasenaPorEmail(email, nuevaContrasenaHasheada) {
+    const conn = getConnection()
+    const [result] = await conn.execute(
+      'UPDATE usuario SET password = ? WHERE email = ?',
+      [nuevaContrasenaHasheada, email]
+    )
+    logger.debug('Contraseña actualizada por email', { email })
+    return result.affectedRows > 0
+  }
 } 
+

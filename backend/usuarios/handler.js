@@ -114,7 +114,7 @@ export class UsuarioHandler {
         responseTime: `${Date.now() - req.startTime}ms`
       })
       
-      const status = error.message.includes('Ya existe') ? 409 : 
+      const status = error.message.includes('Ya existe') || error.message.includes('registrado') ? 409 : 
                      error.message.includes('requerido') || error.message.includes('inválido') ? 400 : 500
       
       res.status(status).json({

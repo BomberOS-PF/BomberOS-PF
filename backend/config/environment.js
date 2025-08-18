@@ -11,6 +11,11 @@ export function loadConfig() {
       host: process.env.HOST || 'localhost'
     },
     
+    frontend: {
+      port: parseInt(process.env.FRONTEND_PORT) || 5173,
+      host: process.env.FRONTEND_HOST || 'localhost'
+    },
+    
     database: {
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT) || 3306,
@@ -29,16 +34,19 @@ export function loadConfig() {
     },
     
     cors: {
-      origin: process.env.CORS_ORIGIN?.split(',') || function(origin, callback) {
-        // Permitir requests sin origin (como Postman) o desde localhost en desarrollo
-        if (!origin || /^http:\/\/localhost:\d+$/.test(origin)) {
-          callback(null, true)
-        } else {
-          callback(new Error('No permitido por CORS'))
-        }
-      },
+      origin: process.env.CORS_ORIGIN
+        ? process.env.CORS_ORIGIN.split(',')
+        : function (origin, callback) {
+            // Si no hay origin (Postman) o es localhost en cualquier puerto -> permitir
+            if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin)) {
+              callback(null, true)
+            } else {
+              callback(new Error('No permitido por CORS'))
+            }
+          },
       credentials: true
-    },
+  },
+
     
     logging: {
       level: process.env.LOG_LEVEL || 'info',
