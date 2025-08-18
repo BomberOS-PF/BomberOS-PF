@@ -162,9 +162,6 @@ const Menu = ({user, setUser}) => {
     }
   }
 
-  const usuarioActual = usuario || JSON.parse(localStorage.getItem('usuario')) || {}
-  const rol = usuarioActual.rol || 'desconocido'
-
   // Permisos (placeholder)
   const permisos = {
     administrador: ['*'],
