@@ -634,6 +634,61 @@ export function setupRoutes(app, container) {
     }
   })
 
+  // --- Grupos de guardia ---
+  app.post('/api/grupos', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.crearGrupo(req, res)
+    } catch (error) {
+      logger.error('Error en ruta crearGrupo:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/grupos', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.listarGrupos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listarGrupos:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/grupos/:id/bomberos', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.obtenerBomberosDelGrupo(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtenerBomberosDelGrupo:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/grupos/buscar', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.buscarGrupos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta buscarGrupos:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.delete('/api/grupos/:id', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.eliminarGrupo(req, res)
+    } catch (error) {
+      logger.error('Error en ruta eliminarGrupo:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.put('/api/grupos/:id', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.actualizarGrupo(req, res)
+    } catch (error) {
+      logger.error('Error en ruta actualizarGrupo:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
   // ===================== FACTOR CLIMÁTICO =====================
   app.post('/api/factor-climatico', async (req, res) => {
     console.log('🌍 [ROUTES] Entrando a /api/factor-climatico...')
@@ -734,7 +789,16 @@ export function setupRoutes(app, container) {
         'GET /api/incidentes/:id/detalle',
         'POST /api/denunciantes',
         'GET /api/denunciantes/:idDenunciante',
-        'GET /api/denunciantes/dni/:dni'
+        'GET /api/denunciantes/dni/:dni',
+        'POST /api/grupos',
+        'GET /api/grupos',
+        'GET /api/grupos/:id/bomberos',
+        'GET /api/grupos/buscar',
+        'DELETE /api/grupos/:id',
+        'PUT /api/grupos/:id',
+        'POST /api/rescate',
+        'GET /api/rescate',
+        'GET /api/rescate/:id'
       ]
     })
   })
