@@ -7,7 +7,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import esLocale from '@fullcalendar/core/locales/es'
 import Select from 'react-select'
-import '../../DisenioFormulario/DisenioFormulario.css'
+// import '../../DisenioFormulario/DisenioFormulario.css'
 
 const diasSemana = [
   { label: 'Lunes', value: 0 },
@@ -217,8 +217,8 @@ const asignacionesAEventos = (rows, nombreByDni = new Map()) => {
     const [y, m, d] = arr[0].fecha.split('-').map(Number)
 
     let bloqueStart = arr[0].hora_desde
-    let bloqueEnd   = arr[0].hora_hasta
-    let bloqueBom   = [{
+    let bloqueEnd = arr[0].hora_hasta
+    let bloqueBom = [{
       nombre: nombreByDni.get(arr[0].dni) || '',
       dni: arr[0].dni,
       desde: arr[0].hora_desde,
@@ -244,7 +244,7 @@ const asignacionesAEventos = (rows, nombreByDni = new Map()) => {
           id: `srv-${key}-${bloqueStart}-${bloqueEnd}`,
           title: '',
           start: new Date(y, (m || 1) - 1, d || 1, hs || 0, ms || 0),
-          end:   new Date(y, (m || 1) - 1, d || 1, he || 0, me || 0),
+          end: new Date(y, (m || 1) - 1, d || 1, he || 0, me || 0),
           backgroundColor: '#f08080',
           borderColor: '#b30000',
           textColor: 'transparent',
@@ -253,8 +253,8 @@ const asignacionesAEventos = (rows, nombreByDni = new Map()) => {
         })
 
         bloqueStart = a.hora_desde
-        bloqueEnd   = a.hora_hasta
-        bloqueBom   = [{
+        bloqueEnd = a.hora_hasta
+        bloqueBom = [{
           nombre: nombreByDni.get(a.dni) || '',
           dni: a.dni,
           desde: a.hora_desde,
@@ -269,7 +269,7 @@ const asignacionesAEventos = (rows, nombreByDni = new Map()) => {
       id: `srv-${key}-${eventos.length}`,
       title: '',
       start: new Date(y, (m || 1) - 1, d || 1, hs || 0, ms || 0),
-      end:   new Date(y, (m || 1) - 1, d || 1, he || 0, me || 0),
+      end: new Date(y, (m || 1) - 1, d || 1, he || 0, me || 0),
       backgroundColor: '#f08080',
       borderColor: '#b30000',
       textColor: 'transparent',
@@ -370,7 +370,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       if (tooltip) {
         tooltip.innerText = (ev.extendedProps.bomberos || [])
           .slice()
-          .sort((a,b)=> a.desde.localeCompare(b.desde) || (Number(a.dni)-Number(b.dni)))
+          .sort((a, b) => a.desde.localeCompare(b.desde) || (Number(a.dni) - Number(b.dni)))
           .map((b) => `${b.nombre || nombrePorDni.get(Number(b.dni)) || b.dni} (${b.desde}-${b.hasta})`)
           .join('\n')
       }
@@ -443,7 +443,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
         overlaps(nuevoInicioDate, nuevoFinDate, new Date(ev.start), new Date(ev.end))
       )
       if (!touched) {
-        const id = `${fechaObjetivo.toISOString().slice(0,10)}-${horaDesde}-${horaHasta}-${bomberoSeleccionado.value}-${Date.now()}`
+        const id = `${fechaObjetivo.toISOString().slice(0, 10)}-${horaDesde}-${horaHasta}-${bomberoSeleccionado.value}-${Date.now()}`
         eventosActualizados.push({
           id,
           title: '',
@@ -560,42 +560,55 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   }))
 
   // === Mensajería: clase de alerta por contenido ===
-// === Mensajería: clase de alerta por contenido ===
-const mensajeClass = useMemo(() => {
-  if (!mensaje) return 'alert-info'
-  const m = mensaje.toLowerCase()
+  // === Mensajería: clase de alerta por contenido ===
+  const mensajeClass = useMemo(() => {
+    if (!mensaje) return 'alert-info'
+    const m = mensaje.toLowerCase()
 
-  // 1) Errores -> rojo
-  if (/(falló|fallo|error|no se guard|no pudo|rechazad|inválid|invalido)/.test(m)) {
-    return 'alert-danger'
-  }
+    // 1) Errores -> rojo
+    if (/(falló|fallo|error|no se guard|no pudo|rechazad|inválid|invalido)/.test(m)) {
+      return 'alert-danger'
+    }
 
-  // 2) Éxitos -> verde (cubre "con exito/éxito", "correctamente",
-  //    y algunos verbos típicos junto a "con" o "en")
-  if (/(éxito|exito|correctamente|guardad[oa]s? (en|con)|actualizad[oa] (en|con))/.test(m)) {
-    return 'alert-success'
-  }
+    // 2) Éxitos -> verde (cubre "con exito/éxito", "correctamente",
+    //    y algunos verbos típicos junto a "con" o "en")
+    if (/(éxito|exito|correctamente|guardad[oa]s? (en|con)|actualizad[oa] (en|con))/.test(m)) {
+      return 'alert-success'
+    }
 
-  // 3) Avisos / validaciones -> amarillo
-  return 'alert-warning'
-}, [mensaje])
+    // 3) Avisos / validaciones -> amarillo
+    return 'alert-warning'
+  }, [mensaje])
 
 
 
   return (
-    <div className="container formulario-consistente">
-      <h2 className="text-black mb-4">Gestión de guardias - {nombreGrupo}</h2>
+    <div className="container-fluid py-5">
+      <div className='text-center mb-4'>
+        <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
+          <h1 className="fw-bold text-white fs-3 mb-0">
+            Gestionar Guardias
+          </h1>
+        </div>
+        <span className="badge bg-danger-subtle text-danger">
+          <i className="bi bi-fire me-2"></i> Sistema de Gestión de Personal - Cuartel de Bomberos
+        </span>
+      </div>
 
-      {mensaje && (
-  <div className={`alert ${mensajeClass}`} role="alert">
-    {mensaje}
-  </div>
-)}
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+        <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
+          <strong>Gestión de guardias - {nombreGrupo}</strong>
+        </div>
+        <div className="card-body">
+          {mensaje && (
+        <div className={`alert ${mensajeClass}`} role="alert">
+          {mensaje}
+        </div>
+      )}
 
-
-      <div className="row">
+      <div className="row px-5">
         {/* Columna izquierda */}
-        <div className="col-md-4 mb-3">
+        <div className="col-md-4 mb-3 px-5">
           <h4 className="text-black">Bomberos del grupo</h4>
 
           <Select
@@ -607,9 +620,9 @@ const mensajeClass = useMemo(() => {
             isClearable
           />
 
-          <div className="mt-3">
+          <div className="text-black mt-3">
             <label>Día:</label>
-            <Select
+            <Select 
               options={diasSemana}
               value={diaSeleccionado}
               onChange={setDiaSeleccionado}
@@ -619,7 +632,7 @@ const mensajeClass = useMemo(() => {
             />
 
             <label className="mt-2">Desde:</label>
-            <div className="d-flex gap-2">
+            <div className="d-flex gap-3">
               <Select
                 options={horas}
                 value={
@@ -654,7 +667,7 @@ const mensajeClass = useMemo(() => {
             </div>
 
             <label className="mt-2">Hasta:</label>
-            <div className="d-flex gap-2">
+            <div className="d-flex gap-3">
               <Select
                 options={horas}
                 value={
@@ -726,7 +739,7 @@ const mensajeClass = useMemo(() => {
               const lista = info.event.extendedProps?.bomberos || []
               tooltip.innerText = lista
                 .slice()
-                .sort((a,b)=> a.desde.localeCompare(b.desde) || (Number(a.dni)-Number(b.dni)))
+                .sort((a, b) => a.desde.localeCompare(b.desde) || (Number(a.dni) - Number(b.dni)))
                 .map((b) => `${b.nombre || nombrePorDni.get(Number(b.dni)) || b.dni} (${b.desde}-${b.hasta})`)
                 .join('\n')
 
@@ -914,43 +927,43 @@ const mensajeClass = useMemo(() => {
                       disabled={!tieneCambios}
                       onClick={() => {
                         // Si no queda ningún bombero -> eliminar bloque y persistir el día
-if (bomberosEditados.length === 0) {
-  const fechaBase = new Date(eventoSeleccionado.start)
-  const fechaStr = yyyyMmDd(fechaBase)
+                        if (bomberosEditados.length === 0) {
+                          const fechaBase = new Date(eventoSeleccionado.start)
+                          const fechaStr = yyyyMmDd(fechaBase)
 
-  // 1) UI: quitar este evento y re-fusionar
-  const nextEventos = fusionarEventos(
-    eventos.filter(ev => ev.id !== eventoSeleccionado.id)
-  )
-  setEventos(nextEventos)
-  setModalAbierto(false)
+                          // 1) UI: quitar este evento y re-fusionar
+                          const nextEventos = fusionarEventos(
+                            eventos.filter(ev => ev.id !== eventoSeleccionado.id)
+                          )
+                          setEventos(nextEventos)
+                          setModalAbierto(false)
 
-  // 2) Construir el payload del DÍA restante (del resto de eventos de esa fecha)
-  const asignacionesDia = asignacionesDelDiaDesdeEventos(nextEventos, fechaStr)
+                          // 2) Construir el payload del DÍA restante (del resto de eventos de esa fecha)
+                          const asignacionesDia = asignacionesDelDiaDesdeEventos(nextEventos, fechaStr)
 
-  // 3) Persistir con PUT reemplazarDia
-  setGuardando(true)
-  apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
-    method: 'PUT',
-    body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDia })
-  })
-  .then(() => {
-    setMensaje('Guardia eliminada y actualizada con exito')
-    const api = calendarRef.current?.getApi()
-    if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
-    setTimeout(() => setMensaje(''), 3000)
-  })
-  .catch((e) => {
-    console.error(e)
-    setMensaje(`Error al guardar: ${e.message}`)
-    setTimeout(() => setMensaje(''), 5000)
-  })
-  .finally(() => setGuardando(false))
+                          // 3) Persistir con PUT reemplazarDia
+                          setGuardando(true)
+                          apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
+                            method: 'PUT',
+                            body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDia })
+                          })
+                            .then(() => {
+                              setMensaje('Guardia eliminada y actualizada con exito')
+                              const api = calendarRef.current?.getApi()
+                              if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
+                              setTimeout(() => setMensaje(''), 3000)
+                            })
+                            .catch((e) => {
+                              console.error(e)
+                              setMensaje(`Error al guardar: ${e.message}`)
+                              setTimeout(() => setMensaje(''), 5000)
+                            })
+                            .finally(() => setGuardando(false))
 
 
 
-  return
-}
+                          return
+                        }
 
 
                         const errores = []
@@ -1087,6 +1100,11 @@ if (bomberosEditados.length === 0) {
               </div>
             </div>
           )}
+        </div>
+
+      </div>
+
+      
 
         </div>
       </div>
