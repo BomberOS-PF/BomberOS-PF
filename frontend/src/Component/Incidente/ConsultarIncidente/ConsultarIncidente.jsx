@@ -247,7 +247,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
     return (
       <div className="container d-flex justify-content-center align-items-start">
         <div className="formulario-consistente w-100">
-          <h2 className="text-white mb-3">Detalle del incidente #{detalle?.idIncidente}</h2>
+          <h2 className="text-black mb-3">Detalle del incidente #{detalle?.idIncidente}</h2>
 
           <div className="card bg-dark text-white mb-3">
             <div className="card-body">
@@ -282,7 +282,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
 
           {/* Acciones abajo */}
           <div className="text-center mt-3">
-            <button className="btn btn-outline-light me-2" onClick={volverAlListado}>Volver al listado</button>
+            <button className="btn btn-outline-dark me-2" onClick={volverAlListado}>Volver al listado</button>
             <button className="btn btn-secondary" onClick={onVolverMenu}>Volver al menú</button>
           </div>
         </div>
@@ -295,7 +295,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
     <div className="container d-flex justify-content-center align-items-start">
       <div className="formulario-consistente w-100">
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h2 className="text-white m-0">Consultar Incidentes</h2>
+          <h2 className="text-black m-0">Consultar Incidentes</h2>
         </div>
 
         {/* Filtros */}
