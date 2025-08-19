@@ -1,9 +1,16 @@
 import React from 'react'
-// import '../../DisenioFormulario/DisenioFormulario.css'
+import '../../DisenioFormulario/DisenioFormulario.css'
 import { User2, UsersIcon } from 'lucide-react'
 
-const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, descripcion, bomberos, onVolver, onEditar }) => {
-
+const ConsultarBomberosDelGrupo = ({
+  idGrupo,
+  nombreGrupo,
+  descripcion,
+  bomberos = [],
+  onVolver,
+  onEditar,
+  onIrAGestionarGuardias
+}) => {
   return (
     <div className="container-fluid py-5">
       <div className='text-center mb-4'>
@@ -59,19 +66,30 @@ const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, descripcion, bomberos
             </div>
           )}
 
-          <div className='mt-4'>
+          <div className="mt-4">
             <div className="d-flex align-items-center justify-content-between mb-3">
-              <div>
-                <button className="btn btn-warning btn-sm me-2 d-flex align-items-center gap-1"
-                  onClick={() => onEditar({ idGrupo, nombre: nombreGrupo, descripcion })}>
-                  <i className="bi bi-pencil-square"></i>
-                  Editar
-                </button>
-                <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
-                  onClick={onVolver}>
-                  <i className="bi bi-arrow-left"></i> Volver al listado
-                </button>
-              </div>
+              <button
+                className="btn btn-warning me-sm-2 mb-2 mb-sm-0 w-100"
+                onClick={() => onEditar?.({ idGrupo, nombre: nombreGrupo, descripcion })}
+              >
+                <i className="bi bi-pencil-square me-1"></i>
+                Editar grupo
+              </button>
+
+              <button
+                className="btn btn-danger me-sm-2 mb-2 mb-sm-0 w-100"
+                onClick={() => onIrAGestionarGuardias?.({ idGrupo, nombreGrupo, bomberos })}
+              >
+                <i className="bi bi-calendar2-week me-1"></i>
+                Gestionar guardias
+              </button>
+
+              <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
+                onClick={onVolver}
+              >
+                <i className="bi bi-arrow-left me-1"></i>
+                Volver a grupos
+              </button>
             </div>
           </div>
         </div>

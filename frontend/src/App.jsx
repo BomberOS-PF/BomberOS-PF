@@ -11,6 +11,8 @@ import ParticipacionIncidente from './Component/Incidente/ParticipacionIncidente
 import VehiculoInvolucrado from './Component/VehiculoInvolucrado/VehiculoInvolucrado.jsx'
 import ConsultarRol from './Component/Rol/ConsultarRol.jsx'
 import RegistrarRol from './Component/Rol/RegistrarRol.jsx'
+import GestionarGuardias from './Component/Guardia/GestionarGuardias/GestionarGuardia.jsx'
+
 import RestablecerClave from './Component/RestablecerClave/RestablecerClave.jsx'
 
 const App = () => {
