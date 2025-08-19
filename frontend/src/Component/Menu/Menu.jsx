@@ -220,7 +220,16 @@ const Menu = ({ user, setUser }) => {
         return <ConsultarRol onVolver={() => setOpcionSeleccionada(null)} />
       case 'registrarGuardia':
         return <RegistrarGuardia onVolver={() => setOpcionSeleccionada(null)} />
-      case 'consultarGuardia': return (<ConsultarGrupoGuardia onVolver={() => setOpcionSeleccionada('')} onNotificar={agregarBurbuja} />)
+      case 'consultarGuardia':
+        return (
+          <ConsultarGrupoGuardia
+            onVolver={() => setOpcionSeleccionada(null)}
+            onIrAGestionarGuardias={(grupo) => {
+              setGrupoSeleccionado(grupo)
+              setOpcionSeleccionada('gestionar-guardias')
+            }}
+          />
+        )
       case 'gestionar-guardias':
         return grupoSeleccionado
           ? (
