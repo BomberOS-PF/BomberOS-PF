@@ -40,7 +40,8 @@ const Menu = ({ user, setUser }) => {
 
   // Guardias
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null)
-
+  const [grupoAGestionar, setGrupoAGestionar] = useState(null)
+  
   // Usuario actual y rol
   const usuarioActual = user || JSON.parse(localStorage.getItem('usuario')) || {}
   const nombreUsuario = usuarioActual.usuario || 'Usuario'
