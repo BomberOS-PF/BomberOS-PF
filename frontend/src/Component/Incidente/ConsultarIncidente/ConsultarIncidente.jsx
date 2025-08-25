@@ -1,122 +1,65 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
 import '../../DisenioFormulario/DisenioFormulario.css'
+import Pagination from '../../Common/Pagination'
 
-const PAGE_SIZE_DEFAULT = 10
-
-const FiltrosIniciales = {
-  busqueda: '',
-  tipo: '',
-  desde: '',
-  hasta: ''
-}
+const FiltrosIniciales = { busqueda: '', tipo: '', desde: '', hasta: '' }
 
 const ConsultarIncidente = ({ onVolverMenu }) => {
   const [filtros, setFiltros] = useState(FiltrosIniciales)
-  const [pagina, setPagina] = useState(1)
-  const [limite, setLimite] = useState(PAGE_SIZE_DEFAULT)
-  const [total, setTotal] = useState(0)
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  // incidente con detalle (de /incidentes/:id/detalle)
+  const [loadingFiltros, setLoadingFiltros] = useState(false)
   const [detalle, setDetalle] = useState(null)
-
-  const totalPaginas = useMemo(
-    () => Math.max(1, Math.ceil(total / limite)),
-    [total, limite]
-  )
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setFiltros(prev => ({ ...prev, [name]: value }))
   }
 
-  // ------- Listado -------
-  const buscar = async (resetPagina = true) => {
-    try {
-      setLoading(true)
-      setError('')
-      if (resetPagina) setPagina(1)
-
-      const params = new URLSearchParams({
-        pagina: resetPagina ? 1 : pagina,
-        limite
-      })
+  // Build query (memorizado) según filtros
+  const buildQuery = useMemo(() => {
+    return (page, limit) => {
+      const params = new URLSearchParams({ pagina: page, limite: limit })
       if (filtros.busqueda) params.append('busqueda', filtros.busqueda.trim())
       if (filtros.tipo) params.append('tipo', filtros.tipo)
       if (filtros.desde) params.append('desde', filtros.desde)
       if (filtros.hasta) params.append('hasta', filtros.hasta)
-
-      const url = `${API_URLS.incidentes.getAll}?${params.toString()}`
-      const res = await apiRequest(url, { method: 'GET' })
-
-      if (!res) {
-        setItems([])
-        setTotal(0)
-      } else if (Array.isArray(res)) {
-        setItems(res)
-        setTotal(res.length || 0)
-      } else if (typeof res === 'object') {
-        setItems(res.data || [])
-        setTotal(res.total || (res.data ? res.data.length : 0))
-      } else {
-        setError(typeof res === 'string' ? res : 'Respuesta inesperada del servidor')
-        setItems([])
-        setTotal(0)
-      }
-    } catch (e) {
-      setError(e?.message || 'Error al consultar incidentes')
-      setItems([])
-      setTotal(0)
-    } finally {
-      setLoading(false)
+      return `${API_URLS.incidentes.getAll}?${params.toString()}`
     }
+  }, [filtros])
+
+  // Fetch que usa Pagination internamente
+  const fetchPage = async ({ page, limit }) => {
+    const url = buildQuery(page, limit)
+    const res = await apiRequest(url, { method: 'GET' })
+
+    if (!res) return { items: [], total: 0 }
+    if (Array.isArray(res)) return { items: res, total: res.length }
+    if (typeof res === 'object') return { items: res.data || [], total: res.total ?? (res.data ? res.data.length : 0) }
+    return Promise.reject(new Error(typeof res === 'string' ? res : 'Respuesta inesperada del servidor'))
   }
 
-  const cambiarPagina = async (nueva) => {
-    if (nueva < 1 || nueva > totalPaginas) return
-    setPagina(nueva)
-    await buscar(false)
-  }
-
-  // ------- Ver detalle -------
   const verDetalle = async (id) => {
     try {
-      setLoading(true)
-      setError('')
-      // Esta ruta debe devolver: datos base + detalleEspecifico
+      setLoadingFiltros(true)
       const base = await apiRequest(API_URLS.incidentes.getDetalle(id), { method: 'GET' })
       setDetalle(base)
     } catch (e) {
-      setError(e?.message || 'No se pudo cargar el detalle')
+      // El error lo muestra Pagination si fuera de lista; acá mostramos local:
+      alert(e?.message || 'No se pudo cargar el detalle')
     } finally {
-      setLoading(false)
+      setLoadingFiltros(false)
     }
   }
 
-  const volverAlListado = () => {
-    setDetalle(null)
-  }
+  const volverAlListado = () => setDetalle(null)
 
-  useEffect(() => { buscar(true) }, []) // cargar al entrar
-
-  // ------- Render de Detalle Específico -------
   const renderDetalleEspecifico = (idTipoIncidente, detalleEspecifico) => {
-    if (!detalleEspecifico) {
-      return <div>Sin datos específicos para este incidente.</div>
-    }
-
+    if (!detalleEspecifico) return <div>Sin datos específicos para este incidente.</div>
     switch (Number(idTipoIncidente)) {
-      // 1) Accidente de Tránsito (ajustar ID real)
       case 1:
         return (
           <>
-            <div className="mb-2">
-              <strong>Causa:</strong> {detalleEspecifico?.causa?.descripcion || '-'}
-            </div>
-
+            <div className="mb-2"><strong>Causa:</strong> {detalleEspecifico?.causa?.descripcion || '-'}</div>
             <div className="mb-2">
               <strong>Vehículos involucrados</strong>
               <div className="table-responsive mt-2">
@@ -142,9 +85,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
               <strong>Damnificados</strong>
               <div className="table-responsive mt-2">
                 <table className="table table-dark table-striped table-sm align-middle">
-                  <thead>
-                    <tr><th>Nombre</th><th>DNI</th><th>Teléfono</th><th>Falleció</th></tr>
-                  </thead>
+                  <thead><tr><th>Nombre</th><th>DNI</th><th>Teléfono</th><th>Falleció</th></tr></thead>
                   <tbody>
                     {(detalleEspecifico?.damnificados || []).map((d, i) => (
                       <tr key={i}>
@@ -160,32 +101,16 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
             </div>
           </>
         )
-
-      // 2) Factores Climáticos -> tabla "climatico" (ajustar ID real)
       case 2:
       case 3:
         return (
           <div className="row g-3">
-            <div className="col-md-4">
-              <span className="badge bg-danger">Fenómeno</span>
-              <div>{detalleEspecifico?.fenomeno || '-'}</div>
-            </div>
-            <div className="col-md-4">
-              <span className="badge bg-danger">Intensidad</span>
-              <div>{detalleEspecifico?.intensidad || '-'}</div>
-            </div>
-            <div className="col-md-4">
-              <span className="badge bg-danger">Duración</span>
-              <div>{detalleEspecifico?.duracion || '-'}</div>
-            </div>
-            <div className="col-12">
-              <span className="badge bg-danger">Detalle</span>
-              <div>{detalleEspecifico?.detalle || '-'}</div>
-            </div>
+            <div className="col-md-4"><span className="badge bg-danger">Fenómeno</span><div>{detalleEspecifico?.fenomeno || '-'}</div></div>
+            <div className="col-md-4"><span className="badge bg-danger">Intensidad</span><div>{detalleEspecifico?.intensidad || '-'}</div></div>
+            <div className="col-md-4"><span className="badge bg-danger">Duración</span><div>{detalleEspecifico?.duracion || '-'}</div></div>
+            <div className="col-12"><span className="badge bg-danger">Detalle</span><div>{detalleEspecifico?.detalle || '-'}</div></div>
           </div>
         )
-
-      // 3) Incendio Estructural (ajustar ID real)
       case 4:
         return (
           <div className="row g-3">
@@ -195,8 +120,6 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
             <div className="col-12"><span className="badge bg-danger">Detalle</span><div>{detalleEspecifico?.detalle || '-'}</div></div>
           </div>
         )
-
-      // 4) Incendio Forestal (ajustar ID real)
       case 5:
         return (
           <div className="row g-3">
@@ -207,8 +130,6 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
             <div className="col-12"><span className="badge bg-danger">Detalle</span><div>{detalleEspecifico?.detalle || '-'}</div></div>
           </div>
         )
-
-      // 5) Materiales Peligrosos (ajustar ID real)
       case 6:
         return (
           <div className="row g-3">
@@ -217,17 +138,11 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
             <div className="col-md-4"><span className="badge bg-danger">Acción sobre material</span><div>{detalleEspecifico?.accionMaterial || '-'}</div></div>
             <div className="col-12">
               <span className="badge bg-danger">Acciones sobre personas</span>
-              <div>
-                {Array.isArray(detalleEspecifico?.accionesPersona) && detalleEspecifico.accionesPersona.length > 0
-                  ? detalleEspecifico.accionesPersona.join(', ')
-                  : '-'}
-              </div>
+              <div>{Array.isArray(detalleEspecifico?.accionesPersona) && detalleEspecifico.accionesPersona.length > 0 ? detalleEspecifico.accionesPersona.join(', ') : '-'}</div>
             </div>
             <div className="col-12"><span className="badge bg-danger">Observaciones</span><div>{detalleEspecifico?.observaciones || detalleEspecifico?.detalle || '-'}</div></div>
           </div>
         )
-
-      // 6) Rescate (ajustar ID real)
       case 7:
         return (
           <div className="row g-3">
@@ -236,13 +151,12 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
             <div className="col-12"><span className="badge bg-danger">Detalle</span><div>{detalleEspecifico?.detalle || '-'}</div></div>
           </div>
         )
-
       default:
         return <pre className="mb-0">{JSON.stringify(detalleEspecifico, null, 2)}</pre>
     }
   }
 
-  // ------- Vista Detalle -------
+  // Vista Detalle
   if (detalle) {
     return (
       <div className="container d-flex justify-content-center align-items-start">
@@ -252,27 +166,14 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
           <div className="card bg-dark text-white mb-3">
             <div className="card-body">
               <div className="row g-3">
-                <div className="col-md-3">
-                  <span className="badge bg-danger">Tipo</span>
-                  <div>{detalle?.tipoDescripcion || '-'}</div>
-                </div>
-                <div className="col-md-3">
-                  <span className="badge bg-danger">Fecha</span>
-                  <div>{detalle?.fecha || '-'}</div>
-                </div>
-                <div className="col-12">
-                  <span className="badge bg-danger">Descripción</span>
-                  <div>{detalle?.descripcion || '-'}</div>
-                </div>
-                <div className="col-12">
-                  <span className="badge bg-danger">Localización</span>
-                  <div>{detalle?.localizacion || '-'}</div>
-                </div>
+                <div className="col-md-3"><span className="badge bg-danger">Tipo</span><div>{detalle?.tipoDescripcion || '-'}</div></div>
+                <div className="col-md-3"><span className="badge bg-danger">Fecha</span><div>{detalle?.fecha || '-'}</div></div>
+                <div className="col-12"><span className="badge bg-danger">Descripción</span><div>{detalle?.descripcion || '-'}</div></div>
+                <div className="col-12"><span className="badge bg-danger">Localización</span><div>{detalle?.localizacion || '-'}</div></div>
               </div>
             </div>
           </div>
 
-          {/* Detalles específicos por tipo */}
           <div className="card bg-dark text-white mb-3">
             <div className="card-header">Detalles específicos por tipo</div>
             <div className="card-body">
@@ -280,7 +181,6 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
             </div>
           </div>
 
-          {/* Acciones abajo */}
           <div className="text-center mt-3">
             <button className="btn btn-outline-dark me-2" onClick={volverAlListado}>Volver al listado</button>
             <button className="btn btn-secondary" onClick={onVolverMenu}>Volver al menú</button>
@@ -290,7 +190,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
     )
   }
 
-  // ------- Vista Listado -------
+  // Vista Listado con paginación inteligente
   return (
     <div className="container d-flex justify-content-center align-items-start">
       <div className="formulario-consistente w-100">
@@ -304,23 +204,11 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
             <div className="row g-3">
               <div className="col-md-3">
                 <label className="form-label text-white">Búsqueda</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="ID, DNI, denunciante..."
-                  name="busqueda"
-                  value={filtros.busqueda}
-                  onChange={handleChange}
-                />
+                <input type="text" className="form-control" placeholder="ID, DNI, denunciante..." name="busqueda" value={filtros.busqueda} onChange={handleChange} />
               </div>
               <div className="col-md-3">
                 <label className="form-label text-white">Tipo</label>
-                <select
-                  className="form-select"
-                  name="tipo"
-                  value={filtros.tipo}
-                  onChange={handleChange}
-                >
+                <select className="form-select" name="tipo" value={filtros.tipo} onChange={handleChange}>
                   <option value="">Todos</option>
                   <option value="1">Accidente de Tránsito</option>
                   <option value="2">Factores Climáticos</option>
@@ -332,35 +220,28 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
               </div>
               <div className="col-md-3">
                 <label className="form-label text-white">Desde</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  name="desde"
-                  value={filtros.desde}
-                  onChange={handleChange}
-                />
+                <input type="date" className="form-control" name="desde" value={filtros.desde} onChange={handleChange} />
               </div>
               <div className="col-md-3">
                 <label className="form-label text-white">Hasta</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  name="hasta"
-                  value={filtros.hasta}
-                  onChange={handleChange}
-                />
+                <input type="date" className="form-control" name="hasta" value={filtros.hasta} onChange={handleChange} />
               </div>
             </div>
 
             {/* Acciones de filtros */}
             <div className="d-flex gap-2 mt-3">
-              <button className="btn btn-danger" onClick={() => buscar(true)} disabled={loading}>
-                {loading ? 'Buscando...' : 'Buscar'}
+              <button
+                className="btn btn-danger"
+                onClick={async () => { setLoadingFiltros(true); /* fuerza re-fetch por deps */ setLoadingFiltros(false) }}
+                disabled={loadingFiltros}
+                title="Aplicar filtros (se recarga la tabla abajo)"
+              >
+                {loadingFiltros ? 'Buscando...' : 'Aplicar filtros'}
               </button>
               <button
                 className="btn btn-outline-light"
-                onClick={() => { setFiltros(FiltrosIniciales); setPagina(1); buscar(true) }}
-                disabled={loading}
+                onClick={() => setFiltros(FiltrosIniciales)}
+                disabled={loadingFiltros}
               >
                 Limpiar
               </button>
@@ -368,79 +249,62 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
           </div>
         </div>
 
-        {error && <div className="alert alert-danger">{error}</div>}
+        {/* Paginación + Tabla (children) */}
+        <Pagination
+          fetchPage={fetchPage}
+          deps={[filtros]}          // cuando cambien filtros, se resetea a pág 1 y recarga
+          defaultPage={1}
+          defaultLimit={10}
+          className="mb-4"
+        >
+          {(items, { loading, error }) => (
+            <>
+              {error && <div className="alert alert-danger">{error}</div>}
+              <div className="table-responsive">
+                <table className="table table-dark table-hover align-middle">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Fecha</th>
+                      <th>Tipo</th>
+                      <th>Descripción</th>
+                      <th>Localización</th>
+                      <th>Estado</th>
+                      <th style={{ width: 140 }}>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(!loading && items.length === 0) && (
+                      <tr><td colSpan="7" className="text-center">No hay incidentes</td></tr>
+                    )}
+                    {items.map(it => (
+                      <tr key={it.idIncidente}>
+                        <td>{it.idIncidente}</td>
+                        <td>{it.fecha}</td>
+                        <td>{it.tipoDescripcion}</td>
+                        <td>{it.descripcion || '-'}</td>
+                        <td>{it.localizacion || '-'}</td>
+                        <td>{it.estado || '-'}</td>
+                        <td>
+                          <button className="btn btn-sm btn-danger me-2" onClick={() => verDetalle(it.idIncidente)}>
+                            Ver detalle
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {loading && (
+                      <tr><td colSpan="7" className="text-center">Cargando…</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </Pagination>
 
-        {/* Tabla */}
-        <div className="table-responsive">
-          <table className="table table-dark table-hover align-middle">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Fecha</th>
-                <th>Tipo</th>
-                <th>Descripción</th>
-                <th>Localización</th>
-                <th>Estado</th>
-                <th style={{ width: 140 }}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 && !loading && (
-                <tr>
-                  <td colSpan="7" className="text-center">No hay incidentes</td>
-                </tr>
-              )}
-              {items.map(it => (
-                <tr key={it.idIncidente}>
-                  <td>{it.idIncidente}</td>
-                  <td>{it.fecha}</td>
-                  <td>{it.tipoDescripcion}</td>
-                  <td>{it.descripcion || '-'}</td>
-                  <td>{it.localizacion || '-'}</td>
-                  <td>{it.estado || '-'}</td>
-                  <td>
-                    <button
-                      className="btn btn-sm btn-danger me-2"
-                      onClick={() => verDetalle(it.idIncidente)}
-                    >
-                      Ver detalle
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Paginación */}
-        <div className="d-flex justify-content-between align-items-center">
-          <div className="text-white-50">Total: {total}</div>
-          <div className="btn-group">
-            <button
-              className="btn btn-outline-light"
-              onClick={() => cambiarPagina(pagina - 1)}
-              disabled={pagina <= 1}
-            >
-              «
-            </button>
-            <span className="btn btn-outline-light disabled">
-              {pagina} / {totalPaginas}
-            </span>
-            <button
-              className="btn btn-outline-light"
-              onClick={() => cambiarPagina(pagina + 1)}
-              disabled={pagina >= totalPaginas}
-            >
-              »
-            </button>
-          </div>
-        </div>
-
-        {/* Volver al menú abajo */}
-        <div className="text-center mt-4">
-          <button className="btn btn-secondary" onClick={onVolverMenu}>
-            Volver al menú
-          </button>
+        {/* Volver al menú */}
+        <div className="text-center mt-2">
+          <button className="btn btn-secondary" onClick={onVolverMenu}>Volver al menú</button>
         </div>
       </div>
     </div>
