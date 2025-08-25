@@ -1,70 +1,62 @@
 import { useState, useEffect } from 'react'
 import { API_URLS } from '../../../config/api'
 import FormularioBombero from '../FormularioBombero/FormularioBombero'
-//import '../ConsultarBombero/ConsultarBombero.css'
-// import '../../DisenioFormulario/DisenioFormulario.css'
 import { User2, UsersIcon } from 'lucide-react'
 import { BackToMenuButton } from '../../Common/Button'
 
 const ConsultarBombero = ({ onVolver }) => {
+  // ==== MISMA ESTRUCTURA QUE REGISTRARGUARDIA ====
+  const [busqueda, setBusqueda] = useState('')
+  const [paginaActual, setPaginaActual] = useState(1)
+  const [limite] = useState(10)
+  const [total, setTotal] = useState(0)
+
   const [bomberos, setBomberos] = useState([])
-  const [dniBusqueda, setdniBusqueda] = useState('')
-  const [resultadosFiltrados, setResultadosFiltrados] = useState([])
+
+  // Detalle / Edición
   const [bomberoSeleccionado, setBomberoSeleccionado] = useState(null)
   const [modoEdicion, setModoEdicion] = useState(false)
+
+  // UI
   const [mensaje, setMensaje] = useState('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     fetchBomberos()
-  }, [])
-
-  useEffect(() => {
-    if (dniBusqueda.trim() === '') {
-      setResultadosFiltrados(bomberos)
-      setMensaje('')
-      return
-    }
-
-    const filtrados = bomberos.filter(b => {
-      const dni = String(b.dni || '')
-      return dni.includes(dniBusqueda.trim())
-    })
-
-    setResultadosFiltrados(filtrados)
-
-    if (filtrados.length === 0) {
-      setMensaje('No se encontró ningún bombero con ese dni.')
-    } else {
-      setMensaje('')
-    }
-  }, [dniBusqueda, bomberos])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paginaActual, busqueda])
 
   const fetchBomberos = async () => {
     setLoading(true)
     try {
-      const res = await fetch(API_URLS.bomberos.getAll)
+      const url = `${API_URLS.bomberos.buscar}?pagina=${paginaActual}&limite=${limite}&busqueda=${encodeURIComponent(busqueda)}`
+      const res = await fetch(url)
       const data = await res.json()
 
       if (res.ok && data.success) {
-        const bomberos = data.data || []
-        setBomberos(bomberos)
-        setResultadosFiltrados(bomberos)
+        // Si el backend ya viene paginado:
+        // - data.data: página actual
+        // - data.total: total global de registros
+        setBomberos(data.data || [])
+        setTotal(data.total || 0)
         setMensaje('')
       } else {
-        console.error('❌ Error en respuesta:', data)
-        setMensaje(data.message || 'Error al cargar bomberos')
         setBomberos([])
-        setResultadosFiltrados([])
+        setTotal(0)
+        setMensaje(data.message || 'Error al cargar bomberos')
       }
     } catch (error) {
-      console.error('💥 Error al obtener bomberos:', error)
-      setMensaje('Error de conexión. Verifique que el servidor esté funcionando.')
       setBomberos([])
-      setResultadosFiltrados([])
+      setTotal(0)
+      setMensaje('Error de conexión. Verifique que el servidor esté funcionando.')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleBusqueda = (e) => {
+    setBusqueda(e.target.value)
+    setPaginaActual(1) // reset igual que en RegistrarGuardia
   }
 
   const seleccionarBombero = (bombero) => {
@@ -73,65 +65,47 @@ const ConsultarBombero = ({ onVolver }) => {
     setMensaje('')
   }
 
-  const activarEdicion = () => {
-    setModoEdicion(true)
-  }
+  const activarEdicion = () => setModoEdicion(true)
 
   const guardarCambios = async (datosActualizados) => {
-    const dni = bomberoSeleccionado.dni || bomberoSeleccionado.dni
-
+    const dni = bomberoSeleccionado?.dni
     if (!dni) {
-      console.error('❌ No se encontró dni válido para actualizar')
       setMensaje('Error: No se pudo identificar el dni del bombero')
       return
     }
-    // Validación local: evitar legajo/correo duplicados de OTROS bomberos
+
+    // Validaciones básicas contra duplicados (podés delegarlo al backend si ya valida)
     const otroConMismoEmail = bomberos.find(b =>
       b.dni !== dni && b.correo?.trim().toLowerCase() === datosActualizados.correo?.trim().toLowerCase()
     )
     const otroConMismoLegajo = bomberos.find(b =>
-      b.dni !== dni && b.legajo?.trim().toLowerCase() === datosActualizados.legajo?.trim().toLowerCase()
+      b.dni !== dni && (b.legajo || '').trim().toLowerCase() === (datosActualizados.legajo || '').trim().toLowerCase()
     )
-
-    if (otroConMismoEmail) {
-      setMensaje('❌ El correo electrónico ya está en uso por otro bombero')
-      return
-    }
-
-    if (otroConMismoLegajo) {
-      setMensaje('❌ El legajo ya está en uso por otro bombero')
-      return
-    }
+    if (otroConMismoEmail) return setMensaje('❌ El correo electrónico ya está en uso por otro bombero')
+    if (otroConMismoLegajo) return setMensaje('❌ El legajo ya está en uso por otro bombero')
 
     setLoading(true)
     try {
       const url = API_URLS.bomberos.update(dni)
-
       const res = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datosActualizados)
       })
-
       const result = await res.json()
 
       if (res.ok && result.success) {
         setMensaje('✅ Bombero actualizado correctamente. Volviendo al listado...')
         setModoEdicion(false)
-
-        // Volver al listado después de 1.5 segundos para mostrar el mensaje de éxito
         setTimeout(() => {
           setBomberoSeleccionado(null)
           setMensaje('')
         }, 1500)
-
-        fetchBomberos() // Recargar lista
+        fetchBomberos()
       } else {
-        console.error('❌ Error al guardar:', result)
         setMensaje(result.message || result.error || 'Error al guardar los cambios')
       }
-    } catch (error) {
-      console.error('💥 Error al guardar cambios:', error)
+    } catch {
       setMensaje('Error de conexión al guardar cambios')
     } finally {
       setLoading(false)
@@ -139,41 +113,37 @@ const ConsultarBombero = ({ onVolver }) => {
   }
 
   const eliminarBombero = async (bombero) => {
-    const dni = bombero.dni || bombero.dni
-
+    const dni = bombero?.dni
     if (!dni) {
-      console.error('❌ No se encontró dni válido:', bombero)
       setMensaje('Error: No se pudo identificar el dni del bombero')
       return
     }
-
-    if (!window.confirm(`¿Estás seguro de que querés eliminar al bombero ${bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : 'seleccionado'}?`)) return
+    if (!window.confirm(`¿Estás seguro de eliminar a ${bombero.nombre || ''} ${bombero.apellido || ''}?`)) return
 
     setLoading(true)
     try {
       const url = API_URLS.bomberos.delete(dni)
-
-      const res = await fetch(url, {
-        method: 'DELETE'
-      })
-
+      const res = await fetch(url, { method: 'DELETE' })
       const result = await res.json()
 
       if (res.ok && result.success) {
         setMensaje('Bombero eliminado correctamente')
-        fetchBomberos() // Recargar lista
+        // Si al eliminar quedara vacía la página y no es la primera, retrocede una
+        const quedaVacia = bomberos.length === 1 && paginaActual > 1
+        if (quedaVacia) {
+          setPaginaActual(prev => Math.max(1, prev - 1))
+        } else {
+          fetchBomberos()
+        }
 
-        // Si el bombero eliminado estaba seleccionado, limpiar selección
-        if (bomberoSeleccionado && (bomberoSeleccionado.dni === dni || bomberoSeleccionado.dni === dni)) {
+        if (bomberoSeleccionado?.dni === dni) {
           setBomberoSeleccionado(null)
           setModoEdicion(false)
         }
       } else {
-        console.error('❌ Error al eliminar:', result)
         setMensaje(result.message || result.error || 'No se pudo eliminar el bombero')
       }
-    } catch (error) {
-      console.error('💥 Error al eliminar bombero:', error)
+    } catch {
       setMensaje('Error de conexión al eliminar bombero')
     } finally {
       setLoading(false)
@@ -184,7 +154,7 @@ const ConsultarBombero = ({ onVolver }) => {
     setBomberoSeleccionado(null)
     setModoEdicion(false)
     setMensaje('')
-    fetchBomberos() // Recargar después de editar
+    fetchBomberos()
   }
 
   return (
@@ -192,8 +162,7 @@ const ConsultarBombero = ({ onVolver }) => {
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
           <div className="bg-danger p-3 rounded-circle">
-            <UsersIcon size={32}
-              color="white" />
+            <UsersIcon size={32} color="white" />
           </div>
           <h1 className="fw-bold text-white fs-3 mb-0">Consultar Bomberos</h1>
         </div>
@@ -207,12 +176,15 @@ const ConsultarBombero = ({ onVolver }) => {
           <User2 />
           <strong>Listado de Bomberos</strong>
         </div>
+
         <div className="card-body">
           {mensaje && (
             <div
-              className={`alert ${mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' :
-                mensaje.includes('✅') ? 'alert-success' : 'alert-info'
-                }`}
+              className={`alert ${
+                mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger'
+                : mensaje.includes('✅') ? 'alert-success'
+                : 'alert-info'
+              }`}
             >
               {mensaje}
             </div>
@@ -224,7 +196,7 @@ const ConsultarBombero = ({ onVolver }) => {
             </div>
           )}
 
-          {/* Buscador */}
+          {/* Buscador (igual patrón que RegistrarGuardia: server-side) */}
           {!bomberoSeleccionado && (
             <>
               <div className="mb-3 position-relative">
@@ -232,51 +204,51 @@ const ConsultarBombero = ({ onVolver }) => {
                 <input
                   type="text"
                   className="form-control ps-5 py-3 border-secondary"
-                  placeholder="Buscar por DNI..."
-                  value={dniBusqueda}
-                  onChange={(e) => setdniBusqueda(e.target.value)}
+                  placeholder="Buscar por DNI, legajo, nombre o apellido"
+                  value={busqueda}
+                  onChange={handleBusqueda}
                   disabled={loading}
                 />
               </div>
 
-              {resultadosFiltrados.length > 0 ? (
-                <div className="table-responsive rounded border">
-                  <table className="table table-hover align-middle mb-0">
-                    <thead className="bg-light">
-                      <tr>
-                        <th className="border-end text-center">Nombre completo</th>
-                        <th className="border-end text-center">DNI</th>
-                        <th className="border-end text-center">Teléfono</th>
-                        <th className="border-end text-center">Email</th>
-                        <th className="border-end text-center">Plan</th>
-                        <th className="text-center">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[...resultadosFiltrados]
-                        .sort((a, b) => (a.apellido || '').localeCompare(b.apellido || ''))
-                        .map((bombero) => (
-                          <tr key={bombero.dni}>
-                            <td className="border-end px-3">{bombero.nombre} {bombero.apellido}</td>
-                            <td className="border-end px-3">{bombero.dni}</td>
-                            <td className="border-end px-2">{bombero.telefono || 'N/A'}</td>
-                            <td className="border-end text-primary">{bombero.correo || 'N/A'}</td>
+              {/* Tabla paginada por backend */}
+              {bomberos.length > 0 ? (
+                <>
+                  <div className="table-responsive rounded border">
+                    <table className="table table-hover align-middle mb-0">
+                      <thead className="bg-light">
+                        <tr>
+                          <th className="border-end text-center">Nombre completo</th>
+                          <th className="border-end text-center">DNI</th>
+                          <th className="border-end text-center">Teléfono</th>
+                          <th className="border-end text-center">Email</th>
+                          <th className="border-end text-center">Plan</th>
+                          <th className="text-center">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bomberos.map((b) => (
+                          <tr key={b.dni}>
+                            <td className="border-end px-3">{b.nombre} {b.apellido}</td>
+                            <td className="border-end px-3">{b.dni}</td>
+                            <td className="border-end px-2">{b.telefono || 'N/A'}</td>
+                            <td className="border-end text-primary">{b.correo || 'N/A'}</td>
                             <td className="border-end">
-                              <span className={`badge ${bombero.esDelPlan ? 'bg-success' : 'bg-secondary'}`}>
-                                {bombero.esDelPlan ? 'Sí' : 'No'}
+                              <span className={`badge ${b.esDelPlan ? 'bg-success' : 'bg-secondary'}`}>
+                                {b.esDelPlan ? 'Sí' : 'No'}
                               </span>
                             </td>
                             <td className="text-center">
                               <button
                                 className="btn btn-outline-secondary btn-sm me-2"
-                                onClick={() => seleccionarBombero(bombero)}
+                                onClick={() => seleccionarBombero(b)}
                                 disabled={loading}
                               >
                                 <i className="bi bi-eye me-1"></i> Ver
                               </button>
                               <button
                                 className="btn btn-outline-danger btn-sm"
-                                onClick={() => eliminarBombero(bombero)}
+                                onClick={() => eliminarBombero(b)}
                                 disabled={loading}
                               >
                                 <i className="bi bi-trash"></i>
@@ -284,36 +256,57 @@ const ConsultarBombero = ({ onVolver }) => {
                             </td>
                           </tr>
                         ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : !loading && resultadosFiltrados.length === 0 && (
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Paginación (tal cual en RegistrarGuardia) */}
+                  <div className="d-flex justify-content-center mb-3 py-2">
+                    {Array.from({ length: Math.ceil(total / limite) }, (_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setPaginaActual(i + 1)}
+                        type='button'
+                        className={`btn btn-sm me-1 custom-page-btn ${paginaActual === i + 1 ? 'active' : ''}`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : !loading ? (
                 <div className="text-center py-3 text-muted">
                   No hay resultados para la búsqueda.
                 </div>
-              )}
+              ) : null}
             </>
           )}
 
-          {/* Detalles */}
+          {/* Detalles / Edición */}
           {bomberoSeleccionado && (
             <div className="mt-4">
               <div className="d-flex align-items-center justify-content-between mb-3">
                 <div className="d-flex align-items-center gap-2">
-                  <i className="text-secondary fs-5"></i>
                   <h3 className="text-dark mb-0">
-                    {modoEdicion ? `✏️ Editando: ${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}` : `👤 Detalles: ${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}`}
+                    {modoEdicion
+                      ? `✏️ Editando: ${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}`
+                      : `👤 Detalles: ${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}`}
                   </h3>
                 </div>
 
                 <div>
                   {!modoEdicion && (
-                    <button className="btn btn-warning btn-sm me-2 d-flex align-items-center gap-1" onClick={activarEdicion}>
-                      <i className="bi bi-pencil-square"></i>
-                      Editar
+                    <button
+                      className="btn btn-warning btn-sm me-2 d-flex align-items-center gap-1"
+                      onClick={activarEdicion}
+                    >
+                      <i className="bi bi-pencil-square"></i> Editar
                     </button>
                   )}
-                  <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" onClick={volverListado}>
+                  <button
+                    className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
+                    onClick={volverListado}
+                  >
                     <i className="bi bi-arrow-left"></i> Volver al listado
                   </button>
                 </div>
@@ -333,7 +326,8 @@ const ConsultarBombero = ({ onVolver }) => {
               </div>
             </div>
           )}
-          <div className="d-grid gap-3 py-2"></div>
+
+          <div className="d-grid gap-3 py-2" />
           <BackToMenuButton onClick={onVolver} />
         </div>
       </div>
