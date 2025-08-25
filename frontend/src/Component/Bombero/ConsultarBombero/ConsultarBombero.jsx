@@ -4,6 +4,7 @@ import FormularioBombero from '../FormularioBombero/FormularioBombero'
 //import '../ConsultarBombero/ConsultarBombero.css'
 // import '../../DisenioFormulario/DisenioFormulario.css'
 import { User2, UsersIcon } from 'lucide-react'
+import { BackToMenuButton } from '../../Common/Button'
 
 const ConsultarBombero = ({ onVolver }) => {
   const [bomberos, setBomberos] = useState([])
@@ -333,9 +334,7 @@ const ConsultarBombero = ({ onVolver }) => {
             </div>
           )}
           <div className="d-grid gap-3 py-2"></div>
-          <button type="button" className="btn btn-secondary" onClick={onVolver} disabled={loading}>
-            Volver al menú
-          </button>
+          <BackToMenuButton onClick={onVolver} />
         </div>
       </div>
     </div>

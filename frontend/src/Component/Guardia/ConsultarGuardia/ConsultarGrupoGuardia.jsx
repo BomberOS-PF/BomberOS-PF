@@ -6,6 +6,7 @@ import '../RegistrarGuardia/RegistrarGuardia.css'
 import ConsultarBomberosDelGrupo from './ConsultarBomberosDelGrupo'
 import * as bootstrap from 'bootstrap'
 import { User2, UsersIcon } from 'lucide-react'
+import { BackToMenuButton } from '../../Common/Button'
 
 const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
   const [busqueda, setBusqueda] = useState('')
@@ -230,11 +231,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
         </div>
 
         <div className="d-grid gap-3">
-          <button 
-          type="button"
-          className="btn btn-secondary" onClick={onVolver} disabled={loading}>
-            Volver al menú
-          </button>
+          <BackToMenuButton onClick={onVolver} />
         </div>
       </div>
 

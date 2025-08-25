@@ -3,6 +3,7 @@ import { API_URLS } from '../../../config/api'
 import './RegistrarGuardia.css'
 import { Users, AlertTriangle, Plus, Trash2, FileText } from 'lucide-react'
 import '../../DisenioFormulario/DisenioFormulario.css'
+import { BackToMenuButton } from '../../Common/Button'
 
 const RegistrarGuardia = ({
   idGrupo,
@@ -339,14 +340,8 @@ const RegistrarGuardia = ({
                 {loading ? 'Espere...' : modoEdicion ? 'Actualizar Grupo' : 'Guardar Grupo'}
               </button>
 
-              <button
-                type="button"
-                onClick={onVolver}
-                disabled={loading}
-                className="btn btn-secondary"
-              >
-                Volver al menú
-              </button>
+              <BackToMenuButton onClick={onVolver} />
+
             </div>
           </div>
         </div>

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
 import { UsersIcon, Shield } from 'lucide-react'
 
+import { BackToMenuButton } from '../../Common/Button'
+
 const ConsultarUsuario = ({ onVolver }) => {
   const [usuarios, setUsuarios] = useState([])
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null)
@@ -380,9 +382,7 @@ const ConsultarUsuario = ({ onVolver }) => {
 
           {/* Botón Volver al menú */}
           <div className='d-grid gap-3 py-4'>
-            <button type='button' className='btn btn-secondary' onClick={onVolver} disabled={loading}>
-              Volver al menú
-            </button>
+            <BackToMenuButton onClick={onVolver} />
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { apiRequest, API_URLS } from '../../config/api'
 import { User, AlertTriangle, User2, FileText, UsersIcon, CreditCard } from 'lucide-react'
 import '../DisenioFormulario/DisenioFormulario.css'
+import { BackToMenuButton } from '../Common/Button'
 
 const RegistrarRol = ({ onVolver }) => {
   const [formData, setFormData] = useState({ nombreRol: '', descripcion: '' })
@@ -147,9 +148,7 @@ const RegistrarRol = ({ onVolver }) => {
                   )}
                 </button>
                 {onVolver && (
-                  <button type="button" className="btn btn-secondary" onClick={onVolver} disabled={loading}>
-                    Volver al menú
-                  </button>
+                  <BackToMenuButton onClick={onVolver} />
                 )}
               </div>
             </div>
