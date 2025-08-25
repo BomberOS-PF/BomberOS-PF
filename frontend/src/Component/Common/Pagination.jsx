@@ -15,6 +15,7 @@ const Pagination = ({
   defaultLimit = 10,
   limitOptions = [5, 10, 20],
   showSummary = true,
+  hideIfSinglePage = true,   // 👈 nuevo: oculta barra si total <= limit
   className = '',
   children,                  // (items, { loading, error }) => JSX
 }) => {
@@ -89,92 +90,96 @@ const Pagination = ({
   const startItem = total === 0 ? 0 : (page - 1) * limit + 1
   const endItem = Math.min(total, page * limit)
 
+  const shouldHideBar = hideIfSinglePage && total <= limit
+
   return (
     <div className={className}>
       {/* Contenido render-prop */}
       {typeof children === 'function' && children(items, { loading, error })}
 
       {/* Barra inferior: total / tamaño de página / controles */}
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
-        <div className="text-white-50">
-          {showSummary && (loading ? 'Cargando…' : `Mostrando ${startItem}-${endItem} de ${total}`)}
-        </div>
+      {!shouldHideBar && (
+        <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+          <div className="text-white-50">
+            {showSummary && (loading ? 'Cargando…' : `Mostrando ${startItem}-${endItem} de ${total}`)}
+          </div>
 
-        <div className="d-flex align-items-center gap-2">
-          <select
-            className="form-select form-select-sm w-auto"
-            value={limit}
-            onChange={(e) => changeLimit(e.target.value)}
-            disabled={loading}
-          >
-            {limitOptions.map((opt) => <option key={opt} value={opt}>{opt} / pág.</option>)}
-          </select>
-
-          <div className="d-flex align-items-center flex-wrap gap-1" role="navigation" aria-label="Paginación">
-            <button
-              type="button"
-              className={btnClass(page === 1 || loading ? 'disabled' : '')}
-              aria-label="Primera página"
-              onClick={() => go(1)}
+          <div className="d-flex align-items-center gap-2">
+            <select
+              className="form-select form-select-sm w-auto"
+              value={limit}
+              onChange={(e) => changeLimit(e.target.value)}
+              disabled={loading}
             >
-              «
-            </button>
+              {limitOptions.map((opt) => <option key={opt} value={opt}>{opt} / pág.</option>)}
+            </select>
 
-            <button
-              type="button"
-              className={btnClass(page === 1 || loading ? 'disabled' : '')}
-              aria-label="Página anterior"
-              onClick={() => go(page - 1)}
-            >
-              ‹
-            </button>
-
-            {start > 1 && (
-              <>
-                <button type="button" className={btnClass()} onClick={() => go(1)}>1</button>
-                {start > 2 && <span className={btnClass('disabled')} aria-hidden="true">…</span>}
-              </>
-            )}
-
-            {pages.map((p) => (
+            <div className="d-flex align-items-center flex-wrap gap-1" role="navigation" aria-label="Paginación">
               <button
-                key={p}
                 type="button"
-                className={btnClass(p === page ? 'active' : '')}
-                aria-current={p === page ? 'page' : undefined}
-                onClick={() => go(p)}
+                className={btnClass(page === 1 || loading ? 'disabled' : '')}
+                aria-label="Primera página"
+                onClick={() => go(1)}
               >
-                {p}
+                «
               </button>
-            ))}
 
-            {end < totalPages && (
-              <>
-                {end < totalPages - 1 && <span className={btnClass('disabled')} aria-hidden="true">…</span>}
-                <button type="button" className={btnClass()} onClick={() => go(totalPages)}>{totalPages}</button>
-              </>
-            )}
+              <button
+                type="button"
+                className={btnClass(page === 1 || loading ? 'disabled' : '')}
+                aria-label="Página anterior"
+                onClick={() => go(page - 1)}
+              >
+                ‹
+              </button>
 
-            <button
-              type="button"
-              className={btnClass(page === totalPages || loading ? 'disabled' : '')}
-              aria-label="Página siguiente"
-              onClick={() => go(page + 1)}
-            >
-              ›
-            </button>
+              {start > 1 && (
+                <>
+                  <button type="button" className={btnClass()} onClick={() => go(1)}>1</button>
+                  {start > 2 && <span className={btnClass('disabled')} aria-hidden="true">…</span>}
+                </>
+              )}
 
-            <button
-              type="button"
-              className={btnClass(page === totalPages || loading ? 'disabled' : '')}
-              aria-label="Última página"
-              onClick={() => go(totalPages)}
-            >
-              »
-            </button>
+              {pages.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  className={btnClass(p === page ? 'active' : '')}
+                  aria-current={p === page ? 'page' : undefined}
+                  onClick={() => go(p)}
+                >
+                  {p}
+                </button>
+              ))}
+
+              {end < totalPages && (
+                <>
+                  {end < totalPages - 1 && <span className={btnClass('disabled')} aria-hidden="true">…</span>}
+                  <button type="button" className={btnClass()} onClick={() => go(totalPages)}>{totalPages}</button>
+                </>
+              )}
+
+              <button
+                type="button"
+                className={btnClass(page === totalPages || loading ? 'disabled' : '')}
+                aria-label="Página siguiente"
+                onClick={() => go(page + 1)}
+              >
+                ›
+              </button>
+
+              <button
+                type="button"
+                className={btnClass(page === totalPages || loading ? 'disabled' : '')}
+                aria-label="Última página"
+                onClick={() => go(totalPages)}
+              >
+                »
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Errores */}
       {error && <div className="alert alert-danger mt-2">{error}</div>}
