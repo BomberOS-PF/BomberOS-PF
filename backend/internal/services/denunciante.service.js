@@ -4,7 +4,7 @@ import { getConnection } from '../platform/database/connection.js'
 
 export class DenuncianteService {
   /**
-   * @param {import('../repositories/mysql/denunciante.repository.js').MySQLDenuncianteRepository} denuncianteRepository
+   * @param {import('../repositories/denunciante.repository.js').MySQLDenuncianteRepository} denuncianteRepository
    */
   constructor (denuncianteRepository) {
     this.denuncianteRepository = denuncianteRepository
