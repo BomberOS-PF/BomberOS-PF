@@ -127,6 +127,11 @@ import { buildDenuncianteHandler } from '../handler/denunciante/handler.js'
 import { MySQLDenuncianteRepository } from '../internal/repositories/denunciante.repository.js'
 import { DenuncianteService } from '../internal/services/denunciante.service.js'
 
+// --- Respuestas de incidentes ---
+import { RespuestaIncidenteService } from '../internal/services/respuesta-incidente.service.js'
+import { MySQLRespuestaIncidenteRepository } from '../internal/repositories/respuesta-incidente.repository.js'
+import { RespuestaIncidenteHandler } from '../handler/respuestas/handler.js'
+
 export async function createServer(config) {
   try {
     logger.info('🏗️ Iniciando assembler de dependencias...')
@@ -170,6 +175,7 @@ export async function createServer(config) {
     const matPelAccionPersonaRepository = new MySQLMatPelAccionPersonaRepository()
     const factorClimaticoRepository = new MySQLFactorClimaticoRepository()
     const rescateRepository = new MySQLRescateRepository()
+    const respuestaIncidenteRepository = new MySQLRespuestaIncidenteRepository()
 
     // --- Servicios ---
     const whatsappService = new WhatsAppService(config)
@@ -187,7 +193,13 @@ export async function createServer(config) {
       damnificadoRepository,
       incendioForestalRepository,
       areaAfectadaRepository,
-      tipoIncidenteService
+      tipoIncidenteService,
+      // repositorios específicos para obtenerDetalleCompleto
+      accidenteTransitoRepository,
+      incendioEstructuralRepository,
+      materialPeligrosoRepository,
+      rescateRepository,
+      factorClimaticoRepository
     )
     const grupoGuardiaService = new GrupoGuardiaService(grupoGuardiaRepository, bomberoRepository)
     const rolService = new RolService(rolRepository)
@@ -223,7 +235,7 @@ export async function createServer(config) {
       damnificadoRepository
     )
 
-    const incendioEstructuralService = new IncendioEstructuralService(incendioEstructuralRepository)
+    const incendioEstructuralService = new IncendioEstructuralService(incendioEstructuralRepository, damnificadoRepository)
     const categoriaMaterialPeligrosoService = new CategoriaMatPelService(categoriaMaterialPeligrosoRepository)
     const tipoMatInvolucradoService = new TipoMatInvolucradoService(tipoMatInvolucradoRepository)
     const accionMaterialService = new AccionMaterialService(accionMaterialRepository)
@@ -232,6 +244,7 @@ export async function createServer(config) {
     const rescateService = new RescateService(rescateRepository, damnificadoRepository)
 
     const guardiaAsignacionService = new GuardiaAsignacionService(guardiaAsignacionRepository)
+    const respuestaIncidenteService = new RespuestaIncidenteService(respuestaIncidenteRepository, bomberoService, whatsappService)
 
     // --- Handlers / Adapters ---
     const bomberoHandler = new BomberoHandler(bomberoService)
@@ -258,6 +271,7 @@ export async function createServer(config) {
     const rescateHandler = new RescateHandler(rescateService)
     const guardiaHandlers = buildGuardiaHandlers(guardiaAsignacionService)
     const denuncianteHandler = buildDenuncianteHandler(denuncianteService)
+    const respuestaIncidenteHandler = new RespuestaIncidenteHandler(respuestaIncidenteService)
 
     // --- Contenedor a exponer a las rutas ---
     const container = {
@@ -293,6 +307,7 @@ export async function createServer(config) {
       areaAfectadaRepository,
       incendioEstructuralRepository,
       tokenRepository,
+      respuestaIncidenteRepository,
 
       // services
       bomberoService,
@@ -322,6 +337,7 @@ export async function createServer(config) {
       incendioEstructuralService,
       guardiaAsignacionService,
       tokenService,
+      respuestaIncidenteService,
 
       // handlers/adapters
       bomberoHandler,
@@ -350,6 +366,7 @@ export async function createServer(config) {
       recuperarClaveHandler,
       validarTokenHandler,
       restablecerClaveHandler,
+      respuestaIncidenteHandler,
 
       // infra
       dbConnection,

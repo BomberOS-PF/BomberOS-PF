@@ -9,7 +9,7 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
 
   const [formData, setFormData] = useState(() => {
     const guardado = localStorage.getItem(storageKey)
-    return guardado
+    const savedData = guardado
       ? JSON.parse(guardado)
       : {
           lugar: '',
@@ -17,32 +17,59 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
           detalle: '',
           damnificados: []
         }
+    
+    // Mapear los nombres de campos del backend a los nombres que usa el frontend
+    const datosPreviosMapeados = {
+      ...datosPrevios,
+      // Mapear campos específicos del rescate
+      lugar: datosPrevios.lugar, // Lugar específico del rescate (dropdown)
+      otroLugar: datosPrevios.otroLugar,
+      detalle: datosPrevios.detalle || datosPrevios.descripcion, // Mapear descripcion del backend a detalle del frontend
+      damnificados: datosPrevios.damnificados || [],
+      // Mantener el lugar del incidente base por separado
+      lugarIncidente: datosPrevios.descripcion // Lugar del incidente base (solo para mostrar)
+    }
+    
+    // Combinar datos guardados con datos previos mapeados, dando prioridad a los datos previos
+    const combined = { ...savedData, ...datosPreviosMapeados }
+    
+    return combined
   })
 
   const [mostrarOtroLugar, setMostrarOtroLugar] = useState(formData.lugar === 'Otro')
   const [loading, setLoading] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+  const [errors, setErrors] = useState({})
+  const [damnificadosErrors, setDamnificadosErrors] = useState([])
   const toastRef = useRef(null)
 
   // Información del incidente base
   const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id
     ? {
         id: datosPrevios.idIncidente || datosPrevios.id,
-        tipo: datosPrevios.tipoSiniestro,
+        tipo: datosPrevios.tipoDescripcion,
         fecha: datosPrevios.fechaHora || datosPrevios.fecha,
         localizacion: datosPrevios.localizacion,
-        lugar: datosPrevios.lugar
+        lugar: datosPrevios.lugar || 'No especificado'
       }
     : null
 
-  // Merge con datosPrevios sin pisar damnificados ya cargados
   useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      ...datosPrevios,
-      damnificados: Array.isArray(prev.damnificados) ? prev.damnificados : []
-    }))
+    // Solo actualizar si hay nuevos datosPrevios y son diferentes
+    if (datosPrevios && Object.keys(datosPrevios).length > 0) {
+      // Mapear los nombres de campos del backend a los nombres que usa el frontend
+      const datosMapeados = {
+        ...datosPrevios,
+        // Mapear campos específicos del rescate
+        lugar: datosPrevios.lugar,
+        otroLugar: datosPrevios.otroLugar,
+        detalle: datosPrevios.detalle || datosPrevios.descripcion,
+        damnificados: datosPrevios.damnificados || []
+      }
+      
+      setFormData(prev => ({ ...prev, ...datosMapeados }))
+    }
   }, [datosPrevios])
 
   // Mantener en sync el toggle "Otro"
@@ -85,11 +112,68 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
     alert('Datos guardados localmente. Podés continuar después.')
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
+  // Funciones de validación
+  const validarTelefono = (telefono) => {
+    if (!telefono) return true;
+    const cleaned = telefono.replace(/[^0-9+]/g, '');
+    const numbersOnly = cleaned.replace(/\+/g, '');
+    return /^[0-9+]+$/.test(cleaned) && numbersOnly.length >= 8 && numbersOnly.length <= 15;
+  }
+
+  const validarDNI = (dni) => {
+    if (!dni) return true;
+    return /^\d{7,10}$/.test(dni);
+  }
+
+  const damnificadoVacio = (d) => {
+    return !d.nombre && !d.apellido && !d.domicilio && !d.telefono && !d.dni && !d.fallecio;
+  }
+
+  const validate = () => {
+    const newErrors = {}
+    
+    // Validar lugar (obligatorio)
+    if (!formData.lugar || formData.lugar === "") {
+      newErrors.lugar = 'Campo obligatorio'
+    }
+    
+    // Validar "otro lugar" si se seleccionó "Otro"
+    if (formData.lugar === 'Otro' && (!formData.otroLugar || formData.otroLugar.trim() === '')) {
+      newErrors.otroLugar = 'Debe especificar el tipo de lugar'
+    }
+    
+    // Validar detalle (obligatorio)
+    if (!formData.detalle || formData.detalle.trim() === '') {
+      newErrors.detalle = 'Campo obligatorio'
+    }
+    
+    // Validar damnificados (solo si tienen datos)
+    const damErrors = (formData.damnificados || []).map(d => {
+      if (damnificadoVacio(d)) return {};
+      const e = {}
+      if (!d.nombre) e.nombre = 'Campo obligatorio'
+      if (!d.apellido) e.apellido = 'Campo obligatorio'
+      if (d.telefono && !validarTelefono(d.telefono)) e.telefono = 'Teléfono inválido (8-15 dígitos)'
+      if (d.dni && !validarDNI(d.dni)) e.dni = 'DNI inválido (7-10 dígitos)'
+      return e
+    })
+    
+    setErrors(newErrors)
+    setDamnificadosErrors(damErrors)
+    return Object.keys(newErrors).length === 0 && damErrors.every((e, i) => damnificadoVacio(formData.damnificados[i]) || Object.keys(e).length === 0)
+  }
+
+  const handleSubmit = async () => {
     setSuccessMsg('')
     setErrorMsg('')
+    
+    if (!validate()) {
+      setErrorMsg('Por favor complete los campos obligatorios y corrija los errores.');
+      if (toastRef.current) toastRef.current.focus();
+      return;
+    }
+    
+    setLoading(true)
 
     try {
       // Snapshot local
@@ -102,8 +186,14 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
         damnificados: formData.damnificados
       }
 
-      const resp = await apiRequest(API_URLS.incidentes.createRescate, {
-        method: 'POST',
+      const esActualizacion = !!(datosPrevios.idIncidente || datosPrevios.id)
+      const method = esActualizacion ? 'PUT' : 'POST'
+      const url = esActualizacion ? 
+        API_URLS.incidentes.updateRescate : 
+        API_URLS.incidentes.createRescate
+
+      const resp = await apiRequest(url, {
+        method: method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       })
@@ -112,14 +202,52 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
         throw new Error(resp?.message || 'Error al registrar rescate')
       }
 
-      const esActualizacion = !!(datosPrevios.idIncidente || datosPrevios.id)
-      setSuccessMsg(esActualizacion ? 'Rescate actualizado correctamente' : '✅ Rescate registrado correctamente')
+      const mensajeExito = esActualizacion
+        ? 'Rescate actualizado con éxito'
+        : '✅ Rescate registrado correctamente'
+
+      setSuccessMsg(mensajeExito)
       setErrorMsg('')
-      localStorage.removeItem(storageKey)
-      onFinalizar?.({ idIncidente: incidenteId })
+
+      // Solo limpiar localStorage en creaciones, no en actualizaciones
+      if (!esActualizacion) {
+        localStorage.removeItem(storageKey)
+      }
+
+      // Actualizar el estado local con los datos guardados para evitar problemas de timing
+      if (esActualizacion) {
+        setFormData(prev => ({
+          ...prev,
+          lugar: formData.lugar,
+          otroLugar: formData.otroLugar,
+          detalle: formData.detalle,
+          damnificados: formData.damnificados
+        }))
+      }
+
+      // Pasar el resultado al callback
+      if (onFinalizar) {
+        onFinalizar({
+          success: true,
+          message: mensajeExito,
+          data: resp,
+          esActualizacion
+        })
+      }
     } catch (error) {
-      setErrorMsg('Error al conectar con backend: ' + error.message)
+      const mensajeError = `❌ Error al ${esActualizacion ? 'actualizar' : 'registrar'} rescate: ${error.message}`
+      setErrorMsg(mensajeError)
       setSuccessMsg('')
+
+      // Pasar el error al callback
+      if (onFinalizar) {
+        onFinalizar({
+          success: false,
+          message: mensajeError,
+          error: error.message,
+          esActualizacion
+        })
+      }
     } finally {
       setLoading(false)
       if (toastRef.current) toastRef.current.focus()
@@ -148,14 +276,15 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form>
           <div className="mb-3">
-            <label htmlFor="lugar" className="text-black form-label">Lugar</label>
+            <label htmlFor="lugar" className="text-black form-label">Tipo de lugar específico del rescate *</label>
             <select
-              className="form-select"
+              className={`form-select${errors.lugar ? ' is-invalid' : ''}`}
               id="lugar"
               value={formData.lugar || ''}
               onChange={handleChange}
+              aria-describedby="error-lugar"
             >
               <option disabled value="">Seleccione</option>
               <option>Arroyo</option>
@@ -166,30 +295,36 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
               <option>Restaurant-Comedor</option>
               <option>Otro</option>
             </select>
+            {errors.lugar && <div className="invalid-feedback" id="error-lugar">{errors.lugar}</div>}
           </div>
 
           {mostrarOtroLugar && (
             <div className="mb-3">
-              <label htmlFor="otroLugar" className="text-black form-label">Describa el otro tipo de lugar</label>
+              <label htmlFor="otroLugar" className="text-black form-label">Describa el otro tipo de lugar *</label>
               <input
                 type="text"
-                className="form-control"
+                className={`form-control${errors.otroLugar ? ' is-invalid' : ''}`}
                 id="otroLugar"
                 value={formData.otroLugar || ''}
                 onChange={handleChange}
+                aria-describedby="error-otroLugar"
+                placeholder="Ej: Cueva, Pozo, etc."
               />
+              {errors.otroLugar && <div className="invalid-feedback" id="error-otroLugar">{errors.otroLugar}</div>}
             </div>
           )}
 
           <div className="mb-3">
-            <label htmlFor="detalle" className="text-black form-label">Detalle de lo sucedido</label>
+            <label htmlFor="detalle" className="text-black form-label">Detalle de lo sucedido *</label>
             <textarea
-              className="form-control"
+              className={`form-control${errors.detalle ? ' is-invalid' : ''}`}
               rows="3"
               id="detalle"
               value={formData.detalle || ''}
               onChange={handleChange}
+              aria-describedby="error-detalle"
             ></textarea>
+            {errors.detalle && <div className="invalid-feedback" id="error-detalle">{errors.detalle}</div>}
           </div>
 
           <h5 className="text-white mt-4">Personas damnificadas</h5>
@@ -240,7 +375,7 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
             ➕ Agregar damnificado
           </button>
 
-          <button type="submit" className="btn btn-danger w-100 mt-3" disabled={loading}>
+          <button type="button" className="btn btn-danger w-100 mt-3" disabled={loading} onClick={() => handleSubmit()}>
             {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Actualizar rescate' : 'Finalizar carga')}
           </button>
 

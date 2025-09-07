@@ -29,6 +29,20 @@ export class MaterialPeligrosoHandler {
   }
 
   /**
+   * PUT /api/incidentes/material-peligroso
+   */
+  async actualizar(req, res) {
+    try {
+      const dto = crearMaterialPeligrosoDto(req.body)
+      const resultado = await this.materialPeligrosoService.registrarMaterialPeligroso(dto) // Reutilizar el mismo método
+      res.status(200).json({ success: true, message: 'Material peligroso actualizado exitosamente', data: resultado })
+    } catch (error) {
+      logger.error('❌ Error en MaterialPeligrosoHandler.actualizar', { error: error.message })
+      res.status(400).json({ success: false, message: error.message })
+    }
+  }
+
+  /**
    * GET /api/materiales-peligrosos/:idIncidente
    */
   async obtenerPorIncidente(req, res) {

@@ -13,10 +13,33 @@ export class FactorClimaticoService {
     try {
       logger.info('💾 Registrando factor climático...', datos)
 
-      // Guardar el registro principal en climatico
-      const idClimatico = await this.factorClimaticoRepository.guardar(datos)
+      // Verificar si ya existe el registro específico de factor climático
+      const climaticoExistente = await this.factorClimaticoRepository.obtenerPorIncidente(datos.idIncidente)
+      let idClimatico
+      
+      if (climaticoExistente) {
+        // Actualizar factor climático existente
+        await this.factorClimaticoRepository.actualizar(climaticoExistente.idClimatico, {
+          detalle: datos.detalle,
+          superficie: datos.superficie,
+          cantidadPersonasAfectadas: datos.personasEvacuadas || datos.cantidadPersonasAfectadas
+        })
+        idClimatico = climaticoExistente.idClimatico
+        logger.info('🔄 Factor climático actualizado', { idClimatico })
+      } else {
+        // Insertar nuevo factor climático
+        idClimatico = await this.factorClimaticoRepository.guardar(datos)
+        logger.info('➕ Nuevo factor climático creado', { idClimatico })
+      }
 
-      // Guardar damnificados (si existen)
+      // Manejar damnificados (si existen)
+      if (climaticoExistente) {
+        // Para actualizaciones, eliminar damnificados existentes
+        await this.damnificadoRepository.eliminarPorIncidente(datos.idIncidente)
+        logger.debug('🗑️ Damnificados existentes eliminados para actualización')
+      }
+
+      // Insertar nuevos damnificados
       if (datos.damnificados && datos.damnificados.length > 0) {
         for (const dam of datos.damnificados) {
           await this.damnificadoRepository.insertarDamnificado({

@@ -107,9 +107,17 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
 
   const soloLectura = modo === 'consulta'
 
+  const esConsulta = modo === 'consulta'
+  // Tema light mejorado con mejor presentación
+  const cardClasses = "card bg-white text-dark border-0 shadow-sm p-4"
+  const labelClasses = "form-label text-dark d-flex align-items-center gap-2 fw-semibold"
+  const inputClasses = esConsulta 
+    ? "form-control border-secondary bg-light" 
+    : "form-control border-secondary focus-ring focus-ring-primary"
+
   return (
     <div className="container">
-      <div className="card bg-dark text-white border-0 shadow-lg p-4">
+      <div className={cardClasses}>
         {!ocultarTitulo && (
           <h4 className="mb-4 text-danger">
             {modo === 'alta' ? 'Alta de Bombero' : modo === 'edicion' ? 'Editar Bombero' : 'Consulta de Bombero'}
@@ -121,16 +129,30 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             <input type="hidden" id="idUsuario" value={formData.idUsuario} onChange={handleChange} />
           )}
 
+          {/* Información Personal */}
+          {esConsulta && (
+            <div className="mb-4">
+              <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
+                <div className="bg-danger p-2 rounded-circle me-3">
+                  <i className="bi bi-person-circle text-white fs-5"></i>
+                </div>
+                <h5 className="text-danger mb-0 fw-bold">
+                  Información Personal
+                </h5>
+              </div>
+            </div>
+          )}
+
           {/* Nombre, Apellido, DNI */}
           <div className="row mb-3">
             <div className="col-md-4">
-              <label htmlFor="nombre" className="form-label text-white d-flex align-items-center gap-2">
+              <label htmlFor="nombre" className={labelClasses}>
                 <User className="text-primary" />
                 Nombre
               </label>
               <input
                 type="text"
-                className="form-control bg-secondary text-white border-0"
+                className={inputClasses}
                 id="nombre"
                 value={formData.nombre || ''}
                 required={!soloLectura}
@@ -140,13 +162,13 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="apellido" className="form-label text-white d-flex align-items-center gap-2">
+              <label htmlFor="apellido" className={labelClasses}>
                 <User className="text-primary" />
                 Apellido
               </label>
               <input
                 type="text"
-                className="form-control bg-secondary text-white border-0"
+                className={inputClasses}
                 id="apellido"
                 value={formData.apellido || ''}
                 required={!soloLectura}
@@ -156,13 +178,13 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="dni" className="form-label text-white d-flex align-items-center gap-2">
+              <label htmlFor="dni" className={labelClasses}>
                 <CreditCard className="text-primary" />
                 DNI
               </label>
               <input
                 type="text"
-                className="form-control bg-secondary text-white border-0"
+                className={inputClasses}
                 id="dni"
                 value={formData.dni || ''}
                 required={!soloLectura}
@@ -174,15 +196,29 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
           </div>
 
+          {/* Información de Contacto */}
+          {esConsulta && (
+            <div className="mb-4 mt-5">
+              <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
+                <div className="bg-danger p-2 rounded-circle me-3">
+                  <i className="bi bi-telephone text-white fs-5"></i>
+                </div>
+                <h5 className="text-danger mb-0 fw-bold">
+                  Información de Contacto
+                </h5>
+              </div>
+            </div>
+          )}
+
           {/* Contacto */}
           <div className="row mb-3 py-4">
             <div className="col-md-4">
-              <label htmlFor="domicilio" className="form-label text-white d-flex align-items-center gap-2">
+              <label htmlFor="domicilio" className={labelClasses}>
                 Domicilio
               </label>
               <input
                 type="text"
-                className="form-control bg-secondary text-white border-0"
+                className={inputClasses}
                 id="domicilio"
                 value={formData.domicilio || ''}
                 onChange={handleChange}
@@ -192,13 +228,13 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="telefono" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
+              <label htmlFor="telefono" className={labelClasses}>
                 <Phone size={16} className="text-primary" />
                 Teléfono
               </label>
               <input
                 type="tel"
-                className="form-control bg-secondary text-white border-0"
+                className={inputClasses}
                 id="telefono"
                 value={formData.telefono || ''}
                 onChange={handleChange}
@@ -210,13 +246,13 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="correo" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
+              <label htmlFor="correo" className={labelClasses}>
                 <Mail className="text-primary" />
                 Correo electrónico
               </label>
               <input
                 type="email"
-                className="form-control bg-secondary text-white border-0"
+                className={inputClasses}
                 id="correo"
                 value={formData.correo || ''}
                 onChange={handleChange}
@@ -227,14 +263,27 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           </div>
 
           {/* Información Profesional */}
+          {esConsulta && (
+            <div className="mb-4 mt-5">
+              <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
+                <div className="bg-danger p-2 rounded-circle me-3">
+                  <i className="bi bi-shield-check text-white fs-5"></i>
+                </div>
+                <h5 className="text-danger mb-0 fw-bold">
+                  Información Profesional
+                </h5>
+              </div>
+            </div>
+          )}
+
           <div className="row mb-3">
             <div className="col-md-4">
-              <label htmlFor="legajo" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
+              <label htmlFor="legajo" className={labelClasses}>
                 Legajo <span className="badge bg-secondary text-white text-uppercase ms-2">opcional</span>
               </label>
               <input
                 type="text"
-                className="form-control bg-secondary text-white border-0"
+                className={inputClasses}
                 id="legajo"
                 value={formData.legajo || ''}
                 onChange={handleChange}
@@ -243,12 +292,12 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="antiguedad" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
+              <label htmlFor="antiguedad" className={labelClasses}>
                 Antigüedad (años)
               </label>
               <input
                 type="number"
-                className="form-control bg-secondary text-white border-0"
+                className={inputClasses}
                 id="antiguedad"
                 value={formData.antiguedad || 0}
                 onChange={handleChange}
@@ -259,7 +308,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="rango" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
+              <label htmlFor="rango" className={labelClasses}>
                 <Shield className="text-primary" />
                 Rango
               </label>
@@ -282,9 +331,22 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           </div>
 
           {/* Información Médica */}
+          {esConsulta && (
+            <div className="mb-4 mt-5">
+              <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
+                <div className="bg-danger p-2 rounded-circle me-3">
+                  <i className="bi bi-heart-pulse text-white fs-5"></i>
+                </div>
+                <h5 className="text-danger mb-0 fw-bold">
+                  Información Médica
+                </h5>
+              </div>
+            </div>
+          )}
+
           <div className="row mb-3 py-4">
             <div className="col-md-4">
-              <label htmlFor="fichaMedica" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
+              <label htmlFor="fichaMedica" className={labelClasses}>
                 Ficha médica (PDF)
               </label>
 
@@ -326,7 +388,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="fechaFichaMedica" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
+              <label htmlFor="fechaFichaMedica" className={labelClasses}>
                 Fecha de carga
               </label>
               <input
@@ -340,7 +402,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="grupoSanguineo" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
+              <label htmlFor="grupoSanguineo" className={labelClasses}>
                 <PillIcon className="text-warning" />
                 Grupo Sanguíneo
               </label>
@@ -377,7 +439,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
                   onChange={handleChange}
                   disabled={soloLectura || loading}
                 />
-                <label className="form-label text-white d-flex align-items-center gap-2" htmlFor="aptoPsicologico">
+                <label className={labelClasses} htmlFor="aptoPsicologico">
                   Apto psicológico
                 </label>
               </div>
@@ -393,7 +455,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
                   onChange={handleChange}
                   disabled={soloLectura || loading}
                 />
-                <label className="form-label text-white d-flex align-items-center gap-2" htmlFor="esDelPlan">
+                <label className={labelClasses} htmlFor="esDelPlan">
                   Es del plan (guardias pagas)
                 </label>
               </div>

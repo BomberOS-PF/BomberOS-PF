@@ -21,4 +21,20 @@ export class MySQLAccidenteDamnificadoRepository {
       throw new Error('Error al asociar damnificado al accidente')
     }
   }
+
+  async eliminarRelacionesPorAccidente(idAccidenteTransito) {
+    const query = `
+      DELETE FROM ${this.tableName}
+      WHERE idAccidenteTransito = ?
+    `
+    const connection = getConnection()
+    try {
+      const [result] = await connection.execute(query, [idAccidenteTransito])
+      logger.debug('🗑️ Relaciones accidente-damnificado eliminadas', { idAccidenteTransito, affectedRows: result.affectedRows })
+      return result.affectedRows
+    } catch (error) {
+      logger.error('❌ Error al eliminar relaciones accidente-damnificado', { error: error.message })
+      throw new Error('Error al eliminar relaciones accidente-damnificado')
+    }
+  }
 }

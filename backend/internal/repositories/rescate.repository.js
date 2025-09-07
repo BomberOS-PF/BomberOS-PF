@@ -43,4 +43,54 @@ export class MySQLRescateRepository {
     const [rows] = await conn.execute(query)
     return rows
   }
+
+  async actualizar(idRescate, rescate) {
+    const query = `
+      UPDATE ${this.table} 
+      SET descripcion = ?, lugar = ?
+      WHERE idRescate = ?
+    `
+    const values = [
+      rescate.descripcion ?? null,
+      rescate.lugar ?? null,
+      idRescate
+    ]
+    const conn = await getConnection()
+    try {
+      const [result] = await conn.execute(query, values)
+      logger.info('🔄 Rescate actualizado correctamente', { idRescate, affectedRows: result.affectedRows })
+      return result.affectedRows > 0
+    } catch (err) {
+      logger.error('❌ Error al actualizar rescate', { error: err.message })
+      throw err
+    }
+  }
+
+  /**
+   * Obtiene rescate completo con damnificados
+   */
+  async obtenerRescateCompleto(idIncidente) {
+    const connection = getConnection()
+
+    // 1. Buscar rescate por idIncidente
+    const [rescateRows] = await connection.execute(`
+      SELECT * FROM ${this.table}
+      WHERE idIncidente = ?
+    `, [idIncidente])
+
+    if (rescateRows.length === 0) return null
+
+    const rescate = rescateRows[0]
+
+    // 2. Obtener damnificados del incidente
+    const [damnificados] = await connection.execute(`
+      SELECT * FROM damnificado
+      WHERE idIncidente = ?
+    `, [idIncidente])
+
+    return {
+      ...rescate,
+      damnificados: damnificados || []
+    }
+  }
 }

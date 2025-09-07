@@ -20,7 +20,7 @@ export class MaterialPeligrosoService {
       const limpio = {
         idIncidente: matPel.idIncidente,
         categoria: matPel.categoria,
-        cantidadMateriales: matPel.cantidadMateriales ?? 0,
+        cantidadMatInvolucrado: matPel.cantidadMatInvolucrado ?? 0,
         otraAccionMaterial: matPel.otraAccionMaterial ?? null,
         otraAccionPersona: matPel.otraAccionPersona ?? null,
         detalleOtrasAccionesPersona: matPel.detalleOtrasAccionesPersona ?? null,
@@ -32,8 +32,31 @@ export class MaterialPeligrosoService {
         damnificados: matPel.damnificados || []
       }
 
-      // Guardar material peligroso principal
-      const idMatPel = await this.materialPeligrosoRepository.guardar(limpio)
+      // Verificar si ya existe el registro específico de material peligroso
+      const materialExistente = await this.materialPeligrosoRepository.obtenerPorIncidente(limpio.idIncidente)
+      let idMatPel
+      
+      if (materialExistente) {
+        // Actualizar material peligroso existente
+        await this.materialPeligrosoRepository.actualizar(materialExistente.idMatPel, limpio)
+        idMatPel = materialExistente.idMatPel
+        logger.info('🔄 Material peligroso actualizado', { idMatPel })
+      } else {
+        // Insertar nuevo material peligroso
+        idMatPel = await this.materialPeligrosoRepository.guardar(limpio)
+        logger.info('➕ Nuevo material peligroso creado', { idMatPel })
+      }
+
+      // Para actualizaciones, eliminar relaciones existentes
+      if (materialExistente) {
+        // Eliminar tipos de materiales existentes
+        await this.matPelTipoMatPelRepository.eliminarPorMaterialPeligroso(idMatPel)
+        // Eliminar acciones sobre material existentes
+        await this.matPelAccionMaterialRepository.eliminarPorMaterialPeligroso(idMatPel)
+        // Eliminar acciones sobre persona existentes
+        await this.matPelAccionPersonaRepository.eliminarPorMaterialPeligroso(idMatPel)
+        logger.debug('🗑️ Relaciones existentes eliminadas para actualización')
+      }
 
       // Relación con tipos de materiales
       if (limpio.tiposMateriales.length) {
@@ -50,7 +73,14 @@ export class MaterialPeligrosoService {
         await this.matPelAccionPersonaRepository.asociarAcciones(idMatPel, limpio.accionesPersona)
       }
 
-      // Damnificados vinculados al incidente
+      // Manejar damnificados vinculados al incidente
+      if (materialExistente) {
+        // Para actualizaciones, eliminar damnificados existentes
+        await this.damnificadoRepository.eliminarPorIncidente(limpio.idIncidente)
+        logger.debug('🗑️ Damnificados existentes eliminados para actualización')
+      }
+
+      // Insertar nuevos damnificados
       if (limpio.damnificados.length) {
         for (const d of limpio.damnificados) {
           await this.damnificadoRepository.insertarDamnificado({

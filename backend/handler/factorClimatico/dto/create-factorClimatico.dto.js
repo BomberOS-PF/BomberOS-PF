@@ -11,13 +11,15 @@ export function crearFactorClimaticoDto(body) {
     throw new Error('Debe especificar la superficie')
   }
 
-  // Validar cantidad de personas afectadas
+  // Validar cantidad de personas evacuadas (mapear desde personasEvacuadas)
+  const personasEvacuadas = body.personasEvacuadas || body.cantidadPersonasAfectadas
+  
   if (
-    body.cantidadPersonasAfectadas != null &&
-    isNaN(Number(body.cantidadPersonasAfectadas))
+    personasEvacuadas != null &&
+    isNaN(Number(personasEvacuadas))
   ) {
     throw new Error(
-      'La cantidad de personas afectadas debe ser un número válido'
+      'La cantidad de personas evacuadas debe ser un número válido'
     )
   }
 
@@ -35,8 +37,8 @@ export function crearFactorClimaticoDto(body) {
   return {
     idIncidente: Number(body.idIncidente),
     superficie: body.superficie.trim(),
-    cantidadPersonasAfectadas: body.cantidadPersonasAfectadas
-      ? Number(body.cantidadPersonasAfectadas)
+    cantidadPersonasAfectadas: personasEvacuadas
+      ? Number(personasEvacuadas)
       : 0,
     detalle: body.detalle?.trim() || null,
     damnificados: Array.isArray(body.damnificados)

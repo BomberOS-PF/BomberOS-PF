@@ -11,7 +11,7 @@ export class MySQLAccidenteTransitoRepository {
       INSERT INTO ${this.tableName} (idIncidente, descripcion, idCausaAccidente)
       VALUES (?, ?, ?)
     `
-    const params = [idIncidente, descripcion, idCausaAccidente]
+    const params = [idIncidente, descripcion ?? null, idCausaAccidente ?? null]
 
     const connection = getConnection()
     try {
@@ -21,6 +21,43 @@ export class MySQLAccidenteTransitoRepository {
     } catch (error) {
       logger.error('❌ Error al insertar accidente de tránsito', { error: error.message })
       throw new Error('Error al insertar el accidente en la base de datos')
+    }
+  }
+
+  async obtenerPorIdIncidente(idIncidente) {
+    const query = `
+      SELECT * FROM ${this.tableName}
+      WHERE idIncidente = ?
+      LIMIT 1
+    `
+    const connection = getConnection()
+    try {
+      const [rows] = await connection.execute(query, [idIncidente])
+      return rows[0] || null
+    } catch (error) {
+      logger.error('❌ Error al obtener accidente por idIncidente', { error: error.message })
+      throw error
+    }
+  }
+
+  async actualizarAccidente(idAccidenteTransito, { descripcion, idCausaAccidente }) {
+    const query = `
+      UPDATE ${this.tableName}
+      SET descripcion = ?, idCausaAccidente = ?
+      WHERE idAccidenteTransito = ?
+    `
+    const connection = getConnection()
+    try {
+      const [result] = await connection.execute(query, [
+        descripcion ?? null, 
+        idCausaAccidente ?? null, 
+        idAccidenteTransito
+      ])
+      logger.debug('🔄 Accidente de tránsito actualizado', { idAccidenteTransito, affectedRows: result.affectedRows })
+      return result.affectedRows > 0
+    } catch (error) {
+      logger.error('❌ Error al actualizar accidente de tránsito', { error: error.message })
+      throw error
     }
   }
 

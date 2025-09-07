@@ -23,4 +23,20 @@ export class MySQLAccidenteVehiculoRepository {
       throw new Error('Error al insertar relación accidente-vehículo')
     }
   }
+
+  async eliminarRelacionesPorAccidente(idAccidente) {
+    const query = `
+      DELETE FROM ${this.tableName}
+      WHERE idAccidenteTransito = ?
+    `
+    const connection = getConnection()
+    try {
+      const [result] = await connection.execute(query, [idAccidente])
+      logger.debug('🗑️ Relaciones accidente-vehículo eliminadas', { idAccidente, affectedRows: result.affectedRows })
+      return result.affectedRows
+    } catch (error) {
+      logger.error('❌ Error al eliminar relaciones accidente-vehículo', { error: error.message })
+      throw new Error('Error al eliminar relaciones accidente-vehículo')
+    }
+  }
 }

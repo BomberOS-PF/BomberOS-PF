@@ -1,6 +1,19 @@
 // Config API
 const API_BASE_URL = 'http://localhost:3000/api'
 
+// Helper para query strings
+const toQS = (params) => {
+  if (!params || Object.keys(params).length === 0) return ''
+  const searchParams = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      searchParams.append(key, value)
+    }
+  })
+  const qs = searchParams.toString()
+  return qs ? `?${qs}` : ''
+}
+
 export const API_URLS = {
   // Bomberos
   bomberos: {
@@ -63,25 +76,32 @@ export const API_URLS = {
     create: `${API_BASE_URL}/incidentes`,
     getAll: `${API_BASE_URL}/incidentes`,
     getById: (id) => `${API_BASE_URL}/incidentes/${id}`,
-    getDetalle: (id) => `${API_BASE_URL}/incidentes/${id}/detalle`, // 👈io-forestal`,
+    getDetalle: (id) => `${API_BASE_URL}/incidentes/${id}/detalle`,
+    update: (id) => `${API_BASE_URL}/incidentes/${id}`,
+    listar: params => `${API_BASE_URL}/incidentes${toQS(params)}`,
+    
+    // Tipos específicos de incidente - CREATE
+    createAccidenteTransito: `${API_BASE_URL}/accidentes`,
     createFactorClimatico: `${API_BASE_URL}/factor-climatico`,
     createIncendioEstructural: `${API_BASE_URL}/incendio-estructural`,
+    createIncendioForestal: `${API_BASE_URL}/incidentes/incendio-forestal`,
     createMaterialPeligroso: `${API_BASE_URL}/materiales-peligrosos`,
     createRescate: `${API_BASE_URL}/rescate`,
-    getAll: `${API_BASE_URL}/incidentes`,              // simple (sin filtros)
-    listar: params => `${API_BASE_URL}/incidentes${toQS(params)}`, // con filtros/paginado
+    
+    // Tipos específicos de incidente - UPDATE
+    updateAccidenteTransito: `${API_BASE_URL}/incidentes/accidente-transito`,
+    updateFactorClimatico: `${API_BASE_URL}/incidentes/factor-climatico`,
+    updateIncendioEstructural: `${API_BASE_URL}/incidentes/incendio-estructural`,
+    updateIncendioForestal: `${API_BASE_URL}/incidentes/incendio-forestal`,
+    updateMaterialPeligroso: `${API_BASE_URL}/incidentes/material-peligroso`,
+    updateRescate: `${API_BASE_URL}/incidentes/rescate`,
+    
+    // Detalles por tipo
     detallePorTipo: {
       accidenteTransito: (idIncidente) => `${API_BASE_URL}/accidentes/${idIncidente}`,
       factorClimatico: (idIncidente) => `${API_BASE_URL}/factor-climatico/${idIncidente}`,
       incendioEstructural: (idIncidente) => `${API_BASE_URL}/incendio-estructural/${idIncidente}`,
-      incendioForestal: (idIncidente) => `${API_BASE_URL}/incendio-forestal/${idIncidente}`, // <-- si lo tenés como GET; si no, omite
-      materialesPeligrosos: (idIncidente) => `${API_BASE_URL}/materiales-peligrosos/${idIncidente}`,
-      rescate: (idIncidente) => `${API_BASE_URL}/rescate/${idIncidente}`,
-    },
-    detallePorTipo: {
-      accidenteTransito: (idIncidente) => `${API_BASE_URL}/accidentes/${idIncidente}`,
-      factorClimatico: (idIncidente) => `${API_BASE_URL}/factor-climatico/${idIncidente}`,
-      incendioEstructural: (idIncidente) => `${API_BASE_URL}/incendio-estructural/${idIncidente}`,
+      incendioForestal: (idIncidente) => `${API_BASE_URL}/incendio-forestal/${idIncidente}`,
       materialesPeligrosos: (idIncidente) => `${API_BASE_URL}/materiales-peligrosos/${idIncidente}`,
       rescate: (idIncidente) => `${API_BASE_URL}/rescate/${idIncidente}`
     }

@@ -164,22 +164,36 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
         console.log('✅ Incidente guardado:', incidente)
       }
 
-      const mensaje = `🚨 EMERGENCIA DETECTADA
-📍 Tipo: ${formData.tipoSiniestro}
-📍 Ubicación: ${formData.localizacion} - ${formData.lugar}
-📅 Fecha/Hora: ${formData.fechaHora}`
+      console.log('📱 Enviando notificación WhatsApp para incidente:', incidente.idIncidente)
 
-      const numeros = ['5493547669771', '5493513279054']
-
-      const resp = await fetch('http://localhost:3001/alerta', {
+      const resp = await fetch(`/api/incidentes/${incidente.idIncidente}/notificar`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: numeros, mensaje })
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        }
       })
 
-      if (!resp.ok) throw new Error('Error al enviar alerta por WhatsApp')
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}))
+        throw new Error(errorData.message || `Error ${resp.status}: ${resp.statusText}`)
+      }
 
-      alert(`🚨 ALERTA ENVIADA POR WHATSAPP a ${numeros.length} bomberos ✅`)
+      const resultado = await resp.json()
+      
+      if (resultado.success) {
+        const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = resultado.data
+        alert(`🚨 ALERTA ENVIADA POR WHATSAPP ✅
+        
+📊 Resumen:
+• Total bomberos: ${totalBomberos}
+• Notificaciones exitosas: ${notificacionesExitosas}
+• Notificaciones fallidas: ${notificacionesFallidas}
+
+Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
+      } else {
+        throw new Error(resultado.message || 'Error al enviar notificación')
+      }
 
       if (onNotificar) {
         const datosParaFormulario = {
@@ -396,7 +410,29 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
 
               {incidenteCreado && (
                 <div className="alert alert-success mt-3">
-                  ✅ Incidente registrado y bomberos notificados
+                  <div className="d-flex justify-content-between align-items-center">
+                    <span>✅ Incidente #{incidenteCreado.idIncidente} registrado exitosamente</span>
+                    <button 
+                      type="button" 
+                      className="btn btn-sm btn-outline-success"
+                      onClick={() => {
+                        // Redirigir directamente al formulario de edición del incidente
+                        console.log('🔄 Completar Detalles clicked - incidenteCreado:', incidenteCreado)
+                        if (onVolver) {
+                          console.log('💾 Guardando en localStorage:', incidenteCreado.idIncidente)
+                          localStorage.setItem('incidenteParaCompletar', incidenteCreado.idIncidente)
+                          console.log('🔄 Llamando onVolver con consultarIncidente')
+                          onVolver('consultarIncidente')
+                        }
+                      }}
+                    >
+                      <i className="bi bi-pencil-square me-1"></i>
+                      Completar Detalles →
+                    </button>
+                  </div>
+                  <small className="text-muted d-block mt-2">
+                    💡 Haz clic en "Completar Detalles" para agregar información específica del tipo de incidente
+                  </small>
                 </div>
               )}
 

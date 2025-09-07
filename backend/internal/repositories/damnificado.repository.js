@@ -34,4 +34,20 @@ export class MySQLDamnificadoRepository {
       throw new Error('Error al insertar damnificado')
     }
   }
+
+  async eliminarPorIncidente(idIncidente) {
+    const query = `
+      DELETE FROM ${this.tableName}
+      WHERE idIncidente = ?
+    `
+    const connection = getConnection()
+    try {
+      const [result] = await connection.execute(query, [idIncidente])
+      logger.debug('🗑️ Damnificados eliminados por incidente', { idIncidente, affectedRows: result.affectedRows })
+      return result.affectedRows
+    } catch (error) {
+      logger.error('❌ Error al eliminar damnificados por incidente', { error: error.message })
+      throw new Error('Error al eliminar damnificados por incidente')
+    }
+  }
 }

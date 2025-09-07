@@ -30,6 +30,20 @@ export class RescateHandler {
   }
 
   /**
+   * PUT /api/incidentes/rescate
+   */
+  async actualizar(req, res) {
+    try {
+      const datos = crearRescateDto(req.body)
+      const resultado = await this.rescateService.registrarRescate(datos) // Reutilizar el mismo método
+      res.status(200).json({ success: true, message: 'Rescate actualizado exitosamente', data: resultado })
+    } catch (error) {
+      logger.error('❌ Error en RescateHandler.actualizar', { error: error.message })
+      res.status(400).json({ success: false, message: error.message })
+    }
+  }
+
+  /**
    * GET /api/rescate/:idIncidente
    */
   async obtenerPorIncidente(req, res) {

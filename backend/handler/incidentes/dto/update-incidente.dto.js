@@ -1,11 +1,22 @@
 export function updateIncidenteDto(data) {
-  const camposPermitidos = ['idTipoIncidente', 'fecha', 'idLocalizacion', 'descripcion']
   const resultado = {}
 
-  for (const campo of camposPermitidos) {
-    if (data[campo] !== undefined) {
-      resultado[campo] = data[campo]
-    }
+  // Campos que se pueden actualizar directamente
+  if (data.idTipoIncidente !== undefined) {
+    resultado.idTipoIncidente = data.idTipoIncidente
+  }
+  
+  if (data.fecha !== undefined) {
+    resultado.fecha = data.fecha
+  }
+  
+  if (data.descripcion !== undefined) {
+    resultado.descripcion = data.descripcion
+  }
+
+  // Solo manejar idLocalizacion (campo correcto de la BD)
+  if (data.idLocalizacion !== undefined) {
+    resultado.idLocalizacion = data.idLocalizacion
   }
 
   if (Object.keys(resultado).length === 0) {

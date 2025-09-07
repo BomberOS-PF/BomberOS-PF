@@ -15,7 +15,7 @@ import ConsultarRol from '../Rol/ConsultarRol'
 import RegistrarGuardia from '../Guardia/RegistrarGuardia/RegistrarGuardia'
 import ConsultarGrupoGuardia from '../Guardia/ConsultarGuardia/ConsultarGrupoGuardia'
 import GestionarGuardias from '../Guardia/GestionarGuardias/GestionarGuardia'
-import BurbujaFormulario from '../BurbujaFormulario/BurbujaFormulario'
+// import BurbujaFormulario from '../BurbujaFormulario/BurbujaFormulario' // Eliminado - simplificando flujo
 import AccidenteTransito from '../Incidente/TipoIncidente/AccidenteTransito/AccidenteTransito'
 import FactorClimatico from '../Incidente/TipoIncidente/FactorClimatico/FactorClimatico'
 import IncendioEstructural from '../Incidente/TipoIncidente/IncendioEstructural/IncendioEstructural'
@@ -24,6 +24,8 @@ import MaterialPeligroso from '../Incidente/TipoIncidente/MaterialPeligroso/Mate
 import Rescate from '../Incidente/TipoIncidente/Rescate/Rescate'
 import ParticipacionIncidente from '../Incidente/ParticipacionIncidente/ParticipacionIncidente'
 import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
+import DashboardRespuestas from '../Respuestas/DashboardRespuestas'
+import EstadoWhatsApp from '../WhatsApp/EstadoWhatsApp'
 
 const Menu = ({ user, setUser }) => {
   const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
@@ -32,8 +34,8 @@ const Menu = ({ user, setUser }) => {
   const [acordeonAbierto, setAcordeonAbierto] = useState(null)
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
-  const [burbujas, setBurbujas] = useState([])
-  const [burbujaExpandida, setBurbujaExpandida] = useState(null)
+  // const [burbujas, setBurbujas] = useState([]) // Eliminado - simplificando flujo
+  // const [burbujaExpandida, setBurbujaExpandida] = useState(null) // Eliminado - simplificando flujo
 
   // Flujo post-notificación
   const [datosFinalizados, setDatosFinalizados] = useState(null)
@@ -111,65 +113,20 @@ const Menu = ({ user, setUser }) => {
     }
   }, [])
 
-  // Burbujas
-  const agregarBurbuja = (tipo, datosPrevios) => {
-    const id = datosPrevios?.id || Date.now()
-    const yaExiste = burbujas.find(b => b.id === id)
-    if (!yaExiste) {
-      setBurbujas(prev => [...prev, { id, tipo, datosPrevios, minimizada: true }])
-      setBurbujas(prev => [...prev, { id, tipo, datosPrevios, minimizada: true }])
-    }
-    setOpcionSeleccionada(null)
+  // Función simplificada para notificaciones (sin burbujas)
+  const manejarNotificacion = (tipo, datosPrevios) => {
+    // Simplemente mostrar mensaje de éxito - el componente CargarIncidente manejará la redirección
+    console.log('Notificación enviada:', tipo, datosPrevios)
   }
 
-  const cerrarBurbuja = (id) => {
-    setBurbujas(prev => prev.filter(b => b.id !== id))
-    if (burbujaExpandida === id) setBurbujaExpandida(null)
-  }
+  // Funciones de burbujas eliminadas - flujo simplificado
 
-  const toggleMinimizada = (id) => {
-    setBurbujas(prev => prev.map(b => {
-      const activa = b.id === id
-      const minimizada = !b.minimizada
-      if (activa) setBurbujaExpandida(minimizada ? null : id)
-      return { ...b, minimizada: activa ? minimizada : true }
-    }))
-  }
-
-  const manejarFinalizarCarga = (datos) => {
-    if (burbujaExpandida) cerrarBurbuja(burbujaExpandida)
-
-    // Combinar datos del incidente básico con los específicos
-    const datosCompletos = {
-      ...datosFinalizados,
-      ...datos,
-      incidenteCompleto: true
-    }
-    setDatosFinalizados(datosCompletos)
-    setOpcionSeleccionada('participacion-incidente')
-  }
-
-  const renderFormularioExpandido = () => {
-    const burbuja = burbujas.find(b => b.id === burbujaExpandida)
-    if (!burbuja) return null
-
-    const props = { datosPrevios: burbuja.datosPrevios, onFinalizar: manejarFinalizarCarga }
-
-    switch (burbuja.tipo) {
-      case 'Accidente': return <AccidenteTransito {...props} />
-      case 'Factores Climáticos': return <FactorClimatico {...props} />
-      case 'Incendio Estructural': return <IncendioEstructural {...props} />
-      case 'Incendio Forestal': return <IncendioForestal {...props} />
-      case 'Material Peligroso': return <MaterialPeligroso {...props} />
-      case 'Rescate': return <Rescate {...props} />
-      default: return <p>Formulario no encontrado</p>
-    }
-  }
+  // renderFormularioExpandido eliminado - flujo simplificado
 
   // Permisos (placeholder)
   const permisos = {
     administrador: ['*'],
-    bombero: ['cargar-incidente', 'consultar-bombero', 'participacion-incidente']
+    bombero: ['cargar-incidente', 'consultar-bombero', 'participacion-incidente', 'dashboard-respuestas', 'estado-whatsapp']
   }
   const puedeVer = (clave) => permisos[rol]?.includes('*') || permisos[rol]?.includes(clave)
 
@@ -205,7 +162,7 @@ const Menu = ({ user, setUser }) => {
   const renderContenido = () => {
     switch (opcionSeleccionada) {
       case 'cargarIncidente':
-        return <CargarIncidente onVolver={() => setOpcionSeleccionada(null)} onNotificar={agregarBurbuja} />
+        return <CargarIncidente onVolver={(opcion) => setOpcionSeleccionada(opcion || null)} onNotificar={manejarNotificacion} />
       case 'registrarBombero':
         return <RegistrarBombero onVolver={() => setOpcionSeleccionada(null)} />
       case 'consultarBombero':
@@ -267,6 +224,10 @@ const Menu = ({ user, setUser }) => {
         return <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />
       case 'consultarIncidente': // << NUEVO
         return <ConsultarIncidente onVolverMenu={() => setOpcionSeleccionada('')} />
+      case 'dashboard-respuestas':
+        return <DashboardRespuestas onVolver={() => setOpcionSeleccionada(null)} />
+      case 'estado-whatsapp':
+        return <EstadoWhatsApp onVolver={() => setOpcionSeleccionada(null)} />
     }
   }
 
@@ -366,6 +327,14 @@ const Menu = ({ user, setUser }) => {
                 { texto: 'Registrar Guardia', accion: 'registrarGuardia' },
                 { texto: 'Consultar Guardia', accion: 'consultarGuardia' }
               ]
+            }, {
+              id: 'collapseWhatsApp',
+              icono: 'bi-whatsapp',
+              titulo: 'WhatsApp & Respuestas',
+              botones: [
+                { texto: 'Dashboard Respuestas', accion: 'dashboard-respuestas' },
+                { texto: 'Estado WhatsApp', accion: 'estado-whatsapp' }
+              ]
             }].map(({ id, icono, titulo, botones }) => (
               <div key={id} className="accordion-item bg-dark border-0">
                 <h2 className="accordion-header">
@@ -401,15 +370,9 @@ const Menu = ({ user, setUser }) => {
         </div>
       </div>
 
-      <main className={`container ${opcionSeleccionada || burbujaExpandida ? 'centrado' : ''}`}>
-        {burbujaExpandida ? renderFormularioExpandido() : renderContenido()}
+      <main className={`container ${opcionSeleccionada ? 'centrado' : ''}`}>
+        {renderContenido()}
       </main>
-      {burbujas.map((b, i) => (
-        <div key={b.id} style={{ position: 'fixed', right: `${20 + i * 370}px`, bottom: 0, zIndex: 9999 }}>
-          <BurbujaFormulario {...b} onCerrar={cerrarBurbuja} onToggleMinimizada={toggleMinimizada} />
-          <BurbujaFormulario {...b} onCerrar={cerrarBurbuja} onToggleMinimizada={toggleMinimizada} />
-        </div>
-      ))}
     </div>
   )
 }

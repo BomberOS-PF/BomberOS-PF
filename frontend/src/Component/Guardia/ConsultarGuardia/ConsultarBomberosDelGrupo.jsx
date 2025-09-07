@@ -28,7 +28,7 @@ const ConsultarBomberosDelGrupo = ({
         </span>
       </div>
 
-      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+      <div className="card shadow-sm border-0 bg-white">
         <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <User2 />
           <strong>Bomberos del grupo: {nombreGrupo || 'Sin nombre'}</strong>
@@ -68,26 +68,31 @@ const ConsultarBomberosDelGrupo = ({
 
           <div className="mt-4">
             <div className="d-flex align-items-center justify-content-between mb-3">
-              <button
-                className="btn btn-warning me-sm-2 mb-2 mb-sm-0 w-100"
-                onClick={() => onEditar?.({ idGrupo, nombre: nombreGrupo, descripcion })}
-              >
-                <i className="bi bi-pencil-square me-1"></i>
-                Editar grupo
-              </button>
+              <div className="d-flex align-items-center gap-2">
+                <button
+                  className="btn btn-warning btn-sm d-flex align-items-center gap-1"
+                  onClick={() => onEditar?.({ idGrupo, nombre: nombreGrupo, descripcion })}
+                  title="Editar información del grupo"
+                >
+                  <i className="bi bi-pencil-square"></i>
+                  Editar
+                </button>
 
-              <button
-                className="btn btn-danger me-sm-2 mb-2 mb-sm-0 w-100"
-                onClick={() => onIrAGestionarGuardias?.({ idGrupo, nombreGrupo, bomberos })}
-              >
-                <i className="bi bi-calendar2-week me-1"></i>
-                Gestionar guardias
-              </button>
+                <button
+                  className="btn btn-primary btn-sm d-flex align-items-center gap-1"
+                  onClick={() => onIrAGestionarGuardias?.({ idGrupo, nombreGrupo, bomberos })}
+                  title="Gestionar guardias de este grupo"
+                >
+                  <i className="bi bi-calendar2-week"></i>
+                  Guardias
+                </button>
+              </div>
 
-              <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
+              <button 
+                className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
                 onClick={onVolver}
               >
-                <i className="bi bi-arrow-left me-1"></i>
+                <i className="bi bi-arrow-left"></i>
                 Volver a grupos
               </button>
             </div>

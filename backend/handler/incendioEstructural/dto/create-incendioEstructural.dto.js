@@ -40,12 +40,13 @@ export function crearIncendioEstructuralDto(data) {
   // DTO final
   return {
     idIncidente: Number(data.idIncidente),
-    tipoTecho: tipoTechoMap[data.tipoTecho] || null,
-    tipoAbertura: tipoAberturaMap[data.tipoAbertura] || null,
+    tipoTecho: Number(data.tipoTecho) || null,
+    tipoAbertura: Number(data.tipoAbertura) || null,
     descripcion: data.descripcion,
     superficie: data.superficie || null,
     cantPisos: data.cantPisos || null,
     cantAmbientes: data.cantAmbientes || null,
+    nombreLugar: data.nombreLugar || null,
     damnificados
   }
 }

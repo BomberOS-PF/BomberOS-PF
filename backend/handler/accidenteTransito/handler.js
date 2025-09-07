@@ -21,6 +21,20 @@ export class AccidenteTransitoHandler {
   }
 
   /**
+   * PUT /api/incidentes/accidente-transito
+   */
+  async actualizar(req, res) {
+    try {
+      const datos = crearAccidenteTransitoDto(req.body)
+      const resultado = await this.accidenteTransitoService.registrarAccidente(datos) // Reutilizar el mismo método
+      res.status(200).json({ success: true, message: 'Accidente de tránsito actualizado exitosamente', data: resultado })
+    } catch (error) {
+      logger.error('❌ Error en AccidenteTransitoHandler.actualizar', { error: error.message })
+      res.status(400).json({ success: false, message: error.message })
+    }
+  }
+
+  /**
    * GET /api/accidentes/:id
    */
   async obtenerPorIncidente(req, res) {

@@ -1,8 +1,9 @@
 import { logger } from '../platform/logger/logger.js'
 
 export class IncendioEstructuralService {
-  constructor(incendioEstructuralRepository) {
+  constructor(incendioEstructuralRepository, damnificadoRepository = null) {
     this.incendioEstructuralRepository = incendioEstructuralRepository
+    this.damnificadoRepository = damnificadoRepository
   }
 
   /**
@@ -10,25 +11,58 @@ export class IncendioEstructuralService {
    */
   async registrarIncendio(data) {
     try {
-      logger.info('🔥 Registrando incendio estructural...', data)
+      logger.info('🔥 Registrando incendio estructural...')
+      logger.info('📋 Datos recibidos completos:', JSON.stringify(data, null, 2))
 
       // Validación básica
       if (!data.idIncidente || !data.descripcion) {
         throw new Error('Faltan datos obligatorios: idIncidente o descripcion')
       }
 
-      // 1. Insertar incendio estructural
-      const idIncendioEstructural = await this.incendioEstructuralRepository.insertarIncendio({
-        idIncidente: data.idIncidente,
-        tipoTecho: data.tipoTecho,
-        tipoAbertura: data.tipoAbertura,
-        descripcion: data.descripcion,
-        superficie: data.superficie,
-        cantPisos: data.cantPisos,
-        cantAmbientes: data.cantAmbientes
-      })
+      // 1. Verificar si ya existe el registro específico de incendio estructural
+      const incendioExistente = await this.incendioEstructuralRepository.obtenerPorIncidente(data.idIncidente)
+      let idIncendioEstructural
+      
+      if (incendioExistente) {
+        // Actualizar incendio estructural existente
+        const updateData = {
+          tipoTecho: data.tipoTecho,
+          tipoAbertura: data.tipoAbertura,
+          descripcion: data.descripcion,
+          superficie: data.superficie,
+          cantPisos: data.cantPisos,
+          cantAmbientes: data.cantAmbientes,
+          nombreLugar: data.nombreLugar
+        }
+        logger.info('🔄 Datos para actualizar:', JSON.stringify(updateData, null, 2))
+        await this.incendioEstructuralRepository.actualizarIncendio(incendioExistente.idIncendioEstructural, updateData)
+        idIncendioEstructural = incendioExistente.idIncendioEstructural
+        logger.info('🔄 Incendio estructural actualizado', { idIncendioEstructural })
+      } else {
+        // Insertar nuevo incendio estructural
+        const insertData = {
+          idIncidente: data.idIncidente,
+          tipoTecho: data.tipoTecho,
+          tipoAbertura: data.tipoAbertura,
+          descripcion: data.descripcion,
+          superficie: data.superficie,
+          cantPisos: data.cantPisos,
+          cantAmbientes: data.cantAmbientes,
+          nombreLugar: data.nombreLugar
+        }
+        logger.info('➕ Datos para insertar:', JSON.stringify(insertData, null, 2))
+        idIncendioEstructural = await this.incendioEstructuralRepository.insertarIncendio(insertData)
+        logger.info('➕ Nuevo incendio estructural creado', { idIncendioEstructural })
+      }
 
-      // 2. Insertar damnificados asociados al incidente
+      // 2. Manejar damnificados asociados al incidente
+      if (incendioExistente && this.damnificadoRepository) {
+        // Para actualizaciones, eliminar damnificados existentes
+        await this.damnificadoRepository.eliminarPorIncidente(data.idIncidente)
+        logger.debug('🗑️ Damnificados existentes eliminados para actualización')
+      }
+
+      // Insertar nuevos damnificados
       for (const damnificado of data.damnificados || []) {
         logger.debug('➕ Insertando damnificado:', damnificado)
 

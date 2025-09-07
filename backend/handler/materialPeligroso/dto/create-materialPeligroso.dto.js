@@ -26,7 +26,7 @@ export function crearMaterialPeligrosoDto(body) {
   return {
     idIncidente,
     categoria, // 👈 ahora coincide con la columna
-    cantidadMateriales,
+    cantidadMatInvolucrado: cantidadMateriales, // 👈 mapear al nombre correcto de la columna
     otraAccionMaterial: body.otraAccionMaterial ?? null,
     otraAccionPersona: body.otraAccionPersona ?? null,
     detalleOtrasAccionesPersona: body.detalleOtrasAccionesPersona ?? null,

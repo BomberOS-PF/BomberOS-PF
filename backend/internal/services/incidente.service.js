@@ -13,11 +13,12 @@ export class IncidenteService extends IncidenteServiceInterface {
     incendioForestalRepository = null,
     areaAfectadaRepository = null,
     tipoIncidenteService = null,
-    // opcionales si los tenés
-    accidenteRepository = null,
+    // repositorios específicos para obtenerDetalleCompleto
+    accidenteTransitoRepository = null,
     incendioEstructuralRepository = null,
     materialPeligrosoRepository = null,
-    rescateRepository = null
+    rescateRepository = null,
+    factorClimaticoRepository = null
   ) {
     super()
     this.incidenteRepository = incidenteRepository
@@ -29,11 +30,12 @@ export class IncidenteService extends IncidenteServiceInterface {
     this.areaAfectadaRepository = areaAfectadaRepository
     this.tipoIncidenteService = tipoIncidenteService
 
-    // repos específicos opcionales
-    this.accidenteRepository = accidenteRepository
+    // repos específicos para obtenerDetalleCompleto
+    this.accidenteTransitoRepository = accidenteTransitoRepository
     this.incendioEstructuralRepository = incendioEstructuralRepository
     this.materialPeligrosoRepository = materialPeligrosoRepository
     this.rescateRepository = rescateRepository
+    this.factorClimaticoRepository = factorClimaticoRepository
   }
 
   // ================== ALTAS ==================
@@ -109,25 +111,77 @@ export class IncidenteService extends IncidenteServiceInterface {
       })
     }
 
+    // El método insertarIncendioForestal ya maneja UPDATE/INSERT automáticamente
+    const incendioId = incidente.idIncidente || incidente.id
+    
+    
     await this.incendioForestalRepository.insertarIncendioForestal({
-      idIncidente: incidente.idIncidente || incidente.id,
+      idIncidente: incendioId,
       caracteristicasLugar: data.caracteristicasLugar,
       areaAfectada: data.areaAfectada,
       cantidadAfectada: data.cantidadAfectada,
       causaProbable: data.causaProbable,
       detalle: data.detalle
     })
+    logger.info('✅ Incendio forestal procesado (INSERT/UPDATE automático)', { idIncidente: incendioId })
 
+    // Manejar damnificados
     if (Array.isArray(data.damnificados) && this.damnificadoRepository) {
+      const idIncidenteFinal = incidente.idIncidente || incidente.id
+      
+      // Si es actualización, eliminar damnificados existentes
+      if (data.idIncidente) {
+        await this.damnificadoRepository.eliminarPorIncidente(idIncidenteFinal)
+        logger.debug('🗑️ Damnificados existentes eliminados para actualización')
+      }
+      
+      // Insertar nuevos damnificados
       for (const damnificado of data.damnificados) {
         await this.damnificadoRepository.insertarDamnificado({
           ...damnificado,
-          idIncidente: incidente.idIncidente || incidente.id
+          idIncidente: idIncidenteFinal
         })
       }
+      logger.debug(`👥 ${data.damnificados.length} damnificados procesados`)
     }
 
     return incidente
+  }
+
+  async actualizarIncendioForestal(data) {
+    // Reutilizar el método crearIncendioForestal ya que maneja ambos casos
+    return await this.crearIncendioForestal(data)
+  }
+
+  async actualizarAccidenteTransito(data) {
+    logger.info('🔄 Actualizando accidente de tránsito', { idIncidente: data.idIncidente })
+    // Los servicios específicos manejan tanto creación como actualización
+    // Por ahora, delegamos al handler específico que ya existe
+    throw new Error('Método debe ser manejado por el servicio específico de AccidenteTransito')
+  }
+
+  async actualizarFactorClimatico(data) {
+    logger.info('🔄 Actualizando factor climático', { idIncidente: data.idIncidente })
+    // Los servicios específicos manejan tanto creación como actualización
+    throw new Error('Método debe ser manejado por el servicio específico de FactorClimatico')
+  }
+
+  async actualizarIncendioEstructural(data) {
+    logger.info('🔄 Actualizando incendio estructural', { idIncidente: data.idIncidente })
+    // Los servicios específicos manejan tanto creación como actualización
+    throw new Error('Método debe ser manejado por el servicio específico de IncendioEstructural')
+  }
+
+  async actualizarMaterialPeligroso(data) {
+    logger.info('🔄 Actualizando material peligroso', { idIncidente: data.idIncidente })
+    // Los servicios específicos manejan tanto creación como actualización
+    throw new Error('Método debe ser manejado por el servicio específico de MaterialPeligroso')
+  }
+
+  async actualizarRescate(data) {
+    logger.info('🔄 Actualizando rescate', { idIncidente: data.idIncidente })
+    // Los servicios específicos manejan tanto creación como actualización
+    throw new Error('Método debe ser manejado por el servicio específico de Rescate')
   }
 
   // ================== LISTADOS / CONSULTAS ==================
@@ -250,8 +304,10 @@ export class IncidenteService extends IncidenteServiceInterface {
         i.idTipoIncidente,
         DATE_FORMAT(i.fecha, '%Y-%m-%d %H:%i') AS fecha,
         i.descripcion,
+        i.idLocalizacion,
         ti.nombre AS tipoDescripcion,
-        l.descripcion AS localizacion
+        l.descripcion AS localizacion,
+        l.direccion AS lugar
       FROM incidente i
       JOIN tipoIncidente ti ON ti.idTipoIncidente = i.idTipoIncidente
       JOIN localizacion   l ON l.idLocalizacion   = i.idLocalizacion
@@ -269,38 +325,30 @@ export class IncidenteService extends IncidenteServiceInterface {
       let detalleEspecifico = null
 
       switch (Number(base.idTipoIncidente)) {
-        case 2: { // ⚠️ Ajusta al ID real de "Factores Climáticos" en tu tabla tipoIncidente
-          const [r] = await cn.execute(
-            `SELECT
-               *
-             FROM climatico c
-             WHERE c.idIncidente = ?
-             LIMIT 1`,
-            [idIncidente]
-          )
-          detalleEspecifico = r[0] || null
+        case 2: { // Factor Climático
+          detalleEspecifico = await this.factorClimaticoRepository.obtenerClimaticoCompleto(idIncidente)
           break
         }
 
         //Ejemplos para que completes si querés:
         case 1: { // Accidente de Tránsito
-          const [r] = await cn.execute(`SELECT * FROM accidenteTransito WHERE idIncidente = ?`, [idIncidente])
-          detalleEspecifico = r[0] || null
+          detalleEspecifico = await this.accidenteTransitoRepository.obtenerAccidenteCompleto(idIncidente)
           break
         }
         case 3: { // Incendio Estructural
-          const [r] = await cn.execute(`SELECT * FROM incendioEstructural WHERE idIncidente = ?`, [idIncidente])
-          detalleEspecifico = r[0] || null
+          detalleEspecifico = await this.incendioEstructuralRepository.obtenerIncendioCompleto(idIncidente)
+          break
+        }
+        case 4: { // Incendio Forestal
+          detalleEspecifico = await this.incendioForestalRepository.obtenerIncendioCompleto(idIncidente)
           break
         }
         case 5: { // Material Peligroso
-          const [r] = await cn.execute(`SELECT * FROM materialPeligroso WHERE idIncidente = ?`, [idIncidente])
-          detalleEspecifico = r[0] || null
+          detalleEspecifico = await this.materialPeligrosoRepository.obtenerMaterialCompleto(idIncidente)
           break
         }
         case 6: { // Rescate
-          const [r] = await cn.execute(`SELECT * FROM rescate WHERE idIncidente = ?`, [idIncidente])
-          detalleEspecifico = r[0] || null
+          detalleEspecifico = await this.rescateRepository.obtenerRescateCompleto(idIncidente)
           break
         }
 
@@ -308,7 +356,7 @@ export class IncidenteService extends IncidenteServiceInterface {
           detalleEspecifico = null
       }
 
-      return {
+      const resultado = {
         idIncidente: base.idIncidente,
         idTipoIncidente: base.idTipoIncidente,
         fecha: base.fecha,
@@ -317,9 +365,12 @@ export class IncidenteService extends IncidenteServiceInterface {
         dniUsuario: base.dniUsuario,
         tipoDescripcion: base.tipoDescripcion,
         localizacion: base.localizacion,
+        lugar: base.lugar,
         denuncianteNombre: base.denuncianteNombre,
         detalleEspecifico
       }
+      
+      return resultado
     } catch (err) {
       logger.error('❌ obtenerDetalleCompleto error', { err: err.message, idIncidente })
       throw err

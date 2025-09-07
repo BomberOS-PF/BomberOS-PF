@@ -5,7 +5,7 @@ export class AccionMaterialHandler {
     this.service = service
   }
 
-  async listar(res) {
+  async listar(req, res) {
     try {
       const acciones = await this.service.obtenerTodas()
       res.status(200).json({ success: true, data: acciones })

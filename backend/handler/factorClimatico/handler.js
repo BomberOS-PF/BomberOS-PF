@@ -29,7 +29,21 @@ export class FactorClimaticoHandler {
             console.error('❌ [HANDLER] Error:', error.message, error.stack)
             return res.status(500).json({ error: 'Error en handler', detalle: error.message })
         }
-        }
+    }
+
+  /**
+   * PUT /api/incidentes/factor-climatico
+   */
+  async actualizar(req, res) {
+    try {
+      const datos = crearFactorClimaticoDto(req.body)
+      const resultado = await this.factorClimaticoService.registrarFactorClimatico(datos) // Reutilizar el mismo método
+      res.status(200).json({ success: true, message: 'Factor climático actualizado exitosamente', data: resultado })
+    } catch (error) {
+      logger.error('❌ Error en FactorClimaticoHandler.actualizar', { error: error.message })
+      res.status(400).json({ success: false, message: error.message })
+    }
+  }
 
   /**
    * GET /api/factor-climatico/:idIncidente

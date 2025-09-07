@@ -19,7 +19,7 @@ export class MySQLIncidenteRepository {
     const query = `
       SELECT 
         i.*,
-        l.direccion AS localizacion,
+        l.descripcion AS localizacion,
         d.nombre AS denuncianteNombre,
         d.apellido AS denuncianteApellido,
         d.dni AS denuncianteDni,
@@ -47,7 +47,7 @@ export class MySQLIncidenteRepository {
     const query = `
       SELECT 
         i.*,
-        l.direccion AS localizacion,
+        l.descripcion AS localizacion,
         d.nombre AS denuncianteNombre,
         d.apellido AS denuncianteApellido,
         d.dni AS denuncianteDni,
@@ -109,30 +109,32 @@ export class MySQLIncidenteRepository {
     }
   }
 
-  async update(id, incidente) {
-    const query = `
-      UPDATE ${this.tableName} SET 
-        idTipoIncidente = ?, 
-        fecha = ?, 
-        idLocalizacion = ?, 
-        descripcion = ?,
-        idDenunciante = ?
-      WHERE idIncidente = ?
-    `
-    const params = [
-      incidente.idTipoIncidente,
-      incidente.fecha,
-      incidente.idLocalizacion,
-      incidente.descripcion,
-      incidente.idDenunciante ?? null,
-      id
-    ]
+  async update(id, data) {
+    const camposPermitidos = ['idTipoIncidente', 'fecha', 'idLocalizacion', 'descripcion', 'idDenunciante']
+    const updates = []
+    const params = []
+
+    // Los datos ya vienen con los nombres correctos de campos
+
+    for (const campo of camposPermitidos) {
+      if (data[campo] !== undefined) {
+        updates.push(`${campo} = ?`)
+        params.push(data[campo])
+      }
+    }
+
+    if (updates.length === 0) {
+      throw new Error('No hay campos para actualizar')
+    }
+
+    const query = `UPDATE ${this.tableName} SET ${updates.join(', ')} WHERE idIncidente = ?`
+    params.push(id)
 
     const connection = await getConnection()
 
     try {
       const [result] = await connection.execute(query, params)
-      logger.debug('Incidente actualizado', { id })
+      logger.debug('Incidente actualizado', { id, camposActualizados: updates })
       return result.affectedRows > 0 ? this.findById(id) : null
     } catch (error) {
       logger.error('Error al actualizar incidente', { id, error: error.message })

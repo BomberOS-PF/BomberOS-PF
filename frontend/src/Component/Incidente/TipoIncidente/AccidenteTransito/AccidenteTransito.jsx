@@ -8,30 +8,56 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
 
   const [formData, setFormData] = useState(() => {
     const guardado = localStorage.getItem(storageKey)
-    return guardado ? JSON.parse(guardado) : { vehiculos: [] , damnificados: []}
+    const savedData = guardado ? JSON.parse(guardado) : { vehiculos: [] , damnificados: []}
+    
+    // Mapear los nombres de campos del backend a los nombres que usa el frontend
+    const datosPreviosMapeados = {
+      ...datosPrevios,
+      // Mapear campos específicos del accidente de tránsito
+      detalle: datosPrevios.detalle || datosPrevios.descripcion, // Mapear descripcion del backend a detalle del frontend
+      causaAccidente: datosPrevios.causaAccidente || datosPrevios.idCausaAccidente,
+      vehiculos: datosPrevios.vehiculos || [],
+      damnificados: datosPrevios.damnificados || []
+    }
+    
+    // Combinar datos guardados con datos previos mapeados, dando prioridad a los datos previos
+    const combined = { ...savedData, ...datosPreviosMapeados }
+    
+    return combined
   })
 
   const [causasAccidente, setCausasAccidente] = useState([])
   const [loading, setLoading] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+  const [errors, setErrors] = useState({})
+  const [damnificadosErrors, setDamnificadosErrors] = useState([])
   const toastRef = useRef(null)
 
   // Mostrar información del incidente básico si existe
   const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id ? {
     id: datosPrevios.idIncidente || datosPrevios.id,
-    tipo: datosPrevios.tipoSiniestro,
+    tipo: datosPrevios.tipoDescripcion,
     fecha: datosPrevios.fechaHora || datosPrevios.fecha,
     localizacion: datosPrevios.localizacion,
-    lugar: datosPrevios.lugar
+    lugar: datosPrevios.lugar || 'No especificado'
   } : null
 
   useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      ...datosPrevios,
-      vehiculos: datosPrevios.vehiculos || prev.vehiculos || []
-    }))
+    // Solo actualizar si hay nuevos datosPrevios y son diferentes
+    if (datosPrevios && Object.keys(datosPrevios).length > 0) {
+      // Mapear los nombres de campos del backend a los nombres que usa el frontend
+      const datosMapeados = {
+        ...datosPrevios,
+        // Mapear campos específicos del accidente de tránsito
+        detalle: datosPrevios.detalle || datosPrevios.descripcion, // Mapear descripcion del backend a detalle del frontend
+        causaAccidente: datosPrevios.causaAccidente || datosPrevios.idCausaAccidente,
+        vehiculos: datosPrevios.vehiculos || [],
+        damnificados: datosPrevios.damnificados || []
+      }
+      
+      setFormData(prev => ({ ...prev, ...datosMapeados }))
+    }
   }, [datosPrevios])
 
   useEffect(() => {
@@ -113,10 +139,67 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
     alert('Datos guardados localmente. Podés continuar después.')
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  // Funciones de validación
+  const validarTelefono = (telefono) => {
+    if (!telefono) return true;
+    const cleaned = telefono.replace(/[^0-9+]/g, '');
+    const numbersOnly = cleaned.replace(/\+/g, '');
+    return /^[0-9+]+$/.test(cleaned) && numbersOnly.length >= 8 && numbersOnly.length <= 15;
+  }
+
+  const validarDNI = (dni) => {
+    if (!dni) return true;
+    return /^\d{7,10}$/.test(dni);
+  }
+
+  const damnificadoVacio = (d) => {
+    return !d.nombre && !d.apellido && !d.domicilio && !d.telefono && !d.dni && !d.fallecio;
+  }
+
+  const validate = () => {
+    const newErrors = {}
+    
+    // Validar causa del accidente (obligatorio)
+    if (!formData.idCausaAccidente || formData.idCausaAccidente === "") {
+      newErrors.idCausaAccidente = 'Campo obligatorio'
+    }
+    
+    // Validar que haya al menos un vehículo
+    if (!formData.vehiculos || formData.vehiculos.length === 0) {
+      newErrors.vehiculos = 'Debe agregar al menos un vehículo involucrado'
+    }
+    
+    // Validar detalle (obligatorio)
+    if (!formData.detalle || formData.detalle.trim() === '') {
+      newErrors.detalle = 'Campo obligatorio'
+    }
+    
+    // Validar damnificados (solo si tienen datos)
+    const damErrors = (formData.damnificados || []).map(d => {
+      if (damnificadoVacio(d)) return {};
+      const e = {}
+      if (!d.nombre) e.nombre = 'Campo obligatorio'
+      if (!d.apellido) e.apellido = 'Campo obligatorio'
+      if (d.telefono && !validarTelefono(d.telefono)) e.telefono = 'Teléfono inválido (8-15 dígitos)'
+      if (d.dni && !validarDNI(d.dni)) e.dni = 'DNI inválido (7-10 dígitos)'
+      return e
+    })
+    
+    setErrors(newErrors)
+    setDamnificadosErrors(damErrors)
+    return Object.keys(newErrors).length === 0 && damErrors.every((e, i) => damnificadoVacio(formData.damnificados[i]) || Object.keys(e).length === 0)
+  }
+
+  const handleSubmit = async () => {
     setSuccessMsg('')
     setErrorMsg('')
+    
+    if (!validate()) {
+      setErrorMsg('Por favor complete los campos obligatorios.');
+      if (toastRef.current) toastRef.current.focus();
+      return;
+    }
+    
     setLoading(true)
 
     const payload = {
@@ -128,8 +211,14 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
     }
 
     try {
-      const res = await fetch('http://localhost:3000/api/accidentes', {
-        method: 'POST',
+      const esActualizacion = datosPrevios.idIncidente || datosPrevios.id
+      const method = esActualizacion ? 'PUT' : 'POST'
+      const url = esActualizacion ? 
+        'http://localhost:3000/api/incidentes/accidente-transito' : 
+        'http://localhost:3000/api/accidentes'
+      
+      const res = await fetch(url, {
+        method: method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
@@ -137,23 +226,51 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
       const data = await res.json()
 
       if (data.success) {
-        const esActualizacion = datosPrevios.idIncidente || datosPrevios.id
-        setSuccessMsg(esActualizacion ? 
+        const mensajeExito = esActualizacion ? 
           'Accidente de tránsito actualizado con éxito' : 
           'Accidente de tránsito registrado exitosamente'
-        )
+        
+        setSuccessMsg(mensajeExito)
         setErrorMsg('')
         localStorage.removeItem(storageKey)
-        if (onFinalizar) onFinalizar({ id: datosPrevios.idIncidente || datosPrevios.id })
+        
+        // Pasar el resultado completo al callback
+        if (onFinalizar) {
+          onFinalizar({
+            success: true,
+            message: mensajeExito,
+            data: data,
+            esActualizacion
+          })
+        }
       } else {
-        setErrorMsg('Error al registrar: ' + (data.message || ''))
+        const mensajeError = 'Error al ' + (esActualizacion ? 'actualizar' : 'registrar') + ': ' + (data.message || '')
+        setErrorMsg(mensajeError)
         setSuccessMsg('')
         console.error(data)
+        
+        // También pasar el error al callback
+        if (onFinalizar) {
+          onFinalizar({
+            success: false,
+            message: mensajeError,
+            error: data
+          })
+        }
       }
     } catch (error) {
-      setErrorMsg('Error al conectar con el backend')
+      const mensajeError = 'Error al conectar con el backend'
+      setErrorMsg(mensajeError)
       setSuccessMsg('')
       console.error('Error al enviar:', error)
+      
+      if (onFinalizar) {
+        onFinalizar({
+          success: false,
+          message: mensajeError,
+          error
+        })
+      }
     } finally {
       setLoading(false)
       if (toastRef.current) toastRef.current.focus()
@@ -183,14 +300,15 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
           </div>
         )}
         
-        <form onSubmit={handleSubmit}>
+        <form>
           <div className="mb-3">
-            <label htmlFor="idCausaAccidente" className="text-black form-label">Causa del accidente</label>
+            <label htmlFor="idCausaAccidente" className="text-black form-label">Causa del accidente *</label>
             <select
-              className="form-select"
+              className={`form-select${errors.idCausaAccidente ? ' is-invalid' : ''}`}
               id="idCausaAccidente"
               onChange={handleChange}
               value={formData.idCausaAccidente || ''}
+              aria-describedby="error-idCausaAccidente"
             >
               <option disabled value="">Seleccione causa</option>
               {causasAccidente.map((causa) => (
@@ -199,6 +317,7 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
                 </option>
               ))}
             </select>
+            {errors.idCausaAccidente && <div className="invalid-feedback" id="error-idCausaAccidente">{errors.idCausaAccidente}</div>}
           </div>
 
           <h5 className="text-black mt-3 mb-2">Vehículos involucrados</h5>
@@ -240,9 +359,16 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
             <button type="button" className="btn btn-sm btn-success" onClick={agregarVehiculo}>+ Agregar vehículo</button>
           </div>
 
+          {errors.vehiculos && (
+            <div className="alert alert-danger" role="alert">
+              {errors.vehiculos}
+            </div>
+          )}
+
           <div className="mb-3">
-            <label className="text-black form-label">Detalle de lo sucedido</label>
-            <textarea className="form-control" rows="3" id="detalle" value={formData.detalle || ''} onChange={handleChange}></textarea>
+            <label className="text-black form-label">Detalle de lo sucedido *</label>
+            <textarea className={`form-control${errors.detalle ? ' is-invalid' : ''}`} rows="3" id="detalle" value={formData.detalle || ''} onChange={handleChange} aria-describedby="error-detalle"></textarea>
+            {errors.detalle && <div className="invalid-feedback" id="error-detalle">{errors.detalle}</div>}
           </div>
 
           <h5 className="text-black mt-4">Personas damnificadas</h5>
@@ -250,12 +376,14 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
             <div key={index} className="border rounded p-3 mb-3">
               <div className="row mb-2">
                 <div className="col">
-                  <label className="text-black form-label">Nombre</label>
-                  <input type="text" className="form-control" value={d.nombre} onChange={(e) => handleDamnificadoChange(index, 'nombre', e.target.value)} />
+                  <label className="text-black form-label">Nombre {!damnificadoVacio(d) ? '*' : ''}</label>
+                  <input type="text" className={`form-control${damnificadosErrors[index]?.nombre ? ' is-invalid' : ''}`} value={d.nombre} onChange={(e) => handleDamnificadoChange(index, 'nombre', e.target.value)} />
+                  {damnificadosErrors[index]?.nombre && <div className="invalid-feedback">{damnificadosErrors[index].nombre}</div>}
                 </div>
                 <div className="col">
-                  <label className="text-black form-label">Apellido</label>
-                  <input type="text" className="form-control" value={d.apellido} onChange={(e) => handleDamnificadoChange(index, 'apellido', e.target.value)} />
+                  <label className="text-black form-label">Apellido {!damnificadoVacio(d) ? '*' : ''}</label>
+                  <input type="text" className={`form-control${damnificadosErrors[index]?.apellido ? ' is-invalid' : ''}`} value={d.apellido} onChange={(e) => handleDamnificadoChange(index, 'apellido', e.target.value)} />
+                  {damnificadosErrors[index]?.apellido && <div className="invalid-feedback">{damnificadosErrors[index].apellido}</div>}
                 </div>
               </div>
               <div className="mb-2">
@@ -265,11 +393,13 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
               <div className="row mb-2">
                 <div className="col">
                   <label className="text-black form-label">Teléfono</label>
-                  <input type="tel" className="form-control" value={d.telefono} onChange={(e) => handleDamnificadoChange(index, 'telefono', e.target.value)} />
+                  <input type="tel" className={`form-control${damnificadosErrors[index]?.telefono ? ' is-invalid' : ''}`} value={d.telefono} onChange={(e) => handleDamnificadoChange(index, 'telefono', e.target.value)} />
+                  {damnificadosErrors[index]?.telefono && <div className="invalid-feedback">{damnificadosErrors[index].telefono}</div>}
                 </div>
                 <div className="col">
                   <label className="text-black form-label">DNI</label>
-                  <input type="text" className="form-control" value={d.dni} onChange={(e) => handleDamnificadoChange(index, 'dni', e.target.value)} />
+                  <input type="text" className={`form-control${damnificadosErrors[index]?.dni ? ' is-invalid' : ''}`} value={d.dni} onChange={(e) => handleDamnificadoChange(index, 'dni', e.target.value)} />
+                  {damnificadosErrors[index]?.dni && <div className="invalid-feedback">{damnificadosErrors[index].dni}</div>}
                 </div>
               </div>
               <div className="form-check mb-2">
@@ -284,7 +414,7 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
             <button type="button" className="btn btn-sm btn-success" onClick={agregarDamnificado}>+ Agregar damnificado</button>
           </div>
 
-          <button type="submit" className="btn btn-danger w-100 mt-3" disabled={loading}>
+          <button type="button" className="btn btn-danger w-100 mt-3" disabled={loading} onClick={() => handleSubmit()}>
             {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Actualizar accidente de tránsito' : 'Finalizar carga')}
           </button>
 

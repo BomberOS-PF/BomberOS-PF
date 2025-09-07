@@ -16,8 +16,8 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
   const incidenteId = datosPrevios.idIncidente || datosPrevios.id || 'temp'
   const storageKey = `incendioEstructural-${incidenteId}`
 
-  const [formData, setFormData] = useState(() =>
-    safeRead(storageKey, {
+  const [formData, setFormData] = useState(() => {
+    const savedData = safeRead(storageKey, {
       nombreLugar: '',
       pisos: '',
       ambientes: '',
@@ -27,33 +27,65 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
       descripcion: '',
       damnificados: []
     })
-  )
+    
+    // Mapear los nombres de campos del backend a los nombres que usa el frontend
+    const datosPreviosMapeados = {
+      ...datosPrevios,
+      // Mapear campos específicos del incendio estructural
+      nombreLugar: datosPrevios.nombreLugar,
+      pisos: datosPrevios.pisos || datosPrevios.cantPisos,
+      ambientes: datosPrevios.ambientes || datosPrevios.cantAmbientes,
+      tipoTecho: datosPrevios.tipoTecho,
+      tipoAbertura: datosPrevios.tipoAbertura,
+      superficie: datosPrevios.superficie,
+      descripcion: datosPrevios.descripcion, // Campo específico del incendio estructural
+      damnificados: datosPrevios.damnificados || []
+    }
+    
+    // Combinar datos guardados con datos previos mapeados, dando prioridad a los datos previos
+    const combined = { ...savedData, ...datosPreviosMapeados }
+    
+    return combined
+  })
 
   const [loading, setLoading] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+  const [errors, setErrors] = useState({})
+  const [damnificadosErrors, setDamnificadosErrors] = useState([])
   const toastRef = useRef(null)
 
   // Info del incidente base (solo display)
   const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id
     ? {
         id: datosPrevios.idIncidente || datosPrevios.id,
-        tipo: datosPrevios.tipoSiniestro,
+        tipo: datosPrevios.tipoDescripcion,
         fecha: datosPrevios.fechaHora || datosPrevios.fecha,
         localizacion: datosPrevios.localizacion,
-        lugar: datosPrevios.lugar
+        lugar: datosPrevios.lugar || 'No especificado'
       }
     : null
 
-  // Sincronizar cambios de id del incidente sin pisar lo ya tipeado
   useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      // mantené lo escrito por el usuario, solo aseguramos el array
-      damnificados: Array.isArray(prev.damnificados) ? prev.damnificados : []
-    }))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datosPrevios?.idIncidente, datosPrevios?.id])
+    // Solo actualizar si hay nuevos datosPrevios y son diferentes
+    if (datosPrevios && Object.keys(datosPrevios).length > 0) {
+      // Mapear los nombres de campos del backend a los nombres que usa el frontend
+      const datosMapeados = {
+        ...datosPrevios,
+        // Mapear campos específicos del incendio estructural
+        nombreLugar: datosPrevios.nombreLugar,
+        pisos: datosPrevios.pisos || datosPrevios.cantPisos,
+        ambientes: datosPrevios.ambientes || datosPrevios.cantAmbientes,
+        tipoTecho: datosPrevios.tipoTecho,
+        tipoAbertura: datosPrevios.tipoAbertura,
+        superficie: datosPrevios.superficie,
+        descripcion: datosPrevios.descripcion, // Campo específico del incendio estructural
+        damnificados: datosPrevios.damnificados || []
+      }
+      
+      setFormData(prev => ({ ...prev, ...datosMapeados }))
+    }
+  }, [datosPrevios])
 
   // Autosave con debounce
   useEffect(() => {
@@ -109,16 +141,83 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
     return Number.isFinite(n) ? n : null
   }
 
-  const isValid = () => {
-    // Ajustá reglas si necesitás obligatorios
-    return true
+  // Funciones de validación
+  const validarTelefono = (telefono) => {
+    if (!telefono) return true;
+    const cleaned = telefono.replace(/[^0-9+]/g, '');
+    const numbersOnly = cleaned.replace(/\+/g, '');
+    return /^[0-9+]+$/.test(cleaned) && numbersOnly.length >= 8 && numbersOnly.length <= 15;
   }
 
-  const handleFinalizar = async (e) => {
-    e.preventDefault()
-    setLoading(true)
+  const validarDNI = (dni) => {
+    if (!dni) return true;
+    return /^\d{7,10}$/.test(dni);
+  }
+
+  const damnificadoVacio = (d) => {
+    return !d.nombre && !d.apellido && !d.domicilio && !d.telefono && !d.dni && !d.fallecio;
+  }
+
+  const isValid = () => {
+    const newErrors = {}
+    
+    // Validar tipo de techo (obligatorio)
+    if (!formData.tipoTecho || formData.tipoTecho === "") {
+      newErrors.tipoTecho = 'Campo obligatorio'
+    }
+    
+    // Validar tipo de abertura (obligatorio)
+    if (!formData.tipoAbertura || formData.tipoAbertura === "") {
+      newErrors.tipoAbertura = 'Campo obligatorio'
+    }
+    
+    // Validar pisos (no negativo si se proporciona)
+    if (formData.pisos && formData.pisos < 0) {
+      newErrors.pisos = 'La cantidad no puede ser negativa'
+    }
+    
+    // Validar ambientes (no negativo si se proporciona)
+    if (formData.ambientes && formData.ambientes < 0) {
+      newErrors.ambientes = 'La cantidad no puede ser negativa'
+    }
+    
+    // Validar superficie (no negativa si se proporciona)
+    if (formData.superficie && formData.superficie < 0) {
+      newErrors.superficie = 'La superficie no puede ser negativa'
+    }
+    
+    // Validar descripción (obligatorio)
+    if (!formData.descripcion || formData.descripcion.trim() === '') {
+      newErrors.descripcion = 'Campo obligatorio'
+    }
+    
+    // Validar damnificados (solo si tienen datos)
+    const damErrors = (formData.damnificados || []).map(d => {
+      if (damnificadoVacio(d)) return {};
+      const e = {}
+      if (!d.nombre) e.nombre = 'Campo obligatorio'
+      if (!d.apellido) e.apellido = 'Campo obligatorio'
+      if (d.telefono && !validarTelefono(d.telefono)) e.telefono = 'Teléfono inválido (8-15 dígitos)'
+      if (d.dni && !validarDNI(d.dni)) e.dni = 'DNI inválido (7-10 dígitos)'
+      return e
+    })
+    
+    setErrors(newErrors)
+    setDamnificadosErrors(damErrors)
+    return Object.keys(newErrors).length === 0 && damErrors.every((e, i) => damnificadoVacio(formData.damnificados[i]) || Object.keys(e).length === 0)
+  }
+
+  const handleFinalizar = async () => {
     setSuccessMsg('')
     setErrorMsg('')
+    
+    if (!isValid()) {
+      setErrorMsg('Por favor complete los campos obligatorios y corrija los errores.');
+      if (toastRef.current) toastRef.current.focus();
+      return;
+    }
+    
+    setLoading(true)
 
     try {
       // Snapshot local por las dudas
@@ -126,12 +225,13 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
 
       const payload = {
         idIncidente: incidenteId,
-        tipoTecho: formData.tipoTecho,
-        tipoAbertura: formData.tipoAbertura,
+        tipoTecho: toNumberOrNull(formData.tipoTecho),
+        tipoAbertura: toNumberOrNull(formData.tipoAbertura),
         descripcion: formData.descripcion?.trim() || null,
         superficie: toNumberOrNull(formData.superficie),
         cantPisos: toNumberOrNull(formData.pisos),
         cantAmbientes: toNumberOrNull(formData.ambientes),
+        nombreLugar: formData.nombreLugar?.trim() || null,
         damnificados: (formData.damnificados || []).map(d => ({
           nombre: d.nombre?.trim() || null,
           apellido: d.apellido?.trim() || null,
@@ -143,12 +243,21 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
         }))
       }
 
+      console.log('🔍 FRONTEND - formData completo:', JSON.stringify(formData, null, 2))
+      console.log('🔍 FRONTEND - payload a enviar:', JSON.stringify(payload, null, 2))
+
       if (!isValid()) {
         throw new Error('Revisá los campos obligatorios y formatos')
       }
 
-      const resp = await apiRequest(API_URLS.incidentes.createIncendioEstructural, {
-        method: 'POST',
+      const esActualizacion = !!(datosPrevios.idIncidente || datosPrevios.id)
+      const method = esActualizacion ? 'PUT' : 'POST'
+      const url = esActualizacion ? 
+        API_URLS.incidentes.updateIncendioEstructural : 
+        API_URLS.incidentes.createIncendioEstructural
+
+      const resp = await apiRequest(url, {
+        method: method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
@@ -158,17 +267,40 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
         throw new Error(resp?.message || 'Error al registrar incendio estructural')
       }
 
-      const esActualizacion = !!(datosPrevios.idIncidente || datosPrevios.id)
-      setSuccessMsg(esActualizacion
+      const mensajeExito = esActualizacion
         ? 'Incendio estructural actualizado con éxito'
         : '✅ Incendio estructural registrado correctamente'
-      )
+      
+      setSuccessMsg(mensajeExito)
       setErrorMsg('')
-      localStorage.removeItem(storageKey)
-      onFinalizar?.({ idIncidente: incidenteId })
+      
+      // Solo limpiar localStorage en creaciones, no en actualizaciones
+      if (!esActualizacion) {
+        localStorage.removeItem(storageKey)
+      }
+      
+      // Pasar el resultado al callback
+      if (onFinalizar) {
+        onFinalizar({
+          success: true,
+          message: mensajeExito,
+          data: resp,
+          esActualizacion
+        })
+      }
     } catch (error) {
-      setErrorMsg(`❌ Error al registrar incendio estructural: ${error.message}`)
+      const mensajeError = `❌ Error al registrar incendio estructural: ${error.message}`
+      setErrorMsg(mensajeError)
       setSuccessMsg('')
+      
+      // También pasar el error al callback
+      if (onFinalizar) {
+        onFinalizar({
+          success: false,
+          message: mensajeError,
+          error
+        })
+      }
     } finally {
       setLoading(false)
       toastRef.current?.focus()
@@ -197,7 +329,7 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
           </div>
         )}
 
-        <form onSubmit={handleFinalizar}>
+        <form>
           <div className="mb-3">
             <label htmlFor="nombreLugar" className="text-black form-label">Nombre del comercio/casa de familia</label>
             <input type="text" className="form-control" id="nombreLugar" value={formData.nombreLugar || ''} onChange={handleChange} />
@@ -206,18 +338,20 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
           <div className="row mb-3">
             <div className="col">
               <label htmlFor="pisos" className="text-black form-label">Cantidad de pisos afectados</label>
-              <input type="number" className="form-control" id="pisos" value={formData.pisos || ''} onChange={handleChange} />
+              <input type="number" min="0" className={`form-control${errors.pisos ? ' is-invalid' : ''}`} id="pisos" value={formData.pisos || ''} onChange={handleChange} aria-describedby="error-pisos" placeholder="Ej: 2" />
+              {errors.pisos && <div className="invalid-feedback" id="error-pisos">{errors.pisos}</div>}
             </div>
             <div className="col">
               <label htmlFor="ambientes" className="text-black form-label">Cantidad de ambientes afectados</label>
-              <input type="number" className="form-control" id="ambientes" value={formData.ambientes || ''} onChange={handleChange} />
+              <input type="number" min="0" className={`form-control${errors.ambientes ? ' is-invalid' : ''}`} id="ambientes" value={formData.ambientes || ''} onChange={handleChange} aria-describedby="error-ambientes" placeholder="Ej: 5" />
+              {errors.ambientes && <div className="invalid-feedback" id="error-ambientes">{errors.ambientes}</div>}
             </div>
           </div>
 
           <div className="row mb-3">
             <div className="col">
-              <label htmlFor="tipoTecho" className="text-black form-label">Tipo de techo</label>
-              <select className="form-select" id="tipoTecho" value={formData.tipoTecho || ''} onChange={handleSelectChange}>
+              <label htmlFor="tipoTecho" className="text-black form-label">Tipo de techo *</label>
+              <select className={`form-select${errors.tipoTecho ? ' is-invalid' : ''}`} id="tipoTecho" value={formData.tipoTecho || ''} onChange={handleSelectChange} aria-describedby="error-tipoTecho">
                 <option disabled value="">Seleccione</option>
                 <option value="1">Chapa aislada</option>
                 <option value="2">Chapa metálica</option>
@@ -225,26 +359,31 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
                 <option value="4">Teja</option>
                 <option value="5">Yeso</option>
               </select>
+              {errors.tipoTecho && <div className="invalid-feedback" id="error-tipoTecho">{errors.tipoTecho}</div>}
             </div>
             <div className="col">
-              <label htmlFor="tipoAbertura" className="text-black form-label">Tipo de abertura</label>
-              <select className="form-select" id="tipoAbertura" value={formData.tipoAbertura || ''} onChange={handleSelectChange}>
+              <label htmlFor="tipoAbertura" className="text-black form-label">Tipo de abertura *</label>
+              <select className={`form-select${errors.tipoAbertura ? ' is-invalid' : ''}`} id="tipoAbertura" value={formData.tipoAbertura || ''} onChange={handleSelectChange} aria-describedby="error-tipoAbertura">
                 <option disabled value="">Seleccione</option>
                 <option value="1">Acero/Hierro</option>
                 <option value="2">Aluminio</option>
                 <option value="3">Madera</option>
                 <option value="4">Plástico</option>
               </select>
+              {errors.tipoAbertura && <div className="invalid-feedback" id="error-tipoAbertura">{errors.tipoAbertura}</div>}
             </div>
             <div className="col">
               <label htmlFor="superficie" className="text-black form-label">Superficie afectada (m²)</label>
-              <input type="number" className="form-control" id="superficie" value={formData.superficie || ''} onChange={handleChange} />
+              <input type="number" min="0" step="0.01" className={`form-control${errors.superficie ? ' is-invalid' : ''}`} id="superficie" value={formData.superficie || ''} onChange={handleChange} aria-describedby="error-superficie" placeholder="Ej: 150.5" />
+              {errors.superficie && <div className="invalid-feedback" id="error-superficie">{errors.superficie}</div>}
+              <div className="form-text text-muted small">Área en metros cuadrados (no puede ser negativa)</div>
             </div>
           </div>
 
           <div className="mb-3">
-            <label htmlFor="descripcion" className="text-black form-label">Detalle de lo sucedido</label>
-            <textarea className="form-control" rows="3" id="descripcion" value={formData.descripcion || ''} onChange={handleChange}></textarea>
+            <label htmlFor="descripcion" className="text-black form-label">Detalle de lo sucedido *</label>
+            <textarea className={`form-control${errors.descripcion ? ' is-invalid' : ''}`} rows="3" id="descripcion" value={formData.descripcion || ''} onChange={handleChange} aria-describedby="error-descripcion"></textarea>
+            {errors.descripcion && <div className="invalid-feedback" id="error-descripcion">{errors.descripcion}</div>}
           </div>
 
           <h5 className="text-white mt-4">Personas damnificadas</h5>
@@ -254,12 +393,14 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
               <div key={index} className="border rounded p-3 mb-3">
                 <div className="row mb-2">
                   <div className="col">
-                    <label htmlFor={`${base}-nombre`} className="text-black form-label">Nombre</label>
-                    <input id={`${base}-nombre`} type="text" className="form-control" value={d.nombre} onChange={(e) => handleDamnificadoChange(index, 'nombre', e.target.value)} />
+                    <label htmlFor={`${base}-nombre`} className="text-black form-label">Nombre {!damnificadoVacio(d) ? '*' : ''}</label>
+                    <input id={`${base}-nombre`} type="text" className={`form-control${damnificadosErrors[index]?.nombre ? ' is-invalid' : ''}`} value={d.nombre} onChange={(e) => handleDamnificadoChange(index, 'nombre', e.target.value)} />
+                    {damnificadosErrors[index]?.nombre && <div className="invalid-feedback">{damnificadosErrors[index].nombre}</div>}
                   </div>
                   <div className="col">
-                    <label htmlFor={`${base}-apellido`} className="text-black form-label">Apellido</label>
-                    <input id={`${base}-apellido`} type="text" className="form-control" value={d.apellido} onChange={(e) => handleDamnificadoChange(index, 'apellido', e.target.value)} />
+                    <label htmlFor={`${base}-apellido`} className="text-black form-label">Apellido {!damnificadoVacio(d) ? '*' : ''}</label>
+                    <input id={`${base}-apellido`} type="text" className={`form-control${damnificadosErrors[index]?.apellido ? ' is-invalid' : ''}`} value={d.apellido} onChange={(e) => handleDamnificadoChange(index, 'apellido', e.target.value)} />
+                    {damnificadosErrors[index]?.apellido && <div className="invalid-feedback">{damnificadosErrors[index].apellido}</div>}
                   </div>
                 </div>
 
@@ -292,7 +433,7 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
             ➕ Agregar damnificado
           </button>
 
-          <button type="submit" className="btn btn-danger w-100 mt-3" disabled={loading}>
+          <button type="button" className="btn btn-danger w-100 mt-3" disabled={loading} onClick={() => handleFinalizar()}>
             {loading ? 'Enviando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Actualizar incendio estructural' : 'Finalizar carga')}
           </button>
           <button type="button" className="btn btn-secondary w-100 mt-2" onClick={guardarLocalmente} disabled={loading}>

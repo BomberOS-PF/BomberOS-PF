@@ -171,6 +171,28 @@ export const construirIncidenteHandler = (incidenteService) => {
         })
       }
     },
+
+    actualizarIncendioForestal: async (req, res, next) => {
+      try {
+        logger.info('📝 Actualizar incendio forestal', { body: req.body })
+        const datosValidados = crearIncendioForestalDto(req.body) // Reutilizar el mismo DTO
+        const result = await incidenteService.actualizarIncendioForestal(datosValidados)
+        res.status(200).json({
+          success: true,
+          message: 'Incendio forestal actualizado exitosamente',
+          data: result
+        })
+      } catch (error) {
+        logger.error('❌ Error al actualizar incendio forestal', { error: error.message })
+        res.status(400).json({
+          success: false,
+          message: error.message
+        })
+      }
+    },
+
+    // Estos métodos serán manejados por los handlers específicos
+    // Los endpoints PUT deben usar los servicios específicos directamente
     async detalle(req, res) {
       try {
         const { id } = req.params

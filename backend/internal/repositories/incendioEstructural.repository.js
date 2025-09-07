@@ -17,14 +17,15 @@ export class MySQLIncendioEstructuralRepository {
     descripcion,
     superficie,
     cantPisos,
-    cantAmbientes
+    cantAmbientes,
+    nombreLugar
   }) {
     const connection = getConnection()
 
     const query = `
       INSERT INTO ${this.tableName} 
-      (idIncidente, tipoTecho, tipoAbertura, descripcion, superficie, cantPisos, cantAmbientes)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      (idIncidente, tipoTecho, tipoAbertura, descripcion, superficie, cantPisos, cantAmbientes, nombreLugar)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `
 
     const params = [
@@ -34,8 +35,11 @@ export class MySQLIncendioEstructuralRepository {
       descripcion || null,
       superficie || null,
       cantPisos || null,
-      cantAmbientes || null
+      cantAmbientes || null,
+      nombreLugar || null
     ]
+
+    logger.debug('🔥 Parámetros para INSERT:', JSON.stringify(params, null, 2))
 
     try {
       const [result] = await connection.execute(query, params)
@@ -137,6 +141,77 @@ export class MySQLIncendioEstructuralRepository {
     } catch (error) {
       logger.error('❌ Error en obtenerTodos incendios estructurales', { error: error.message })
       throw new Error('Error al obtener los incendios estructurales')
+    }
+  }
+
+  /**
+   * Actualizar incendio estructural existente
+   */
+  async actualizarIncendio(idIncendioEstructural, {
+    tipoTecho,
+    tipoAbertura,
+    descripcion,
+    superficie,
+    cantPisos,
+    cantAmbientes,
+    nombreLugar
+  }) {
+    const connection = getConnection()
+
+    const query = `
+      UPDATE ${this.tableName} 
+      SET tipoTecho = ?, tipoAbertura = ?, descripcion = ?, superficie = ?, cantPisos = ?, cantAmbientes = ?, nombreLugar = ?
+      WHERE idIncendioEstructural = ?
+    `
+
+    const params = [
+      tipoTecho || null,
+      tipoAbertura || null,
+      descripcion || null,
+      superficie || null,
+      cantPisos || null,
+      cantAmbientes || null,
+      nombreLugar || null,
+      idIncendioEstructural
+    ]
+
+    logger.debug('🔄 Parámetros para UPDATE:', JSON.stringify(params, null, 2))
+
+    try {
+      const [result] = await connection.execute(query, params)
+      logger.debug('🔄 Incendio estructural actualizado', { idIncendioEstructural, affectedRows: result.affectedRows })
+      return result.affectedRows > 0
+    } catch (error) {
+      logger.error('❌ Error al actualizar incendio estructural', { error: error.message })
+      throw error
+    }
+  }
+
+  /**
+   * Obtiene incendio estructural completo con damnificados
+   */
+  async obtenerIncendioCompleto(idIncidente) {
+    const connection = getConnection()
+
+    // 1. Buscar incendio estructural por idIncidente
+    const [incendioRows] = await connection.execute(`
+      SELECT * FROM ${this.tableName}
+      WHERE idIncidente = ?
+    `, [idIncidente])
+
+    if (incendioRows.length === 0) return null
+
+    const incendio = incendioRows[0]
+
+    // 2. Obtener damnificados del incidente
+    const [damnificados] = await connection.execute(`
+      SELECT * FROM damnificado
+      WHERE idIncidente = ?
+    `, [idIncidente])
+
+    return {
+      ...incendio,
+      damnificados: damnificados || []
     }
   }
 }

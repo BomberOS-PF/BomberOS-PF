@@ -33,6 +33,20 @@ export class IncendioEstructuralHandler {
   }
 
   /**
+   * PUT /api/incidentes/incendio-estructural
+   */
+  async actualizar(req, res) {
+    try {
+      const datos = crearIncendioEstructuralDto(req.body)
+      const resultado = await this.incendioEstructuralService.registrarIncendio(datos) // Reutilizar el mismo método
+      res.status(200).json({ success: true, message: 'Incendio estructural actualizado exitosamente', data: resultado })
+    } catch (error) {
+      logger.error('❌ Error en IncendioEstructuralHandler.actualizar', { error: error.message })
+      res.status(400).json({ success: false, message: error.message })
+    }
+  }
+
+  /**
    * GET /api/incendio-estructural/:id
    */
   async obtenerPorIncidente(req, res) {
