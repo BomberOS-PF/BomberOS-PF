@@ -157,7 +157,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
         </span>
       </div>
 
-      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+      <div className="card shadow-sm border-0 bg-white">
         <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <User2 />
           <strong>Listado de Grupos de Guardia</strong>
@@ -168,7 +168,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
             <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
             <input
               type="text"
-              className="form-control ps-5 py-3 border-secondary"
+              className="form-control border-secondary ps-5 py-3"
               placeholder="Buscar por nombre del grupo"
               value={busqueda}
               onChange={handleBusqueda}

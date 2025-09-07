@@ -201,7 +201,7 @@ const ConsultarBombero = ({ onVolver }) => {
         </span>
       </div>
 
-      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+      <div className="card shadow-sm border-0 bg-white">
         <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <User2 />
           <strong>Listado de Bomberos</strong>
@@ -230,7 +230,7 @@ const ConsultarBombero = ({ onVolver }) => {
                 <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
                 <input
                   type="text"
-                  className="form-control ps-5 py-3 border-secondary"
+                  className="form-control border-secondary ps-5 py-3"
                   placeholder="Buscar por DNI..."
                   value={dniBusqueda}
                   onChange={(e) => setdniBusqueda(e.target.value)}
@@ -320,7 +320,7 @@ const ConsultarBombero = ({ onVolver }) => {
 
               <hr className="border-4 border-danger mb-4" />
 
-              <div className="card bg-dark text-white border-0 shadow-lg py-4">
+              <div className="card bg-light border-0 shadow-sm py-4" style={{borderRadius: '12px'}}>
                 <FormularioBombero
                   modo={modoEdicion ? 'edicion' : 'consulta'}
                   datosIniciales={bomberoSeleccionado}

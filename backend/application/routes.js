@@ -16,6 +16,7 @@ export function setupRoutes(app, container) {
       environment: process.env.NODE_ENV || 'development'
     })
   })
+
   app.get('/', (req, res) => res.redirect('/health'))
 
   // Handlers desde el contenedor (nombres normalizados)
@@ -56,7 +57,11 @@ export function setupRoutes(app, container) {
 
     // Acciones
     accionPersonaHandler,
-    accionMaterialHandler
+    accionMaterialHandler,
+
+    // Respuestas de incidentes
+    respuestaIncidenteHandler,
+    respuestaIncidenteService
   } = container
 
   // ---------- Acciones persona/material ----------
@@ -347,6 +352,30 @@ export function setupRoutes(app, container) {
     await incidenteHandler.crearIncendioForestal(req, res, next)
   })
 
+  app.put('/api/incidentes/incendio-forestal', async (req, res, next) => {
+    await incidenteHandler.actualizarIncendioForestal(req, res, next)
+  })
+
+  app.put('/api/incidentes/accidente-transito', async (req, res, next) => {
+    await accidenteTransitoHandler.actualizar(req, res, next)
+  })
+
+  app.put('/api/incidentes/factor-climatico', async (req, res, next) => {
+    await factorClimaticoHandler.actualizar(req, res, next)
+  })
+
+  app.put('/api/incidentes/incendio-estructural', async (req, res, next) => {
+    await incendioEstructuralHandler.actualizar(req, res, next)
+  })
+
+  app.put('/api/incidentes/material-peligroso', async (req, res, next) => {
+    await materialPeligrosoHandler.actualizar(req, res, next)
+  })
+
+  app.put('/api/incidentes/rescate', async (req, res, next) => {
+    await rescateHandler.actualizar(req, res, next)
+  })
+
   app.get('/api/incidentes', async (req, res) => {
     try {
       await incidenteHandler.listar(req, res)
@@ -384,6 +413,11 @@ export function setupRoutes(app, container) {
 
   app.put('/api/incidentes/:id', async (req, res) => {
     try {
+      logger.info('🔄 PUT /api/incidentes/:id recibido', { 
+        id: req.params.id, 
+        body: req.body,
+        headers: req.headers['content-type']
+      })
       await incidenteHandler.actualizar(req, res)
     } catch (error) {
       logger.error('Error en ruta actualizar incidente:', error)
@@ -715,6 +749,87 @@ export function setupRoutes(app, container) {
       await factorClimaticoHandler.obtenerPorIncidente(req, res)
     } catch (error) {
       logger.error('Error en ruta obtener factor climático por incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // RESPUESTAS DE INCIDENTES - Para visualizar quién confirmó asistencia
+  app.get('/api/incidentes/:id/respuestas', async (req, res) => {
+    try {
+      await respuestaIncidenteHandler.obtenerRespuestasIncidente(req, res)
+    } catch (error) {
+      logger.error('Error en ruta respuestas incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/incidentes/:id/estadisticas', async (req, res) => {
+    try {
+      await respuestaIncidenteHandler.obtenerEstadisticasIncidente(req, res)
+    } catch (error) {
+      logger.error('Error en ruta estadísticas incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/incidentes/resumen-respuestas', async (req, res) => {
+    try {
+      await respuestaIncidenteHandler.obtenerResumenIncidentes(req, res)
+    } catch (error) {
+      logger.error('Error en ruta resumen respuestas:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/dashboard/respuestas', async (req, res) => {
+    try {
+      await respuestaIncidenteHandler.obtenerDashboardRespuestas(req, res)
+    } catch (error) {
+      logger.error('Error en ruta dashboard respuestas:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // WEBHOOKS WHATSAPP - Para recibir respuestas de bomberos
+  app.post('/api/webhooks/whatsapp', async (req, res) => {
+    try {
+      logger.info('📱 Webhook WhatsApp recibido', {
+        body: req.body,
+        headers: req.headers
+      })
+
+      const { From, Body, MessageSid } = req.body
+      
+      if (!From || !Body) {
+        logger.warn('📱 Webhook WhatsApp incompleto', { From, Body })
+        return res.status(400).json({ error: 'Datos incompletos' })
+      }
+
+      // Extraer número de teléfono (remover prefijo whatsapp:)
+      const telefono = From.replace('whatsapp:', '')
+      const respuesta = Body.trim()
+      
+      // Procesar respuesta usando el servicio especializado
+      const resultado = await respuestaIncidenteService.procesarRespuestaWebhook(
+        { From, Body, MessageSid },
+        req.ip
+      )
+      
+      if (resultado.success) {
+        logger.info('📱 Respuesta procesada y guardada', {
+          respuestaId: resultado.respuestaId,
+          bombero: resultado.bombero,
+          telefono: resultado.telefono,
+          tipoRespuesta: resultado.tipoRespuesta
+        })
+        
+        res.status(200).json(resultado)
+      } else {
+        res.status(400).json(resultado)
+      }
+      
+    } catch (error) {
+      logger.error('Error en webhook WhatsApp:', error)
       res.status(500).json({ error: 'Error interno' })
     }
   })

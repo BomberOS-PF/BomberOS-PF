@@ -151,7 +151,7 @@ const ConsultarRol = ({ onVolver }) => {
       </div>
 
       {/* Card principal */}
-      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+      <div className="card shadow-sm border-0 bg-white">
         <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <i className="bi bi-people-fill fs-5"></i>
           <strong>Listado de Roles</strong>
@@ -179,7 +179,7 @@ const ConsultarRol = ({ onVolver }) => {
                 <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
                 <input
                   type="text"
-                  className="form-control ps-5 py-3 border-secondary"
+                  className="form-control border-secondary ps-5 py-3"
                   placeholder="Buscar por nombre del rol..."
                   value={nombreBusqueda}
                   onChange={(e) => setNombreBusqueda(e.target.value)}
@@ -269,7 +269,7 @@ const ConsultarRol = ({ onVolver }) => {
               <hr className="border-4 border-danger mb-4" />
 
               {/* Formulario de edición */}
-              <div className="card bg-dark text-white border-0 shadow-lg py-4">
+              <div className="card bg-light border-0 shadow-sm py-4" style={{borderRadius: '12px'}}>
                 <form
                   className="px-4"
                   onSubmit={(e) => {
@@ -281,21 +281,21 @@ const ConsultarRol = ({ onVolver }) => {
                   }}
                 >
                   <div className="mb-3">
-                    <label htmlFor="nombreRol" className="form-label">Nombre del Rol *</label>
+                    <label htmlFor="nombreRol" className="form-label text-dark">Nombre del Rol *</label>
                     <input
                       type="text"
                       id="nombreRol"
-                      className="form-control"
+                      className="form-control border-secondary"
                       value={rolSeleccionado.nombreRol}
                       onChange={(e) => setRolSeleccionado({ ...rolSeleccionado, nombreRol: e.target.value })}
                       disabled={!modoEdicion || loading}
                     />
                   </div>
                   <div className="mb-3">
-                    <label htmlFor="descripcion" className="form-label">Descripción</label>
+                    <label htmlFor="descripcion" className="form-label text-dark">Descripción</label>
                     <textarea
                       id="descripcion"
-                      className="form-control"
+                      className="form-control border-secondary"
                       rows="3"
                       value={rolSeleccionado.descripcion || ''}
                       onChange={(e) => setRolSeleccionado({ ...rolSeleccionado, descripcion: e.target.value })}

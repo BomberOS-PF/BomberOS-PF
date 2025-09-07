@@ -3,129 +3,134 @@ import { createConnection } from '../internal/platform/database/connection.js'
 import { logger } from '../internal/platform/logger/logger.js'
 
 // --- Bomberos / Usuarios / Incidentes base ---
+import { BomberoHandler } from '../handler/bomberos/handler.js'
+import { MySQLBomberoRepository } from '../internal/repositories/bombero.repository.js'
 import { BomberoService } from '../internal/services/bombero.service.js'
-import { MySQLBomberoRepository } from '../internal/repositories/mysql/bombero.repository.js'
-import { BomberoHandler } from '../bomberos/handler.js'
 
+import { UsuarioHandler } from '../handler/usuarios/handler.js'
+import { MySQLUsuarioRepository } from '../internal/repositories/usuario.repository.js'
 import { UsuarioService } from '../internal/services/usuario.service.js'
-import { MySQLUsuarioRepository } from '../internal/repositories/mysql/usuario.repository.js'
-import { UsuarioHandler } from '../usuarios/handler.js'
 
+import { construirIncidenteHandler } from '../handler/incidentes/handler.js'
+import { MySQLIncidenteRepository } from '../internal/repositories/incidente.repository.js'
 import { IncidenteService } from '../internal/services/incidente.service.js'
-import { MySQLIncidenteRepository } from '../internal/repositories/mysql/incidente.repository.js'
-import { construirIncidenteHandler } from '../incidentes/handler.js'
 
 // --- Grupos y guardias ---
-import { buildGrupoHandlers } from '../grupos/handler.js'
+import { buildGrupoHandlers } from '../handler/grupos/handler.js'
+import { MySQLGrupoGuardiaRepository } from '../internal/repositories/grupo-guardia.repository.js'
 import { GrupoGuardiaService } from '../internal/services/grupo-guardia.service.js'
-import { MySQLGrupoGuardiaRepository } from '../internal/repositories/mysql/grupo-guardia.repository.js'
 
-import { MySQLGuardiaAsignacionRepository } from '../internal/repositories/mysql/guardia-asignacion.repository.js'
+import { buildGuardiaHandlers } from '../handler/guardias/handler.js'
+import { MySQLGuardiaAsignacionRepository } from '../internal/repositories/guardia-asignacion.repository.js'
 import { GuardiaAsignacionService } from '../internal/services/guardia-asignacion.service.js'
-import { buildGuardiaHandlers } from '../guardias/handler.js'
 
 // --- Infraestructura y varios ---
 import { WhatsAppService } from '../internal/services/whatsapp.service.js'
 
 // --- Roles ---
+import { RestApiRolesAdapter } from '../handler/roles/handler.js'
+import { MySQLRolRepository } from '../internal/repositories/rol.repository.js'
 import { RolService } from '../internal/services/rol.service.js'
-import { MySQLRolRepository } from '../internal/repositories/mysql/rol.repository.js'
-import { RestApiRolesAdapter } from '../roles/handler.js'
 
 // --- Damnificados y accidentes de tránsito ---
-import { MySQLDamnificadoRepository } from '../internal/repositories/mysql/damnificado.repository.js'
+import { MySQLDamnificadoRepository } from '../internal/repositories/damnificado.repository.js'
 import { DamnificadoService } from '../internal/services/damnificado.service.js'
 
-import { MySQLAccidenteTransitoRepository } from '../internal/repositories/mysql/accidenteTransito.repository.js'
+import { AccidenteTransitoHandler } from '../handler/accidenteTransito/handler.js'
+import { MySQLAccidenteTransitoRepository } from '../internal/repositories/accidenteTransito.repository.js'
 import { AccidenteTransitoService } from '../internal/services/accidenteTransito.service.js'
-import { AccidenteTransitoHandler } from '../accidenteTransito/handler.js'
 
-import { MySQLCausaAccidenteRepository } from '../internal/repositories/mysql/causaAccidente.repository.js'
+import { CausaAccidenteHandler } from '../handler/causaAccidente/handler.js'
+import { MySQLCausaAccidenteRepository } from '../internal/repositories/causaAccidente.repository.js'
 import { CausaAccidenteService } from '../internal/services/causaAccidente.service.js'
-import { CausaAccidenteHandler } from '../causaAccidente/handler.js'
 
-import { MySQLVehiculoRepository } from '../internal/repositories/mysql/vehiculo.repository.js'
+import { MySQLVehiculoRepository } from '../internal/repositories/vehiculo.repository.js'
 import { VehiculoService } from '../internal/services/vehiculo.service.js'
-import { VehiculoHandler } from '../vehiculo/handler.js'
+import { VehiculoHandler } from '../handler/vehiculo/handler.js'
 
-import { MySQLAccidenteDamnificadoRepository } from '../internal/repositories/mysql/accidenteDamnificado.repository.js'
-import { MySQLAccidenteVehiculoRepository } from '../internal/repositories/mysql/accidenteVehiculo.repository.js'
+import { MySQLAccidenteDamnificadoRepository } from '../internal/repositories/accidenteDamnificado.repository.js'
+import { MySQLAccidenteVehiculoRepository } from '../internal/repositories/accidenteVehiculo.repository.js'
 import { AccidenteVehiculoService } from '../internal/services/accidenteVehiculo.service.js'
 
 // --- Incendio estructural ---
-import { IncendioEstructuralHandler } from '../incendioEstructural/handler.js'
+import { IncendioEstructuralHandler } from '../handler/incendioEstructural/handler.js'
+import { MySQLIncendioEstructuralRepository } from '../internal/repositories/incendioEstructural.repository.js'
 import { IncendioEstructuralService } from '../internal/services/incendioEstructural.service.js'
-import { MySQLIncendioEstructuralRepository } from '../internal/repositories/mysql/incendioEstructural.repository.js'
 
 // --- Material peligroso + catálogos ---
-import { MaterialPeligrosoHandler } from '../materialPeligroso/handler.js'
+import { MySQLMaterialPeligrosoRepository } from '../internal/repositories/materialPeligroso.repository.js'
 import { MaterialPeligrosoService } from '../internal/services/materialPeligroso.service.js'
-import { MySQLMaterialPeligrosoRepository } from '../internal/repositories/mysql/materialPeligroso.repository.js'
+import { MaterialPeligrosoHandler } from '../handler/materialPeligroso/handler.js'
 
-import { CategoriaMaterialPeligrosoHandler } from '../categoriaMaterialPeligroso/handler.js'
+import { CategoriaMaterialPeligrosoHandler } from '../handler/categoriaMaterialPeligroso/handler.js'
+import { MySQLCategoriaMaterialPeligrosoRepository } from '../internal/repositories/categoriaMaterialPeligroso.respository.js'
 import { CategoriaMatPelService } from '../internal/services/categoriaMaterialPeligroso.service.js'
-import { MySQLCategoriaMaterialPeligrosoRepository } from '../internal/repositories/mysql/categoriaMaterialPeligroso.respository.js'
 
-import { TipoMatInvolucradoHandler } from '../tipoMatInvolucrado/handler.js'
+import { MySQLTipoMatInvolucradoRepository } from '../internal/repositories/tipoMatInvolucrado.repository.js'
 import { TipoMatInvolucradoService } from '../internal/services/tipoMatInvolucrado.service.js'
-import { MySQLTipoMatInvolucradoRepository } from '../internal/repositories/mysql/tipoMatInvolucrado.repository.js'
+import { TipoMatInvolucradoHandler } from '../handler/tipoMatInvolucrado/handler.js'
 
-import { AccionMaterialHandler } from '../accionMaterial/handler.js'
+import { AccionMaterialHandler } from '../handler/accionMaterial/handler.js'
+import { MySQLAccionMaterialRepository } from '../internal/repositories/accionMaterial.repository.js'
 import { AccionMaterialService } from '../internal/services/accionMaterial.service.js'
-import { MySQLAccionMaterialRepository } from '../internal/repositories/mysql/accionMaterial.repository.js'
 
-import { AccionPersonaHandler } from '../accionPersona/handler.js'
+import { AccionPersonaHandler } from '../handler/accionPersona/handler.js'
+import { MySQLAccionPersonaRepository } from '../internal/repositories/accionPersona.repository.js'
 import { AccionPersonaService } from '../internal/services/accionPersona.service.js'
-import { MySQLAccionPersonaRepository } from '../internal/repositories/mysql/accionPersona.repository.js'
 
-import { MySQLMatPelTipoMatPelRepository } from '../internal/repositories/mysql/matPelTipoMatPel.repository.js'
-import { MySQLMatPelAccionMaterialRepository } from '../internal/repositories/mysql/matPelAccionMaterial.repository.js'
-import { MySQLMatPelAccionPersonaRepository } from '../internal/repositories/mysql/matPelAccionPersona.repository.js'
+import { MySQLMatPelAccionMaterialRepository } from '../internal/repositories/matPelAccionMaterial.repository.js'
+import { MySQLMatPelAccionPersonaRepository } from '../internal/repositories/matPelAccionPersona.repository.js'
+import { MySQLMatPelTipoMatPelRepository } from '../internal/repositories/matPelTipoMatPel.repository.js'
 
 // --- Factor Climático ---
-import { FactorClimaticoHandler } from '../factorClimatico/handler.js'
+import { FactorClimaticoHandler } from '../handler/factorClimatico/handler.js'
+import { MySQLFactorClimaticoRepository } from '../internal/repositories/factorClimatico.repository.js'
 import { FactorClimaticoService } from '../internal/services/factorClimatico.service.js'
-import { MySQLFactorClimaticoRepository } from '../internal/repositories/mysql/factorClimatico.repository.js'
 
 // --- Rescate ---
-import { MySQLRescateRepository } from '../internal/repositories/mysql/rescate.repository.js'
+import { MySQLRescateRepository } from '../internal/repositories/rescate.repository.js'
 import { RescateService } from '../internal/services/rescate.service.js'
-import { RescateHandler } from '../rescate/handler.js'
+import { RescateHandler } from '../handler/rescate/handler.js'
 
 // --- Rango + Catálogos forestales ---
-import { MySQLRangoRepository } from '../internal/repositories/mysql/rango.repository.js'
+import { MySQLRangoRepository } from '../internal/repositories/rango.repository.js'
 import { RangoService } from '../internal/services/rango.service.js'
-import { RangoHandler } from '../rangos/handler.js'
+import { RangoHandler } from '../handler/rangos/handler.js'
 
-import { MySQLCaracteristicasLugarRepository } from '../internal/repositories/mysql/caracteristicasLugar.repository.js'
-import { MySQLAreaAfectadaRepository } from '../internal/repositories/mysql/areaAfectada.repository.js'
-import { CaracteristicasLugarService } from '../internal/services/caracteristicasLugar.service.js'
+import { ForestalCatalogosHandler } from '../handler/forestal/handler.js'
+import { MySQLAreaAfectadaRepository } from '../internal/repositories/areaAfectada.repository.js'
+import { MySQLCaracteristicasLugarRepository } from '../internal/repositories/caracteristicasLugar.repository.js'
 import { AreaAfectadaService } from '../internal/services/areaAfectada.service.js'
-import { ForestalCatalogosHandler } from '../forestal/handler.js'
+import { CaracteristicasLugarService } from '../internal/services/caracteristicasLugar.service.js'
 
 // --- Seguridad de cuenta (recuperar/restablecer) ---
-import { MySQLTokenRepository } from '../internal/repositories/mysql/token.repository.js'
+import { MySQLTokenRepository } from '../internal/repositories/token.repository.js'
 import { TokenService } from '../internal/services/token.service.js'
-import { construirRecuperarClaveHandlers } from '../recuperarClave/handler.js'
-import { construirRestablecerClaveHandler } from '../restablecerClave/handler.js'
+import { construirRecuperarClaveHandlers } from '../handler/recuperarClave/handler.js'
+import { construirRestablecerClaveHandler } from '../handler/restablecerClave/handler.js'
 
 // --- Tipos de incidente / Localización / Causas probables ---
-import { MySQLTipoIncidenteRepository } from '../internal/repositories/mysql/tipoIncidente.repository.js'
+import { MySQLTipoIncidenteRepository } from '../internal/repositories/tipoIncidente.repository.js'
 import { TipoIncidenteService } from '../internal/services/tipoIncidente.service.js'
-import { TipoIncidenteHandler } from '../tipoIncidente/handler.js'
+import { TipoIncidenteHandler } from '../handler/tipoIncidente/handler.js'
 
-import { MySQLLocalizacionRepository } from '../internal/repositories/mysql/localizacion.repository.js'
+import { MySQLLocalizacionRepository } from '../internal/repositories/localizacion.repository.js'
 import { LocalizacionService } from '../internal/services/localizacion.service.js'
-import { LocalizacionHandler } from '../localizacion/handler.js'
+import { LocalizacionHandler } from '../handler/localizacion/handler.js'
 
-import { MySQLCausaProbableRepository } from '../internal/repositories/mysql/causaProbable.repository.js'
+import { CausaProbableHandler } from '../handler/causaProbable/handler.js'
+import { MySQLCausaProbableRepository } from '../internal/repositories/causaProbable.repository.js'
 import { CausaProbableService } from '../internal/services/causaProbable.service.js'
-import { CausaProbableHandler } from '../causaProbable/handler.js'
 
 // --- Denunciantes ---
-import { MySQLDenuncianteRepository } from '../internal/repositories/mysql/denunciante.repository.js'
+import { buildDenuncianteHandler } from '../handler/denunciante/handler.js'
+import { MySQLDenuncianteRepository } from '../internal/repositories/denunciante.repository.js'
 import { DenuncianteService } from '../internal/services/denunciante.service.js'
-import { buildDenuncianteHandler } from '../denunciante/handler.js'
+
+// --- Respuestas de incidentes ---
+import { RespuestaIncidenteService } from '../internal/services/respuesta-incidente.service.js'
+import { MySQLRespuestaIncidenteRepository } from '../internal/repositories/respuesta-incidente.repository.js'
+import { RespuestaIncidenteHandler } from '../handler/respuestas/handler.js'
 
 export async function createServer(config) {
   try {
@@ -152,7 +157,7 @@ export async function createServer(config) {
 
     const rangoRepository = new MySQLRangoRepository()
     const incendioForestalRepository =
-      new (await import('../internal/repositories/mysql/incendioForestal.repository.js')).MySQLIncendioForestalRepository()
+      new (await import('../internal/repositories/incendioForestal.repository.js')).MySQLIncendioForestalRepository()
     const caracteristicasLugarRepository = new MySQLCaracteristicasLugarRepository()
     const areaAfectadaRepository = new MySQLAreaAfectadaRepository()
     const tokenRepository = new MySQLTokenRepository()
@@ -170,6 +175,7 @@ export async function createServer(config) {
     const matPelAccionPersonaRepository = new MySQLMatPelAccionPersonaRepository()
     const factorClimaticoRepository = new MySQLFactorClimaticoRepository()
     const rescateRepository = new MySQLRescateRepository()
+    const respuestaIncidenteRepository = new MySQLRespuestaIncidenteRepository()
 
     // --- Servicios ---
     const whatsappService = new WhatsAppService(config)
@@ -187,7 +193,13 @@ export async function createServer(config) {
       damnificadoRepository,
       incendioForestalRepository,
       areaAfectadaRepository,
-      tipoIncidenteService
+      tipoIncidenteService,
+      // repositorios específicos para obtenerDetalleCompleto
+      accidenteTransitoRepository,
+      incendioEstructuralRepository,
+      materialPeligrosoRepository,
+      rescateRepository,
+      factorClimaticoRepository
     )
     const grupoGuardiaService = new GrupoGuardiaService(grupoGuardiaRepository, bomberoRepository)
     const rolService = new RolService(rolRepository)
@@ -223,7 +235,7 @@ export async function createServer(config) {
       damnificadoRepository
     )
 
-    const incendioEstructuralService = new IncendioEstructuralService(incendioEstructuralRepository)
+    const incendioEstructuralService = new IncendioEstructuralService(incendioEstructuralRepository, damnificadoRepository)
     const categoriaMaterialPeligrosoService = new CategoriaMatPelService(categoriaMaterialPeligrosoRepository)
     const tipoMatInvolucradoService = new TipoMatInvolucradoService(tipoMatInvolucradoRepository)
     const accionMaterialService = new AccionMaterialService(accionMaterialRepository)
@@ -232,6 +244,7 @@ export async function createServer(config) {
     const rescateService = new RescateService(rescateRepository, damnificadoRepository)
 
     const guardiaAsignacionService = new GuardiaAsignacionService(guardiaAsignacionRepository)
+    const respuestaIncidenteService = new RespuestaIncidenteService(respuestaIncidenteRepository, bomberoService, whatsappService)
 
     // --- Handlers / Adapters ---
     const bomberoHandler = new BomberoHandler(bomberoService)
@@ -258,6 +271,7 @@ export async function createServer(config) {
     const rescateHandler = new RescateHandler(rescateService)
     const guardiaHandlers = buildGuardiaHandlers(guardiaAsignacionService)
     const denuncianteHandler = buildDenuncianteHandler(denuncianteService)
+    const respuestaIncidenteHandler = new RespuestaIncidenteHandler(respuestaIncidenteService)
 
     // --- Contenedor a exponer a las rutas ---
     const container = {
@@ -293,6 +307,7 @@ export async function createServer(config) {
       areaAfectadaRepository,
       incendioEstructuralRepository,
       tokenRepository,
+      respuestaIncidenteRepository,
 
       // services
       bomberoService,
@@ -322,6 +337,7 @@ export async function createServer(config) {
       incendioEstructuralService,
       guardiaAsignacionService,
       tokenService,
+      respuestaIncidenteService,
 
       // handlers/adapters
       bomberoHandler,
@@ -350,6 +366,7 @@ export async function createServer(config) {
       recuperarClaveHandler,
       validarTokenHandler,
       restablecerClaveHandler,
+      respuestaIncidenteHandler,
 
       // infra
       dbConnection,

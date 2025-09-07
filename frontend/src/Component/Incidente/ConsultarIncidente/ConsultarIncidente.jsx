@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
+import { FileText, Search, Calendar, Filter } from 'lucide-react'
 import '../../DisenioFormulario/DisenioFormulario.css'
+
+// Importar formularios específicos de tipos de incidente
+import AccidenteTransito from '../TipoIncidente/AccidenteTransito/AccidenteTransito'
+import FactorClimatico from '../TipoIncidente/FactorClimatico/FactorClimatico'
+import IncendioEstructural from '../TipoIncidente/IncendioEstructural/IncendioEstructural'
+import IncendioForestal from '../TipoIncidente/IncendioForestal/IncendioForestal'
+import MaterialPeligroso from '../TipoIncidente/MaterialPeligroso/MaterialPeligroso'
+import Rescate from '../TipoIncidente/Rescate/Rescate'
 
 const PAGE_SIZE_DEFAULT = 10
 
@@ -11,7 +20,19 @@ const FiltrosIniciales = {
   hasta: ''
 }
 
+// Mapeo de tipos de incidente a sus componentes específicos
+const TIPO_INCIDENTE_COMPONENTS = {
+  1: AccidenteTransito,      // Accidente de Tránsito
+  2: FactorClimatico,        // Factores Climáticos  
+  3: IncendioEstructural,    // Incendio Estructural
+  4: IncendioForestal,       // Incendio Forestal
+  5: MaterialPeligroso,      // Material Peligroso
+  6: Rescate,                // Rescate
+  // Agregar más según los tipos disponibles
+}
+
 const ConsultarIncidente = ({ onVolverMenu }) => {
+  
   const [filtros, setFiltros] = useState(FiltrosIniciales)
   const [pagina, setPagina] = useState(1)
   const [limite, setLimite] = useState(PAGE_SIZE_DEFAULT)
@@ -22,6 +43,26 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
 
   // incidente con detalle (de /incidentes/:id/detalle)
   const [detalle, setDetalle] = useState(null)
+  const [modoEdicion, setModoEdicion] = useState(false)
+  const [mensaje, setMensaje] = useState('')
+  const [modoEdicionEspecifica, setModoEdicionEspecifica] = useState(false)
+  
+  // Función para obtener el color del badge según el tipo de incidente
+  const getIncidentTypeColor = (tipoDescripcion) => {
+    const colores = {
+      'Accidente de tránsito': 'bg-danger',        // Rojo suave
+      'Rescate': 'bg-primary',                     // Azul
+      'Incendio forestal': 'bg-success',           // Verde
+      'Incendio estructural': 'bg-warning',        // Amarillo/Naranja
+      'Factor climático': 'bg-info',               // Celeste
+      'Material peligroso': 'bg-secondary'         // Gris
+    }
+    
+    return colores[tipoDescripcion] || 'bg-dark' // Default: gris oscuro
+  }
+  
+  // Incidente pendiente de completar
+  const [incidentePendiente, setIncidentePendiente] = useState(null)
 
   const totalPaginas = useMemo(
     () => Math.max(1, Math.ceil(total / limite)),
@@ -32,6 +73,10 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
     const { name, value } = e.target
     setFiltros(prev => ({ ...prev, [name]: value }))
   }
+
+  // ELIMINADO: useEffect duplicado - ahora se maneja en el useEffect principal más abajo
+
+  // ELIMINADO: buscarIncidentePendiente - ahora se usa verDetalle directamente
 
   // ------- Listado -------
   const buscar = async (resetPagina = true) => {
@@ -83,13 +128,19 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
 
   // ------- Ver detalle -------
   const verDetalle = async (id) => {
+    console.log('👁️ verDetalle llamado con ID:', id)
     try {
       setLoading(true)
       setError('')
       // Esta ruta debe devolver: datos base + detalleEspecifico
-      const base = await apiRequest(API_URLS.incidentes.getDetalle(id), { method: 'GET' })
+      const url = `/api/incidentes/${id}/detalle`
+      console.log('📡 Haciendo request a:', url)
+      const base = await apiRequest(url, { method: 'GET' })
+      console.log('📥 Respuesta recibida:', base)
       setDetalle(base)
+      console.log('✅ Detalle establecido correctamente')
     } catch (e) {
+      console.error('❌ Error en verDetalle:', e)
       setError(e?.message || 'No se pudo cargar el detalle')
     } finally {
       setLoading(false)
@@ -98,14 +149,171 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
 
   const volverAlListado = () => {
     setDetalle(null)
+    setModoEdicion(false)
+    setModoEdicionEspecifica(false)
+    setMensaje('')
+    setError('')
   }
 
-  useEffect(() => { buscar(true) }, []) // cargar al entrar
+  const activarEdicion = () => {
+    setModoEdicion(true)
+    setMensaje('') // Limpiar mensaje al activar edición
+    setError('') // Limpiar errores al activar edición
+  }
+
+  const guardarCambios = async (datosActualizados) => {
+    if (!detalle?.idIncidente) return
+
+    setLoading(true)
+    try {
+      console.log('📤 Enviando actualización:', {
+        id: detalle.idIncidente,
+        datos: datosActualizados,
+        url: `/api/incidentes/${detalle.idIncidente}`
+      })
+
+      const response = await fetch(`/api/incidentes/${detalle.idIncidente}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+          // Removemos Authorization por ahora para probar
+        },
+        body: JSON.stringify(datosActualizados)
+      })
+
+      console.log('📥 Response recibida:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      
+
+      if (result.success) {
+        setMensaje('✅ Incidente actualizado correctamente')
+        setModoEdicion(false)
+        setError('') // Limpiar cualquier error previo
+        
+        // Actualizar el detalle con los nuevos datos Y los datos del servidor
+        setDetalle(prev => ({ 
+          ...prev, 
+          ...datosActualizados,
+          ...result.data // Incluir datos actualizados del servidor
+        }))
+        
+        // Recargar la lista para reflejar cambios
+        await buscar(false) // false para no resetear la página
+        
+        // Limpiar mensaje después de 3 segundos
+        setTimeout(() => setMensaje(''), 3000)
+      } else {
+        console.error('❌ Respuesta sin success:', result)
+        setError(result.message || result.error || 'Error al actualizar el incidente')
+        setMensaje('') // Limpiar mensaje de éxito si hay error
+      }
+    } catch (err) {
+      console.error('❌ Error completo al guardar cambios:', err)
+      setError(`Error de conexión: ${err.message}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { 
+    // Verificar si viene de "Completar Detalles" ANTES de cargar la lista
+    const incidenteParaCompletar = localStorage.getItem('incidenteParaCompletar')
+    console.log('🔍 ConsultarIncidente useEffect - incidenteParaCompletar:', incidenteParaCompletar)
+    
+    if (incidenteParaCompletar) {
+      console.log('✅ Detectado incidente para completar, cargando directamente:', incidenteParaCompletar)
+      // Buscar y mostrar automáticamente el incidente SIN cargar la lista
+      verDetalle(incidenteParaCompletar)
+      // Activar modo edición específica automáticamente
+      setTimeout(() => {
+        console.log('⚙️ Activando modo edición específica')
+        setModoEdicionEspecifica(true)
+        setMensaje('💡 Completa los detalles específicos del tipo de incidente')
+        setTimeout(() => setMensaje(''), 5000)
+      }, 1500) // Dar tiempo para que cargue el detalle
+      // Limpiar localStorage
+      localStorage.removeItem('incidenteParaCompletar')
+    } else {
+      console.log('📋 No hay incidente para completar, cargando lista normal')
+      // Solo cargar la lista si NO viene de "Completar Detalles"
+      buscar(true) 
+    }
+  }, []) // cargar al entrar
+
+  // ------- Render de Formulario Específico Inline -------
+  const renderFormularioEspecificoInline = () => {
+    if (!detalle) return null
+
+    const ComponenteEspecifico = TIPO_INCIDENTE_COMPONENTS[detalle.idTipoIncidente]
+    
+    if (!ComponenteEspecifico) {
+      return (
+        <div className="alert alert-warning mb-0">
+          <h6 className="mb-2">⚠️ Formulario no disponible</h6>
+          <p className="mb-0">No hay un formulario específico disponible para este tipo de incidente.</p>
+        </div>
+      )
+    }
+
+    
+    // Combinar datos base con detalles específicos
+    const datosCombinados = {
+      ...detalle,
+      ...(detalle.detalleEspecifico || {})
+    }
+    
+    
+    return (
+      <ComponenteEspecifico
+        datosPrevios={datosCombinados}
+        onFinalizar={(resultado) => {
+          if (resultado.success) {
+            // Regresar inmediatamente al listado con mensaje de éxito
+            setDetalle(null) // Esto regresa al listado
+            setMensaje(resultado.message || '✅ Detalles específicos guardados correctamente')
+            setError('') // Limpiar errores
+            setModoEdicionEspecifica(false)
+            
+            // Limpiar mensaje después de 3 segundos
+            setTimeout(() => setMensaje(''), 3000)
+            
+          } else {
+            setError(resultado.message || 'Error al guardar los detalles específicos')
+            setMensaje('') // Limpiar mensajes de éxito
+          }
+        }}
+      />
+    )
+  }
+
+  // ------- Render de Formulario Específico (Legacy - para mantener compatibilidad) -------
+  const renderFormularioEspecifico = () => {
+    // Esta función ya no se usa, pero la mantenemos por si acaso
+    return null
+  }
 
   // ------- Render de Detalle Específico -------
   const renderDetalleEspecifico = (idTipoIncidente, detalleEspecifico) => {
     if (!detalleEspecifico) {
-      return <div>Sin datos específicos para este incidente.</div>
+      return (
+        <div className="text-center py-4">
+          <i className="bi bi-info-circle text-muted fs-1 mb-3 d-block"></i>
+          <h6 className="text-muted mb-2">Sin datos específicos para este incidente</h6>
+          <p className="text-muted mb-0">
+            Haz clic en "Editar/Completar" para agregar los detalles específicos del tipo de incidente.
+          </p>
+        </div>
+      )
     }
 
     switch (Number(idTipoIncidente)) {
@@ -161,9 +369,8 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
           </>
         )
 
-      // 2) Factores Climáticos -> tabla "climatico" (ajustar ID real)
+      // 2) Factores Climáticos -> tabla "climatico"
       case 2:
-      case 3:
         return (
           <div className="row g-3">
             <div className="col-md-4">
@@ -185,8 +392,8 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
           </div>
         )
 
-      // 3) Incendio Estructural (ajustar ID real)
-      case 4:
+      // 3) Incendio Estructural
+      case 3:
         return (
           <div className="row g-3">
             <div className="col-md-4"><span className="badge bg-danger">Estructura</span><div>{detalleEspecifico?.estructura || '-'}</div></div>
@@ -196,20 +403,35 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
           </div>
         )
 
-      // 4) Incendio Forestal (ajustar ID real)
-      case 5:
+      // 4) Incendio Forestal
+      case 4:
         return (
           <div className="row g-3">
-            <div className="col-md-4"><span className="badge bg-danger">Características del lugar</span><div>{detalleEspecifico?.caracteristicasLugar || '-'}</div></div>
-            <div className="col-md-4"><span className="badge bg-danger">Área afectada</span><div>{detalleEspecifico?.areaAfectada || '-'}</div></div>
-            <div className="col-md-4"><span className="badge bg-danger">Cantidad afectada</span><div>{detalleEspecifico?.cantidadAfectada ?? '-'}</div></div>
-            <div className="col-12"><span className="badge bg-danger">Causa probable</span><div>{detalleEspecifico?.causaProbable || '-'}</div></div>
-            <div className="col-12"><span className="badge bg-danger">Detalle</span><div>{detalleEspecifico?.detalle || '-'}</div></div>
+            <div className="col-md-4">
+              <span className="badge bg-danger">Características del lugar</span>
+              <div>{detalleEspecifico?.caracteristicasLugar || '-'}</div>
+            </div>
+            <div className="col-md-4">
+              <span className="badge bg-danger">Área afectada</span>
+              <div>{detalleEspecifico?.areaAfectada || '-'}</div>
+            </div>
+            <div className="col-md-4">
+              <span className="badge bg-danger">Cantidad afectada</span>
+              <div>{detalleEspecifico?.cantidadAfectada !== undefined && detalleEspecifico?.cantidadAfectada !== null ? detalleEspecifico.cantidadAfectada : '-'}</div>
+            </div>
+            <div className="col-md-6">
+              <span className="badge bg-danger">Causa probable</span>
+              <div>{detalleEspecifico?.causaProbable || detalleEspecifico?.idCausaProbable || '-'}</div>
+            </div>
+            <div className="col-md-6">
+              <span className="badge bg-danger">Detalle</span>
+              <div>{detalleEspecifico?.detalle || '-'}</div>
+            </div>
           </div>
         )
 
-      // 5) Materiales Peligrosos (ajustar ID real)
-      case 6:
+      // 5) Material Peligroso
+      case 5:
         return (
           <div className="row g-3">
             <div className="col-md-4"><span className="badge bg-danger">Categoría</span><div>{detalleEspecifico?.categoria || '-'}</div></div>
@@ -227,8 +449,8 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
           </div>
         )
 
-      // 6) Rescate (ajustar ID real)
-      case 7:
+      // 6) Rescate
+      case 6:
         return (
           <div className="row g-3">
             <div className="col-md-4"><span className="badge bg-danger">Tipo de rescate</span><div>{detalleEspecifico?.tipo || '-'}</div></div>
@@ -242,48 +464,197 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
     }
   }
 
-  // ------- Vista Detalle -------
-  if (detalle) {
-    return (
-      <div className="container d-flex justify-content-center align-items-start">
-        <div className="formulario-consistente w-100">
-          <h2 className="text-black mb-3">Detalle del incidente #{detalle?.idIncidente}</h2>
+  // Función para mostrar el detalle del incidente seleccionado
+  const renderDetalleIncidente = () => {
+    if (!detalle) return null
 
-          <div className="card bg-dark text-white mb-3">
-            <div className="card-body">
-              <div className="row g-3">
-                <div className="col-md-3">
-                  <span className="badge bg-danger">Tipo</span>
-                  <div>{detalle?.tipoDescripcion || '-'}</div>
-                </div>
-                <div className="col-md-3">
-                  <span className="badge bg-danger">Fecha</span>
-                  <div>{detalle?.fecha || '-'}</div>
-                </div>
-                <div className="col-12">
-                  <span className="badge bg-danger">Descripción</span>
-                  <div>{detalle?.descripcion || '-'}</div>
-                </div>
-                <div className="col-12">
-                  <span className="badge bg-danger">Localización</span>
-                  <div>{detalle?.localizacion || '-'}</div>
+    return (
+      <div className="mt-4">
+        {/* Header con título y botones - siguiendo patrón exacto */}
+        <div className="d-flex align-items-center justify-content-between mb-3">
+          <div className="d-flex align-items-center gap-2">
+            <i className="text-secondary fs-5"></i>
+            <h3 className="text-dark mb-0">
+              {modoEdicion ? `✏️ Editando: Incidente #${detalle?.idIncidente}` : `📋 Detalles: Incidente #${detalle?.idIncidente} - ${detalle?.tipoDescripcion}`}
+            </h3>
+          </div>
+
+          <div>
+            {!modoEdicion && (
+              <button 
+                className="btn btn-warning btn-sm me-2 d-flex align-items-center gap-1" 
+                onClick={activarEdicion}
+                disabled={loading}
+              >
+                <i className="bi bi-pencil-square"></i> Editar
+              </button>
+            )}
+            <button 
+              className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" 
+              onClick={volverAlListado}
+              disabled={loading}
+            >
+              <i className="bi bi-arrow-left"></i> Volver al listado
+            </button>
+          </div>
+        </div>
+
+        <hr className="border-4 border-danger mb-4" />
+
+        {/* Card light mejorado para mejor UX */}
+        <div className="card bg-light border-0 shadow-sm py-4" style={{borderRadius: '12px'}}>
+          <div className="card-body">
+            
+            <div>
+              
+              {/* Información General */}
+              <div className="mb-4">
+                <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
+                  <div className="bg-danger p-2 rounded-circle me-3">
+                    <i className="bi bi-info-circle text-white fs-5"></i>
+                  </div>
+                  <h5 className="text-danger mb-0 fw-bold">
+                    Información General del Incidente
+                  </h5>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Detalles específicos por tipo */}
-          <div className="card bg-dark text-white mb-3">
-            <div className="card-header">Detalles específicos por tipo</div>
-            <div className="card-body">
-              {renderDetalleEspecifico(detalle?.idTipoIncidente, detalle?.detalleEspecifico)}
-            </div>
-          </div>
+              <div className="row mb-3">
+                <div className="col-md-4 py-3">
+                  <label className="form-label text-dark d-flex align-items-center gap-2 fw-semibold">
+                    <i className="bi bi-fire text-danger"></i> Tipo de Incidente
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control border-secondary bg-light"
+                    value={detalle?.tipoDescripcion || '-'}
+                    disabled
+                  />
+                  <small className="text-muted">No editable</small>
+                </div>
+                <div className="col-md-4 py-3">
+                  <label className="form-label text-dark d-flex align-items-center gap-2 fw-semibold">
+                    <i className="bi bi-calendar text-primary"></i> Fecha y Hora
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control border-secondary bg-light"
+                    value={detalle?.fecha || '-'}
+                    disabled
+                  />
+                  <small className="text-muted">No editable</small>
+                </div>
+                <div className="col-md-4 py-3">
+                  <label className="form-label text-dark d-flex align-items-center gap-2 fw-semibold">
+                    <i className="bi bi-info-circle text-success"></i> Estado
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control border-secondary bg-light"
+                    value={detalle?.estado || 'Activo'}
+                    disabled
+                  />
+                  <small className="text-muted">No editable</small>
+                </div>
+                <div className="col-12 py-3">
+                  <label className="form-label text-dark d-flex align-items-center gap-2 fw-semibold">
+                    <i className="bi bi-card-text text-warning"></i> Descripción
+                  </label>
+                  <textarea
+                    className="form-control border-secondary bg-light"
+                    rows="3"
+                    value={detalle?.descripcion || ''}
+                    onChange={(e) => setDetalle(prev => ({ ...prev, descripcion: e.target.value }))}
+                    disabled={!modoEdicion}
+                    placeholder="Descripción del incidente"
+                  />
+                </div>
+                <div className="col-12 py-3">
+                  <label className="form-label text-dark d-flex align-items-center gap-2 fw-semibold">
+                    <i className="bi bi-geo-alt text-info"></i> Localización
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control border-secondary bg-light"
+                    value={detalle?.localizacion || ''}
+                    onChange={(e) => setDetalle(prev => ({ ...prev, localizacion: e.target.value }))}
+                    disabled={!modoEdicion}
+                    placeholder="Ubicación del incidente"
+                  />
+                </div>
+              </div>
 
-          {/* Acciones abajo */}
-          <div className="text-center mt-3">
-            <button className="btn btn-outline-dark me-2" onClick={volverAlListado}>Volver al listado</button>
-            <button className="btn btn-secondary" onClick={onVolverMenu}>Volver al menú</button>
+              {/* Botones de acción en modo edición */}
+              {modoEdicion && (
+                <div className="d-grid gap-3 pt-3 border-top">
+                  <button 
+                    type="submit" 
+                    className="btn btn-danger btn-lg"
+                    disabled={loading}
+                  >
+                    {loading ? 'Guardando...' : 'Guardar Cambios'}
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-outline-secondary"
+                    onClick={() => setModoEdicion(false)}
+                    disabled={loading}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              )}
+
+              {/* Separador */}
+              <hr className="border-secondary my-4" />
+
+              {/* Detalles Específicos del Tipo - Solo mostrar formulario cuando estamos en modo edición */}
+              {modoEdicionEspecifica && (
+                <div className="mt-5">
+                  <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-danger border-2">
+                    <div className="d-flex align-items-center">
+                      <div className="bg-danger p-2 rounded-circle me-3">
+                        <i className="bi bi-gear text-white fs-5"></i>
+                      </div>
+                      <h5 className="text-danger mb-0 fw-bold">
+                        Detalles Específicos del Tipo de Incidente
+                      </h5>
+                    </div>
+                    
+                    {/* Botón para cerrar el formulario */}
+                    {!modoEdicion && (
+                      <button 
+                        className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
+                        onClick={() => setModoEdicionEspecifica(false)}
+                        disabled={loading}
+                      >
+                        <i className="bi bi-x-circle"></i>
+                        Cerrar
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="bg-light rounded p-4 border">
+                    {renderFormularioEspecificoInline()}
+                  </div>
+                </div>
+              )}
+
+              {/* Botón para editar/completar detalles específicos */}
+              {!modoEdicionEspecifica && !modoEdicion && (
+                <div className="mt-4 text-center">
+                  <button 
+                    className="btn btn-primary d-flex align-items-center gap-2 mx-auto"
+                    onClick={() => setModoEdicionEspecifica(true)}
+                  >
+                    <i className="bi bi-pencil-square"></i>
+                    {detalle?.detalleEspecifico ? 'Editar Detalles Específicos' : 'Completar Detalles Específicos'}
+                  </button>
+                </div>
+              )}
+
+            </div>
+
           </div>
         </div>
       </div>
@@ -292,153 +663,236 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
 
   // ------- Vista Listado -------
   return (
-    <div className="container d-flex justify-content-center align-items-start">
-      <div className="formulario-consistente w-100">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h2 className="text-black m-0">Consultar Incidentes</h2>
+    <div className='container-fluid py-5'>
+      <div className='text-center mb-4'>
+        <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
+          <div className="bg-danger p-3 rounded-circle">
+            <FileText size={32} color="white" />
+          </div>
+          <h1 className="fw-bold text-white fs-3 mb-0">Consultar Incidentes</h1>
         </div>
+        <span className="badge bg-danger-subtle text-danger">
+          <i className="bi bi-fire me-2"></i> Sistema de Gestión de Incidentes - Cuartel de Bomberos
+        </span>
+      </div>
 
-        {/* Filtros */}
-        <div className="card bg-dark text-white mb-3">
-          <div className="card-body">
-            <div className="row g-3">
-              <div className="col-md-3">
-                <label className="form-label text-white">Búsqueda</label>
+      <div className="card shadow-sm border-0 bg-white">
+        <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
+          <Search />
+          <strong>Búsqueda y Listado de Incidentes</strong>
+        </div>
+        <div className="card-body">
+
+        {/* Mensaje de éxito/error */}
+        {mensaje && (
+          <div
+            className={`alert ${mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' :
+              mensaje.includes('✅') ? 'alert-success' : 'alert-info'
+              } mb-3`}
+          >
+            {mensaje}
+          </div>
+        )}
+
+        {/* Alerta de incidente pendiente */}
+        {incidentePendiente && (
+          <div className="alert alert-info d-flex align-items-center mb-3">
+            <div className="me-3">
+              <i className="fas fa-info-circle fa-2x"></i>
+            </div>
+            <div className="flex-grow-1">
+              <h5 className="alert-heading mb-1">
+                🎯 Incidente #{incidentePendiente.idIncidente} listo para completar
+              </h5>
+              <p className="mb-2">
+                Este incidente fue creado recientemente y está pendiente de completar los detalles específicos del tipo de incidente.
+              </p>
+              <small className="text-muted">
+                💡 El detalle se ha abierto automáticamente abajo. Puedes editarlo haciendo clic en "Ver detalle".
+              </small>
+            </div>
+            <button 
+              type="button" 
+              className="btn-close" 
+              onClick={() => setIncidentePendiente(null)}
+              aria-label="Cerrar"
+            ></button>
+          </div>
+        )}
+
+          {/* Buscador y filtros - solo mostrar si no hay detalle seleccionado */}
+          {!detalle && (
+            <>
+              <div className="mb-3 position-relative">
+                <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
                 <input
                   type="text"
-                  className="form-control"
-                  placeholder="ID, DNI, denunciante..."
+                  className="form-control border-secondary ps-5 py-3"
+                  placeholder="Buscar por ID, DNI, denunciante..."
                   name="busqueda"
                   value={filtros.busqueda}
                   onChange={handleChange}
+                  disabled={loading}
                 />
               </div>
-              <div className="col-md-3">
-                <label className="form-label text-white">Tipo</label>
-                <select
-                  className="form-select"
-                  name="tipo"
-                  value={filtros.tipo}
-                  onChange={handleChange}
-                >
-                  <option value="">Todos</option>
-                  <option value="1">Accidente de Tránsito</option>
-                  <option value="2">Factores Climáticos</option>
-                  <option value="3">Incendio Estructural</option>
-                  <option value="4">Incendio Forestal</option>
-                  <option value="5">Material Peligroso</option>
-                  <option value="6">Rescate</option>
-                </select>
+
+              {/* Filtros adicionales en una fila */}
+              <div className="row g-3 mb-3 align-items-end">
+                <div className="col-md-3">
+                  <label className="form-label text-dark fw-semibold">Tipo de Incidente</label>
+                  <select
+                    className="form-select border-secondary"
+                    name="tipo"
+                    value={filtros.tipo}
+                    onChange={handleChange}
+                  >
+                    <option value="">Todos los tipos</option>
+                    <option value="1">Accidente de Tránsito</option>
+                    <option value="2">Factores Climáticos</option>
+                    <option value="3">Incendio Estructural</option>
+                    <option value="4">Incendio Forestal</option>
+                    <option value="5">Material Peligroso</option>
+                    <option value="6">Rescate</option>
+                  </select>
+                </div>
+                <div className="col-md-3">
+                  <label className="form-label text-dark fw-semibold">Fecha Desde</label>
+                  <input
+                    type="date"
+                    className="form-control border-secondary bg-light"
+                    name="desde"
+                    value={filtros.desde}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="col-md-3">
+                  <label className="form-label text-dark fw-semibold">Fecha Hasta</label>
+                  <input
+                    type="date"
+                    className="form-control border-secondary bg-light"
+                    name="hasta"
+                    value={filtros.hasta}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="col-md-3 d-flex">
+                  <button 
+                    className="btn btn-danger d-flex align-items-center gap-2 px-3 py-2" 
+                    onClick={() => buscar(true)} 
+                    disabled={loading}
+                    style={{width: 'fit-content'}}
+                  >
+                    <i className="bi bi-search"></i>
+                    {loading ? 'Buscando...' : 'Buscar'}
+                  </button>
+                </div>
               </div>
-              <div className="col-md-3">
-                <label className="form-label text-white">Desde</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  name="desde"
-                  value={filtros.desde}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="col-md-3">
-                <label className="form-label text-white">Hasta</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  name="hasta"
-                  value={filtros.hasta}
-                  onChange={handleChange}
-                />
-              </div>
+            </>
+          )}
+
+          {error && (
+            <div className="alert alert-danger d-flex align-items-center">
+              <i className="bi bi-exclamation-triangle-fill me-2"></i>
+              {error}
             </div>
+          )}
 
-            {/* Acciones de filtros */}
-            <div className="d-flex gap-2 mt-3">
-              <button className="btn btn-danger" onClick={() => buscar(true)} disabled={loading}>
-                {loading ? 'Buscando...' : 'Buscar'}
-              </button>
-              <button
-                className="btn btn-outline-light"
-                onClick={() => { setFiltros(FiltrosIniciales); setPagina(1); buscar(true) }}
-                disabled={loading}
-              >
-                Limpiar
-              </button>
+          {loading && (
+            <div className="text-center mb-3">
+              <div className="spinner-border text-danger" role="status"></div>
             </div>
-          </div>
-        </div>
+          )}
 
-        {error && <div className="alert alert-danger">{error}</div>}
-
-        {/* Tabla */}
-        <div className="table-responsive">
-          <table className="table table-dark table-hover align-middle">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Fecha</th>
-                <th>Tipo</th>
-                <th>Descripción</th>
-                <th>Localización</th>
-                <th>Estado</th>
-                <th style={{ width: 140 }}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 && !loading && (
-                <tr>
-                  <td colSpan="7" className="text-center">No hay incidentes</td>
-                </tr>
+          {/* Tabla de resultados - solo mostrar si no hay detalle seleccionado */}
+          {!detalle && (
+            <>
+              {items.length > 0 ? (
+                <div className="table-responsive rounded border">
+                  <table className="table table-hover align-middle mb-0">
+                    <thead className="bg-light">
+                      <tr>
+                        <th className="border-end text-center">ID</th>
+                        <th className="border-end text-center">Fecha</th>
+                        <th className="border-end text-center">Tipo</th>
+                        <th className="border-end text-center">Descripción</th>
+                        <th className="border-end text-center">Localización</th>
+                        <th className="border-end text-center">Estado</th>
+                        <th className="text-center">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map(it => (
+                        <tr key={it.idIncidente}>
+                          <td className="border-end px-3 text-center fw-bold">{it.idIncidente}</td>
+                          <td className="border-end px-3">{it.fecha}</td>
+                          <td className="border-end px-3">
+                            <span className={`badge ${getIncidentTypeColor(it.tipoDescripcion)}`}>
+                              {it.tipoDescripcion}
+                            </span>
+                          </td>
+                          <td className="border-end px-3">{it.descripcion || '-'}</td>
+                          <td className="border-end px-3">{it.localizacion || '-'}</td>
+                          <td className="border-end px-3">
+                            <span className="badge bg-success">{it.estado || 'Activo'}</span>
+                          </td>
+                          <td className="text-center">
+                            <button
+                              className="btn btn-outline-secondary btn-sm me-2"
+                              onClick={() => verDetalle(it.idIncidente)}
+                              disabled={loading}
+                            >
+                              <i className="bi bi-eye me-1"></i> Ver
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                !loading && (
+                  <div className="text-center py-3 text-muted">
+                    No hay resultados para la búsqueda.
+                  </div>
+                )
               )}
-              {items.map(it => (
-                <tr key={it.idIncidente}>
-                  <td>{it.idIncidente}</td>
-                  <td>{it.fecha}</td>
-                  <td>{it.tipoDescripcion}</td>
-                  <td>{it.descripcion || '-'}</td>
-                  <td>{it.localizacion || '-'}</td>
-                  <td>{it.estado || '-'}</td>
-                  <td>
+
+              {/* Paginación simple */}
+              {total > 0 && (
+                <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                  <small className="text-muted">
+                    Mostrando {items.length} de {total} incidentes
+                  </small>
+                  <div className="btn-group">
                     <button
-                      className="btn btn-sm btn-danger me-2"
-                      onClick={() => verDetalle(it.idIncidente)}
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={() => cambiarPagina(pagina - 1)}
+                      disabled={pagina <= 1}
                     >
-                      Ver detalle
+                      ‹ Anterior
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    <span className="btn btn-outline-secondary btn-sm disabled">
+                      {pagina} / {totalPaginas}
+                    </span>
+                    <button
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={() => cambiarPagina(pagina + 1)}
+                      disabled={pagina >= totalPaginas}
+                    >
+                      Siguiente ›
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
 
-        {/* Paginación */}
-        <div className="d-flex justify-content-between align-items-center">
-          <div className="text-white-50">Total: {total}</div>
-          <div className="btn-group">
-            <button
-              className="btn btn-outline-light"
-              onClick={() => cambiarPagina(pagina - 1)}
-              disabled={pagina <= 1}
-            >
-              «
-            </button>
-            <span className="btn btn-outline-light disabled">
-              {pagina} / {totalPaginas}
-            </span>
-            <button
-              className="btn btn-outline-light"
-              onClick={() => cambiarPagina(pagina + 1)}
-              disabled={pagina >= totalPaginas}
-            >
-              »
-            </button>
-          </div>
-        </div>
+          {/* Detalles del incidente seleccionado */}
+          {renderDetalleIncidente()}
 
-        {/* Volver al menú abajo */}
-        <div className="text-center mt-4">
-          <button className="btn btn-secondary" onClick={onVolverMenu}>
+          {/* Botón volver al menú */}
+          <div className="d-grid gap-3 py-2 mt-4"></div>
+          <button type="button" className="btn btn-secondary" onClick={() => onVolverMenu && onVolverMenu()} disabled={loading}>
             Volver al menú
           </button>
         </div>

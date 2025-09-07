@@ -160,7 +160,7 @@ const ConsultarUsuario = ({ onVolver }) => {
       </div>
 
       {/* Card */}
-      <div className='card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm'>
+      <div className='card shadow-sm border-0 bg-white'>
         <div className='card-header bg-danger text-white d-flex align-items-center gap-2 py-4'>
           <i className='bi bi-person-fill fs-5'></i>
           <strong>Listado de Usuarios</strong>
@@ -186,7 +186,7 @@ const ConsultarUsuario = ({ onVolver }) => {
                 <i className='bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary'></i>
                 <input
                   type='text'
-                  className='form-control ps-5 py-3 border-secondary'
+                  className='form-control border-secondary ps-5 py-3'
                   placeholder='Buscar por usuario, email o rol...'
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
@@ -283,7 +283,7 @@ const ConsultarUsuario = ({ onVolver }) => {
               <hr className='border-4 border-danger mb-4' />
 
               {/* Card de detalles o edición */}
-              <div className='card bg-dark text-white border-0 shadow-lg py-4'>
+              <div className='card bg-light border-0 shadow-sm py-4' style={{borderRadius: '12px'}}>
                 <div className='card-body'>
                   <form
                     onSubmit={(e) => {
@@ -294,12 +294,12 @@ const ConsultarUsuario = ({ onVolver }) => {
                     <div className='row mb-3'>
                       {/* Usuario */}
                       <div className='col-md-6 py-3'>
-                        <label className='form-label text-white d-flex align-items-center gap-2'>
+                        <label className='form-label text-dark d-flex align-items-center gap-2'>
                           <i className='bi bi-person text-danger'></i> Nombre de Usuario
                         </label>
                         <input
                           type='text'
-                          className='form-control'
+                          className='form-control border-secondary'
                           value={usuarioSeleccionado.usuario || usuarioSeleccionado.username}
                           onChange={(e) =>
                             setUsuarioSeleccionado({ ...usuarioSeleccionado, usuario: e.target.value })
@@ -310,12 +310,12 @@ const ConsultarUsuario = ({ onVolver }) => {
 
                       {/* Password */}
                       <div className='col-md-6 py-3'>
-                        <label className='form-label text-white d-flex align-items-center gap-2'>
+                        <label className='form-label text-dark d-flex align-items-center gap-2'>
                           <i className='bi bi-shield-lock text-warning'></i> Contraseña (nueva)
                         </label>
                         <input
                           type='password'
-                          className='form-control'
+                          className='form-control border-secondary'
                           placeholder='Dejar en blanco para no cambiar'
                           value={usuarioSeleccionado.password || ''}
                           onChange={(e) =>
@@ -327,12 +327,12 @@ const ConsultarUsuario = ({ onVolver }) => {
 
                       {/* Email */}
                       <div className='col-md-6 py-3'>
-                        <label className='form-label text-white d-flex align-items-center gap-2'>
+                        <label className='form-label text-dark d-flex align-items-center gap-2'>
                           <i className='bi bi-envelope text-primary'></i> Correo electrónico
                         </label>
                         <input
                           type='email'
-                          className='form-control'
+                          className='form-control border-secondary'
                           value={usuarioSeleccionado.email}
                           onChange={(e) =>
                             setUsuarioSeleccionado({ ...usuarioSeleccionado, email: e.target.value })
@@ -343,7 +343,7 @@ const ConsultarUsuario = ({ onVolver }) => {
 
                       {/* Rol */}
                       <div className='col-md-6 py-3'>
-                        <label className='form-label text-white d-flex align-items-center gap-2'>
+                        <label className='form-label text-dark d-flex align-items-center gap-2'>
                           <Shield className='text-primary' /> Rol
                         </label>
                         <select
