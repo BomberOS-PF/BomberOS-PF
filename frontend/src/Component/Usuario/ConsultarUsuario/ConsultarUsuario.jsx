@@ -1,64 +1,114 @@
 import { useState, useEffect } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
 import { UsersIcon, Shield } from 'lucide-react'
+import { BackToMenuButton } from '../../Common/Button'
+import '../../DisenioFormulario/DisenioFormulario.css'
 
 const ConsultarUsuario = ({ onVolver }) => {
+  // === Paginación (calcado a RegistrarGuardia) ===
+  const [busqueda, setBusqueda] = useState('')
+  const [paginaActual, setPaginaActual] = useState(1)
+  const [limite] = useState(10)
+  const [total, setTotal] = useState(0)
+
+  // Datos
   const [usuarios, setUsuarios] = useState([])
+  const [roles, setRoles] = useState([])
+
+  // UI / Edición
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null)
   const [modoEdicion, setModoEdicion] = useState(false)
   const [mensaje, setMensaje] = useState('')
-  const [busqueda, setBusqueda] = useState('')
   const [loading, setLoading] = useState(false)
-  const [roles, setRoles] = useState([])
 
+  // Cargar usuarios cuando cambian página o búsqueda (server-side)
   useEffect(() => {
     cargarUsuarios()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paginaActual, busqueda])
+
+  // Cargar roles una vez
+  useEffect(() => {
     cargarRoles()
   }, [])
 
   const cargarUsuarios = async () => {
     try {
-      const response = await apiRequest(API_URLS.usuarios.getAll)
-      if (response.success) {
-        setUsuarios(response.data)
-        setMensaje(response.data.length === 0 ? 'No hay usuarios registrados. Registra algunos usuarios primero.' : '')
+      setLoading(true)
+      const params = new URLSearchParams({
+        pagina: String(paginaActual),
+        limite: String(limite),
+        busqueda: busqueda || ''
+      }).toString()
+
+      const url = `${API_URLS.usuarios.getAll}?${params}`
+      const response = await apiRequest(url, { method: 'GET' })
+
+      if (response?.success) {
+        const data = Array.isArray(response.data) ? response.data : []
+        const totalSrv = Number.isFinite(response.total) ? response.total : data.length
+
+        // Si quedamos en una página vacía (por eliminación o filtro) y hay páginas previas, retroceder
+        const totalPaginas = Math.max(1, Math.ceil(totalSrv / limite))
+        if (paginaActual > totalPaginas && totalPaginas >= 1) {
+          setPaginaActual(totalPaginas)
+          return
+        }
+
+        setUsuarios(data)
+        setTotal(totalSrv)
+        setMensaje(totalSrv === 0 ? 'No hay usuarios para los criterios de búsqueda.' : '')
       } else {
-        throw new Error(response.message || 'Error al obtener usuarios')
+        throw new Error(response?.message || 'Error al obtener usuarios')
       }
     } catch (error) {
       console.error('❌ Error al cargar usuarios:', error)
+      setUsuarios([])
+      setTotal(0)
       setMensaje(`Error al cargar usuarios: ${error.message}`)
+    } finally {
+      setLoading(false)
     }
   }
 
   const cargarRoles = async () => {
     try {
       const response = await apiRequest(API_URLS.roles.getAll)
-      if (response.success) {
-        setRoles(response.data)
-      }
+      if (response?.success) setRoles(response.data || [])
     } catch (error) {
       console.error('❌ Error al cargar roles:', error)
     }
   }
 
+  const handleBusqueda = (e) => {
+    setBusqueda(e.target.value)
+    setPaginaActual(1) // reset de página (igual que RegistrarGuardia)
+  }
+
+  const seleccionarUsuario = (usuario) => {
+    setUsuarioSeleccionado(usuario)
+    setModoEdicion(false)
+    setMensaje('')
+  }
+
+  const activarEdicion = () => setModoEdicion(true)
+
   const guardarCambios = async (datosActualizados) => {
     setLoading(true)
 
-    if (!datosActualizados.usuario.trim()) {
+    const usuarioValue = datosActualizados.usuario || datosActualizados.username || ''
+    if (!usuarioValue.trim()) {
       setMensaje('El nombre de usuario es obligatorio')
       setLoading(false)
       setTimeout(() => setMensaje(''), 2500)
       return
     }
-
-    if (!datosActualizados.email.trim()) {
+    if (!datosActualizados.email?.trim()) {
       setMensaje('El email es obligatorio')
       setLoading(false)
       setTimeout(() => setMensaje(''), 2500)
       return
     }
-
     if (!datosActualizados.idRol) {
       setMensaje('Debe seleccionar un rol')
       setLoading(false)
@@ -70,14 +120,14 @@ const ConsultarUsuario = ({ onVolver }) => {
       const response = await apiRequest(API_URLS.usuarios.update(usuarioSeleccionado.id), {
         method: 'PUT',
         body: JSON.stringify({
-          usuario: datosActualizados.usuario,
+          usuario: usuarioValue,
           password: datosActualizados.password || null,
           email: datosActualizados.email,
           idRol: datosActualizados.idRol
         })
       })
 
-      if (response.success) {
+      if (response?.success) {
         setMensaje('✅ Usuario actualizado correctamente')
         setModoEdicion(false)
         setTimeout(() => {
@@ -85,6 +135,8 @@ const ConsultarUsuario = ({ onVolver }) => {
           setMensaje('')
         }, 1500)
         cargarUsuarios()
+      } else {
+        throw new Error(response?.message || 'Error al guardar')
       }
     } catch (error) {
       const errorMsg = error?.response?.error || error.message || 'Error al guardar'
@@ -101,35 +153,28 @@ const ConsultarUsuario = ({ onVolver }) => {
     }
   }
 
-  const usuariosFiltrados = usuarios.filter((usuario) =>
-    usuario.username.toLowerCase().includes(busqueda.toLowerCase()) ||
-    usuario.email.toLowerCase().includes(busqueda.toLowerCase()) ||
-    usuario.rol.toLowerCase().includes(busqueda.toLowerCase())
-  )
-
-  const seleccionarUsuario = (usuario) => {
-    setUsuarioSeleccionado(usuario)
-    setModoEdicion(false)
-    setMensaje('')
-  }
-
-  const activarEdicion = () => setModoEdicion(true)
-
   const eliminarUsuario = async (usuario) => {
-    if (!window.confirm(`¿Estás seguro de que querés eliminar el usuario "${usuario.username}"?`)) return
+    const nombre = usuario.username || usuario.usuario
+    if (!window.confirm(`¿Estás seguro de que querés eliminar el usuario "${nombre}"?`)) return
     try {
-      const response = await apiRequest(API_URLS.usuarios.delete(usuario.id), {
-        method: 'DELETE'
-      })
-      if (response.success) {
+      const response = await apiRequest(API_URLS.usuarios.delete(usuario.id), { method: 'DELETE' })
+      if (response?.success) {
         setMensaje('✅ Usuario eliminado correctamente')
-        await cargarUsuarios()
+
+        // Si al eliminar queda vacía la página actual y no es la primera, retroceder una página
+        const quedaVacia = usuarios.length === 1 && paginaActual > 1
+        if (quedaVacia) {
+          setPaginaActual(prev => Math.max(1, prev - 1))
+        } else {
+          await cargarUsuarios()
+        }
+
         if (usuarioSeleccionado?.id === usuario.id) {
           setUsuarioSeleccionado(null)
           setModoEdicion(false)
         }
       } else {
-        throw new Error(response.message || 'Error al eliminar usuario')
+        throw new Error(response?.message || 'Error al eliminar usuario')
       }
     } catch (error) {
       console.error('❌ Error al eliminar usuario:', error)
@@ -143,6 +188,8 @@ const ConsultarUsuario = ({ onVolver }) => {
     setMensaje('')
     await cargarUsuarios()
   }
+
+  const totalPaginas = Math.max(1, Math.ceil(total / limite))
 
   return (
     <div className='container-fluid py-5'>
@@ -179,7 +226,7 @@ const ConsultarUsuario = ({ onVolver }) => {
             </div>
           )}
 
-          {/* Tabla */}
+          {/* Tabla + Buscador (server-side con paginación calcada) */}
           {!usuarioSeleccionado && !modoEdicion && (
             <>
               <div className='mb-3 position-relative'>
@@ -189,60 +236,78 @@ const ConsultarUsuario = ({ onVolver }) => {
                   className='form-control border-secondary ps-5 py-3'
                   placeholder='Buscar por usuario, email o rol...'
                   value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
+                  onChange={handleBusqueda}
                   disabled={loading}
                 />
               </div>
 
-              {usuariosFiltrados.length > 0 ? (
-                <div className='table-responsive rounded border'>
-                  <table className='table table-hover align-middle mb-0'>
-                    <thead className='bg-light'>
-                      <tr>
-                        <th className='border-end text-center'>Usuario</th>
-                        <th className='border-end text-center'>Email</th>
-                        <th className='border-end text-center'>Rol</th>
-                        <th className='text-center'>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {usuariosFiltrados.map((usuario) => (
-                        <tr key={usuario.username}>
-                          <td className='border-end'>{usuario.username}</td>
-                          <td className='border-end'>{usuario.email}</td>
-                          <td className='border-end'>
-                            <span
-                              className={`badge ${usuario.rol === 'administrador'
-                                ? 'bg-danger'
-                                : usuario.rol === 'jefe_cuartel'
-                                  ? 'bg-warning'
-                                  : 'bg-info'
-                                }`}
-                            >
-                              {usuario.rol}
-                            </span>
-                          </td>
-                          <td className='text-center'>
-                            <button
-                              className='btn btn-outline-secondary btn-sm me-2'
-                              onClick={() => seleccionarUsuario(usuario)}
-                              disabled={loading}
-                            >
-                              <i className='bi bi-eye me-1'></i> Ver
-                            </button>
-                            <button
-                              className='btn btn-outline-danger btn-sm'
-                              onClick={() => eliminarUsuario(usuario)}
-                              disabled={loading}
-                            >
-                              <i className='bi bi-trash'></i>
-                            </button>
-                          </td>
+              {usuarios.length > 0 ? (
+                <>
+                  <div className='table-responsive rounded border'>
+                    <table className='table table-hover align-middle mb-0'>
+                      <thead className='bg-light'>
+                        <tr>
+                          <th className='border-end text-center'>Usuario</th>
+                          <th className='border-end text-center'>Email</th>
+                          <th className='border-end text-center'>Rol</th>
+                          <th className='text-center'>Acciones</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {usuarios.map((usuario) => (
+                          <tr key={usuario.id}>
+                            <td className='border-end'>{usuario.usuario || usuario.username}</td>
+                            <td className='border-end'>{usuario.email}</td>
+                            <td className='border-end'>
+                              <span
+                                className={`badge ${
+                                  (usuario.rol || '').toLowerCase() === 'administrador'
+                                    ? 'bg-danger'
+                                    : (usuario.rol || '').toLowerCase() === 'jefe_cuartel'
+                                      ? 'bg-warning'
+                                      : 'bg-info'
+                                }`}
+                              >
+                                {usuario.rol}
+                              </span>
+                            </td>
+                            <td className='text-center'>
+                              <button
+                                className='btn btn-outline-secondary btn-sm me-2'
+                                onClick={() => seleccionarUsuario(usuario)}
+                                disabled={loading}
+                              >
+                                <i className='bi bi-eye me-1'></i> Ver
+                              </button>
+                              <button
+                                className='btn btn-outline-danger btn-sm'
+                                onClick={() => eliminarUsuario(usuario)}
+                                disabled={loading}
+                              >
+                                <i className='bi bi-trash'></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Paginación (calcada a RegistrarGuardia) */}
+                  <div className="d-flex justify-content-center mb-3 py-2">
+                    {Array.from({ length: totalPaginas }, (_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setPaginaActual(i + 1)}
+                        type='button'
+                        className={`btn btn-sm me-1 custom-page-btn ${paginaActual === (i + 1) ? 'active' : ''}`}
+                        disabled={loading}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                </>
               ) : (
                 !loading && <div className='text-center py-3 text-muted'>No se encontraron usuarios que coincidan con la búsqueda.</div>
               )}
@@ -256,8 +321,8 @@ const ConsultarUsuario = ({ onVolver }) => {
               <div className='d-flex align-items-center justify-content-between mb-3'>
                 <h3 className='text-dark mb-0'>
                   {modoEdicion
-                    ? `✏️ Editando: ${usuarioSeleccionado.username}`
-                    : `👤 Detalles: ${usuarioSeleccionado.username}`}
+                    ? `✏️ Editando: ${usuarioSeleccionado.usuario || usuarioSeleccionado.username}`
+                    : `👤 Detalles: ${usuarioSeleccionado.usuario || usuarioSeleccionado.username}`}
                 </h3>
 
                 <div>
@@ -380,9 +445,7 @@ const ConsultarUsuario = ({ onVolver }) => {
 
           {/* Botón Volver al menú */}
           <div className='d-grid gap-3 py-4'>
-            <button type='button' className='btn btn-secondary' onClick={onVolver} disabled={loading}>
-              Volver al menú
-            </button>
+            <BackToMenuButton onClick={onVolver} />
           </div>
         </div>
       </div>

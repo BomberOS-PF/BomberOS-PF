@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { apiRequest, API_URLS } from '../../config/api'
 import { ShieldUser, User2, UsersIcon } from 'lucide-react'
 // import '../DisenioFormulario/DisenioFormulario.css'
+import { BackToMenuButton } from '../Common/Button'
 
 const ConsultarRol = ({ onVolver }) => {
   const [roles, setRoles] = useState([])
@@ -315,9 +316,7 @@ const ConsultarRol = ({ onVolver }) => {
 
           {/* Botón volver menú */}
           <div className="d-grid gap-3 py-4">
-            <button type="button" className="btn btn-secondary" onClick={onVolver} disabled={loading}>
-              Volver al menú
-            </button>
+            <BackToMenuButton onClick={onVolver} />
           </div>
         </div>
       </div>
