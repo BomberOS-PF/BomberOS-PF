@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
 import { FileText, Search, Calendar, Filter } from 'lucide-react'
 import '../../DisenioFormulario/DisenioFormulario.css'
@@ -10,7 +10,8 @@ import IncendioEstructural from '../TipoIncidente/IncendioEstructural/IncendioEs
 import IncendioForestal from '../TipoIncidente/IncendioForestal/IncendioForestal'
 import MaterialPeligroso from '../TipoIncidente/MaterialPeligroso/MaterialPeligroso'
 import Rescate from '../TipoIncidente/Rescate/Rescate'
-import Pagination from '../../Common/Pagination'
+
+const PAGE_SIZE_DEFAULT = 10
 
 const FiltrosIniciales = {
   busqueda: '',
@@ -33,7 +34,14 @@ const TIPO_INCIDENTE_COMPONENTS = {
 const ConsultarIncidente = ({ onVolverMenu }) => {
   
   const [filtros, setFiltros] = useState(FiltrosIniciales)
-  const [loadingFiltros, setLoadingFiltros] = useState(false)
+  const [pagina, setPagina] = useState(1)
+  const [limite, setLimite] = useState(PAGE_SIZE_DEFAULT)
+  const [total, setTotal] = useState(0)
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  // incidente con detalle (de /incidentes/:id/detalle)
   const [detalle, setDetalle] = useState(null)
   const [modoEdicion, setModoEdicion] = useState(false)
   const [mensaje, setMensaje] = useState('')
@@ -65,30 +73,60 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
     const { name, value } = e.target
     setFiltros(prev => ({ ...prev, [name]: value }))
   }
-  
-  // Build query (memorizado) según filtros
-  const buildQuery = useMemo(() => {
-    return (page, limit) => {
-      const params = new URLSearchParams({ pagina: page, limite: limit })
+
+  // ELIMINADO: useEffect duplicado - ahora se maneja en el useEffect principal más abajo
+
+  // ELIMINADO: buscarIncidentePendiente - ahora se usa verDetalle directamente
+
+  // ------- Listado -------
+  const buscar = async (resetPagina = true) => {
+    try {
+      setLoading(true)
+      setError('')
+      if (resetPagina) setPagina(1)
+
+      const params = new URLSearchParams({
+        pagina: resetPagina ? 1 : pagina,
+        limite
+      })
       if (filtros.busqueda) params.append('busqueda', filtros.busqueda.trim())
       if (filtros.tipo) params.append('tipo', filtros.tipo)
       if (filtros.desde) params.append('desde', filtros.desde)
       if (filtros.hasta) params.append('hasta', filtros.hasta)
-      return `${API_URLS.incidentes.getAll}?${params.toString()}`
+
+      const url = `${API_URLS.incidentes.getAll}?${params.toString()}`
+      const res = await apiRequest(url, { method: 'GET' })
+
+      if (!res) {
+        setItems([])
+        setTotal(0)
+      } else if (Array.isArray(res)) {
+        setItems(res)
+        setTotal(res.length || 0)
+      } else if (typeof res === 'object') {
+        setItems(res.data || [])
+        setTotal(res.total || (res.data ? res.data.length : 0))
+      } else {
+        setError(typeof res === 'string' ? res : 'Respuesta inesperada del servidor')
+        setItems([])
+        setTotal(0)
+      }
+    } catch (e) {
+      setError(e?.message || 'Error al consultar incidentes')
+      setItems([])
+      setTotal(0)
+    } finally {
+      setLoading(false)
     }
-  }, [filtros])
-
-  // Fetch que usa Pagination internamente
-  const fetchPage = async ({ page, limit }) => {
-    const url = buildQuery(page, limit)
-    const res = await apiRequest(url, { method: 'GET' })
-
-    if (!res) return { items: [], total: 0 }
-    if (Array.isArray(res)) return { items: res, total: res.length }
-    if (typeof res === 'object') return { items: res.data || [], total: res.total ?? (res.data ? res.data.length : 0) }
-    return Promise.reject(new Error(typeof res === 'string' ? res : 'Respuesta inesperada del servidor'))
   }
 
+  const cambiarPagina = async (nueva) => {
+    if (nueva < 1 || nueva > totalPaginas) return
+    setPagina(nueva)
+    await buscar(false)
+  }
+
+  // ------- Ver detalle -------
   const verDetalle = async (id) => {
     console.log('👁️ verDetalle llamado con ID:', id)
     try {
@@ -105,7 +143,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
       console.error('❌ Error en verDetalle:', e)
       setError(e?.message || 'No se pudo cargar el detalle')
     } finally {
-      setLoadingFiltros(false)
+      setLoading(false)
     }
   }
 
@@ -279,10 +317,14 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
     }
 
     switch (Number(idTipoIncidente)) {
+      // 1) Accidente de Tránsito (ajustar ID real)
       case 1:
         return (
           <>
-            <div className="mb-2"><strong>Causa:</strong> {detalleEspecifico?.causa?.descripcion || '-'}</div>
+            <div className="mb-2">
+              <strong>Causa:</strong> {detalleEspecifico?.causa?.descripcion || '-'}
+            </div>
+
             <div className="mb-2">
               <strong>Vehículos involucrados</strong>
               <div className="table-responsive mt-2">
@@ -308,7 +350,9 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
               <strong>Damnificados</strong>
               <div className="table-responsive mt-2">
                 <table className="table table-dark table-striped table-sm align-middle">
-                  <thead><tr><th>Nombre</th><th>DNI</th><th>Teléfono</th><th>Falleció</th></tr></thead>
+                  <thead>
+                    <tr><th>Nombre</th><th>DNI</th><th>Teléfono</th><th>Falleció</th></tr>
+                  </thead>
                   <tbody>
                     {(detalleEspecifico?.damnificados || []).map((d, i) => (
                       <tr key={i}>
@@ -329,10 +373,22 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
       case 2:
         return (
           <div className="row g-3">
-            <div className="col-md-4"><span className="badge bg-danger">Fenómeno</span><div>{detalleEspecifico?.fenomeno || '-'}</div></div>
-            <div className="col-md-4"><span className="badge bg-danger">Intensidad</span><div>{detalleEspecifico?.intensidad || '-'}</div></div>
-            <div className="col-md-4"><span className="badge bg-danger">Duración</span><div>{detalleEspecifico?.duracion || '-'}</div></div>
-            <div className="col-12"><span className="badge bg-danger">Detalle</span><div>{detalleEspecifico?.detalle || '-'}</div></div>
+            <div className="col-md-4">
+              <span className="badge bg-danger">Fenómeno</span>
+              <div>{detalleEspecifico?.fenomeno || '-'}</div>
+            </div>
+            <div className="col-md-4">
+              <span className="badge bg-danger">Intensidad</span>
+              <div>{detalleEspecifico?.intensidad || '-'}</div>
+            </div>
+            <div className="col-md-4">
+              <span className="badge bg-danger">Duración</span>
+              <div>{detalleEspecifico?.duracion || '-'}</div>
+            </div>
+            <div className="col-12">
+              <span className="badge bg-danger">Detalle</span>
+              <div>{detalleEspecifico?.detalle || '-'}</div>
+            </div>
           </div>
         )
 
@@ -383,7 +439,11 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
             <div className="col-md-4"><span className="badge bg-danger">Acción sobre material</span><div>{detalleEspecifico?.accionMaterial || '-'}</div></div>
             <div className="col-12">
               <span className="badge bg-danger">Acciones sobre personas</span>
-              <div>{Array.isArray(detalleEspecifico?.accionesPersona) && detalleEspecifico.accionesPersona.length > 0 ? detalleEspecifico.accionesPersona.join(', ') : '-'}</div>
+              <div>
+                {Array.isArray(detalleEspecifico?.accionesPersona) && detalleEspecifico.accionesPersona.length > 0
+                  ? detalleEspecifico.accionesPersona.join(', ')
+                  : '-'}
+              </div>
             </div>
             <div className="col-12"><span className="badge bg-danger">Observaciones</span><div>{detalleEspecifico?.observaciones || detalleEspecifico?.detalle || '-'}</div></div>
           </div>
@@ -398,6 +458,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
             <div className="col-12"><span className="badge bg-danger">Detalle</span><div>{detalleEspecifico?.detalle || '-'}</div></div>
           </div>
         )
+
       default:
         return <pre className="mb-0">{JSON.stringify(detalleEspecifico, null, 2)}</pre>
     }
@@ -600,7 +661,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
     )
   }
 
-  // Vista Listado con paginación inteligente
+  // ------- Vista Listado -------
   return (
     <div className='container-fluid py-5'>
       <div className='text-center mb-4'>
