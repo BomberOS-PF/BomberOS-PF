@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react'
+// src/Component/GrupoGuardia/ConsultarGrupoGuardia/ConsultarGrupoGuardia.jsx
+import React, { useState } from 'react'
 import { API_URLS } from '../../../config/api'
 import RegistrarGuardia from '../RegistrarGuardia/RegistrarGuardia'
 import '../RegistrarGuardia/RegistrarGuardia.css'
@@ -8,6 +9,8 @@ import * as bootstrap from 'bootstrap'
 import { User2, UsersIcon } from 'lucide-react'
 import { BackToMenuButton } from '../../Common/Button'
 import Pagination from '../../Common/Pagination'
+
+const PAGE_SIZE_DEFAULT = 10
 
 const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
   const [busqueda, setBusqueda] = useState('')
@@ -23,12 +26,10 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
   // Carga/acciones locales (el Pagination maneja su propio loading de lista)
   const [loadingAccion, setLoadingAccion] = useState(false)
 
-  // Forzar recarga del Pagination (deps)
+  // Forzar recarga del Pagination (como en Bomberos/Incidentes)
   const [refreshKey, setRefreshKey] = useState(0)
 
-  const handleBusqueda = (e) => {
-    setBusqueda(e.target.value)
-  }
+  const handleBusqueda = (e) => setBusqueda(e.target.value)
 
   const confirmarEliminacion = (grupo) => {
     setGrupoAEliminar(grupo)
@@ -66,6 +67,31 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
   const editarGrupo = (grupo) => {
     setGrupoSeleccionado(grupo)
     setModoEdicion(true)
+  }
+
+  // ---------- fetchPage para Pagination (server-side) ----------
+  const fetchGruposPage = async ({ page, limit, filters }) => {
+    const params = new URLSearchParams({
+      pagina: page,
+      limite: limit
+    })
+    // el backend espera "busqueda"
+    if (filters?.q) params.append('busqueda', String(filters.q).trim())
+
+    const url = `${API_URLS.grupos.buscar}?${params.toString()}`
+    const res = await fetch(url)
+    const data = await res.json().catch(() => ({}))
+
+    if (res.ok && data?.success) {
+      const arr = Array.isArray(data.data) ? data.data : []
+      const total = Number.isFinite(data.total) ? data.total : arr.length
+      // mensajito de vacío
+      setMensaje(arr.length === 0 ? 'No hay resultados para la búsqueda.' : '')
+      return { data: arr, total }
+    }
+
+    // error: devolvemos vacío y dejamos que el Pagination exponga el error
+    throw new Error(data?.message || 'Error al obtener grupos')
   }
 
   // Vista edición
@@ -134,93 +160,92 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
             />
           </div>
 
-          {/* 🔽 Usa el Pagination para renderizar la tabla y la barra (oculta si total <= limit) */}
+          {/* ✅ Pagination igual que en Incidentes/Bomberos */}
           <Pagination
-            defaultPage={1}
-            defaultLimit={10}
-            hideIfSinglePage
-            deps={[busqueda, refreshKey]}
-            fetchPage={async ({ page, limit }) => {
-              // Llamada server-side paginada
-              const url = `${API_URLS.grupos.buscar}?pagina=${page}&limite=${limit}&busqueda=${encodeURIComponent(busqueda || '')}`
-              const res = await fetch(url)
-              const data = await res.json()
-
-              if (!res.ok || !data?.success) {
-                throw new Error(data?.message || 'Error al obtener grupos')
-              }
-
-              const items = Array.isArray(data.data) ? data.data : []
-              const total = Number.isFinite(data.total) ? data.total : items.length
-
-              // Mensaje de vacío
-              setMensaje(items.length === 0 ? 'No hay resultados para la búsqueda.' : '')
-
-              return { items, total }
+            fetchPage={fetchGruposPage}
+            initialPage={1}
+            initialPageSize={PAGE_SIZE_DEFAULT}
+            // filtros + tick para recargar
+            filters={{ q: busqueda, _tick: refreshKey }}
+            showControls
+            labels={{
+              prev: '‹ Anterior',
+              next: 'Siguiente ›',
+              of: '/',
+              showing: (shown, total) => `Mostrando ${shown} de ${total} grupos`
             }}
           >
-            {(items, { loading, error }) => (
+            {({ items, loading, error }) => (
               <>
-                {(!loading && items.length === 0 && mensaje) && (
-                  <div className="text-center py-3 text-muted">{mensaje}</div>
+                {error && <div className="alert alert-danger mb-3">{String(error)}</div>}
+
+                {loading && (
+                  <div className="text-center mb-3">
+                    <div className="spinner-border text-danger" role="status"></div>
+                  </div>
                 )}
 
-                <div className="table-responsive rounded border">
-                  <table className="table table-hover align-middle mb-0">
-                    <thead className="bg-light">
-                      <tr>
-                        <th className="border-end text-center">Nombre</th>
-                        <th className="border-end text-center">Descripción</th>
-                        <th className="text-center">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {items.map((grupo) => (
-                        <tr key={grupo.idGrupo}>
-                          <td className="border-end px-3">{grupo.nombre}</td>
-                          <td className="border-end px-3">{grupo.descripcion}</td>
-                          <td className="border-end">
-                            <button
-                              className="btn btn-outline-secondary btn-sm me-2"
-                              onClick={async () => {
-                                // Cargar bomberos y abrir detalle
-                                try {
-                                  setLoadingAccion(true)
-                                  const res = await fetch(API_URLS.grupos.obtenerBomberosDelGrupo(grupo.idGrupo))
-                                  const data = await res.json()
-                                  if (res.ok && data.success) {
-                                    setBomberosDelGrupo(data.data || [])
-                                    setGrupoSeleccionado(grupo) // usa el grupo del item actual
-                                    setMensaje('')
-                                  } else {
-                                    setMensaje(data.message || 'No se pudieron obtener los bomberos del grupo')
-                                  }
-                                } catch (e) {
-                                  setMensaje('Error de conexión al obtener bomberos del grupo')
-                                } finally {
-                                  setLoadingAccion(false)
-                                }
-                              }}
-                              disabled={loading || loadingAccion}
-                            >
-                              <i className="bi bi-eye me-1"></i> Ver
-                            </button>
-                            <button
-                              className="btn btn-outline-danger btn-sm"
-                              onClick={() => confirmarEliminacion(grupo)}
-                              disabled={loading || loadingAccion}
-                              title="Eliminar grupo"
-                            >
-                              <i className="bi bi-trash"></i>
-                            </button>
-                          </td>
+                {items.length > 0 ? (
+                  <div className="table-responsive rounded border">
+                    <table className="table table-hover align-middle mb-0">
+                      <thead className="bg-light">
+                        <tr>
+                          <th className="border-end text-center">Nombre</th>
+                          <th className="border-end text-center">Descripción</th>
+                          <th className="text-center">Acciones</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {error && <div className="alert alert-danger mt-2">{error}</div>}
+                      </thead>
+                      <tbody>
+                        {items.map((grupo) => (
+                          <tr key={grupo.idGrupo}>
+                            <td className="border-end px-3">{grupo.nombre}</td>
+                            <td className="border-end px-3">{grupo.descripcion}</td>
+                            <td className="border-end">
+                              <button
+                                className="btn btn-outline-secondary btn-sm me-2"
+                                onClick={async () => {
+                                  try {
+                                    setLoadingAccion(true)
+                                    const res = await fetch(API_URLS.grupos.obtenerBomberosDelGrupo(grupo.idGrupo))
+                                    const data = await res.json()
+                                    if (res.ok && data.success) {
+                                      setBomberosDelGrupo(data.data || [])
+                                      setGrupoSeleccionado(grupo)
+                                      setMensaje('')
+                                    } else {
+                                      setMensaje(data.message || 'No se pudieron obtener los bomberos del grupo')
+                                    }
+                                  } catch (e) {
+                                    setMensaje('Error de conexión al obtener bomberos del grupo')
+                                  } finally {
+                                    setLoadingAccion(false)
+                                  }
+                                }}
+                                disabled={loading || loadingAccion}
+                              >
+                                <i className="bi bi-eye me-1"></i> Ver
+                              </button>
+                              <button
+                                className="btn btn-outline-danger btn-sm"
+                                onClick={() => confirmarEliminacion(grupo)}
+                                disabled={loading || loadingAccion}
+                                title="Eliminar grupo"
+                              >
+                                <i className="bi bi-trash"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  !loading && (
+                    <div className="text-center py-3 text-muted">
+                      {mensaje || 'No hay resultados para la búsqueda.'}
+                    </div>
+                  )
+                )}
               </>
             )}
           </Pagination>
