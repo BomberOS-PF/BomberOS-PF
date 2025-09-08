@@ -580,7 +580,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
                 <div className='col-md-3'>
                   <label className='form-label text-dark fw-semibold'>Tipo de Incidente</label>
                   <select
-                    className='form-select border-secondary'
+                    className='text-dark form-select border-secondary'
                     name='tipo'
                     value={filtros.tipo}
                     onChange={handleChange}
