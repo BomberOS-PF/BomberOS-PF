@@ -1,88 +1,43 @@
+// src/Component/Usuario/ConsultarUsuario/ConsultarUsuario.jsx
 import { useState, useEffect } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
 import { UsersIcon, Shield } from 'lucide-react'
 import { BackToMenuButton } from '../../Common/Button'
+import Pagination from '../../Common/Pagination'
 import '../../DisenioFormulario/DisenioFormulario.css'
 
-const ConsultarUsuario = ({ onVolver }) => {
-  // === Paginación (calcado a RegistrarGuardia) ===
-  const [busqueda, setBusqueda] = useState('')
-  const [paginaActual, setPaginaActual] = useState(1)
-  const [limite] = useState(10)
-  const [total, setTotal] = useState(0)
+const PAGE_SIZE_DEFAULT = 10
 
-  // Datos
-  const [usuarios, setUsuarios] = useState([])
+const ConsultarUsuario = ({ onVolver }) => {
+  // Filtros / recarga
+  const [busqueda, setBusqueda] = useState('')
+  const [reloadTick, setReloadTick] = useState(0)
+
+  // Datos auxiliares
   const [roles, setRoles] = useState([])
 
   // UI / Edición
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null)
   const [modoEdicion, setModoEdicion] = useState(false)
   const [mensaje, setMensaje] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  // Cargar usuarios cuando cambian página o búsqueda (server-side)
-  useEffect(() => {
-    cargarUsuarios()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paginaActual, busqueda])
+  const [loadingAccion, setLoadingAccion] = useState(false)
 
   // Cargar roles una vez
   useEffect(() => {
+    const cargarRoles = async () => {
+      try {
+        const response = await apiRequest(API_URLS.roles.getAll)
+        if (response?.success) setRoles(response.data || [])
+      } catch (error) {
+        console.error('❌ Error al cargar roles:', error)
+      }
+    }
     cargarRoles()
   }, [])
 
-  const cargarUsuarios = async () => {
-    try {
-      setLoading(true)
-      const params = new URLSearchParams({
-        pagina: String(paginaActual),
-        limite: String(limite),
-        busqueda: busqueda || ''
-      }).toString()
-
-      const url = `${API_URLS.usuarios.getAll}?${params}`
-      const response = await apiRequest(url, { method: 'GET' })
-
-      if (response?.success) {
-        const data = Array.isArray(response.data) ? response.data : []
-        const totalSrv = Number.isFinite(response.total) ? response.total : data.length
-
-        // Si quedamos en una página vacía (por eliminación o filtro) y hay páginas previas, retroceder
-        const totalPaginas = Math.max(1, Math.ceil(totalSrv / limite))
-        if (paginaActual > totalPaginas && totalPaginas >= 1) {
-          setPaginaActual(totalPaginas)
-          return
-        }
-
-        setUsuarios(data)
-        setTotal(totalSrv)
-        setMensaje(totalSrv === 0 ? 'No hay usuarios para los criterios de búsqueda.' : '')
-      } else {
-        throw new Error(response?.message || 'Error al obtener usuarios')
-      }
-    } catch (error) {
-      console.error('❌ Error al cargar usuarios:', error)
-      setUsuarios([])
-      setTotal(0)
-      setMensaje(`Error al cargar usuarios: ${error.message}`)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const cargarRoles = async () => {
-    try {
-      const response = await apiRequest(API_URLS.roles.getAll)
-      if (response?.success) setRoles(response.data || [])
-    } catch (error) {
-      console.error('❌ Error al cargar roles:', error)
-    }
-  }
-
   const handleBusqueda = (e) => {
     setBusqueda(e.target.value)
-    setPaginaActual(1) // reset de página (igual que RegistrarGuardia)
+    // Pagination resetea página en cambios de filters
   }
 
   const seleccionarUsuario = (usuario) => {
@@ -93,25 +48,52 @@ const ConsultarUsuario = ({ onVolver }) => {
 
   const activarEdicion = () => setModoEdicion(true)
 
+  // ---- fetchPage para Pagination (server-side) ----
+  const fetchUsuariosPage = async ({ page, limit, filters }) => {
+    const params = new URLSearchParams({
+      pagina: String(page),
+      limite: String(limit),
+      busqueda: (filters?.q || '').toString()
+    }).toString()
+
+    const url = `${API_URLS.usuarios.getAll}?${params}`
+    const response = await apiRequest(url, { method: 'GET' })
+
+    if (!response?.success) {
+      throw new Error(response?.message || 'Error al obtener usuarios')
+    }
+
+    const data = Array.isArray(response.data) ? response.data : []
+    const totalSrv = Number.isFinite(response.total) ? response.total : data.length
+
+    if (totalSrv === 0) {
+      setMensaje('No hay usuarios para los criterios de búsqueda.')
+    } else {
+      setMensaje('')
+    }
+
+    return { data, total: totalSrv }
+  }
+
   const guardarCambios = async (datosActualizados) => {
-    setLoading(true)
+    setLoadingAccion(true)
 
     const usuarioValue = datosActualizados.usuario || datosActualizados.username || ''
     if (!usuarioValue.trim()) {
       setMensaje('El nombre de usuario es obligatorio')
-      setLoading(false)
+      setLoadingAccion(false)
       setTimeout(() => setMensaje(''), 2500)
       return
     }
     if (!datosActualizados.email?.trim()) {
       setMensaje('El email es obligatorio')
-      setLoading(false)
+      setLoadingAccion(false)
       setTimeout(() => setMensaje(''), 2500)
       return
     }
     if (!datosActualizados.idRol) {
       setMensaje('Debe seleccionar un rol')
-      setLoading(false)
+      setLoadingAccion(false)
       setTimeout(() => setMensaje(''), 2500)
       return
     }
@@ -133,8 +115,8 @@ const ConsultarUsuario = ({ onVolver }) => {
         setTimeout(() => {
           setUsuarioSeleccionado(null)
           setMensaje('')
-        }, 1500)
-        cargarUsuarios()
+          setReloadTick(t => t + 1) // recarga el listado
+        }, 1200)
       } else {
         throw new Error(response?.message || 'Error al guardar')
       }
@@ -149,7 +131,7 @@ const ConsultarUsuario = ({ onVolver }) => {
       )
       setTimeout(() => setMensaje(''), 2500)
     } finally {
-      setLoading(false)
+      setLoadingAccion(false)
     }
   }
 
@@ -157,39 +139,36 @@ const ConsultarUsuario = ({ onVolver }) => {
     const nombre = usuario.username || usuario.usuario
     if (!window.confirm(`¿Estás seguro de que querés eliminar el usuario "${nombre}"?`)) return
     try {
+      setLoadingAccion(true)
       const response = await apiRequest(API_URLS.usuarios.delete(usuario.id), { method: 'DELETE' })
       if (response?.success) {
         setMensaje('✅ Usuario eliminado correctamente')
 
-        // Si al eliminar queda vacía la página actual y no es la primera, retroceder una página
-        const quedaVacia = usuarios.length === 1 && paginaActual > 1
-        if (quedaVacia) {
-          setPaginaActual(prev => Math.max(1, prev - 1))
-        } else {
-          await cargarUsuarios()
-        }
-
+        // Si el eliminado estaba en detalle, limpiamos
         if (usuarioSeleccionado?.id === usuario.id) {
           setUsuarioSeleccionado(null)
           setModoEdicion(false)
         }
+
+        // refrescar la grilla
+        setReloadTick(t => t + 1)
       } else {
         throw new Error(response?.message || 'Error al eliminar usuario')
       }
     } catch (error) {
       console.error('❌ Error al eliminar usuario:', error)
       setMensaje(`Error al eliminar usuario: ${error.message}`)
+    } finally {
+      setLoadingAccion(false)
     }
   }
 
-  const volverListado = async () => {
+  const volverListado = () => {
     setUsuarioSeleccionado(null)
     setModoEdicion(false)
     setMensaje('')
-    await cargarUsuarios()
+    setReloadTick(t => t + 1) // recarga
   }
-
-  const totalPaginas = Math.max(1, Math.ceil(total / limite))
 
   return (
     <div className='container-fluid py-5'>
@@ -215,18 +194,14 @@ const ConsultarUsuario = ({ onVolver }) => {
 
         <div className='card-body'>
           {mensaje && (
-            <div className={`alert ${mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' : 'alert-info'}`}>
+            <div className={`alert ${
+              mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' : 'alert-info'
+            }`}>
               {mensaje}
             </div>
           )}
 
-          {loading && (
-            <div className='text-center mb-3'>
-              <div className='spinner-border text-danger' role='status'></div>
-            </div>
-          )}
-
-          {/* Tabla + Buscador (server-side con paginación calcada) */}
+          {/* Listado + buscador con Pagination */}
           {!usuarioSeleccionado && !modoEdicion && (
             <>
               <div className='mb-3 position-relative'>
@@ -237,87 +212,104 @@ const ConsultarUsuario = ({ onVolver }) => {
                   placeholder='Buscar por usuario, email o rol...'
                   value={busqueda}
                   onChange={handleBusqueda}
-                  disabled={loading}
+                  disabled={loadingAccion}
                 />
               </div>
 
-              {usuarios.length > 0 ? (
-                <>
-                  <div className='table-responsive rounded border'>
-                    <table className='table table-hover align-middle mb-0'>
-                      <thead className='bg-light'>
-                        <tr>
-                          <th className='border-end text-center'>Usuario</th>
-                          <th className='border-end text-center'>Email</th>
-                          <th className='border-end text-center'>Rol</th>
-                          <th className='text-center'>Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {usuarios.map((usuario) => (
-                          <tr key={usuario.id}>
-                            <td className='border-end'>{usuario.usuario || usuario.username}</td>
-                            <td className='border-end'>{usuario.email}</td>
-                            <td className='border-end'>
-                              <span
-                                className={`badge ${
-                                  (usuario.rol || '').toLowerCase() === 'administrador'
-                                    ? 'bg-danger'
-                                    : (usuario.rol || '').toLowerCase() === 'jefe_cuartel'
-                                      ? 'bg-warning'
-                                      : 'bg-info'
-                                }`}
-                              >
-                                {usuario.rol}
-                              </span>
-                            </td>
-                            <td className='text-center'>
-                              <button
-                                className='btn btn-outline-secondary btn-sm me-2'
-                                onClick={() => seleccionarUsuario(usuario)}
-                                disabled={loading}
-                              >
-                                <i className='bi bi-eye me-1'></i> Ver
-                              </button>
-                              <button
-                                className='btn btn-outline-danger btn-sm'
-                                onClick={() => eliminarUsuario(usuario)}
-                                disabled={loading}
-                              >
-                                <i className='bi bi-trash'></i>
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+              <Pagination
+                fetchPage={fetchUsuariosPage}
+                initialPage={1}
+                initialPageSize={PAGE_SIZE_DEFAULT}   // ✅ 10 por página
+                filters={{ q: busqueda, _tick: reloadTick }}
+                showControls
+                labels={{
+                  prev: '‹ Anterior',
+                  next: 'Siguiente ›',
+                  of: '/',
+                  showing: (shown, total) => `Mostrando ${shown} de ${total} usuarios`
+                }}
+              >
+                {({ items, loading, error }) => (
+                  <>
+                    {error && (
+                      <div className="alert alert-danger d-flex align-items-center">
+                        <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                        {String(error)}
+                      </div>
+                    )}
 
-                  {/* Paginación (calcada a RegistrarGuardia) */}
-                  <div className="d-flex justify-content-center mb-3 py-2">
-                    {Array.from({ length: totalPaginas }, (_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setPaginaActual(i + 1)}
-                        type='button'
-                        className={`btn btn-sm me-1 custom-page-btn ${paginaActual === (i + 1) ? 'active' : ''}`}
-                        disabled={loading}
-                      >
-                        {i + 1}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                !loading && <div className='text-center py-3 text-muted'>No se encontraron usuarios que coincidan con la búsqueda.</div>
-              )}
+                    {loading && (
+                      <div className='text-center mb-3'>
+                        <div className='spinner-border text-danger' role='status'></div>
+                      </div>
+                    )}
+
+                    {items.length > 0 ? (
+                      <div className='table-responsive rounded border'>
+                        <table className='table table-hover align-middle mb-0'>
+                          <thead className='bg-light'>
+                            <tr>
+                              <th className='border-end text-center'>Usuario</th>
+                              <th className='border-end text-center'>Email</th>
+                              <th className='border-end text-center'>Rol</th>
+                              <th className='text-center'>Acciones</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {items.map((usuario) => (
+                              <tr key={usuario.id}>
+                                <td className='border-end'>{usuario.usuario || usuario.username}</td>
+                                <td className='border-end'>{usuario.email}</td>
+                                <td className='border-end'>
+                                  <span
+                                    className={`badge ${
+                                      (usuario.rol || '').toLowerCase() === 'administrador'
+                                        ? 'bg-danger'
+                                        : (usuario.rol || '').toLowerCase() === 'jefe_cuartel'
+                                          ? 'bg-warning'
+                                          : 'bg-info'
+                                    }`}
+                                  >
+                                    {usuario.rol}
+                                  </span>
+                                </td>
+                                <td className='text-center'>
+                                  <button
+                                    className='btn btn-outline-secondary btn-sm me-2'
+                                    onClick={() => seleccionarUsuario(usuario)}
+                                    disabled={loading || loadingAccion}
+                                  >
+                                    <i className='bi bi-eye me-1'></i> Ver
+                                  </button>
+                                  <button
+                                    className='btn btn-outline-danger btn-sm'
+                                    onClick={() => eliminarUsuario(usuario)}
+                                    disabled={loading || loadingAccion}
+                                  >
+                                    <i className='bi bi-trash'></i>
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      !loading && (
+                        <div className='text-center py-3 text-muted'>
+                          No se encontraron usuarios que coincidan con la búsqueda.
+                        </div>
+                      )
+                    )}
+                  </>
+                )}
+              </Pagination>
             </>
           )}
 
           {/* Detalles / Edición */}
           {usuarioSeleccionado && (
             <div className='mt-4'>
-              {/* Header */}
               <div className='d-flex align-items-center justify-content-between mb-3'>
                 <h3 className='text-dark mb-0'>
                   {modoEdicion
@@ -330,7 +322,7 @@ const ConsultarUsuario = ({ onVolver }) => {
                     <button
                       className='btn btn-warning btn-sm me-2 d-flex align-items-center gap-1'
                       onClick={activarEdicion}
-                      disabled={loading}
+                      disabled={loadingAccion}
                     >
                       <i className='bi bi-pencil-square'></i> Editar
                     </button>
@@ -338,7 +330,7 @@ const ConsultarUsuario = ({ onVolver }) => {
                   <button
                     className='btn btn-outline-secondary btn-sm d-flex align-items-center gap-1'
                     onClick={volverListado}
-                    disabled={loading}
+                    disabled={loadingAccion}
                   >
                     <i className='bi bi-arrow-left'></i> Volver al listado
                   </button>
@@ -347,7 +339,6 @@ const ConsultarUsuario = ({ onVolver }) => {
 
               <hr className='border-4 border-danger mb-4' />
 
-              {/* Card de detalles o edición */}
               <div className='card bg-light border-0 shadow-sm py-4' style={{borderRadius: '12px'}}>
                 <div className='card-body'>
                   <form
@@ -357,7 +348,6 @@ const ConsultarUsuario = ({ onVolver }) => {
                     }}
                   >
                     <div className='row mb-3'>
-                      {/* Usuario */}
                       <div className='col-md-6 py-3'>
                         <label className='form-label text-dark d-flex align-items-center gap-2'>
                           <i className='bi bi-person text-danger'></i> Nombre de Usuario
@@ -369,11 +359,10 @@ const ConsultarUsuario = ({ onVolver }) => {
                           onChange={(e) =>
                             setUsuarioSeleccionado({ ...usuarioSeleccionado, usuario: e.target.value })
                           }
-                          disabled={!modoEdicion || loading}
+                          disabled={!modoEdicion || loadingAccion}
                         />
                       </div>
 
-                      {/* Password */}
                       <div className='col-md-6 py-3'>
                         <label className='form-label text-dark d-flex align-items-center gap-2'>
                           <i className='bi bi-shield-lock text-warning'></i> Contraseña (nueva)
@@ -386,11 +375,10 @@ const ConsultarUsuario = ({ onVolver }) => {
                           onChange={(e) =>
                             setUsuarioSeleccionado({ ...usuarioSeleccionado, password: e.target.value })
                           }
-                          disabled={!modoEdicion || loading}
+                          disabled={!modoEdicion || loadingAccion}
                         />
                       </div>
 
-                      {/* Email */}
                       <div className='col-md-6 py-3'>
                         <label className='form-label text-dark d-flex align-items-center gap-2'>
                           <i className='bi bi-envelope text-primary'></i> Correo electrónico
@@ -402,11 +390,10 @@ const ConsultarUsuario = ({ onVolver }) => {
                           onChange={(e) =>
                             setUsuarioSeleccionado({ ...usuarioSeleccionado, email: e.target.value })
                           }
-                          disabled={!modoEdicion || loading}
+                          disabled={!modoEdicion || loadingAccion}
                         />
                       </div>
 
-                      {/* Rol */}
                       <div className='col-md-6 py-3'>
                         <label className='form-label text-dark d-flex align-items-center gap-2'>
                           <Shield className='text-primary' /> Rol
@@ -417,7 +404,7 @@ const ConsultarUsuario = ({ onVolver }) => {
                           onChange={(e) =>
                             setUsuarioSeleccionado({ ...usuarioSeleccionado, idRol: e.target.value })
                           }
-                          disabled={!modoEdicion || loading}
+                          disabled={!modoEdicion || loadingAccion}
                         >
                           <option value=''>Seleccione un rol</option>
                           {roles.map((rol) => (
@@ -429,11 +416,10 @@ const ConsultarUsuario = ({ onVolver }) => {
                       </div>
                     </div>
 
-                    {/* Botón guardar solo en edición */}
                     {modoEdicion && (
                       <div className='d-grid gap-3'>
-                        <button type='submit' className='btn btn-danger' disabled={loading}>
-                          {loading ? 'Guardando...' : 'Guardar cambios'}
+                        <button type='submit' className='btn btn-danger' disabled={loadingAccion}>
+                          {loadingAccion ? 'Guardando...' : 'Guardar cambios'}
                         </button>
                       </div>
                     )}
@@ -443,7 +429,6 @@ const ConsultarUsuario = ({ onVolver }) => {
             </div>
           )}
 
-          {/* Botón Volver al menú */}
           <div className='d-grid gap-3 py-4'>
             <BackToMenuButton onClick={onVolver} />
           </div>
