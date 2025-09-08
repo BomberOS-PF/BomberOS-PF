@@ -205,7 +205,6 @@ const ConsultarBombero = ({ onVolver }) => {
                               <th className="border-end text-center">Nombre completo</th>
                               <th className="border-end text-center">DNI</th>
                               <th className="border-end text-center">Teléfono</th>
-                              <th className="border-end text-center">Email</th>
                               <th className="border-end text-center">Plan</th>
                               <th className="text-center">Acciones</th>
                             </tr>
@@ -218,7 +217,6 @@ const ConsultarBombero = ({ onVolver }) => {
                                   <td className="border-end px-3">{bombero.nombre} {bombero.apellido}</td>
                                   <td className="border-end px-3">{bombero.dni}</td>
                                   <td className="border-end px-2">{bombero.telefono || 'N/A'}</td>
-                                  <td className="border-end text-primary">{bombero.correo || 'N/A'}</td>
                                   <td className="border-end">
                                     <span className={`badge ${bombero.esDelPlan ? 'bg-success' : 'bg-secondary'}`}>
                                       {bombero.esDelPlan ? 'Sí' : 'No'}
