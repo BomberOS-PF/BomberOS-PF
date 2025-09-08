@@ -240,8 +240,7 @@ const RegistrarGuardia = ({
                           <th className="border-end text-center">Legajo</th>
                           <th className="border-end text-center">Nombre</th>
                           <th className="border-end text-center">Apellido</th>
-                          <th className="border-end text-center">Teléfono</th>
-                          <th className="text-center">Email</th>
+                          <th className="border-end text-center">Teléfono</th>     
                         </tr>
                       </thead>
 
@@ -284,7 +283,6 @@ const RegistrarGuardia = ({
                               <td className="border-end px-4">{b.nombre}</td>
                               <td className="border-end px-4">{b.apellido}</td>
                               <td className="border-end px-2">{b.telefono}</td>
-                              <td className="text-black">{b.email}</td>
                             </tr>
                           )
                         })}
@@ -316,7 +314,6 @@ const RegistrarGuardia = ({
                       <th className="border-end text-center">Nombre</th>
                       <th className="border-end text-center">Apellido</th>
                       <th className="border-end text-center">Teléfono</th>
-                      <th className="border-end text-center">Email</th>
                       <th className="text-center">Quitar</th>
                     </tr>
                   </thead>
@@ -335,7 +332,6 @@ const RegistrarGuardia = ({
                           <td className="border-end text-center">{b.nombre}</td>
                           <td className="border-end text-center">{b.apellido}</td>
                           <td className="border-end text-center">{b.telefono}</td>
-                          <td className="border-end text-center">{b.email}</td>
                           <td className="text-center">
                             <button
                               onClick={() => quitarDelGrupo(b.dni)}
