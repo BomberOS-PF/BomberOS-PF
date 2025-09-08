@@ -1,62 +1,42 @@
-import { useState, useEffect } from 'react'
+// src/Component/Bombero/ConsultarBombero/ConsultarBombero.jsx
+import { useState } from 'react'
 import { API_URLS } from '../../../config/api'
 import FormularioBombero from '../FormularioBombero/FormularioBombero'
 import { User2, UsersIcon } from 'lucide-react'
-import { BackToMenuButton } from '../../Common/Button'
+import Pagination from '../../Common/Pagination'
+
+const PAGE_SIZE_DEFAULT = 10
 
 const ConsultarBombero = ({ onVolver }) => {
-  // ==== MISMA ESTRUCTURA QUE REGISTRARGUARDIA ====
-  const [busqueda, setBusqueda] = useState('')
-  const [paginaActual, setPaginaActual] = useState(1)
-  const [limite] = useState(10)
-  const [total, setTotal] = useState(0)
-
-  const [bomberos, setBomberos] = useState([])
-
-  // Detalle / Edición
+  const [dniBusqueda, setDniBusqueda] = useState('')
   const [bomberoSeleccionado, setBomberoSeleccionado] = useState(null)
   const [modoEdicion, setModoEdicion] = useState(false)
-
-  // UI
   const [mensaje, setMensaje] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [loadingAccion, setLoadingAccion] = useState(false)
 
-  useEffect(() => {
-    fetchBomberos()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paginaActual, busqueda])
+  // Para forzar recargas del listado sin tocar el estado interno del Pagination
+  const [reloadTick, setReloadTick] = useState(0)
 
-  const fetchBomberos = async () => {
-    setLoading(true)
-    try {
-      const url = `${API_URLS.bomberos.buscar}?pagina=${paginaActual}&limite=${limite}&busqueda=${encodeURIComponent(busqueda)}`
-      const res = await fetch(url)
-      const data = await res.json()
+  // ---- fetchPage para Pagination (server-side) ----
+  const fetchBomberosPage = async ({ page, limit, filters }) => {
+    const params = new URLSearchParams({
+      pagina: page,
+      limite: limit
+    })
+    if (filters?.dni) params.append('busqueda', String(filters.dni).trim())
 
-      if (res.ok && data.success) {
-        // Si el backend ya viene paginado:
-        // - data.data: página actual
-        // - data.total: total global de registros
-        setBomberos(data.data || [])
-        setTotal(data.total || 0)
-        setMensaje('')
-      } else {
-        setBomberos([])
-        setTotal(0)
-        setMensaje(data.message || 'Error al cargar bomberos')
-      }
-    } catch (error) {
-      setBomberos([])
-      setTotal(0)
-      setMensaje('Error de conexión. Verifique que el servidor esté funcionando.')
-    } finally {
-      setLoading(false)
+    const url = `${API_URLS.bomberos.buscar}?${params.toString()}`
+    const res = await fetch(url)
+    const data = await res.json().catch(() => ({}))
+
+    // Soporta tanto {success,data,total} como array simple
+    if (res.ok && data && typeof data === 'object' && 'success' in data) {
+      const arr = Array.isArray(data.data) ? data.data : []
+      const total = Number(data.total) || arr.length
+      return { data: arr, total }
     }
-  }
-
-  const handleBusqueda = (e) => {
-    setBusqueda(e.target.value)
-    setPaginaActual(1) // reset igual que en RegistrarGuardia
+    if (Array.isArray(data)) return { data, total: data.length }
+    return { data: [], total: 0 }
   }
 
   const seleccionarBombero = (bombero) => {
@@ -70,21 +50,11 @@ const ConsultarBombero = ({ onVolver }) => {
   const guardarCambios = async (datosActualizados) => {
     const dni = bomberoSeleccionado?.dni
     if (!dni) {
-      setMensaje('Error: No se pudo identificar el dni del bombero')
+      setMensaje('Error: No se pudo identificar el DNI del bombero')
       return
     }
 
-    // Validaciones básicas contra duplicados (podés delegarlo al backend si ya valida)
-    const otroConMismoEmail = bomberos.find(b =>
-      b.dni !== dni && b.correo?.trim().toLowerCase() === datosActualizados.correo?.trim().toLowerCase()
-    )
-    const otroConMismoLegajo = bomberos.find(b =>
-      b.dni !== dni && (b.legajo || '').trim().toLowerCase() === (datosActualizados.legajo || '').trim().toLowerCase()
-    )
-    if (otroConMismoEmail) return setMensaje('❌ El correo electrónico ya está en uso por otro bombero')
-    if (otroConMismoLegajo) return setMensaje('❌ El legajo ya está en uso por otro bombero')
-
-    setLoading(true)
+    setLoadingAccion(true)
     try {
       const url = API_URLS.bomberos.update(dni)
       const res = await fetch(url, {
@@ -92,61 +62,56 @@ const ConsultarBombero = ({ onVolver }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datosActualizados)
       })
-      const result = await res.json()
+      const result = await res.json().catch(() => ({}))
 
-      if (res.ok && result.success) {
+      if (res.ok && result?.success) {
         setMensaje('✅ Bombero actualizado correctamente. Volviendo al listado...')
         setModoEdicion(false)
         setTimeout(() => {
           setBomberoSeleccionado(null)
           setMensaje('')
-        }, 1500)
-        fetchBomberos()
+          setReloadTick(t => t + 1) // recarga listado
+        }, 1200)
       } else {
-        setMensaje(result.message || result.error || 'Error al guardar los cambios')
+        setMensaje(result?.message || result?.error || 'Error al guardar los cambios')
       }
     } catch {
       setMensaje('Error de conexión al guardar cambios')
     } finally {
-      setLoading(false)
+      setLoadingAccion(false)
     }
   }
 
   const eliminarBombero = async (bombero) => {
     const dni = bombero?.dni
     if (!dni) {
-      setMensaje('Error: No se pudo identificar el dni del bombero')
+      setMensaje('Error: No se pudo identificar el DNI del bombero')
       return
     }
-    if (!window.confirm(`¿Estás seguro de eliminar a ${bombero.nombre || ''} ${bombero.apellido || ''}?`)) return
+    if (!window.confirm(`¿Eliminar al bombero ${bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : ''}?`)) {
+      return
+    }
 
-    setLoading(true)
+    setLoadingAccion(true)
     try {
       const url = API_URLS.bomberos.delete(dni)
       const res = await fetch(url, { method: 'DELETE' })
-      const result = await res.json()
+      const result = await res.json().catch(() => ({}))
 
-      if (res.ok && result.success) {
+      if (res.ok && result?.success) {
         setMensaje('Bombero eliminado correctamente')
-        // Si al eliminar quedara vacía la página y no es la primera, retrocede una
-        const quedaVacia = bomberos.length === 1 && paginaActual > 1
-        if (quedaVacia) {
-          setPaginaActual(prev => Math.max(1, prev - 1))
-        } else {
-          fetchBomberos()
-        }
-
         if (bomberoSeleccionado?.dni === dni) {
           setBomberoSeleccionado(null)
           setModoEdicion(false)
         }
+        setReloadTick(t => t + 1) // recarga listado
       } else {
-        setMensaje(result.message || result.error || 'No se pudo eliminar el bombero')
+        setMensaje(result?.message || result?.error || 'No se pudo eliminar el bombero')
       }
     } catch {
       setMensaje('Error de conexión al eliminar bombero')
     } finally {
-      setLoading(false)
+      setLoadingAccion(false)
     }
   }
 
@@ -154,7 +119,7 @@ const ConsultarBombero = ({ onVolver }) => {
     setBomberoSeleccionado(null)
     setModoEdicion(false)
     setMensaje('')
-    fetchBomberos()
+    setReloadTick(t => t + 1)
   }
 
   return (
@@ -171,7 +136,7 @@ const ConsultarBombero = ({ onVolver }) => {
         </span>
       </div>
 
-      <div className="card shadow-sm border-0 bg-white">
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
         <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <User2 />
           <strong>Listado de Bomberos</strong>
@@ -179,114 +144,126 @@ const ConsultarBombero = ({ onVolver }) => {
 
         <div className="card-body">
           {mensaje && (
-            <div
-              className={`alert ${
-                mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger'
-                : mensaje.includes('✅') ? 'alert-success'
-                : 'alert-info'
-              }`}
-            >
+            <div className={`alert ${
+              mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' :
+              mensaje.includes('✅') ? 'alert-success' : 'alert-info'
+            }`}>
               {mensaje}
             </div>
           )}
 
-          {loading && (
-            <div className="text-center mb-3">
-              <div className="spinner-border text-danger" role="status"></div>
-            </div>
-          )}
-
-          {/* Buscador (igual patrón que RegistrarGuardia: server-side) */}
+          {/* Listado con paginado (oculto cuando hay un bombero seleccionado) */}
           {!bomberoSeleccionado && (
             <>
+              {/* Buscador */}
               <div className="mb-3 position-relative">
                 <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
                 <input
                   type="text"
-                  className="form-control border-secondary ps-5 py-3"
+                  className="form-control ps-5 py-3 border-secondary"
                   placeholder="Buscar por DNI..."
                   value={dniBusqueda}
-                  onChange={(e) => setdniBusqueda(e.target.value)}
-                  disabled={loading}
+                  onChange={(e) => setDniBusqueda(e.target.value)}
+                  disabled={loadingAccion}
                 />
               </div>
 
-              {/* Tabla paginada por backend */}
-              {bomberos.length > 0 ? (
-                <>
-                  <div className="table-responsive rounded border">
-                    <table className="table table-hover align-middle mb-0">
-                      <thead className="bg-light">
-                        <tr>
-                          <th className="border-end text-center">Nombre completo</th>
-                          <th className="border-end text-center">DNI</th>
-                          <th className="border-end text-center">Teléfono</th>
-                          <th className="border-end text-center">Email</th>
-                          <th className="border-end text-center">Plan</th>
-                          <th className="text-center">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {bomberos.map((b) => (
-                          <tr key={b.dni}>
-                            <td className="border-end px-3">{b.nombre} {b.apellido}</td>
-                            <td className="border-end px-3">{b.dni}</td>
-                            <td className="border-end px-2">{b.telefono || 'N/A'}</td>
-                            <td className="border-end text-primary">{b.correo || 'N/A'}</td>
-                            <td className="border-end">
-                              <span className={`badge ${b.esDelPlan ? 'bg-success' : 'bg-secondary'}`}>
-                                {b.esDelPlan ? 'Sí' : 'No'}
-                              </span>
-                            </td>
-                            <td className="text-center">
-                              <button
-                                className="btn btn-outline-secondary btn-sm me-2"
-                                onClick={() => seleccionarBombero(b)}
-                                disabled={loading}
-                              >
-                                <i className="bi bi-eye me-1"></i> Ver
-                              </button>
-                              <button
-                                className="btn btn-outline-danger btn-sm"
-                                onClick={() => eliminarBombero(b)}
-                                disabled={loading}
-                              >
-                                <i className="bi bi-trash"></i>
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+              <Pagination
+                fetchPage={fetchBomberosPage}
+                initialPage={1}
+                initialPageSize={PAGE_SIZE_DEFAULT}   // ✅ 10 ítems por página
+                // incluir reloadTick en filters para que Pagination detecte el cambio y recargue
+                filters={{ dni: dniBusqueda, _tick: reloadTick }}
+                showControls                              // ✅ muestra Prev / Siguiente y “p / total”
+                labels={{
+                  prev: '‹ Anterior',
+                  next: 'Siguiente ›',
+                  of: '/',
+                  showing: (shown, total) => `Mostrando ${shown} de ${total} bomberos`
+                }}
+              >
+                {({ items, loading, error }) => (
+                  <>
+                    {error && (
+                      <div className="alert alert-danger d-flex align-items-center">
+                        <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                        {error}
+                      </div>
+                    )}
 
-                  {/* Paginación (tal cual en RegistrarGuardia) */}
-                  <div className="d-flex justify-content-center mb-3 py-2">
-                    {Array.from({ length: Math.ceil(total / limite) }, (_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setPaginaActual(i + 1)}
-                        type='button'
-                        className={`btn btn-sm me-1 custom-page-btn ${paginaActual === i + 1 ? 'active' : ''}`}
-                      >
-                        {i + 1}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              ) : !loading ? (
-                <div className="text-center py-3 text-muted">
-                  No hay resultados para la búsqueda.
-                </div>
-              ) : null}
+                    {loading && (
+                      <div className="text-center mb-3">
+                        <div className="spinner-border text-danger" role="status"></div>
+                      </div>
+                    )}
+
+                    {items.length > 0 ? (
+                      <div className="table-responsive rounded border">
+                        <table className="table table-hover align-middle mb-0">
+                          <thead className="bg-light">
+                            <tr>
+                              <th className="border-end text-center">Nombre completo</th>
+                              <th className="border-end text-center">DNI</th>
+                              <th className="border-end text-center">Teléfono</th>
+                              <th className="border-end text-center">Email</th>
+                              <th className="border-end text-center">Plan</th>
+                              <th className="text-center">Acciones</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[...items]
+                              .sort((a, b) => (a.apellido || '').localeCompare(b.apellido || ''))
+                              .map((bombero) => (
+                                <tr key={bombero.dni}>
+                                  <td className="border-end px-3">{bombero.nombre} {bombero.apellido}</td>
+                                  <td className="border-end px-3">{bombero.dni}</td>
+                                  <td className="border-end px-2">{bombero.telefono || 'N/A'}</td>
+                                  <td className="border-end text-primary">{bombero.correo || 'N/A'}</td>
+                                  <td className="border-end">
+                                    <span className={`badge ${bombero.esDelPlan ? 'bg-success' : 'bg-secondary'}`}>
+                                      {bombero.esDelPlan ? 'Sí' : 'No'}
+                                    </span>
+                                  </td>
+                                  <td className="text-center">
+                                    <button
+                                      className="btn btn-outline-secondary btn-sm me-2"
+                                      onClick={() => seleccionarBombero(bombero)}
+                                      disabled={loading || loadingAccion}
+                                    >
+                                      <i className="bi bi-eye me-1"></i> Ver
+                                    </button>
+                                    <button
+                                      className="btn btn-outline-danger btn-sm"
+                                      onClick={() => eliminarBombero(bombero)}
+                                      disabled={loading || loadingAccion}
+                                    >
+                                      <i className="bi bi-trash"></i>
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      !loading && (
+                        <div className="text-center py-3 text-muted">
+                          No hay resultados para la búsqueda.
+                        </div>
+                      )
+                    )}
+                  </>
+                )}
+              </Pagination>
             </>
           )}
 
-          {/* Detalles / Edición */}
+          {/* Detalle / Edición */}
           {bomberoSeleccionado && (
             <div className="mt-4">
               <div className="d-flex align-items-center justify-content-between mb-3">
                 <div className="d-flex align-items-center gap-2">
+                  <i className="text-secondary fs-5"></i>
                   <h3 className="text-dark mb-0">
                     {modoEdicion
                       ? `✏️ Editando: ${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}`
@@ -300,7 +277,8 @@ const ConsultarBombero = ({ onVolver }) => {
                       className="btn btn-warning btn-sm me-2 d-flex align-items-center gap-1"
                       onClick={activarEdicion}
                     >
-                      <i className="bi bi-pencil-square"></i> Editar
+                      <i className="bi bi-pencil-square"></i>
+                      Editar
                     </button>
                   )}
                   <button
@@ -314,21 +292,28 @@ const ConsultarBombero = ({ onVolver }) => {
 
               <hr className="border-4 border-danger mb-4" />
 
-              <div className="card bg-light border-0 shadow-sm py-4" style={{borderRadius: '12px'}}>
+              <div className="card bg-dark text-white border-0 shadow-lg py-4">
                 <FormularioBombero
                   modo={modoEdicion ? 'edicion' : 'consulta'}
                   datosIniciales={bomberoSeleccionado}
                   onSubmit={guardarCambios}
                   onVolver={volverListado}
-                  loading={loading}
+                  loading={loadingAccion}
                   ocultarTitulo={true}
                 />
               </div>
             </div>
           )}
 
-          <div className="d-grid gap-3 py-2" />
-          <BackToMenuButton onClick={onVolver} />
+          <div className="d-grid gap-3 py-2"></div>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onVolver}
+            disabled={loadingAccion}
+          >
+            Volver al menú
+          </button>
         </div>
       </div>
     </div>

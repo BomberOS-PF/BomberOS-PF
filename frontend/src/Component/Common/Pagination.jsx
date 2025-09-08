@@ -1,47 +1,61 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+// src/Component/common/Pagination.jsx
+import { useEffect, useMemo, useState, useRef } from 'react'
 
 /**
- * Paginación inteligente:
- * - Mantiene page/limit/total/items y estados de loading/error.
- * - Llama a fetchPage({ page, limit }) y espera { items, total }.
- * - Resetea a página 1 cuando cambie algo en deps.
- * - Renderiza tus items vía render prop: children(items, { loading, error })
- * - Estilos de botones: usa .custom-page-btn (tu CSS)
+ * Componente de paginado reutilizable
+ *
+ * Props:
+ * - fetchPage: async ({ page, limit, filters }) => { data: [], total: number }
+ * - initialPage: number = 1
+ * - initialPageSize: number = 10
+ * - filters: objeto con filtros (si cambia, reinicia a página 1)
+ * - children: render-prop: ({ items, total, page, totalPages, limit, setPage, setLimit, loading, error, reload })
+ * - showControls: boolean = true
+ * - labels?: { prev?, next?, of?, showing?: (shown, total) => string }
  */
 const Pagination = ({
-  fetchPage,                 // async ({ page, limit }) => { items, total }
-  deps = [],                 // dependencias para re-fetch (ej: [filtros])
-  defaultPage = 1,
-  defaultLimit = 10,
-  limitOptions = [5, 10, 20],
-  showSummary = true,
-  hideIfSinglePage = true,   // 👈 nuevo: oculta barra si total <= limit
-  className = '',
-  children,                  // (items, { loading, error }) => JSX
+  fetchPage,
+  initialPage = 1,
+  initialPageSize = 10,
+  filters = {},
+  children,
+  showControls = true,
+  labels
 }) => {
-  const [page, setPage] = useState(defaultPage)
-  const [limit, setLimit] = useState(defaultLimit)
+  const [page, setPage] = useState(initialPage)
+  const [limit, setLimit] = useState(initialPageSize)
   const [total, setTotal] = useState(0)
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const lastFiltersRef = useRef(JSON.stringify(filters))
 
   const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(total / Math.max(1, limit))),
+    () => Math.max(1, Math.ceil((total || 0) / (limit || 1))),
     [total, limit]
   )
 
-  const btnClass = (extra = '') => `custom-page-btn ${extra}`.trim()
-
-  const load = useCallback(async (p = page, l = limit) => {
+  const load = async (opts = { reset: false }) => {
     try {
       setLoading(true)
       setError('')
-      const res = await fetchPage({ page: p, limit: l })
-      const nextItems = Array.isArray(res?.items) ? res.items : []
-      const nextTotal = Number.isFinite(res?.total) ? res.total : nextItems.length
-      setItems(nextItems)
-      setTotal(nextTotal)
+
+      const currentPage = opts.reset ? 1 : page
+      const res = await fetchPage({ page: currentPage, limit, filters })
+
+      if (Array.isArray(res)) {
+        setItems(res)
+        setTotal(res.length || 0)
+      } else if (res && typeof res === 'object') {
+        setItems(res.data || [])
+        setTotal(Number(res.total) || (res.data ? res.data.length : 0))
+      } else {
+        setItems([])
+        setTotal(0)
+        setError('Respuesta inesperada del servidor')
+      }
+
+      if (opts.reset) setPage(1)
     } catch (e) {
       setItems([])
       setTotal(0)
@@ -49,141 +63,75 @@ const Pagination = ({
     } finally {
       setLoading(false)
     }
-  }, [fetchPage, page, limit])
-
-  // Cargar cuando cambian deps: reset a página 1
-  useEffect(() => {
-    setPage(1)
-    load(1, limit)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps) // intención: re-fetch al cambiar filtros, etc.
-
-  // Cargar inicial
-  useEffect(() => {
-    load(defaultPage, defaultLimit)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const go = async (p) => {
-    if (loading) return
-    if (p < 1 || p > totalPages) return
-    setPage(p)
-    await load(p, limit)
   }
 
-  const changeLimit = async (l) => {
-    const nl = Number(l)
-    setLimit(nl)
-    setPage(1)
-    await load(1, nl)
+  useEffect(() => {
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit])
+
+  useEffect(() => {
+    const now = JSON.stringify(filters)
+    if (now !== lastFiltersRef.current) {
+      lastFiltersRef.current = now
+      load({ reset: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters])
+
+  const goPrev = () => setPage(p => Math.max(1, p - 1))
+  const goNext = () => setPage(p => Math.min(totalPages, p + 1))
+  const reload = () => load()
+
+  const l = {
+    prev: labels?.prev ?? '‹ Anterior',
+    next: labels?.next ?? 'Siguiente ›',
+    of: labels?.of ?? '/',
+    showing: labels?.showing ?? ((shown, tot) => `Mostrando ${shown} de ${tot}`)
   }
-
-  // Ventana de páginas centrada
-  const maxPages = 5
-  const half = Math.floor(maxPages / 2)
-  let start = Math.max(1, page - half)
-  let end = Math.min(totalPages, start + maxPages - 1)
-  if (end - start + 1 < maxPages) start = Math.max(1, end - maxPages + 1)
-  const pages = []
-  for (let i = start; i <= end; i++) pages.push(i)
-
-  const startItem = total === 0 ? 0 : (page - 1) * limit + 1
-  const endItem = Math.min(total, page * limit)
-
-  const shouldHideBar = hideIfSinglePage && total <= limit
 
   return (
-    <div className={className}>
-      {/* Contenido render-prop */}
-      {typeof children === 'function' && children(items, { loading, error })}
+    <>
+      {typeof children === 'function' && children({
+        items,
+        total,
+        page,
+        totalPages,
+        limit,
+        setPage,
+        setLimit,
+        loading,
+        error,
+        reload
+      })}
 
-      {/* Barra inferior: total / tamaño de página / controles */}
-      {!shouldHideBar && (
-        <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
-          <div className="text-white-50">
-            {showSummary && (loading ? 'Cargando…' : `Mostrando ${startItem}-${endItem} de ${total}`)}
-          </div>
-
-          <div className="d-flex align-items-center gap-2">
-            <select
-              className="form-select form-select-sm w-auto"
-              value={limit}
-              onChange={(e) => changeLimit(e.target.value)}
-              disabled={loading}
+      {showControls && total > 0 && (
+        <div className='d-flex justify-content-between align-items-center mt-3 pt-3 border-top'>
+          <small className='text-muted'>
+            {l.showing(items.length, total)}
+          </small>
+          <div className='btn-group'>
+            <button
+              className='btn btn-outline-secondary btn-sm'
+              onClick={goPrev}
+              disabled={page <= 1 || loading}
             >
-              {limitOptions.map((opt) => <option key={opt} value={opt}>{opt} / pág.</option>)}
-            </select>
-
-            <div className="d-flex align-items-center flex-wrap gap-1" role="navigation" aria-label="Paginación">
-              <button
-                type="button"
-                className={btnClass(page === 1 || loading ? 'disabled' : '')}
-                aria-label="Primera página"
-                onClick={() => go(1)}
-              >
-                «
-              </button>
-
-              <button
-                type="button"
-                className={btnClass(page === 1 || loading ? 'disabled' : '')}
-                aria-label="Página anterior"
-                onClick={() => go(page - 1)}
-              >
-                ‹
-              </button>
-
-              {start > 1 && (
-                <>
-                  <button type="button" className={btnClass()} onClick={() => go(1)}>1</button>
-                  {start > 2 && <span className={btnClass('disabled')} aria-hidden="true">…</span>}
-                </>
-              )}
-
-              {pages.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  className={btnClass(p === page ? 'active' : '')}
-                  aria-current={p === page ? 'page' : undefined}
-                  onClick={() => go(p)}
-                >
-                  {p}
-                </button>
-              ))}
-
-              {end < totalPages && (
-                <>
-                  {end < totalPages - 1 && <span className={btnClass('disabled')} aria-hidden="true">…</span>}
-                  <button type="button" className={btnClass()} onClick={() => go(totalPages)}>{totalPages}</button>
-                </>
-              )}
-
-              <button
-                type="button"
-                className={btnClass(page === totalPages || loading ? 'disabled' : '')}
-                aria-label="Página siguiente"
-                onClick={() => go(page + 1)}
-              >
-                ›
-              </button>
-
-              <button
-                type="button"
-                className={btnClass(page === totalPages || loading ? 'disabled' : '')}
-                aria-label="Última página"
-                onClick={() => go(totalPages)}
-              >
-                »
-              </button>
-            </div>
+              {l.prev}
+            </button>
+            <span className='btn btn-outline-secondary btn-sm disabled'>
+              {page} {l.of} {totalPages}
+            </span>
+            <button
+              className='btn btn-outline-secondary btn-sm'
+              onClick={goNext}
+              disabled={page >= totalPages || loading}
+            >
+              {l.next}
+            </button>
           </div>
         </div>
       )}
-
-      {/* Errores */}
-      {error && <div className="alert alert-danger mt-2">{error}</div>}
-    </div>
+    </>
   )
 }
 
