@@ -1,0 +1,34 @@
+/* Posiciona la tarjeta abajo a la derecha y le da tamaño fijo */
+.cal-mini-card {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: clamp(360px, 28vw, 560px);
+  z-index: 1049;
+}
+
+/* Alto fijo para que FullCalendar pueda usar height: 100% */
+.cal-mini-card .calendar-mini-wrapper {
+  height: 50vh;     /* mitad de la pantalla */
+  min-height: 320px;
+}
+
+/* Asegura que FullCalendar use todo el alto del wrapper */
+.cal-mini-card .fc,
+.cal-mini-card .fc .fc-view-harness,
+.cal-mini-card .fc .fc-scroller-harness,
+.cal-mini-card .fc .fc-scroller {
+  height: 100% !important;
+}
+
+/* Overlay por si los bg-events quedan por debajo del contenido */
+.cal-mini-card td.fc-daygrid-day {
+  /* el JS ya setea position: relative en cada td que tenga overlay;
+     esto es solo un fallback por si algo lo resetea */
+  position: relative;
+}
+
+/* Por si el tema/estilos bajan la visibilidad de eventos de fondo */
+.cal-mini-card .fc .fc-bg-event {
+  opacity: 1;
+}

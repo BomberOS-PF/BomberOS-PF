@@ -27,6 +27,8 @@ import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
 import DashboardRespuestas from '../Respuestas/DashboardRespuestas'
 import EstadoWhatsApp from '../WhatsApp/EstadoWhatsApp'
 
+import CalendarioGuardias from '../Guardia/CalendarioGuardias/CalendarioGuardias'
+
 const Menu = ({ user, setUser }) => {
   const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
   const [usuario, setUsuario] = useState(null)
@@ -228,6 +230,15 @@ const Menu = ({ user, setUser }) => {
         return <DashboardRespuestas onVolver={() => setOpcionSeleccionada(null)} />
       case 'estado-whatsapp':
         return <EstadoWhatsApp onVolver={() => setOpcionSeleccionada(null)} />
+      default:
+      // Contenido por defecto (pantalla de inicio): tu calendario mensual de guardias
+     return (
+      <CalendarioGuardias
+        dniUsuario={usuario?.dni ?? usuarioActual?.dni}
+          titulo="Tus Guardias"
+     />
+     )
+
     }
   }
 

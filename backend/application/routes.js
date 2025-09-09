@@ -80,6 +80,10 @@ export function setupRoutes(app, container) {
   // opcional
   app.put('/api/grupos/:id/guardias/dia', guardiaHandlers.reemplazarDia)
 
+  
+   // Mis guardias por DNI (rango: start inclusivo, end exclusivo)
+  app.get('/api/guardias/por-dni', guardiaHandlers.obtenerAsignacionesPorDni)
+
   // ACCIDENTES DE TRÁNSITO
   app.post('/api/accidentes', async (req, res) => {
     try {
@@ -898,8 +902,6 @@ export function setupRoutes(app, container) {
         'GET /api/factor-climatico/:idIncidente',
         'GET /api/acciones-persona',
         'GET /api/acciones-material',
-        'POST /api/rescate',
-        'GET /api/rescate',
         'GET /api/rescate/:id',
         'GET /api/incidentes/:id/detalle',
         'POST /api/denunciantes',
@@ -913,7 +915,8 @@ export function setupRoutes(app, container) {
         'PUT /api/grupos/:id',
         'POST /api/rescate',
         'GET /api/rescate',
-        'GET /api/rescate/:id'
+        'GET /api/guardias/por-dni'
+        
       ]
     })
   })
