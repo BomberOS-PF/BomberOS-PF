@@ -144,21 +144,32 @@ const CalendarioGuardias = ({ dniUsuario, titulo = 'Mis Guardias' }) => {
     }
   }
 
-  const crearOverlay = (tdEl, fechaStr) => {
-    if (!tdEl) return
-    if (!overlaysRef.current.has(fechaStr)) {
-      tdEl.style.position = 'relative'
-      const ov = document.createElement('div')
-      ov.className = 'fc-guard-overlay'
-      tdEl.appendChild(ov)
-      overlaysRef.current.set(fechaStr, ov)
+  // Reemplazá tu crearOverlay por este
+const crearOverlay = (tdEl, fechaStr) => {
+  if (!tdEl) return
+
+  // 1) Si ya hay overlays en el TD, quedate con el primero y borrá el resto
+  const existentes = tdEl.querySelectorAll('.fc-guard-overlay')
+  let ov = existentes[0] || null
+  if (existentes.length > 1) {
+    for (let i = 1; i < existentes.length; i++) {
+      existentes[i].parentNode?.removeChild(existentes[i])
     }
-    // sincroniza estado “hoy con guardia”
-    const ov = overlaysRef.current.get(fechaStr)
-    const isToday = fechaStr === hoyStr
-    ov.classList.toggle('is-today', isToday)
-    ensureTodayBadge(ov, isToday)
   }
+
+  // 2) Si no había, crealo
+  if (!ov) {
+    tdEl.style.position = 'relative'
+    ov = document.createElement('div')
+    ov.className = 'fc-guard-overlay'
+    tdEl.appendChild(ov)
+  }
+
+  // 3) Guardá/actualizá la referencia y marcá si es HOY
+  overlaysRef.current.set(fechaStr, ov)
+  ov.classList.toggle('is-today', fechaStr === hoyStr)
+}
+
 
   const quitarOverlay = (fechaStr) => {
     const ov = overlaysRef.current.get(fechaStr)
