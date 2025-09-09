@@ -24,14 +24,44 @@ export class AccidenteTransitoService {
         throw new Error('Faltan datos obligatorios para registrar el accidente')
       }
 
-      // 1. Insertar el accidente de tránsito
-      const idAccidente = await this.accidenteRepository.insertarAccidente({
-        idIncidente: data.idIncidente,
-        descripcion: data.descripcion,
-        idCausaAccidente: data.idCausaAccidente
-      })
+      // 1. Verificar si el accidente ya existe y actualizar o insertar
+      const accidenteExistente = await this.accidenteRepository.obtenerPorIdIncidente(data.idIncidente)
+      let idAccidente
+      
+      if (accidenteExistente) {
+        // Actualizar accidente existente
+        await this.accidenteRepository.actualizarAccidente(accidenteExistente.idAccidenteTransito, {
+          descripcion: data.descripcion,
+          idCausaAccidente: data.idCausaAccidente
+        })
+        idAccidente = accidenteExistente.idAccidenteTransito
+        logger.info('🔄 Accidente de tránsito actualizado', { idAccidente })
+      } else {
+        // Insertar nuevo accidente
+        idAccidente = await this.accidenteRepository.insertarAccidente({
+          idIncidente: data.idIncidente,
+          descripcion: data.descripcion,
+          idCausaAccidente: data.idCausaAccidente
+        })
+        logger.info('➕ Nuevo accidente de tránsito creado', { idAccidente })
+      }
 
-      // 2. Insertar vehículos involucrados y asociarlos
+      // 2. Manejar vehículos involucrados
+      if (accidenteExistente) {
+        // Para actualizaciones, eliminar relaciones existentes y recrear
+        await this.accidenteVehiculoRepository.eliminarRelacionesPorAccidente(idAccidente)
+        logger.debug('🗑️ Relaciones de vehículos eliminadas para actualización')
+        
+        // También eliminar relaciones de damnificados existentes
+        await this.accidenteDamnificadoRepository.eliminarRelacionesPorAccidente(idAccidente)
+        logger.debug('🗑️ Relaciones de damnificados eliminadas para actualización')
+        
+        // Eliminar damnificados huérfanos del incidente (que ya no tienen relaciones)
+        await this.damnificadoRepository.eliminarPorIncidente(data.idIncidente)
+        logger.debug('🗑️ Damnificados del incidente eliminados para actualización')
+      }
+      
+      // Insertar vehículos y crear nuevas relaciones
       for (const vehiculo of data.vehiculos || []) {
         const idVehiculo = await this.vehiculoRepository.insertarVehiculo(vehiculo)
         await this.accidenteVehiculoRepository.insertarRelacion(idAccidente, idVehiculo)

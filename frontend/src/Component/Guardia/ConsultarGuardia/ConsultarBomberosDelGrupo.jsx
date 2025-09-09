@@ -1,9 +1,16 @@
 import React from 'react'
-// import '../../DisenioFormulario/DisenioFormulario.css'
+import '../../DisenioFormulario/DisenioFormulario.css'
 import { User2, UsersIcon } from 'lucide-react'
 
-const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, descripcion, bomberos, onVolver, onEditar }) => {
-
+const ConsultarBomberosDelGrupo = ({
+  idGrupo,
+  nombreGrupo,
+  descripcion,
+  bomberos = [],
+  onVolver,
+  onEditar,
+  onIrAGestionarGuardias
+}) => {
   return (
     <div className="container-fluid py-5">
       <div className='text-center mb-4'>
@@ -21,7 +28,7 @@ const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, descripcion, bomberos
         </span>
       </div>
 
-      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+      <div className="card shadow-sm border-0 bg-white">
         <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <User2 />
           <strong>Bomberos del grupo: {nombreGrupo || 'Sin nombre'}</strong>
@@ -39,8 +46,7 @@ const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, descripcion, bomberos
                     <th className="border-end text-center">Legajo</th>
                     <th className="border-end text-center">Nombre</th>
                     <th className="border-end text-center">Apellido</th>
-                    <th className="border-end text-center">Teléfono</th>
-                    <th className="text-center">Email</th>
+                    <th className="text-center">Teléfono</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -50,8 +56,7 @@ const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, descripcion, bomberos
                       <td className="border-end px-3">{b.legajo}</td>
                       <td className="border-end px-3">{b.nombre}</td>
                       <td className="border-end px-3">{b.apellido}</td>
-                      <td className="border-end px-3">{b.telefono}</td>
-                      <td className='px-3'>{b.email}</td>
+                      <td className="px-3">{b.telefono}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -59,19 +64,35 @@ const ConsultarBomberosDelGrupo = ({ idGrupo, nombreGrupo, descripcion, bomberos
             </div>
           )}
 
-          <div className='mt-4'>
+          <div className="mt-4">
             <div className="d-flex align-items-center justify-content-between mb-3">
-              <div>
-                <button className="btn btn-warning btn-sm me-2 d-flex align-items-center gap-1"
-                  onClick={() => onEditar({ idGrupo, nombre: nombreGrupo, descripcion })}>
+              <div className="d-flex align-items-center gap-2">
+                <button
+                  className="btn btn-warning btn-sm d-flex align-items-center gap-1"
+                  onClick={() => onEditar?.({ idGrupo, nombre: nombreGrupo, descripcion })}
+                  title="Editar información del grupo"
+                >
                   <i className="bi bi-pencil-square"></i>
                   Editar
                 </button>
-                <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
-                  onClick={onVolver}>
-                  <i className="bi bi-arrow-left"></i> Volver al listado
+
+                <button
+                  className="btn btn-primary btn-sm d-flex align-items-center gap-1"
+                  onClick={() => onIrAGestionarGuardias?.({ idGrupo, nombreGrupo, bomberos })}
+                  title="Gestionar guardias de este grupo"
+                >
+                  <i className="bi bi-calendar2-week"></i>
+                  Guardias
                 </button>
               </div>
+
+              <button 
+                className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
+                onClick={onVolver}
+              >
+                <i className="bi bi-arrow-left"></i>
+                Volver a grupos
+              </button>
             </div>
           </div>
         </div>

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import './FormularioBombero.css'
 import '../../../Component/DisenioFormulario/DisenioFormulario.css'
-import { User, Phone, Mail, Shield, UserPlus, AlertTriangle, Home, CreditCard, TriangleAlert, Bone, PillIcon, FileText } from 'lucide-react'
+import { User, Phone, Mail, Shield, CreditCard, PillIcon } from 'lucide-react'
+import { API_URLS, apiRequest } from '../../../config/api'
 
 const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVolver, loading = false, ocultarTitulo = false }) => {
   const [rangosDisponibles, setRangosDisponibles] = useState([])
@@ -25,70 +26,61 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
     idUsuario: null
   })
 
-  useEffect(() => {
-
-    if (modo !== 'alta' && datosIniciales && rangosDisponibles.length > 0) {
-      const idRango = datosIniciales.idRango || datosIniciales.id_rango
-      const descripcionRango = rangosDisponibles.find(
-        r => r.idRango === (datosIniciales.idRango || datosIniciales.id_rango)
-      )?.descripcion || ''
-
-      const datosFormateados = {
-        dni: datosIniciales.dni || '',
-        nombre: datosIniciales.nombre || '',
-        apellido: datosIniciales.apellido || '',
-        correo: datosIniciales.correo || datosIniciales.email || '',
-        telefono: datosIniciales.telefono || datosIniciales.phone || '',
-        domicilio: datosIniciales.domicilio || datosIniciales.direccion || '',
-        legajo: datosIniciales.legajo || '',
-        antiguedad: datosIniciales.antiguedad || 0,
-        rango: idRango,
-        esDelPlan: datosIniciales.esDelPlan || datosIniciales.es_del_plan || false,
-        aptoPsicologico: datosIniciales.aptoPsicologico !== undefined ? datosIniciales.aptoPsicologico : true,
-        grupoSanguineo: datosIniciales.grupoSanguineo || datosIniciales.grupo_sanguineo || '',
-        fichaMedica: datosIniciales.fichaMedicaArchivo || datosIniciales.ficha_medica_archivo || null,
-        fichaMedicaArchivo: datosIniciales.fichaMedicaArchivo || datosIniciales.ficha_medica_archivo || null,
-        fechaFichaMedica: datosIniciales.fechaFichaMedica || datosIniciales.fecha_ficha_medica || new Date().toISOString().split('T')[0],
-        idUsuario: datosIniciales.idUsuario || datosIniciales.id_usuario || null
-      }
-
-      setFormData(datosFormateados)
-    }
-  }, [datosIniciales, modo, rangosDisponibles])
-
-
-  const handleChange = (e) => {
-    const { id, value, type, checked, files } = e.target
-    const newValue = type === 'checkbox' ? checked : type === 'file' ? files[0] : value
-
-    setFormData(prev => ({
-      ...prev,
-      [id]: newValue
-    }))
-  }
+  // Cargar rangos desde backend (apiRequest ya devuelve JSON parseado)
   useEffect(() => {
     const fetchRangos = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/rangos')
-        const data = await res.json()
-        if (res.ok && data.success) {
-          setRangosDisponibles(data.data)
+        const resp = await apiRequest(API_URLS.rangos.getAll)
+        if (resp?.success) {
+          setRangosDisponibles(resp.data || [])
         } else {
-          console.error('Error al obtener rangos:', data)
+          console.error('Error al obtener rangos:', resp)
         }
       } catch (error) {
         console.error('Error de conexión al obtener rangos:', error)
       }
     }
-
     fetchRangos()
   }, [])
 
+  // Cargar datos iniciales cuando hay modo distinto de alta y ya tenemos rangos
+  useEffect(() => {
+    if (modo !== 'alta' && datosIniciales) {
+      const idRango = datosIniciales.idRango || datosIniciales.id_rango || ''
+      setFormData(prev => ({
+        ...prev,
+        dni: datosIniciales.dni ?? prev.dni,
+        nombre: datosIniciales.nombre ?? prev.nombre,
+        apellido: datosIniciales.apellido ?? prev.apellido,
+        correo: datosIniciales.correo ?? datosIniciales.email ?? prev.correo,
+        telefono: datosIniciales.telefono ?? datosIniciales.phone ?? prev.telefono,
+        domicilio: datosIniciales.domicilio ?? datosIniciales.direccion ?? prev.domicilio,
+        legajo: datosIniciales.legajo ?? prev.legajo,
+        antiguedad: datosIniciales.antiguedad ?? prev.antiguedad ?? 0,
+        rango: idRango,
+        esDelPlan: datosIniciales.esDelPlan ?? datosIniciales.es_del_plan ?? prev.esDelPlan ?? false,
+        aptoPsicologico: datosIniciales.aptoPsicologico ?? prev.aptoPsicologico ?? true,
+        grupoSanguineo: datosIniciales.grupoSanguineo ?? datosIniciales.grupo_sanguineo ?? prev.grupoSanguineo,
+        fichaMedica: datosIniciales.fichaMedicaArchivo ?? datosIniciales.ficha_medica_archivo ?? prev.fichaMedica,
+        fichaMedicaArchivo: datosIniciales.fichaMedicaArchivo ?? datosIniciales.ficha_medica_archivo ?? prev.fichaMedicaArchivo,
+        fechaFichaMedica: datosIniciales.fechaFichaMedica ?? datosIniciales.fecha_ficha_medica ?? prev.fechaFichaMedica,
+        idUsuario: datosIniciales.idUsuario ?? datosIniciales.id_usuario ?? prev.idUsuario
+      }))
+    }
+  }, [modo, datosIniciales])
+
+  const handleChange = (e) => {
+    const { id, value, type, checked, files } = e.target
+    const newValue = type === 'checkbox' ? checked : type === 'file' ? files[0] : value
+    setFormData(prev => ({
+      ...prev,
+      [id]: newValue
+    }))
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
 
-    // Preparar datos para enviar al backend
     const dataToSend = {
       dni: formData.dni,
       nombre: formData.nombre,
@@ -103,18 +95,29 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
       aptoPsicologico: formData.aptoPsicologico,
       grupoSanguineo: formData.grupoSanguineo,
       fichaMedica: formData.fichaMedica ? 1 : null,
-      fichaMedicaArchivo: formData.fichaMedica ? (typeof formData.fichaMedica === 'string' ? formData.fichaMedica : formData.fichaMedica.name) : null, // Nombre del archivo
+      fichaMedicaArchivo: formData.fichaMedica
+        ? (typeof formData.fichaMedica === 'string' ? formData.fichaMedica : formData.fichaMedica.name)
+        : null,
       fechaFichaMedica: formData.fechaFichaMedica || null,
       idUsuario: formData.idUsuario || null
     }
+
     onSubmit(dataToSend)
   }
 
   const soloLectura = modo === 'consulta'
 
+  const esConsulta = modo === 'consulta'
+  // Tema light mejorado con mejor presentación
+  const cardClasses = "card bg-white text-dark border-0 shadow-sm p-4"
+  const labelClasses = "form-label text-dark d-flex align-items-center gap-2 fw-semibold"
+  const inputClasses = esConsulta 
+    ? "form-control border-secondary bg-light" 
+    : "form-control border-secondary focus-ring focus-ring-primary"
+
   return (
     <div className="container">
-      <div className="card bg-dark text-white border-0 shadow-lg p-4">
+      <div className={cardClasses}>
         {!ocultarTitulo && (
           <h4 className="mb-4 text-danger">
             {modo === 'alta' ? 'Alta de Bombero' : modo === 'edicion' ? 'Editar Bombero' : 'Consulta de Bombero'}
@@ -122,26 +125,34 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
         )}
 
         <form onSubmit={handleSubmit}>
-
           {modo === 'edicion' && formData.idUsuario && (
-            <input
-              type="hidden"
-              id="idUsuario"
-              value={formData.idUsuario}
-              onChange={handleChange}
-            />
+            <input type="hidden" id="idUsuario" value={formData.idUsuario} onChange={handleChange} />
           )}
 
-          {/* dni - Nombre Completo */}
+          {/* Información Personal */}
+          {esConsulta && (
+            <div className="mb-4">
+              <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
+                <div className="bg-danger p-2 rounded-circle me-3">
+                  <i className="bi bi-person-circle text-white fs-5"></i>
+                </div>
+                <h5 className="text-danger mb-0 fw-bold">
+                  Información Personal
+                </h5>
+              </div>
+            </div>
+          )}
+
+          {/* Nombre, Apellido, DNI */}
           <div className="row mb-3">
             <div className="col-md-4">
-              <label htmlFor="nombre" className="form-label text-white d-flex align-items-center gap-2">
+              <label htmlFor="nombre" className={labelClasses}>
                 <User className="text-primary" />
                 Nombre
               </label>
               <input
                 type="text"
-                className="form-control bg-secondary text-white border-0"
+                className={inputClasses}
                 id="nombre"
                 value={formData.nombre || ''}
                 required={!soloLectura}
@@ -151,13 +162,13 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="apellido" className="form-label text-white d-flex align-items-center gap-2">
+              <label htmlFor="apellido" className={labelClasses}>
                 <User className="text-primary" />
                 Apellido
               </label>
               <input
                 type="text"
-                className="form-control bg-secondary text-white border-0"
+                className={inputClasses}
                 id="apellido"
                 value={formData.apellido || ''}
                 required={!soloLectura}
@@ -167,12 +178,13 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="dni" className="form-label text-white d-flex align-items-center gap-2"><CreditCard className="text-primary" />
+              <label htmlFor="dni" className={labelClasses}>
+                <CreditCard className="text-primary" />
                 DNI
               </label>
               <input
                 type="text"
-                className="form-control bg-secondary text-white border-0"
+                className={inputClasses}
                 id="dni"
                 value={formData.dni || ''}
                 required={!soloLectura}
@@ -184,16 +196,29 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
           </div>
 
+          {/* Información de Contacto */}
+          {esConsulta && (
+            <div className="mb-4 mt-5">
+              <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
+                <div className="bg-danger p-2 rounded-circle me-3">
+                  <i className="bi bi-telephone text-white fs-5"></i>
+                </div>
+                <h5 className="text-danger mb-0 fw-bold">
+                  Información de Contacto
+                </h5>
+              </div>
+            </div>
+          )}
+
           {/* Contacto */}
           <div className="row mb-3 py-4">
             <div className="col-md-4">
-              <label htmlFor="domicilio" className="form-label text-white d-flex align-items-center gap-2">
-                <Home className="text-purple" />
+              <label htmlFor="domicilio" className={labelClasses}>
                 Domicilio
               </label>
               <input
                 type="text"
-                className="form-control bg-secondary text-white border-0"
+                className={inputClasses}
                 id="domicilio"
                 value={formData.domicilio || ''}
                 onChange={handleChange}
@@ -203,13 +228,13 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="telefono" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
+              <label htmlFor="telefono" className={labelClasses}>
                 <Phone size={16} className="text-primary" />
-                Telefono
+                Teléfono
               </label>
               <input
                 type="tel"
-                className="form-control bg-secondary text-white border-0"
+                className={inputClasses}
                 id="telefono"
                 value={formData.telefono || ''}
                 onChange={handleChange}
@@ -221,13 +246,13 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="email" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
+              <label htmlFor="correo" className={labelClasses}>
                 <Mail className="text-primary" />
                 Correo electrónico
               </label>
               <input
                 type="email"
-                className="form-control bg-secondary text-white border-0"
+                className={inputClasses}
                 id="correo"
                 value={formData.correo || ''}
                 onChange={handleChange}
@@ -238,17 +263,27 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           </div>
 
           {/* Información Profesional */}
+          {esConsulta && (
+            <div className="mb-4 mt-5">
+              <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
+                <div className="bg-danger p-2 rounded-circle me-3">
+                  <i className="bi bi-shield-check text-white fs-5"></i>
+                </div>
+                <h5 className="text-danger mb-0 fw-bold">
+                  Información Profesional
+                </h5>
+              </div>
+            </div>
+          )}
+
           <div className="row mb-3">
             <div className="col-md-4">
-              <label htmlFor="legajo" className="form-label text-white fw-semibold d-flex align-items-center gap-2
-                ">
-                <Mail className="text-primary" />
-                Legajo
-                <span className="badge bg-secondary text-white text-uppercase">opcional</span>
+              <label htmlFor="legajo" className={labelClasses}>
+                Legajo <span className="badge bg-secondary text-white text-uppercase ms-2">opcional</span>
               </label>
               <input
                 type="text"
-                className="form-control bg-secondary text-white border-0"
+                className={inputClasses}
                 id="legajo"
                 value={formData.legajo || ''}
                 onChange={handleChange}
@@ -257,13 +292,12 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="antiguedad" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
-                <Mail className="text-primary" />
+              <label htmlFor="antiguedad" className={labelClasses}>
                 Antigüedad (años)
               </label>
               <input
                 type="number"
-                className="form-control bg-secondary text-white border-0"
+                className={inputClasses}
                 id="antiguedad"
                 value={formData.antiguedad || 0}
                 onChange={handleChange}
@@ -274,7 +308,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="rango" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
+              <label htmlFor="rango" className={labelClasses}>
                 <Shield className="text-primary" />
                 Rango
               </label>
@@ -297,11 +331,25 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           </div>
 
           {/* Información Médica */}
+          {esConsulta && (
+            <div className="mb-4 mt-5">
+              <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
+                <div className="bg-danger p-2 rounded-circle me-3">
+                  <i className="bi bi-heart-pulse text-white fs-5"></i>
+                </div>
+                <h5 className="text-danger mb-0 fw-bold">
+                  Información Médica
+                </h5>
+              </div>
+            </div>
+          )}
+
           <div className="row mb-3 py-4">
             <div className="col-md-4">
-              <label htmlFor="fichaMedica" className="form-label text-white fw-semibold d-flex align-items-center gap-2">Ficha médica (PDF)</label>
+              <label htmlFor="fichaMedica" className={labelClasses}>
+                Ficha médica (PDF)
+              </label>
 
-              {/* Mostrar archivo cargado con botón ❌ */}
               {formData.fichaMedicaArchivo && typeof formData.fichaMedicaArchivo === 'string' ? (
                 <div className="d-flex align-items-center justify-content-between border rounded p-2 bg-light">
                   <small className="text-muted me-2" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -328,7 +376,6 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
                   )}
                 </div>
               ) : (
-                // Input de carga solo si no hay archivo
                 <input
                   type="file"
                   className="form-control"
@@ -341,7 +388,9 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="fechaFicha" className="form-label text-white fw-semibold d-flex align-items-center gap-2">Fecha de carga</label>
+              <label htmlFor="fechaFichaMedica" className={labelClasses}>
+                Fecha de carga
+              </label>
               <input
                 type="date"
                 className="form-control"
@@ -353,9 +402,10 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
 
             <div className="col-md-4">
-              <label htmlFor="grupoSanguineo" className="form-label text-white fw-semibold d-flex align-items-center gap-2">
+              <label htmlFor="grupoSanguineo" className={labelClasses}>
                 <PillIcon className="text-warning" />
-                Grupo Sanguíneo</label>
+                Grupo Sanguíneo
+              </label>
               <select
                 className="form-select form-control bg-secondary text-dark border-0"
                 id="grupoSanguineo"
@@ -377,7 +427,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
           </div>
 
-          {/* Checkboxes */}
+          {/* Switches */}
           <div className="row mb-3 py-4">
             <div className="col-md-6">
               <div className="form-check form-switch">
@@ -389,7 +439,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
                   onChange={handleChange}
                   disabled={soloLectura || loading}
                 />
-                <label className="form-label text-white d-flex align-items-center gap-2" htmlFor="aptoPsico">
+                <label className={labelClasses} htmlFor="aptoPsicologico">
                   Apto psicológico
                 </label>
               </div>
@@ -405,7 +455,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
                   onChange={handleChange}
                   disabled={soloLectura || loading}
                 />
-                <label className="form-label text-white d-flex align-items-center gap-2" htmlFor="esPlan">
+                <label className={labelClasses} htmlFor="esDelPlan">
                   Es del plan (guardias pagas)
                 </label>
               </div>
@@ -415,8 +465,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           {/* Botones */}
           <div className="d-grid gap-3">
             {!soloLectura && (
-              <button type="submit" className="btn btn-danger 
-              btn-lg" disabled={loading}>
+              <button type="submit" className="btn btn-danger btn-lg" disabled={loading}>
                 {loading ? 'Procesando...' : modo === 'alta' ? 'Registrar Bombero' : 'Guardar Cambios'}
               </button>
             )}

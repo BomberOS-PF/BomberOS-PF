@@ -12,6 +12,15 @@ export async function createConnection(config) {
     return connection
   }
 
+  logger.info('🌍 Configuración de base de datos usada:', {
+  host: config.host,
+  port: config.port,
+  user: config.user,
+  password: '[oculto]',
+  database: config.database
+})
+
+
   try {
     connection = mysql.createPool({
       host: config.host,
@@ -20,8 +29,7 @@ export async function createConnection(config) {
       password: config.password,
       database: config.database,
       connectionLimit: config.connectionLimit || 10,
-      acquireTimeout: config.acquireTimeout || 60000,
-      timeout: config.timeout || 60000,
+      waitForConnections: true,
       multipleStatements: false,
       charset: 'utf8mb4'
     })
@@ -83,21 +91,21 @@ export async function closeConnection() {
 export async function executeQuery(query, params = []) {
   const conn = getConnection()
   const startTime = Date.now()
-  
+
   try {
     const [results] = await conn.execute(query, params)
     const duration = Date.now() - startTime
-    
+
     logger.debug('📊 Query ejecutada', {
       query: query.substring(0, 100) + (query.length > 100 ? '...' : ''),
       duration: `${duration}ms`,
       rowsAffected: results.affectedRows || results.length
     })
-    
+
     return results
   } catch (error) {
     const duration = Date.now() - startTime
-    
+
     logger.error('❌ Error en query de base de datos', {
       query: query.substring(0, 100) + (query.length > 100 ? '...' : ''),
       params: params,
@@ -105,7 +113,7 @@ export async function executeQuery(query, params = []) {
       error: error.message,
       code: error.code
     })
-    
+
     throw error
   }
 }
@@ -116,15 +124,15 @@ export async function executeQuery(query, params = []) {
 export async function executeTransaction(callback) {
   const conn = getConnection()
   const transactionConnection = await conn.getConnection()
-  
+
   try {
     await transactionConnection.beginTransaction()
-    
+
     const result = await callback(transactionConnection)
-    
+
     await transactionConnection.commit()
     logger.debug('📊 Transacción completada exitosamente')
-    
+
     return result
   } catch (error) {
     await transactionConnection.rollback()
@@ -133,4 +141,4 @@ export async function executeTransaction(callback) {
   } finally {
     transactionConnection.release()
   }
-} 
+}

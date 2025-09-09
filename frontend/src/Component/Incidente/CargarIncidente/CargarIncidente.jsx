@@ -3,6 +3,7 @@ import './CargarIncidente.css'
 import { Flame, AlertTriangle, FileText, User, Clock, MapPin, Phone } from 'lucide-react'
 // import '../../DisenioFormulario/DisenioFormulario.css'
 import { API_URLS, apiRequest } from '../../../config/api'
+import { BackToMenuButton } from '../../Common/Button.jsx'
 
 const CargarIncidente = ({ onVolver, onNotificar }) => {
   const now = new Date()
@@ -10,29 +11,38 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
     .toISOString()
     .slice(0, 16)
 
-  const usuario = JSON.parse(localStorage.getItem('usuario'))
-  console.log('🧾 Usuario cargado desde localStorage:', usuario)
+  // Parseo seguro de usuario
+  let usuario = null
+  try {
+    const raw = localStorage.getItem('usuario')
+    usuario = raw ? JSON.parse(raw) : null
+  } catch {
+    usuario = null
+  }
 
-  // Construir nombre completo con fallbacks
-  const nombreCompleto = usuario ?
-    `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim() ||
-    usuario.usuario ||
-    'Usuario no identificado'
+  const nombreCompleto = usuario
+    ? (`${usuario.nombre || ''} ${usuario.apellido || ''}`.trim() || usuario.usuario || 'Usuario no identificado')
     : 'Usuario no logueado'
 
   const [formData, setFormData] = useState({
-    fechaHora: localDateTime
+    fechaHora: localDateTime,
+    tipoSiniestro: '',
+    localizacion: '',
+    lugar: '',
+    nombreDenunciante: '',
+    apellidoDenunciante: '',
+    telefonoDenunciante: '',
+    dniDenunciante: ''
   })
 
   const [incidenteCreado, setIncidenteCreado] = useState(null)
   const [notificandoBomberos, setNotificandoBomberos] = useState(false)
 
-  // Estados para los datos dinámicos
+  // Catálogos
   const [tiposIncidente, setTiposIncidente] = useState([])
   const [localizaciones, setLocalizaciones] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // Cargar datos dinámicos al montar el componente
   useEffect(() => {
     const cargarDatos = async () => {
       try {
@@ -41,16 +51,14 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
           apiRequest(API_URLS.tiposIncidente),
           apiRequest(API_URLS.localizaciones)
         ])
-
-        setTiposIncidente(tiposRes.data || [])
-        setLocalizaciones(localizacionesRes.data || [])
+        if (tiposRes?.success ?? true) setTiposIncidente(tiposRes.data || tiposRes || [])
+        if (localizacionesRes?.success ?? true) setLocalizaciones(localizacionesRes.data || localizacionesRes || [])
       } catch (error) {
         console.error('Error al cargar datos:', error)
       } finally {
         setLoading(false)
       }
     }
-
     cargarDatos()
   }, [])
 
@@ -59,72 +67,69 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
     setFormData(prev => ({ ...prev, [id]: value }))
   }
 
-  // Función para verificar si los datos esenciales están completos
-  const datosEsencialesCompletos = () => {
-    return formData.tipoSiniestro && formData.localizacion && formData.lugar
-  }
+  const datosEsencialesCompletos = () =>
+    !!(formData.tipoSiniestro && formData.localizacion && formData.lugar)
 
+  // Guardar incidente (tolerante a distintos contratos de API)
   const guardarIncidente = async () => {
-    try {
-      // Buscar el ID del tipo de incidente seleccionado
-      const tipoSeleccionado = tiposIncidente.find(tipo => tipo.nombre === formData.tipoSiniestro)
-      if (!tipoSeleccionado) {
-        throw new Error('Tipo de incidente no válido')
-      }
+    // Resolver IDs según selección por nombre/dirección
+    const tipoSel = tiposIncidente.find(t => t.nombre === formData.tipoSiniestro)
+    if (!tipoSel) throw new Error('Tipo de incidente no válido')
 
-      // Buscar el ID de la localización seleccionada
-      const localizacionSeleccionada = localizaciones.find(loc => loc.descripcion === formData.localizacion)
-      if (!localizacionSeleccionada) {
-        throw new Error('Localización no válida')
-      }
+    const locSel = localizaciones.find(l => l.direccion === formData.localizacion)
+    if (!locSel) throw new Error('Localización no válida')
 
-      const payload = {
-        dni: usuario?.dni,
-        idTipoIncidente: tipoSeleccionado.idTipoIncidente,
-        fecha: formData.fechaHora,
-        idLocalizacion: localizacionSeleccionada.idLocalizacion,
-        descripcion: formData.lugar
-      }
-
-      // Agrega datos del denunciante solo si se completaron
-      if (formData.nombreDenunciante || formData.apellidoDenunciante || formData.telefonoDenunciante || formData.dniDenunciante) {
-        payload.nombreDenunciante = formData.nombreDenunciante
-        payload.apellidoDenunciante = formData.apellidoDenunciante
-        payload.telefonoDenunciante = formData.telefonoDenunciante
-        payload.dniDenunciante = formData.dniDenunciante
-      }
-
-      const response = await fetch('http://localhost:3000/api/incidentes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al guardar el incidente')
-      }
-
-      return data
-    } catch (error) {
-      console.error('❌ Error al guardar incidente:', error)
-      throw error
+    const payload = {
+      dni: usuario?.dni || null,
+      idTipoIncidente: tipoSel.idTipoIncidente,
+      fecha: formData.fechaHora,
+      idLocalizacion: locSel.idLocalizacion,
+      descripcion: formData.lugar
     }
+
+    // Datos del denunciante (opcionales)
+    if (formData.nombreDenunciante || formData.apellidoDenunciante || formData.telefonoDenunciante || formData.dniDenunciante) {
+      payload.nombreDenunciante = formData.nombreDenunciante || null
+      payload.apellidoDenunciante = formData.apellidoDenunciante || null
+      payload.telefonoDenunciante = formData.telefonoDenunciante || null
+      payload.dniDenunciante = formData.dniDenunciante || null
+    }
+
+    const endpoint =
+      API_URLS.incidentes?.create ||
+      API_URLS.incidentes?.createIncidente ||
+      API_URLS.incidentes
+
+    const resp = await apiRequest(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+
+    // 1) Si la API marca explícitamente fracaso
+    if (resp && typeof resp === 'object' && 'success' in resp && resp.success === false) {
+      throw new Error(resp.message || 'Error al guardar el incidente')
+    }
+
+    // 2) Normalizamos lo devuelto (data o el objeto plano)
+    const incidente = (resp && resp.data) ? resp.data : resp
+
+    // 3) Validación suave: si vino un objeto con id, estamos OK
+    if (!incidente || (typeof incidente !== 'object')) {
+      throw new Error('Respuesta inesperada del servidor')
+    }
+
+    return incidente
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-
     try {
       const incidenteGuardado = await guardarIncidente()
       alert('✅ Incidente guardado correctamente')
-
-      // Guardar el incidente creado para referencia
       setIncidenteCreado(incidenteGuardado)
 
       if (onNotificar) {
-        // Pasar datos más completos al formulario específico
         const datosParaFormulario = {
           ...incidenteGuardado,
           tipoSiniestro: formData.tipoSiniestro,
@@ -138,13 +143,12 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
         }
         onNotificar(formData.tipoSiniestro, datosParaFormulario)
       }
-
     } catch (error) {
       alert(`Error: ${error.message}`)
     }
   }
 
-  const notificarBomberos = async () => {
+  const notificarPorWhatsapp = async () => {
     if (!datosEsencialesCompletos()) {
       alert('❌ Debe completar al menos el tipo de siniestro, localización y lugar del incidente')
       return
@@ -153,7 +157,6 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
     setNotificandoBomberos(true)
 
     try {
-      // Primero guardar el incidente automáticamente
       let incidente = incidenteCreado
       if (!incidente) {
         console.log('💾 Guardando incidente automáticamente antes de notificar...')
@@ -162,56 +165,54 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
         console.log('✅ Incidente guardado:', incidente)
       }
 
-      console.log('📱 Notificando bomberos para incidente:', incidente)
+      console.log('📱 Enviando notificación WhatsApp para incidente:', incidente.idIncidente)
 
-      const response = await fetch(`http://localhost:3000/api/incidentes/${incidente.idIncidente}/notificar`, {
+      const resp = await fetch(`/api/incidentes/${incidente.idIncidente}/notificar`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        }
       })
 
-      const data = await response.json()
-
-      if (response.ok && data.success) {
-        const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = data.data
-
-        let mensaje = `🚨 ALERTA ENVIADA A BOMBEROS:\n\n`
-        mensaje += `📍 Tipo: ${formData.tipoSiniestro}\n`
-        mensaje += `📍 Ubicación: ${formData.localizacion} - ${formData.lugar}\n`
-        mensaje += `📍 Fecha/Hora: ${formData.fechaHora}\n\n`
-        mensaje += `📱 Total bomberos contactados: ${totalBomberos}\n`
-        mensaje += `✅ Notificaciones exitosas: ${notificacionesExitosas}\n`
-
-        if (notificacionesFallidas > 0) {
-          mensaje += `❌ Notificaciones fallidas: ${notificacionesFallidas}\n`
-        }
-
-        mensaje += `\n✅ Incidente registrado y bomberos notificados correctamente.`
-
-        alert(mensaje)
-
-        // Callback para manejar el flujo posterior
-        if (onNotificar) {
-          // Pasar datos más completos al formulario específico
-          const datosParaFormulario = {
-            ...incidente,
-            tipoSiniestro: formData.tipoSiniestro,
-            fechaHora: formData.fechaHora,
-            localizacion: formData.localizacion,
-            lugar: formData.lugar,
-            nombreDenunciante: formData.nombreDenunciante,
-            apellidoDenunciante: formData.apellidoDenunciante,
-            telefonoDenunciante: formData.telefonoDenunciante,
-            dniDenunciante: formData.dniDenunciante
-          }
-          onNotificar(formData.tipoSiniestro, datosParaFormulario)
-        }
-      } else {
-        throw new Error(data.message || 'Error en la notificación')
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}))
+        throw new Error(errorData.message || `Error ${resp.status}: ${resp.statusText}`)
       }
 
+      const resultado = await resp.json()
+      
+      if (resultado.success) {
+        const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = resultado.data
+        alert(`🚨 ALERTA ENVIADA POR WHATSAPP ✅
+        
+📊 Resumen:
+• Total bomberos: ${totalBomberos}
+• Notificaciones exitosas: ${notificacionesExitosas}
+• Notificaciones fallidas: ${notificacionesFallidas}
+
+Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
+      } else {
+        throw new Error(resultado.message || 'Error al enviar notificación')
+      }
+
+      if (onNotificar) {
+        const datosParaFormulario = {
+          ...incidente,
+          tipoSiniestro: formData.tipoSiniestro,
+          fechaHora: formData.fechaHora,
+          localizacion: formData.localizacion,
+          lugar: formData.lugar,
+          nombreDenunciante: formData.nombreDenunciante,
+          apellidoDenunciante: formData.apellidoDenunciante,
+          telefonoDenunciante: formData.telefonoDenunciante,
+          dniDenunciante: formData.dniDenunciante
+        }
+        onNotificar(formData.tipoSiniestro, datosParaFormulario)
+      }
     } catch (error) {
-      console.error('❌ Error al notificar bomberos:', error)
-      alert(`❌ Error al notificar bomberos: ${error.message}`)
+      console.error('❌ Error al notificar por WhatsApp:', error)
+      alert(`❌ Error al notificar por WhatsApp: ${error.message}`)
     } finally {
       setNotificandoBomberos(false)
     }
@@ -253,11 +254,14 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
                   <AlertTriangle className="text-warning" />
                   Tipo de Siniestro
                 </label>
-                <select className="text-dark form-select"
+                <select
+                  className="text-dark form-select"
                   id="tipoSiniestro"
-                  required onChange={handleChange}
-                  defaultValue="">
-                  <option disabled value="">Seleccione tipo de siniestro</option>
+                  value={formData.tipoSiniestro}
+                  required
+                  onChange={handleChange}
+                >
+                  <option value="" disabled>Seleccione tipo de siniestro</option>
                   {loading ? (
                     <option>Cargando tipos...</option>
                   ) : (
@@ -292,7 +296,14 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
                   <MapPin className="text-success" />
                   Lugar
                 </label>
-                <input type="text" id="lugar" className="form-control" onChange={handleChange} required />
+                <input
+                  type="text"
+                  id="lugar"
+                  className="form-control"
+                  value={formData.lugar}
+                  onChange={handleChange}
+                  required
+                />
               </div>
 
               <div className="col-md-4 py-4">
@@ -300,17 +311,20 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
                   <MapPin className="text-purple" />
                   Localización
                 </label>
-                <select className="form-select text-dark"
+                <select
+                  className="form-select text-dark"
                   id="localizacion"
-                  required onChange={handleChange}
-                  defaultValue="">
-                  <option disabled value="">Seleccione localización</option>
+                  value={formData.localizacion}
+                  required
+                  onChange={handleChange}
+                >
+                  <option value="" disabled>Seleccione localización</option>
                   {loading ? (
                     <option>Cargando localizaciones...</option>
                   ) : (
                     localizaciones.map(loc => (
-                      <option key={loc.idLocalizacion} value={loc.descripcion}>
-                        {loc.descripcion}
+                      <option key={loc.idLocalizacion} value={loc.direccion}>
+                        {loc.direccion}
                       </option>
                     ))
                   )}
@@ -329,32 +343,62 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
             <div className="row mb-4">
               <div className="col-md-3">
                 <label htmlFor="nombreDenunciante" className="text-dark form-label">Nombre</label>
-                <input type="text" id="nombreDenunciante" className="form-control" onChange={handleChange} />
+                <input
+                  type="text"
+                  id="nombreDenunciante"
+                  className="form-control"
+                  value={formData.nombreDenunciante}
+                  onChange={handleChange}
+                />
               </div>
               <div className="col-md-3">
                 <label htmlFor="apellidoDenunciante" className="text-dark form-label">Apellido</label>
-                <input type="text" id="apellidoDenunciante" className="form-control" onChange={handleChange} />
+                <input
+                  type="text"
+                  id="apellidoDenunciante"
+                  className="form-control"
+                  value={formData.apellidoDenunciante}
+                  onChange={handleChange}
+                />
               </div>
               <div className="col-md-3">
                 <label htmlFor="telefonoDenunciante" className="text-dark form-label">Teléfono</label>
-                <input type="tel" id="telefonoDenunciante" className="form-control" onChange={handleChange} />
+                <input
+                  type="tel"
+                  id="telefonoDenunciante"
+                  className="form-control"
+                  value={formData.telefonoDenunciante}
+                  onChange={handleChange}
+                />
               </div>
               <div className="col-md-3">
                 <label htmlFor="dniDenunciante" className="text-dark form-label">DNI</label>
-                <input type="text" id="dniDenunciante" className="form-control" onChange={handleChange} />
+                <input
+                  type="text"
+                  id="dniDenunciante"
+                  className="form-control"
+                  value={formData.dniDenunciante}
+                  onChange={handleChange}
+                />
               </div>
             </div>
-            
+
             <div className="d-grid gap-3">
               {datosEsencialesCompletos() && (
-                <button type="button" className="btn btn-warning btn-lg" onClick={notificarBomberos} disabled={notificandoBomberos}>
+                <button
+                  type="button"
+                  className="btn btn-warning btn-lg"
+                  onClick={notificarPorWhatsapp}
+                  disabled={notificandoBomberos}
+                  style={{ fontWeight: 'bold', width: '100%' }}
+                >
                   {notificandoBomberos ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Enviando alerta...
+                      🚨 Enviando alerta a bomberos...
                     </>
                   ) : (
-                    <>🚨 Notificar emergencia a bomberos</>
+                    <>🚨 NOTIFICAR EMERGENCIA A BOMBEROS</>
                   )}
                 </button>
               )}
@@ -367,15 +411,36 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
 
               {incidenteCreado && (
                 <div className="alert alert-success mt-3">
-                  ✅ Incidente registrado y bomberos notificados
+                  <div className="d-flex justify-content-between align-items-center">
+                    <span>✅ Incidente #{incidenteCreado.idIncidente} registrado exitosamente</span>
+                    <button 
+                      type="button" 
+                      className="btn btn-sm btn-outline-success"
+                      onClick={() => {
+                        // Redirigir directamente al formulario de edición del incidente
+                        console.log('🔄 Completar Detalles clicked - incidenteCreado:', incidenteCreado)
+                        if (onVolver) {
+                          console.log('💾 Guardando en localStorage:', incidenteCreado.idIncidente)
+                          localStorage.setItem('incidenteParaCompletar', incidenteCreado.idIncidente)
+                          console.log('🔄 Llamando onVolver con consultarIncidente')
+                          onVolver('consultarIncidente')
+                        }
+                      }}
+                    >
+                      <i className="bi bi-pencil-square me-1"></i>
+                      Completar Detalles →
+                    </button>
+                  </div>
+                  <small className="text-muted d-block mt-2">
+                    💡 Haz clic en "Completar Detalles" para agregar información específica del tipo de incidente
+                  </small>
                 </div>
               )}
 
-              <button type="button" className="btn btn-secondary" onClick={onVolver}>
-                Volver al menú
-              </button>
+              <BackToMenuButton onClick={onVolver} />
             </div>
           </form>
+          
         </div>
       </div>
     </div>

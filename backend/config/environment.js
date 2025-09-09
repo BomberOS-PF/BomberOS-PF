@@ -23,8 +23,7 @@ export function loadConfig() {
       password: process.env.DB_PASSWORD || 'bomberos_pass',
       database: process.env.DB_NAME || 'bomberos_db',
       connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT) || 10,
-      acquireTimeout: parseInt(process.env.DB_ACQUIRE_TIMEOUT) || 60000,
-      timeout: parseInt(process.env.DB_TIMEOUT) || 60000
+      
     },
     
     twilio: {

@@ -1,9 +1,25 @@
 import { Incidente } from '../../domain/models/incidente.js'
 import { IncidenteServiceInterface } from '../../interfaces/service.interface.js'
 import { logger } from '../platform/logger/logger.js'
+import { getConnection } from '../platform/database/connection.js'
 
 export class IncidenteService extends IncidenteServiceInterface {
-  constructor(incidenteRepository, denuncianteRepository, bomberoService = null, whatsappService = null, damnificadoRepository = null, incendioForestalRepository = null, areaAfectadaRepository = null, tipoIncidenteService = null) {
+  constructor(
+    incidenteRepository,
+    denuncianteRepository,
+    bomberoService = null,
+    whatsappService = null,
+    damnificadoRepository = null,
+    incendioForestalRepository = null,
+    areaAfectadaRepository = null,
+    tipoIncidenteService = null,
+    // repositorios específicos para obtenerDetalleCompleto
+    accidenteTransitoRepository = null,
+    incendioEstructuralRepository = null,
+    materialPeligrosoRepository = null,
+    rescateRepository = null,
+    factorClimaticoRepository = null
+  ) {
     super()
     this.incidenteRepository = incidenteRepository
     this.denuncianteRepository = denuncianteRepository
@@ -13,49 +29,65 @@ export class IncidenteService extends IncidenteServiceInterface {
     this.incendioForestalRepository = incendioForestalRepository
     this.areaAfectadaRepository = areaAfectadaRepository
     this.tipoIncidenteService = tipoIncidenteService
+
+    // repos específicos para obtenerDetalleCompleto
+    this.accidenteTransitoRepository = accidenteTransitoRepository
+    this.incendioEstructuralRepository = incendioEstructuralRepository
+    this.materialPeligrosoRepository = materialPeligrosoRepository
+    this.rescateRepository = rescateRepository
+    this.factorClimaticoRepository = factorClimaticoRepository
   }
 
+  // ================== ALTAS ==================
   async crearIncidente(data) {
     let idDenunciante = null
 
-    const hayDatosDenunciante =
-      data.nombreDenunciante || data.apellidoDenunciante || data.telefonoDenunciante || data.dniDenunciante
-
-    if (hayDatosDenunciante) {
-      const denunciante = {
-        nombre: data.nombreDenunciante || null,
-        apellido: data.apellidoDenunciante || null,
-        telefono: data.telefonoDenunciante || null,
-        dni: data.dniDenunciante || null
+    const den = data.denunciante
+    if (den && (den.dni || den.nombre || den.apellido || den.telefono)) {
+      const repo = this.denuncianteRepository
+      if (typeof repo.insertarDenunciante === 'function') {
+        idDenunciante = await repo.insertarDenunciante({
+          dni: den.dni ?? null,
+          nombre: den.nombre ?? null,
+          apellido: den.apellido ?? null,
+          telefono: den.telefono ?? null
+        })
+      } else if (typeof repo.crear === 'function') {
+        idDenunciante = await repo.crear({
+          dni: den.dni ?? null,
+          nombre: den.nombre ?? null,
+          apellido: den.apellido ?? null,
+          telefono: den.telefono ?? null
+        })
+      } else {
+        throw new Error('Repositorio de denunciante no implementa insertarDenunciante/crear')
       }
-
-      idDenunciante = await this.denuncianteRepository.crear(denunciante)
     }
 
-    const nuevoIncidente = new Incidente({
+    const dataIncidente = {
       idTipoIncidente: data.idTipoIncidente,
       fecha: data.fecha,
       idLocalizacion: data.idLocalizacion,
       descripcion: data.descripcion,
-      idDenunciante // puede ser null
-    })
+      idDenunciante
+    }
 
-    const incidenteCreado = await this.incidenteRepository.create(nuevoIncidente)
+    logger.debug('➡️ INSERT incidente', dataIncidente)
+    const incidenteCreado = await this.incidenteRepository.create(dataIncidente)
 
-    // Guardar damnificados si vienen en la carga
+
     if (Array.isArray(data.damnificados) && this.damnificadoRepository) {
       for (const damnificado of data.damnificados) {
         await this.damnificadoRepository.insertarDamnificado({
           ...damnificado,
-          idIncidente: incidenteCreado.idIncidente || incidenteCreado.id // compatibilidad
+          idIncidente: incidenteCreado.idIncidente || incidenteCreado.id
         })
       }
     }
 
-    logger.info('📋 Incidente creado exitosamente', {
+    logger.info('📋 Incidente creado', {
       id: incidenteCreado.idIncidente || incidenteCreado.id,
-      tipo: incidenteCreado.idTipoIncidente,
-      fecha: incidenteCreado.fecha
+      idDenunciante
     })
 
     return incidenteCreado
@@ -64,103 +96,179 @@ export class IncidenteService extends IncidenteServiceInterface {
   async crearIncendioForestal(data) {
     let incidente
 
-    // Si ya existe un incidente, actualizarlo; si no, crear uno nuevo
     if (data.idIncidente) {
-      // Actualizar incidente existente
       incidente = await this.incidenteRepository.obtenerPorId(data.idIncidente)
-      if (!incidente) {
-        throw new Error(`Incidente con ID ${data.idIncidente} no encontrado`)
-      }
-      
-      // Actualizar con los datos específicos del incendio forestal
+      if (!incidente) throw new Error(`Incidente con ID ${data.idIncidente} no encontrado`)
       await this.incidenteRepository.actualizar(data.idIncidente, {
         descripcion: data.descripcion || incidente.descripcion
       })
     } else {
-      // Crear nuevo incidente
       incidente = await this.incidenteRepository.create({
-        idTipoIncidente: 4, // Incendio Forestal
+        idTipoIncidente: 4, // Forestal
         fecha: data.fecha,
         idLocalizacion: data.idLocalizacion,
         descripcion: data.descripcion
       })
     }
 
-    // Crear o actualizar registro en incendio_forestal
+    // El método insertarIncendioForestal ya maneja UPDATE/INSERT automáticamente
+    const incendioId = incidente.idIncidente || incidente.id
+    
+    
     await this.incendioForestalRepository.insertarIncendioForestal({
-      idIncidente: incidente.idIncidente || incidente.id,
+      idIncidente: incendioId,
       caracteristicasLugar: data.caracteristicasLugar,
       areaAfectada: data.areaAfectada,
       cantidadAfectada: data.cantidadAfectada,
       causaProbable: data.causaProbable,
       detalle: data.detalle
     })
+    logger.info('✅ Incendio forestal procesado (INSERT/UPDATE automático)', { idIncidente: incendioId })
 
-    // Guardar damnificados
+    // Manejar damnificados
     if (Array.isArray(data.damnificados) && this.damnificadoRepository) {
+      const idIncidenteFinal = incidente.idIncidente || incidente.id
+      
+      // Si es actualización, eliminar damnificados existentes
+      if (data.idIncidente) {
+        await this.damnificadoRepository.eliminarPorIncidente(idIncidenteFinal)
+        logger.debug('🗑️ Damnificados existentes eliminados para actualización')
+      }
+      
+      // Insertar nuevos damnificados
       for (const damnificado of data.damnificados) {
         await this.damnificadoRepository.insertarDamnificado({
           ...damnificado,
-          idIncidente: incidente.idIncidente || incidente.id
+          idIncidente: idIncidenteFinal
         })
       }
+      logger.debug(`👥 ${data.damnificados.length} damnificados procesados`)
     }
 
     return incidente
   }
 
-  /**
-   * Notificar bomberos sobre un incidente
-   */
+  async actualizarIncendioForestal(data) {
+    // Reutilizar el método crearIncendioForestal ya que maneja ambos casos
+    return await this.crearIncendioForestal(data)
+  }
+
+  async actualizarAccidenteTransito(data) {
+    logger.info('🔄 Actualizando accidente de tránsito', { idIncidente: data.idIncidente })
+    // Los servicios específicos manejan tanto creación como actualización
+    // Por ahora, delegamos al handler específico que ya existe
+    throw new Error('Método debe ser manejado por el servicio específico de AccidenteTransito')
+  }
+
+  async actualizarFactorClimatico(data) {
+    logger.info('🔄 Actualizando factor climático', { idIncidente: data.idIncidente })
+    // Los servicios específicos manejan tanto creación como actualización
+    throw new Error('Método debe ser manejado por el servicio específico de FactorClimatico')
+  }
+
+  async actualizarIncendioEstructural(data) {
+    logger.info('🔄 Actualizando incendio estructural', { idIncidente: data.idIncidente })
+    // Los servicios específicos manejan tanto creación como actualización
+    throw new Error('Método debe ser manejado por el servicio específico de IncendioEstructural')
+  }
+
+  async actualizarMaterialPeligroso(data) {
+    logger.info('🔄 Actualizando material peligroso', { idIncidente: data.idIncidente })
+    // Los servicios específicos manejan tanto creación como actualización
+    throw new Error('Método debe ser manejado por el servicio específico de MaterialPeligroso')
+  }
+
+  async actualizarRescate(data) {
+    logger.info('🔄 Actualizando rescate', { idIncidente: data.idIncidente })
+    // Los servicios específicos manejan tanto creación como actualización
+    throw new Error('Método debe ser manejado por el servicio específico de Rescate')
+  }
+
+  // ================== LISTADOS / CONSULTAS ==================
+  // ✅ nuevo: soporta filtros + paginado para el frontend
+  // application/services/incidente.service.js
+  async listarConFiltros(filtros) {
+    const data = await this.incidenteRepository.buscarConFiltros(filtros)
+    const total = await this.incidenteRepository.contarConFiltros(filtros)
+    return { data, total }
+  }
+
+
+  // mantenemos por compatibilidad si lo usás en otros lados
+  async listarIncidentes() {
+    return await this.incidenteRepository.obtenerTodos()
+  }
+
+  // ✅ nuevo: detalle enriquecido (joins) + datos específicos según tipo (si hay repos)
+  async obtenerDetalle(id) {
+    // intenta traer con joins; si no existe el método, cae al básico
+    const base =
+      (this.incidenteRepository.obtenerDetallePorId
+        ? await this.incidenteRepository.obtenerDetallePorId(id)
+        : await this.incidenteRepository.obtenerPorId(id))
+
+    if (!base) return null
+
+    const idIncidente = base.idIncidente || base.id
+    const tipo = base.idTipoIncidente
+
+    // Enriquecimiento por tipo (opcional según repos disponibles)
+    // 1 = Accidente, 2 = Incendio Estructural, 3 = Material Peligroso, 4 = Forestal, 5 = Rescate (ajustá a tus IDs)
+    if (tipo === 1 && this.accidenteRepository?.obtenerPorIncidente) {
+      base.accidenteTransito = await this.accidenteRepository.obtenerPorIncidente(idIncidente)
+    }
+    if (tipo === 2 && this.incendioEstructuralRepository?.obtenerPorIncidente) {
+      base.incendioEstructural = await this.incendioEstructuralRepository.obtenerPorIncidente(idIncidente)
+    }
+    if (tipo === 3 && this.materialPeligrosoRepository?.obtenerPorIncidente) {
+      base.materialPeligroso = await this.materialPeligrosoRepository.obtenerPorIncidente(idIncidente)
+    }
+    if (tipo === 4 && this.incendioForestalRepository?.obtenerPorIncidente) {
+      base.incendioForestal = await this.incendioForestalRepository.obtenerPorIncidente(idIncidente)
+    }
+    if (tipo === 5 && this.rescateRepository?.obtenerPorIncidente) {
+      base.rescate = await this.rescateRepository.obtenerPorIncidente(idIncidente)
+    }
+
+    return base
+  }
+
+  async obtenerIncidentePorId(id) {
+    return await this.incidenteRepository.obtenerPorId(id)
+  }
+
+  // ================== UPDATE / DELETE ==================
+  async actualizarIncidente(id, data) {
+    return await this.incidenteRepository.actualizar(id, data)
+  }
+
+  async eliminarIncidente(id) {
+    return await this.incidenteRepository.eliminar(id)
+  }
+
+  // ================== NOTIFICACIONES ==================
   async notificarBomberosIncidente(incidenteId) {
     try {
       logger.info('📱 Iniciando notificación de bomberos para incidente', { incidenteId })
 
-      // Obtener el incidente
       const incidente = await this.incidenteRepository.obtenerPorId(incidenteId)
-      if (!incidente) {
-        throw new Error(`Incidente con ID ${incidenteId} no encontrado`)
-      }
+      if (!incidente) throw new Error(`Incidente con ID ${incidenteId} no encontrado`)
 
-      // Verificar si tenemos los servicios necesarios
-      if (!this.bomberoService) {
-        throw new Error('BomberoService no disponible para notificaciones')
-      }
+      if (!this.bomberoService) throw new Error('BomberoService no disponible para notificaciones')
+      if (!this.whatsappService) logger.warn('WhatsAppService no disponible, notificación simulada')
 
-      if (!this.whatsappService) {
-        logger.warn('WhatsAppService no disponible, notificación simulada')
-      }
-
-      // Obtener bomberos activos/disponibles
       const bomberos = await this.bomberoService.listarBomberos()
-      const bomberosActivos = bomberos.filter(bombero => {
-        // Acceder correctamente a los value objects
-        const telefono = bombero.telefono ? bombero.telefono.toString().trim() : ''
-        const nombre = bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}`.trim() : ''
-        
+      const bomberosActivos = bomberos.filter(b => {
+        const telefono = b.telefono ? b.telefono.toString().trim() : ''
+        const nombre = b.nombre && b.apellido ? `${b.nombre} ${b.apellido}`.trim() : ''
         return telefono !== '' && nombre !== ''
       })
 
       if (bomberosActivos.length === 0) {
         logger.warn('📱 No hay bomberos activos con teléfono para notificar')
-        return {
-          success: false,
-          message: 'No hay bomberos activos con teléfono válido',
-          total: 0,
-          exitosos: 0,
-          fallidos: 0
-        }
+        return { success: false, message: 'No hay bomberos activos con teléfono válido', total: 0, exitosos: 0, fallidos: 0 }
       }
 
-      logger.info('📱 Bomberos encontrados para notificar', {
-        total: bomberosActivos.length,
-        bomberos: bomberosActivos.map(b => ({ 
-          nombre: b.nombre && b.apellido ? `${b.nombre} ${b.apellido}` : 'Sin nombre', 
-          telefono: b.telefono 
-        }))
-      })
-
-      // Construir datos del incidente para el mensaje
       const incidenteParaMensaje = {
         id: incidente.id,
         tipo: await this.mapearTipoIncidente(incidente.idTipoIncidente),
@@ -169,63 +277,104 @@ export class IncidenteService extends IncidenteServiceInterface {
         descripcion: incidente.descripcion
       }
 
-      // Enviar notificaciones
-      const resultado = await this.whatsappService.notificarBomberosIncidente(
-        bomberosActivos, 
-        incidenteParaMensaje
-      )
+      const resultado = await this.whatsappService.notificarBomberosIncidente(bomberosActivos, incidenteParaMensaje)
 
-      logger.info('📱 Notificación de bomberos completada', {
-        incidenteId,
-        ...resultado
-      })
+      logger.info('📱 Notificación de bomberos completada', { incidenteId, ...resultado })
 
-      return {
-        success: true,
-        message: `Notificación enviada a ${resultado.exitosos} de ${resultado.total} bomberos`,
-        ...resultado
-      }
-
+      return { success: true, message: `Notificación enviada a ${resultado.exitosos} de ${resultado.total} bomberos`, ...resultado }
     } catch (error) {
-      logger.error('📱 Error al notificar bomberos', {
-        incidenteId,
-        error: error.message
-      })
-
-      return {
-        success: false,
-        message: error.message,
-        total: 0,
-        exitosos: 0,
-        fallidos: 0
-      }
+      logger.error('📱 Error al notificar bomberos', { incidenteId, error: error.message })
+      return { success: false, message: error.message, total: 0, exitosos: 0, fallidos: 0 }
     }
   }
 
-  /**
-   * Mapear ID de tipo de incidente a nombre legible
-   */
   async mapearTipoIncidente(idTipo) {
-    if (!this.tipoIncidenteService) {
-      throw new Error('TipoIncidenteService no disponible para mapear tipos')
-    }
+    if (!this.tipoIncidenteService) throw new Error('TipoIncidenteService no disponible para mapear tipos')
     const tipo = await this.tipoIncidenteService.obtenerTipoIncidentePorId(idTipo)
     return tipo ? tipo.nombre : `Tipo ${idTipo}`
   }
 
-  async listarIncidentes() {
-    return await this.incidenteRepository.obtenerTodos()
-  }
+  async obtenerDetalleCompleto(idIncidente) {
+    const cn = getConnection()
 
-  async obtenerIncidentePorId(id) {
-    return await this.incidenteRepository.obtenerPorId(id)
-  }
+    // 1) Datos base (unificados)
+    const sqlBase = `
+        SELECT
+        i.idIncidente,
+        i.idTipoIncidente,
+        DATE_FORMAT(i.fecha, '%Y-%m-%d %H:%i') AS fecha,
+        i.descripcion,
+        i.idLocalizacion,
+        ti.nombre AS tipoDescripcion,
+        l.descripcion AS localizacion,
+        l.direccion AS lugar
+      FROM incidente i
+      JOIN tipoIncidente ti ON ti.idTipoIncidente = i.idTipoIncidente
+      JOIN localizacion   l ON l.idLocalizacion   = i.idLocalizacion
+      WHERE i.idIncidente = ?
+      LIMIT 1
+    `
 
-  async actualizarIncidente(id, data) {
-    return await this.incidenteRepository.actualizar(id, data)
-  }
+    try {
+      const [rows] = await cn.execute(sqlBase, [idIncidente])
+      if (!rows || rows.length === 0) return null
 
-  async eliminarIncidente(id) {
-    return await this.incidenteRepository.eliminar(id)
+      const base = rows[0]
+
+      // 2) Detalle específico por tipo
+      let detalleEspecifico = null
+
+      switch (Number(base.idTipoIncidente)) {
+        case 2: { // Factor Climático
+          detalleEspecifico = await this.factorClimaticoRepository.obtenerClimaticoCompleto(idIncidente)
+          break
+        }
+
+        //Ejemplos para que completes si querés:
+        case 1: { // Accidente de Tránsito
+          detalleEspecifico = await this.accidenteTransitoRepository.obtenerAccidenteCompleto(idIncidente)
+          break
+        }
+        case 3: { // Incendio Estructural
+          detalleEspecifico = await this.incendioEstructuralRepository.obtenerIncendioCompleto(idIncidente)
+          break
+        }
+        case 4: { // Incendio Forestal
+          detalleEspecifico = await this.incendioForestalRepository.obtenerIncendioCompleto(idIncidente)
+          break
+        }
+        case 5: { // Material Peligroso
+          detalleEspecifico = await this.materialPeligrosoRepository.obtenerMaterialCompleto(idIncidente)
+          break
+        }
+        case 6: { // Rescate
+          detalleEspecifico = await this.rescateRepository.obtenerRescateCompleto(idIncidente)
+          break
+        }
+
+        default:
+          detalleEspecifico = null
+      }
+
+      const resultado = {
+        idIncidente: base.idIncidente,
+        idTipoIncidente: base.idTipoIncidente,
+        fecha: base.fecha,
+        descripcion: base.descripcion,
+        estado: base.estado,
+        dniUsuario: base.dniUsuario,
+        tipoDescripcion: base.tipoDescripcion,
+        localizacion: base.localizacion,
+        lugar: base.lugar,
+        denuncianteNombre: base.denuncianteNombre,
+        detalleEspecifico
+      }
+      
+      return resultado
+    } catch (err) {
+      logger.error('❌ obtenerDetalleCompleto error', { err: err.message, idIncidente })
+      throw err
+    }
   }
 }
+

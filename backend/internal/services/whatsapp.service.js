@@ -36,11 +36,11 @@ export class WhatsAppService {
       return { success: true, simulated: true }
     }
 
+    // Obtener valores de los value objects fuera del try para usarlos en catch
+    const telefonoValue = bombero.telefono ? bombero.telefono.toString() : ''
+    const nombreValue = bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : ''
+
     try {
-      // Obtener valores de los value objects
-      const telefonoValue = bombero.telefono ? bombero.telefono.toString() : ''
-      const nombreValue = bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : ''
-      
       const telefono = this.formatearTelefono(telefonoValue)
       if (!telefono) {
         throw new Error(`Teléfono inválido para ${nombreValue}: ${telefonoValue}`)
@@ -237,6 +237,56 @@ _Cuerpo de Bomberos - Sistema BomberOS_`
   /**
    * Obtener estado del servicio
    */
+  /**
+   * Enviar mensaje simple por WhatsApp
+   */
+  async enviarMensaje(telefono, mensaje) {
+    if (!this.isEnabled()) {
+      return {
+        exito: false,
+        error: 'Servicio WhatsApp deshabilitado'
+      }
+    }
+
+    try {
+      // Formatear teléfono
+      const telefonoFormateado = this.formatearTelefono(telefono)
+      if (!telefonoFormateado) {
+        throw new Error(`Teléfono inválido: ${telefono}`)
+      }
+
+      // Enviar mensaje
+      const message = await this.client.messages.create({
+        body: mensaje,
+        from: this.config.whatsappNumber,
+        to: `whatsapp:${telefonoFormateado}`
+      })
+
+      logger.info('📱 Mensaje WhatsApp enviado exitosamente', {
+        telefono: telefonoFormateado,
+        messageSid: message.sid
+      })
+
+      return {
+        exito: true,
+        messageSid: message.sid,
+        telefono: telefonoFormateado
+      }
+
+    } catch (error) {
+      logger.error('📱 Error al enviar mensaje WhatsApp', {
+        telefono,
+        error: error.message
+      })
+
+      return {
+        exito: false,
+        error: error.message,
+        telefono
+      }
+    }
+  }
+
   getStatus() {
     return {
       enabled: this.config.enabled,

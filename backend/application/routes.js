@@ -3,11 +3,9 @@ import { logger } from '../internal/platform/logger/logger.js'
 export function setupRoutes(app, container) {
   logger.info('🛣️ Configurando rutas...')
 
+  // Health
   app.get('/health', (req, res) => {
-    logger.info('Health check solicitado', {
-      ip: req.ip,
-      userAgent: req.get('User-Agent')
-    })
+    logger.info('Health check solicitado', { ip: req.ip, userAgent: req.get('User-Agent') })
     res.json({
       status: 'OK',
       message: 'BomberOS - ABMC Bomberos con Clean Architecture',
@@ -21,53 +19,140 @@ export function setupRoutes(app, container) {
 
   app.get('/', (req, res) => res.redirect('/health'))
 
-  const { bomberoHandler, usuarioHandler, incidenteHandler, grupoGuardiaHandler, rolesAdapter, accidenteTransitoHandler, causaAccidenteHandler, vehiculoHandler, rangoHandler, recuperarClaveHandler, validarTokenHandler, restablecerClaveHandler,incendioEstructuralHandler, forestalCatalogosHandler, tipoIncidenteHandler, localizacionHandler, causaProbableHandler, materialPeligrosoHandler,categoriaMaterialPeligrosoHandler,tipoMatInvolucradoHandler, accionPersonaHadler } = container
+  // Handlers desde el contenedor (nombres normalizados)
+  const {
+    // Core
+    rolesAdapter,
+    bomberoHandler,
+    usuarioHandler,
+    incidenteHandler,
+    denuncianteHandler,
+    grupoGuardiaHandler,
+    guardiaHandlers,
 
+    // Dominio Incidentes
+    accidenteTransitoHandler,
+    causaAccidenteHandler,
+    vehiculoHandler,
 
-  //Acciones personas
-  app.get('/api/acciones-persona', async (req, res) => {
-    await container.accionPersonaHandler.listar(req, res)
+    // Catálogos y otros dominios
+    rangoHandler,
+    forestalCatalogosHandler,
+    tipoIncidenteHandler,
+    localizacionHandler,
+    causaProbableHandler,
+
+    // Seguridad / credenciales
+    recuperarClaveHandler,
+    validarTokenHandler,
+    restablecerClaveHandler,
+
+    // Tipos específicos de incidente
+    incendioEstructuralHandler,
+    materialPeligrosoHandler,
+    categoriaMaterialPeligrosoHandler,
+    tipoMatInvolucradoHandler,
+    factorClimaticoHandler,
+    rescateHandler,
+
+    // Acciones
+    accionPersonaHandler,
+    accionMaterialHandler,
+
+    // Respuestas de incidentes
+    respuestaIncidenteHandler,
+    respuestaIncidenteService
+  } = container
+
+  // ---------- Acciones persona/material ----------
+  app.get('/api/acciones-persona', (req, res) => accionPersonaHandler.listar(req, res))
+  app.get('/api/acciones-persona/:id', (req, res) => accionPersonaHandler.obtenerPorId(req, res))
+
+  app.get('/api/acciones-material', (req, res) => accionMaterialHandler.listar(req, res))
+  app.get('/api/acciones-material/:id', (req, res) => accionMaterialHandler.obtenerPorId(req, res))
+
+  // ASIGNACION DE GUARDIAS
+
+  app.post('/api/grupos/:id/guardias', guardiaHandlers.crearAsignaciones)
+  app.get('/api/grupos/:id/guardias', guardiaHandlers.obtenerAsignaciones)
+  app.delete('/api/grupos/:id/guardias', guardiaHandlers.eliminarAsignaciones)
+
+  // opcional
+  app.put('/api/grupos/:id/guardias/dia', guardiaHandlers.reemplazarDia)
+
+  // ACCIDENTES DE TRÁNSITO
+  app.post('/api/accidentes', async (req, res) => {
+    try {
+      await accidenteTransitoHandler.registrar(req, res)
+    } catch (error) {
+      logger.error('Error en ruta registrar accidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
   })
 
-  app.get('/api/acciones-persona/:id', async (req, res) => {
-    await container.accionPersonaHandler.obtenerPorId(req, res)
+  app.get('/api/accidentes', async (req, res) => {
+    try {
+      await accidenteTransitoHandler.listarTodos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listar accidentes:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
   })
 
-  //Acciones materiales
-  app.get('/api/acciones-material', async (req, res) => {
-    await container.accionMaterialHandler.listar(req, res)
+  app.get('/api/accidentes/:id', async (req, res) => {
+    try {
+      await accidenteTransitoHandler.obtenerPorIncidente(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtener accidente por incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
   })
 
-  app.get('/api/acciones-material/:id', async (req, res) => {
-    await container.accionMaterialHandler.obtenerPorId(req, res)
+  // RESCATE
+  app.post('/api/rescate', async (req, res) => {
+    try {
+      await container.rescateHandler.registrar(req, res)
+    } catch (error) {
+      logger.error('Error en ruta registrar rescate:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
   })
 
-  //Tipos de materiales involucrados
-  app.get('/api/tipos-materiales-involucrados', async (req, res) => {
-    await container.tipoMatInvolucradoHandler.listar(req, res)
+  app.get('/api/rescate', async (req, res) => {
+    try {
+      await container.rescateHandler.listarTodos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listar rescate:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
   })
 
-  app.get('/api/tipos-materiales-involucrados/:id', async (req, res) => {
-    await container.tipoMatInvolucradoHandler.obtenerPorId(req, res)
+  app.get('/api/rescate/:id', async (req, res) => {
+    try {
+      await container.rescateHandler.obtenerPorIncidente(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtener rescate por incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
   })
 
-  //Categoria Materiales peligrosos
+  // ---------- Denunciantes ----------
+  app.post('/api/denunciantes', (req, res) => denuncianteHandler.crear(req, res))
+  app.get('/api/denunciantes/:idDenunciante', (req, res) => denuncianteHandler.obtenerPorId(req, res))
+  app.get('/api/denunciantes/dni/:dni', (req, res) => denuncianteHandler.obtenerPorDni(req, res))
+
+  // ---------- Tipos de materiales involucrados ----------
+  app.get('/api/tipos-materiales-involucrados', (req, res) => tipoMatInvolucradoHandler.listar(req, res))
+  app.get('/api/tipos-materiales-involucrados/:id', (req, res) => tipoMatInvolucradoHandler.obtenerPorId(req, res))
+
+  // ---------- Categorías de materiales peligrosos ----------
   app.get('/api/categorias-material-peligroso', async (req, res) => {
-    try {
-      await categoriaMaterialPeligrosoHandler.listar(req, res)
-    } catch (error) {
-      logger.error('Error en ruta listar categorías material peligroso:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
+    try { await categoriaMaterialPeligrosoHandler.listar(req, res) }
+    catch (error) { logger.error('Error listar categorías MP:', error); res.status(500).json({ error: 'Error interno' }) }
   })
-
   app.get('/api/categorias-material-peligroso/:id', async (req, res) => {
-    try {
-      await categoriaMaterialPeligrosoHandler.obtenerPorId(req, res)
-    } catch (error) {
-      logger.error('Error en ruta obtener categoría material peligroso por ID:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
+    try { await categoriaMaterialPeligrosoHandler.obtenerPorId(req, res) }
+    catch (error) { logger.error('Error obtener categoría MP:', error); res.status(500).json({ error: 'Error interno' }) }
   })
 
   // ROLES
@@ -154,12 +239,12 @@ export function setupRoutes(app, container) {
   })
 
   app.post('/api/bomberos/full', async (req, res) => {
-      try {
-        await bomberoHandler.createBomberoConUsuario(req, res)
-      } catch (error) {
-        logger.error('Error en ruta createBomberoConUsuario:', error)
-        res.status(500).json({ error: 'Error interno' })
-      }
+    try {
+      await bomberoHandler.createBomberoConUsuario(req, res)
+    } catch (error) {
+      logger.error('Error en ruta createBomberoConUsuario:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
   })
 
   app.get('/api/bomberos/:id', async (req, res) => {
@@ -267,6 +352,30 @@ export function setupRoutes(app, container) {
     await incidenteHandler.crearIncendioForestal(req, res, next)
   })
 
+  app.put('/api/incidentes/incendio-forestal', async (req, res, next) => {
+    await incidenteHandler.actualizarIncendioForestal(req, res, next)
+  })
+
+  app.put('/api/incidentes/accidente-transito', async (req, res, next) => {
+    await accidenteTransitoHandler.actualizar(req, res, next)
+  })
+
+  app.put('/api/incidentes/factor-climatico', async (req, res, next) => {
+    await factorClimaticoHandler.actualizar(req, res, next)
+  })
+
+  app.put('/api/incidentes/incendio-estructural', async (req, res, next) => {
+    await incendioEstructuralHandler.actualizar(req, res, next)
+  })
+
+  app.put('/api/incidentes/material-peligroso', async (req, res, next) => {
+    await materialPeligrosoHandler.actualizar(req, res, next)
+  })
+
+  app.put('/api/incidentes/rescate', async (req, res, next) => {
+    await rescateHandler.actualizar(req, res, next)
+  })
+
   app.get('/api/incidentes', async (req, res) => {
     try {
       await incidenteHandler.listar(req, res)
@@ -293,9 +402,22 @@ export function setupRoutes(app, container) {
       res.status(500).json({ error: 'Error interno' })
     }
   })
+  app.get('/api/incidentes/:id/detalle', async (req, res) => {
+    try {
+      await incidenteHandler.obtenerDetalle(req, res) // implementalo en el handler
+    } catch (error) {
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
 
   app.put('/api/incidentes/:id', async (req, res) => {
     try {
+      logger.info('🔄 PUT /api/incidentes/:id recibido', { 
+        id: req.params.id, 
+        body: req.body,
+        headers: req.headers['content-type']
+      })
       await incidenteHandler.actualizar(req, res)
     } catch (error) {
       logger.error('Error en ruta actualizar incidente:', error)
@@ -321,90 +443,52 @@ export function setupRoutes(app, container) {
     }
   })
 
-  // GRUPOS DE GUARDIA
-  app.post('/api/grupos', async (req, res) => {
-    try {
-      await grupoGuardiaHandler.crearGrupo(req, res)
-    } catch (error) {
-      logger.error('Error en ruta crearGrupo:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
+  // ---------- Rangos ----------
+  app.get('/api/rangos', (req, res) => rangoHandler.getAll(req, res))
+
+  // ---------- Catálogos forestales ----------
+  app.get('/api/caracteristicas-lugar', (req, res) => forestalCatalogosHandler.listarCaracteristicasLugar(req, res))
+  app.get('/api/areas-afectadas', (req, res) => forestalCatalogosHandler.listarAreasAfectadas(req, res))
+
+  // ---------- Tipos de incidente ----------
+  app.get('/api/tipos-incidente', (req, res) => tipoIncidenteHandler.listarTiposIncidente(req, res))
+  app.get('/api/tipos-incidente/:id', (req, res) => tipoIncidenteHandler.obtenerTipoIncidentePorId(req, res))
+
+  // ---------- Localizaciones ----------
+  app.get('/api/localizaciones', (req, res) => localizacionHandler.listarLocalizaciones(req, res))
+  app.get('/api/localizaciones/:id', (req, res) => localizacionHandler.obtenerLocalizacionPorId(req, res))
+
+  // ---------- Causas probables ----------
+  app.get('/api/causas-probables', (req, res) => causaProbableHandler.listarCausasProbables(req, res))
+  app.get('/api/causas-probables/:id', (req, res) => causaProbableHandler.obtenerCausaProbablePorId(req, res))
+
+  // ---------- Recuperar / validar / restablecer clave ----------
+  app.post('/api/recuperar-clave', (req, res) => recuperarClaveHandler(req, res))
+  app.get('/api/validar-token', (req, res) => validarTokenHandler(req, res))
+  app.post('/api/restablecer-clave', (req, res) => restablecerClaveHandler(req, res))
+
+  // ---------- Incendio estructural ----------
+  app.post('/api/incendio-estructural', (req, res) => incendioEstructuralHandler.registrar(req, res))
+  app.get('/api/incendio-estructural', (req, res) => incendioEstructuralHandler.listarTodos(req, res))
+  app.get('/api/incendio-estructural/:id', (req, res) => incendioEstructuralHandler.obtenerPorIncidente(req, res))
+
+  // ---------- Materiales peligrosos ----------
+  app.post('/api/materiales-peligrosos', (req, res) => materialPeligrosoHandler.registrar(req, res))
+  app.get('/api/materiales-peligrosos', (req, res) => materialPeligrosoHandler.listarTodos(req, res))
+  app.get('/api/materiales-peligrosos/:id', (req, res) => materialPeligrosoHandler.obtenerPorIncidente(req, res))
+
+  // ---------- Factor climático ----------
+  app.post('/api/factor-climatico', async (req, res) => {
+    try { await factorClimaticoHandler.registrar(req, res) }
+    catch (error) { logger.error('Error registrar factor climático:', error); res.status(500).json({ error: 'Error interno' }) }
   })
-
-  app.get('/api/grupos', async (req, res) => {
-    try {
-      await grupoGuardiaHandler.listarGrupos(req, res)
-    } catch (error) {
-      logger.error('Error en ruta listarGrupos:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
+  app.get('/api/factor-climatico', async (req, res) => {
+    try { await factorClimaticoHandler.listarTodos(req, res) }
+    catch (error) { logger.error('Error listar factores climáticos:', error); res.status(500).json({ error: 'Error interno' }) }
   })
-
-  app.get('/api/grupos/:id/bomberos', async (req, res) => {
-    try {
-      await grupoGuardiaHandler.obtenerBomberosDelGrupo(req, res)
-    } catch (error) {
-      logger.error('Error en ruta obtenerBomberosDelGrupo:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.get('/api/grupos/buscar', async (req, res) => {
-    try {
-      await grupoGuardiaHandler.buscarGrupos(req, res)
-    } catch (error) {
-      logger.error('Error en ruta buscarGrupos:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.delete('/api/grupos/:id', async (req, res) => {
-    try {
-      await grupoGuardiaHandler.eliminarGrupo(req, res)
-    } catch (error) {
-      logger.error('Error en ruta eliminarGrupo:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.put('/api/grupos/:id', async (req, res) => {
-  try {
-    await grupoGuardiaHandler.actualizarGrupo(req, res)
-  } catch (error) {
-    logger.error('Error en ruta actualizarGrupo:', error)
-    res.status(500).json({ error: 'Error interno' })
-  }
-})
-
-
-
-
-  // ACCIDENTES DE TRÁNSITO
-  app.post('/api/accidentes', async (req, res) => {
-    try {
-      await accidenteTransitoHandler.registrar(req, res)
-    } catch (error) {
-      logger.error('Error en ruta registrar accidente:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.get('/api/accidentes', async (req, res) => {
-    try {
-      await accidenteTransitoHandler.listarTodos(req, res)
-    } catch (error) {
-      logger.error('Error en ruta listar accidentes:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.get('/api/accidentes/:id', async (req, res) => {
-    try {
-      await accidenteTransitoHandler.obtenerPorIncidente(req, res)
-    } catch (error) {
-      logger.error('Error en ruta obtener accidente por incidente:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
+  app.get('/api/factor-climatico/:idIncidente', async (req, res) => {
+    try { await factorClimaticoHandler.obtenerPorIncidente(req, res) }
+    catch (error) { logger.error('Error obtener factor climático por incidente:', error); res.status(500).json({ error: 'Error interno' }) }
   })
 
   // CAUSAS DE ACCIDENTE
@@ -426,13 +510,13 @@ export function setupRoutes(app, container) {
       res.status(500).json({ error: 'Error interno' })
     }
   })
-  
+
 
   // RANGOS
   app.get('/api/rangos', async (req, res) => {
     await rangoHandler.getAll(req, res)
   })
-  
+
   // CATÁLOGOS FORESTALES
   app.get('/api/caracteristicas-lugar', async (req, res) => {
     await forestalCatalogosHandler.listarCaracteristicasLugar(req, res)
@@ -526,7 +610,7 @@ export function setupRoutes(app, container) {
     }
   })
 
-// INCENDIO ESTRUCTURAL
+  // INCENDIO ESTRUCTURAL
   app.post('/api/incendio-estructural', async (req, res) => {
     try {
       await incendioEstructuralHandler.registrar(req, res)
@@ -554,10 +638,10 @@ export function setupRoutes(app, container) {
     }
   })
 
-    // ===================== MATERIALES PELIGROSOS =====================
-    app.post('/api/materiales-peligrosos', async (req, res) => {
-  await container.materialPeligrosoHandler.registrar(req, res)
-})
+  // ===================== MATERIALES PELIGROSOS =====================
+  app.post('/api/materiales-peligrosos', async (req, res) => {
+    await container.materialPeligrosoHandler.registrar(req, res)
+  })
 
   app.post('/api/materiales-peligrosos', async (req, res) => {
     try {
@@ -584,14 +668,174 @@ export function setupRoutes(app, container) {
     }
   })
 
+  // --- Grupos de guardia ---
+  app.post('/api/grupos', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.crearGrupo(req, res)
+    } catch (error) {
+      logger.error('Error en ruta crearGrupo:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
 
+  app.get('/api/grupos', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.listarGrupos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listarGrupos:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/grupos/:id/bomberos', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.obtenerBomberosDelGrupo(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtenerBomberosDelGrupo:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/grupos/buscar', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.buscarGrupos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta buscarGrupos:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.delete('/api/grupos/:id', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.eliminarGrupo(req, res)
+    } catch (error) {
+      logger.error('Error en ruta eliminarGrupo:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.put('/api/grupos/:id', async (req, res) => {
+    try {
+      await grupoGuardiaHandler.actualizarGrupo(req, res)
+    } catch (error) {
+      logger.error('Error en ruta actualizarGrupo:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // ===================== FACTOR CLIMÁTICO =====================
+  app.post('/api/factor-climatico', async (req, res) => {
+    console.log('🌍 [ROUTES] Entrando a /api/factor-climatico...')
+    try {
+      await container.factorClimaticoHandler.registrar(req, res)
+      console.log('✅ [ROUTES] Salida OK de handler')
+    } catch (error) {
+      console.error('❌ [ROUTES] Error ANTES del handler:', error.message)
+      res.status(500).json({ error: 'Error interno en routes', detalle: error.message })
+    }
+  })
+
+  app.get('/api/factor-climatico', async (req, res) => {
+    try {
+      await factorClimaticoHandler.listarTodos(req, res)
+    } catch (error) {
+      logger.error('Error en ruta listar factores climáticos:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/factor-climatico/:idIncidente', async (req, res) => {
+    try {
+      await factorClimaticoHandler.obtenerPorIncidente(req, res)
+    } catch (error) {
+      logger.error('Error en ruta obtener factor climático por incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // RESPUESTAS DE INCIDENTES - Para visualizar quién confirmó asistencia
+  app.get('/api/incidentes/:id/respuestas', async (req, res) => {
+    try {
+      await respuestaIncidenteHandler.obtenerRespuestasIncidente(req, res)
+    } catch (error) {
+      logger.error('Error en ruta respuestas incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/incidentes/:id/estadisticas', async (req, res) => {
+    try {
+      await respuestaIncidenteHandler.obtenerEstadisticasIncidente(req, res)
+    } catch (error) {
+      logger.error('Error en ruta estadísticas incidente:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/incidentes/resumen-respuestas', async (req, res) => {
+    try {
+      await respuestaIncidenteHandler.obtenerResumenIncidentes(req, res)
+    } catch (error) {
+      logger.error('Error en ruta resumen respuestas:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  app.get('/api/dashboard/respuestas', async (req, res) => {
+    try {
+      await respuestaIncidenteHandler.obtenerDashboardRespuestas(req, res)
+    } catch (error) {
+      logger.error('Error en ruta dashboard respuestas:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
+  // WEBHOOKS WHATSAPP - Para recibir respuestas de bomberos
+  app.post('/api/webhooks/whatsapp', async (req, res) => {
+    try {
+      logger.info('📱 Webhook WhatsApp recibido', {
+        body: req.body,
+        headers: req.headers
+      })
+
+      const { From, Body, MessageSid } = req.body
+      
+      if (!From || !Body) {
+        logger.warn('📱 Webhook WhatsApp incompleto', { From, Body })
+        return res.status(400).json({ error: 'Datos incompletos' })
+      }
+
+      // Extraer número de teléfono (remover prefijo whatsapp:)
+      const telefono = From.replace('whatsapp:', '')
+      const respuesta = Body.trim()
+      
+      // Procesar respuesta usando el servicio especializado
+      const resultado = await respuestaIncidenteService.procesarRespuestaWebhook(
+        { From, Body, MessageSid },
+        req.ip
+      )
+      
+      if (resultado.success) {
+        logger.info('📱 Respuesta procesada y guardada', {
+          respuestaId: resultado.respuestaId,
+          bombero: resultado.bombero,
+          telefono: resultado.telefono,
+          tipoRespuesta: resultado.tipoRespuesta
+        })
+        
+        res.status(200).json(resultado)
+      } else {
+        res.status(400).json(resultado)
+      }
+      
+    } catch (error) {
+      logger.error('Error en webhook WhatsApp:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
 
   app.use((req, res) => {
-    logger.warn('Ruta no encontrada', {
-      method: req.method,
-      url: req.originalUrl
-    })
-
+    logger.warn('Ruta no encontrada', { method: req.method, url: req.originalUrl })
     res.status(404).json({
       success: false,
       message: 'Endpoint no encontrado',
@@ -618,6 +862,7 @@ export function setupRoutes(app, container) {
         'DELETE /api/usuarios/:id',
         'GET /api/usuarios/rol/:rol',
         'POST /api/usuarios/auth',
+        'GET /api/incidentes (filtros: pagina, limite, busqueda, tipo, desde, hasta)',
         'GET /api/incidentes',
         'POST /api/incidentes',
         'GET /api/incidentes/:id',
@@ -631,7 +876,7 @@ export function setupRoutes(app, container) {
         'DELETE /api/grupos/:id',
         'POST /api/accidentes',
         'GET /api/accidentes',
-        'GET /api/accidentes/:id',        
+        'GET /api/accidentes/:id',
         'GET /api/causa-accidente',
         'POST /api/vehiculos',
         'GET /api/rangos',
@@ -648,9 +893,27 @@ export function setupRoutes(app, container) {
         'POST /api/materiales-peligrosos',
         'GET /api/materiales-peligrosos',
         'GET /api/materiales-peligrosos/:id',
+        'POST /api/factor-climatico',
+        'GET /api/factor-climatico',
+        'GET /api/factor-climatico/:idIncidente',
         'GET /api/acciones-persona',
-        'GET /api/acciones-material'
-
+        'GET /api/acciones-material',
+        'POST /api/rescate',
+        'GET /api/rescate',
+        'GET /api/rescate/:id',
+        'GET /api/incidentes/:id/detalle',
+        'POST /api/denunciantes',
+        'GET /api/denunciantes/:idDenunciante',
+        'GET /api/denunciantes/dni/:dni',
+        'POST /api/grupos',
+        'GET /api/grupos',
+        'GET /api/grupos/:id/bomberos',
+        'GET /api/grupos/buscar',
+        'DELETE /api/grupos/:id',
+        'PUT /api/grupos/:id',
+        'POST /api/rescate',
+        'GET /api/rescate',
+        'GET /api/rescate/:id'
       ]
     })
   })
