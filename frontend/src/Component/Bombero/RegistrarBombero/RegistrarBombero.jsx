@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api.js'
 import { User, Phone, Mail, Shield, UserPlus, AlertTriangle, Home, CreditCard, TriangleAlert, Bone, PillIcon, FileText } from 'lucide-react'
 import '../../DisenioFormulario/DisenioFormulario.css'
+import { BackToMenuButton } from '../../Common/Button.jsx'
 
 const RegistrarBombero = ({ onVolver }) => {
   const [formData, setFormData] = useState({
@@ -463,9 +464,7 @@ const RegistrarBombero = ({ onVolver }) => {
                 </button>
                 
                 {onVolver && (
-                  <button type="button" className="btn btn-secondary" onClick={onVolver} disabled={loading}>
-                    Volver al menú
-                  </button>
+                  <BackToMenuButton onClick={onVolver} />
                 )}
               </div>
             </div>
