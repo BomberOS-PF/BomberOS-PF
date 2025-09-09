@@ -1,6 +1,6 @@
 // src/Component/Guardia/CalendarioGuardias/CalendarioGuardias.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import './CalendarioGuardias.css' // ⬅️ estilos locales (NO los de FullCalendar)
+import './CalendarioGuardias.css'
 
 import { API_URLS, apiRequest } from '../../../config/api'
 
@@ -26,19 +26,28 @@ const addDays = (date, days) => {
 const BG_FILL = 'rgba(240,128,128,0.35)' // #f08080 con transparencia
 const BG_BORDER = '#b30000'
 
+// Utilidad: formatea los rangos "HH:MM-HH:MM" a líneas para el tooltip
+const formatearTooltip = (rangos = []) =>
+  ['Guardias:', ...rangos.map(r => {
+    const [d, h] = String(r).split('-')
+    return `Desde ${d} hasta ${h}`
+  })].join('\n')
+
 /**
  * Calendario mensual que pinta los días con guardias del bombero logueado
- * Props:
- *  - dniUsuario?: number | string
- *  - titulo?: string
  */
 const CalendarioGuardias = ({ dniUsuario, titulo = 'Mis Guardias' }) => {
   const [eventos, setEventos] = useState([])
   const [mensaje, setMensaje] = useState('')
   const [resumenPorFecha, setResumenPorFecha] = useState(new Map())
+
   const calendarRef = useRef()
   const ultimoRangoRef = useRef({ start: '', end: '' })
-  const tooltipsRef = useRef(new Map())
+  const overlaysRef = useRef(new Map())  // fechaStr -> overlay DIV
+  const tooltipsRef = useRef(new Map())  // fechaStr -> tooltip DIV
+
+  // Fecha de HOY en formato YYYY-MM-DD
+  const hoyStr = useMemo(() => yyyyMmDd(new Date()), [])
 
   // DNI del usuario actual
   const dni = useMemo(() => {
@@ -53,11 +62,15 @@ const CalendarioGuardias = ({ dniUsuario, titulo = 'Mis Guardias' }) => {
     }
   }, [dniUsuario])
 
-  // Limpieza de tooltips al desmontar
+  // Limpieza total al desmontar
   useEffect(() => {
     return () => {
+      for (const el of overlaysRef.current.values()) {
+        if (el?.parentNode) el.parentNode.removeChild(el)
+      }
+      overlaysRef.current.clear()
       for (const tip of tooltipsRef.current.values()) {
-        if (tip && tip.parentNode) tip.parentNode.removeChild(tip)
+        if (tip?.parentNode) tip.parentNode.removeChild(tip)
       }
       tooltipsRef.current.clear()
     }
@@ -88,7 +101,7 @@ const CalendarioGuardias = ({ dniUsuario, titulo = 'Mis Guardias' }) => {
         porFecha.get(f).push(`${desde}-${hasta}`)
       }
 
-      // Eventos de background (además pintamos la celda por clase)
+      // Eventos de fondo (complemento; el overlay asegura el pintado)
       const backEvents = []
       for (const [fecha, rangos] of porFecha) {
         const [y, m, d] = fecha.split('-').map(Number)
@@ -112,91 +125,165 @@ const CalendarioGuardias = ({ dniUsuario, titulo = 'Mis Guardias' }) => {
     }
   }
 
-  // Pintado + tooltips en el mount de cada celda
-  const dayCellDidMount = info => {
-    const dateStr = info.date?.toISOString?.().slice(0, 10)
-    if (!dateStr) return
-    const rangos = resumenPorFecha.get(dateStr)
+  // ---------- helpers de overlay/tooltip ----------
 
-    // PINTAR CELDA
-    if (rangos && rangos.length) {
-      info.el.classList.add('fc-dia-guardia')
-      const frame = info.el.querySelector('.fc-daygrid-day-frame')
-      if (frame) {
-        frame.style.background = BG_FILL
-        frame.style.boxShadow = `inset 0 0 0 1px ${BG_BORDER}`
+  // Crea/actualiza el badge "¡Hoy Guardia!" dentro del overlay
+  const ensureTodayBadge = (ov, isToday) => {
+    if (!ov) return
+    const sel = '.hoy-guardia-badge'
+    const existing = ov.querySelector(sel)
+    if (isToday) {
+      if (!existing) {
+        const badge = document.createElement('div')
+        badge.className = 'hoy-guardia-badge'
+        badge.textContent = '¡Hoy Guardia!'
+        ov.appendChild(badge)
       }
+    } else {
+      if (existing && existing.parentNode) existing.parentNode.removeChild(existing)
     }
+  }
 
-    // Tooltip
+  const crearOverlay = (tdEl, fechaStr) => {
+    if (!tdEl) return
+    if (!overlaysRef.current.has(fechaStr)) {
+      tdEl.style.position = 'relative'
+      const ov = document.createElement('div')
+      ov.className = 'fc-guard-overlay'
+      tdEl.appendChild(ov)
+      overlaysRef.current.set(fechaStr, ov)
+    }
+    // sincroniza estado “hoy con guardia”
+    const ov = overlaysRef.current.get(fechaStr)
+    const isToday = fechaStr === hoyStr
+    ov.classList.toggle('is-today', isToday)
+    ensureTodayBadge(ov, isToday)
+  }
+
+  const quitarOverlay = (fechaStr) => {
+    const ov = overlaysRef.current.get(fechaStr)
+    if (ov?.parentNode) ov.parentNode.removeChild(ov)
+    overlaysRef.current.delete(fechaStr)
+  }
+
+  const crearTooltip = (fechaStr) => {
+    if (tooltipsRef.current.has(fechaStr)) return tooltipsRef.current.get(fechaStr)
+    const tip = document.createElement('div')
+    tip.className = 'tooltip-dinamico'
+    // mismo estilo inline que en “GestionarGuardias”
+    tip.style.position = 'absolute'
+    tip.style.display = 'none'
+    tip.style.pointerEvents = 'none'
+    tip.style.whiteSpace = 'pre'
+    tip.style.padding = '6px 8px'
+    tip.style.background = '#222'
+    tip.style.color = '#fff'
+    tip.style.borderRadius = '6px'
+    tip.style.fontSize = '12px'
+    tip.style.boxShadow = '0 2px 8px rgba(0,0,0,.25)'
+    document.body.appendChild(tip)
+    tooltipsRef.current.set(fechaStr, tip)
+    return tip
+  }
+
+  const quitarTooltip = (fechaStr) => {
+    const tip = tooltipsRef.current.get(fechaStr)
+    if (tip?.parentNode) tip.parentNode.removeChild(tip)
+    tooltipsRef.current.delete(fechaStr)
+  }
+
+  // ---------- Hooks de celdas ----------
+  const dayCellDidMount = info => {
+    const fechaStr = info.date?.toISOString?.().slice(0, 10)
+    if (!fechaStr) return
+
+    const rangos = resumenPorFecha.get(fechaStr)
     if (rangos && rangos.length) {
-      const tip = document.createElement('div')
-      tip.className = 'tooltip-dinamico'
-      tip.style.position = 'absolute'
-      tip.style.display = 'none'
-      tip.style.pointerEvents = 'none'
-      tip.style.whiteSpace = 'pre'
-      tip.style.padding = '6px 8px'
-      tip.style.background = '#222'
-      tip.style.color = '#fff'
-      tip.style.borderRadius = '6px'
-      tip.style.fontSize = '12px'
-      tip.style.boxShadow = '0 2px 8px rgba(0,0,0,.25)'
-      tip.innerText = `Guardias:\n${rangos.join('\n')}`
+      // Pintar
+      crearOverlay(info.el, fechaStr)
+      // Tooltip custom
+      const tip = crearTooltip(fechaStr)
+      tip.textContent = formatearTooltip(rangos)
 
-      document.body.appendChild(tip)
-      tooltipsRef.current.set(dateStr, tip)
+      // Evitamos duplicar listeners
+      if (!info.el.dataset.tipBound) {
+        const onEnter = (e) => {
+          const t = tooltipsRef.current.get(fechaStr)
+          if (!t) return
+          t.style.display = 'block'
+          t.style.left = `${e.pageX + 10}px`
+          t.style.top = `${e.pageY - 20}px`
+        }
+        const onMove = (e) => {
+          const t = tooltipsRef.current.get(fechaStr)
+          if (!t) return
+          t.style.left = `${e.pageX + 10}px`
+          t.style.top = `${e.pageY - 20}px`
+        }
+        const onLeave = () => {
+          const t = tooltipsRef.current.get(fechaStr)
+          if (t) t.style.display = 'none'
+        }
 
-      info.el.addEventListener('mouseenter', e => {
-        tip.style.display = 'block'
-        tip.style.left = `${e.pageX + 10}px`
-        tip.style.top = `${e.pageY - 20}px`
-      })
-      info.el.addEventListener('mousemove', e => {
-        tip.style.left = `${e.pageX + 10}px`
-        tip.style.top = `${e.pageY - 20}px`
-      })
-      info.el.addEventListener('mouseleave', () => {
-        tip.style.display = 'none'
-      })
+        info.el.addEventListener('mouseenter', onEnter)
+        info.el.addEventListener('mousemove', onMove)
+        info.el.addEventListener('mouseleave', onLeave)
+        info.el.dataset.tipBound = '1'
+      }
     }
   }
 
   const dayCellWillUnmount = info => {
-    const dateStr = info.date?.toISOString?.().slice(0, 10)
-
-    // Limpio estilos de pintado
-    const frame = info.el.querySelector('.fc-daygrid-day-frame')
-    if (frame) {
-      frame.style.background = ''
-      frame.style.boxShadow = ''
-    }
-    info.el.classList.remove('fc-dia-guardia')
-
-    // Limpio tooltip
-    const tip = tooltipsRef.current.get(dateStr)
-    if (tip && tip.parentNode) tip.parentNode.removeChild(tip)
-    tooltipsRef.current.delete(dateStr)
+    const fechaStr = info.date?.toISOString?.().slice(0, 10)
+    quitarOverlay(fechaStr)
+    quitarTooltip(fechaStr)
+    if (info.el?.dataset) delete info.el.dataset.tipBound
   }
 
-  // 🔁 Re-pinta celdas si llega data después del mount (robusto)
+  // 🔁 Cuando llega/actualiza el resumen del servidor, (re)aplico overlay + tooltip
   useEffect(() => {
-    const cells = document.querySelectorAll('.cal-mini-card .fc-daygrid-day')
-    cells.forEach(cell => {
-      const dateStr = cell.getAttribute('data-date')
-      const frame = cell.querySelector('.fc-daygrid-day-frame')
-      if (!frame) return
-      if (resumenPorFecha.has(dateStr)) {
-        cell.classList.add('fc-dia-guardia')
-        frame.style.background = BG_FILL
-        frame.style.boxShadow = `inset 0 0 0 1px ${BG_BORDER}`
+    const cells = document.querySelectorAll('.cal-mini-card td.fc-daygrid-day')
+    cells.forEach(td => {
+      const fechaStr = td.getAttribute('data-date')
+      if (!fechaStr) return
+      const rangos = resumenPorFecha.get(fechaStr)
+
+      if (rangos && rangos.length) {
+        crearOverlay(td, fechaStr) // setea .is-today y badge si corresponde
+
+        const tip = crearTooltip(fechaStr)
+        tip.textContent = formatearTooltip(rangos)
+
+        if (!td.dataset.tipBound) {
+          const onEnter = (e) => {
+            const t = tooltipsRef.current.get(fechaStr)
+            if (!t) return
+            t.style.display = 'block'
+            t.style.left = `${e.pageX + 10}px`
+            t.style.top = `${e.pageY - 20}px`
+          }
+          const onMove = (e) => {
+            const t = tooltipsRef.current.get(fechaStr)
+            if (!t) return
+            t.style.left = `${e.pageX + 10}px`
+            t.style.top = `${e.pageY - 20}px`
+          }
+          const onLeave = () => {
+            const t = tooltipsRef.current.get(fechaStr)
+            if (t) t.style.display = 'none'
+          }
+          td.addEventListener('mouseenter', onEnter)
+          td.addEventListener('mousemove', onMove)
+          td.addEventListener('mouseleave', onLeave)
+          td.dataset.tipBound = '1'
+        }
       } else {
-        cell.classList.remove('fc-dia-guardia')
-        frame.style.background = ''
-        frame.style.boxShadow = ''
+        quitarOverlay(fechaStr)
+        quitarTooltip(fechaStr)
+        if (td?.dataset) delete td.dataset.tipBound
       }
     })
-  }, [resumenPorFecha])
+  }, [resumenPorFecha, hoyStr])
 
   if (!dni) {
     return (
@@ -214,13 +301,12 @@ const CalendarioGuardias = ({ dniUsuario, titulo = 'Mis Guardias' }) => {
       <div className='card-header bg-danger text-white d-flex align-items-center gap-2'>
         <i className='bi bi-calendar3'></i>
         <strong>{titulo}</strong>
-        <span className='ms-auto badge bg-light text-danger'></span>
       </div>
 
       <div className='card-body'>
         {mensaje && <div className='alert alert-warning'>{mensaje}</div>}
 
-        <div className="calendar-mini-wrapper">{/* ⬅️ fija el alto */}
+        <div className="calendar-mini-wrapper">
           <FullCalendar
             ref={calendarRef}
             plugins={[dayGridPlugin, interactionPlugin]}
@@ -230,7 +316,7 @@ const CalendarioGuardias = ({ dniUsuario, titulo = 'Mis Guardias' }) => {
             firstDay={1}
             fixedWeekCount={false}
             showNonCurrentDates={true}
-            height='100%'                // llena el wrapper (que sí tiene height)
+            height='100%'
             events={eventos}
             eventContent={() => ({ domNodes: [] })}
             datesSet={arg => {

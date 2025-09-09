@@ -21,14 +21,119 @@
   height: 100% !important;
 }
 
-/* Overlay por si los bg-events quedan por debajo del contenido */
+/* Overlay del día con guardia (por encima del fondo del daygrid) */
 .cal-mini-card td.fc-daygrid-day {
-  /* el JS ya setea position: relative en cada td que tenga overlay;
-     esto es solo un fallback por si algo lo resetea */
   position: relative;
 }
-
-/* Por si el tema/estilos bajan la visibilidad de eventos de fondo */
 .cal-mini-card .fc .fc-bg-event {
   opacity: 1;
 }
+
+/* ===== Tooltip con el MISMO estilo que el componente de Asignar Guardia ===== */
+.tooltip-dinamico {
+  position: fixed;          /* evita clipping dentro de contenedores */
+  display: none;
+  pointer-events: none;     /* no captura el mouse */
+  white-space: pre;         /* respeta saltos de línea */
+  padding: 6px 8px;
+  background: #222;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+  z-index: 3000;            /* por encima del calendario */
+}
+
+/* Overlay visual para marcar el día */
+/* Valores compartidos con el otro componente */
+.cal-mini-card {
+  --guard-fill: rgba(240, 128, 128, 0.35); /* #f08080 con transparencia */
+  --guard-border: #b30000;
+}
+
+/* Overlay del día con guardia */
+.fc-guard-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--guard-fill);
+  border: 1px solid var(--guard-border);
+  pointer-events: none;
+  z-index: 1;
+  border-radius: 2px;
+}
+
+/* Contenedor mini: ya lo tenías; aquí sólo guardo las variables */
+.cal-mini-card {
+  --guard-fill: rgba(240, 128, 128, 0.35); /* #f08080 con transparencia */
+  --guard-border: #b30000;
+  --guard-fill-strong: rgba(213, 43, 30, 0.5); /* rojo más fuerte para HOY */
+}
+
+/* 1) NÚMEROS DE DÍA EN NEGRO (bootstrap suele pintarlos azul por ser <a>) */
+.cal-mini-card .fc a.fc-daygrid-day-number,
+.cal-mini-card .fc .fc-daygrid-day-number {
+  color: #111 !important;
+  text-decoration: none !important;
+}
+
+/* Opcional: quitar el subrayado al hover para que no parezca un link azul */
+.cal-mini-card .fc a.fc-daygrid-day-number:hover {
+  text-decoration: none !important;
+}
+
+/* 2) No dejar que el resaltado default de "hoy" tape nuestro overlay */
+.cal-mini-card .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-frame {
+  background: transparent !important;
+}
+
+/* 3) Overlay del día con guardia */
+.fc-guard-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--guard-fill);
+  border: 1px solid var(--guard-border);
+  pointer-events: none;
+  z-index: 1;
+  border-radius: 2px;
+}
+
+/* 4) Si además es HOY, usar rojo más fuerte */
+.fc-guard-overlay.is-today {
+  background: var(--guard-fill-strong);
+  border-color: #d52b1e;
+  box-shadow: 0 0 0 1px #d52b1e inset;
+}
+
+/* Hoy con guardia: más intenso */
+.cal-mini-card td.fc-daygrid-day .fc-guard-overlay.is-today {
+  background: rgba(213, 43, 30, 0.55); /* más oscuro que BG_FILL */
+  border-color: #b30000;
+}
+
+/* Números de día en negro (ya lo tenías) */
+.cal-mini-card .fc-daygrid-day-number {
+  color: #111 !important;
+}
+
+/* Hoy con guardia: más intenso */
+.cal-mini-card td.fc-daygrid-day .fc-guard-overlay.is-today {
+  background: rgba(213, 43, 30, 0.55);
+  border-color: #b30000;
+}
+
+/* Badge “¡Hoy Guardia!” dentro del casillero */
+.cal-mini-card td.fc-daygrid-day .fc-guard-overlay .hoy-guardia-badge {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;              /* abajo-izquierda para no tapar el número del día */
+  font-weight: 700;         /* negrita */
+  font-size: 12px;
+  color: #b30000;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(179, 0, 0, 0.35);
+  border-radius: 6px;
+  padding: 2px 6px;
+  pointer-events: none;     /* para no interferir con el hover del tooltip */
+  box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+
