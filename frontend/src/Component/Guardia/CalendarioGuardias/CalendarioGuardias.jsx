@@ -145,30 +145,30 @@ const CalendarioGuardias = ({ dniUsuario, titulo = 'Mis Guardias' }) => {
   }
 
   // Reemplazá tu crearOverlay por este
-const crearOverlay = (tdEl, fechaStr) => {
-  if (!tdEl) return
+  const crearOverlay = (tdEl, fechaStr) => {
+    if (!tdEl) return
 
-  // 1) Si ya hay overlays en el TD, quedate con el primero y borrá el resto
-  const existentes = tdEl.querySelectorAll('.fc-guard-overlay')
-  let ov = existentes[0] || null
-  if (existentes.length > 1) {
-    for (let i = 1; i < existentes.length; i++) {
-      existentes[i].parentNode?.removeChild(existentes[i])
+    // 1) Si ya hay overlays en el TD, quedate con el primero y borrá el resto
+    const existentes = tdEl.querySelectorAll('.fc-guard-overlay')
+    let ov = existentes[0] || null
+    if (existentes.length > 1) {
+      for (let i = 1; i < existentes.length; i++) {
+        existentes[i].parentNode?.removeChild(existentes[i])
+      }
     }
-  }
 
-  // 2) Si no había, crealo
-  if (!ov) {
-    tdEl.style.position = 'relative'
-    ov = document.createElement('div')
-    ov.className = 'fc-guard-overlay'
-    tdEl.appendChild(ov)
-  }
+    // 2) Si no había, crealo
+    if (!ov) {
+      tdEl.style.position = 'relative'
+      ov = document.createElement('div')
+      ov.className = 'fc-guard-overlay'
+      tdEl.appendChild(ov)
+    }
 
-  // 3) Guardá/actualizá la referencia y marcá si es HOY
-  overlaysRef.current.set(fechaStr, ov)
-  ov.classList.toggle('is-today', fechaStr === hoyStr)
-}
+    // 3) Guardá/actualizá la referencia y marcá si es HOY
+    overlaysRef.current.set(fechaStr, ov)
+    ov.classList.toggle('is-today', fechaStr === hoyStr)
+  }
 
 
   const quitarOverlay = (fechaStr) => {
@@ -307,51 +307,55 @@ const crearOverlay = (tdEl, fechaStr) => {
     )
   }
 
+
   return (
-    <div className='card border-0 shadow-sm cal-mini-card'>
-      <div className='card-header bg-danger text-white d-flex align-items-center gap-2'>
-        <i className='bi bi-calendar3'></i>
-        <strong>{titulo}</strong>
-      </div>
-
-      <div className='card-body'>
-        {mensaje && <div className='alert alert-warning'>{mensaje}</div>}
-
-        <div className="calendar-mini-wrapper">
-          <FullCalendar
-            ref={calendarRef}
-            plugins={[dayGridPlugin, interactionPlugin]}
-            initialView='dayGridMonth'
-            locale={esLocale}
-            headerToolbar={{ left: 'prev,next today', center: 'title', right: '' }}
-            firstDay={1}
-            fixedWeekCount={false}
-            showNonCurrentDates={true}
-            height='100%'
-            events={eventos}
-            eventContent={() => ({ domNodes: [] })}
-            datesSet={arg => {
-              const s = arg.start?.toISOString?.() || ''
-              const e = arg.end?.toISOString?.() || ''
-              if (ultimoRangoRef.current.start !== s || ultimoRangoRef.current.end !== e) {
-                ultimoRangoRef.current = { start: s, end: e }
-                cargarMesServidor(arg.start, arg.end)
-              }
-            }}
-            dayCellDidMount={dayCellDidMount}
-            dayCellWillUnmount={dayCellWillUnmount}
-          />
+    <div className='container-fluid'>
+      <div className='card border-0 shadow-sm cal-mini-card'>
+        <div className='card-header bg-danger text-white d-flex align-items-center gap-2'>
+          <i className='bi bi-calendar3'></i>
+          <strong>{titulo}</strong>
         </div>
 
-        <div className='mt-3 d-flex align-items-center gap-2'>
-          <span
-            className='d-inline-block rounded'
-            style={{ width: 16, height: 16, background: BG_FILL, border: `1px solid ${BG_BORDER}` }}
-          />
-          <small className='text-muted'>Día con guardias asignadas</small>
+        <div className='card-body'>
+          {mensaje && <div className='alert alert-warning'>{mensaje}</div>}
+
+          <div className="calendar-mini-wrapper">
+            <FullCalendar
+              ref={calendarRef}
+              plugins={[dayGridPlugin, interactionPlugin]}
+              initialView='dayGridMonth'
+              locale={esLocale}
+              headerToolbar={{ left: 'prev,next today', center: 'title', right: '' }}
+              firstDay={1}
+              fixedWeekCount={false}
+              showNonCurrentDates={true}
+              height='100%'
+              events={eventos}
+              eventContent={() => ({ domNodes: [] })}
+              datesSet={arg => {
+                const s = arg.start?.toISOString?.() || ''
+                const e = arg.end?.toISOString?.() || ''
+                if (ultimoRangoRef.current.start !== s || ultimoRangoRef.current.end !== e) {
+                  ultimoRangoRef.current = { start: s, end: e }
+                  cargarMesServidor(arg.start, arg.end)
+                }
+              }}
+              dayCellDidMount={dayCellDidMount}
+              dayCellWillUnmount={dayCellWillUnmount}
+            />
+          </div>
+
+          <div className='mt-3 d-flex align-items-center gap-2'>
+            <span
+              className='d-inline-block rounded'
+              style={{ width: 16, height: 16, background: BG_FILL, border: `1px solid ${BG_BORDER}` }}
+            />
+            <small className='text-muted'>Día con guardias asignadas</small>
+          </div>
         </div>
       </div>
     </div>
+
   )
 }
 
