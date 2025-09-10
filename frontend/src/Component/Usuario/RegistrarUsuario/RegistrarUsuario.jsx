@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
 import { Flame, AlertTriangle, FileText, User, Mail, Shield} from 'lucide-react'
 import '../../DisenioFormulario/DisenioFormulario.css'
+import { BackToMenuButton } from '../../Common/Button'
 
 const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuarios = [] }) => {
   const [formData, setFormData] = useState({ username: '', password: '', email: '', idRol: '' })
@@ -342,9 +343,7 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuar
                 </button>
 
                 {onVolver && (
-                  <button type="button" className="btn btn-secondary" onClick={onVolver} disabled={loading}>
-                    Volver al menú
-                  </button>
+                  <BackToMenuButton onClick={onVolver} />
                 )}
               </div>
             </div>

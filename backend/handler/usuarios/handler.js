@@ -15,18 +15,54 @@ export class UsuarioHandler {
    */
   async getAllUsuarios(req, res) {
     try {
-      logger.info('Solicitud: Obtener usuarios', {
+      const pagina = Math.max(1, parseInt(req.query.pagina, 10) || 1)
+      const limite = Math.max(1, parseInt(req.query.limite, 10) || 10)
+      const busqueda = (req.query.busqueda || '').toString().trim().toLowerCase()
+
+      logger.info('Solicitud: Obtener usuarios (con paginación/búsqueda)', {
         method: req.method,
         url: req.url,
-        ip: req.ip
+        ip: req.ip,
+        pagina,
+        limite,
+        busqueda
       })
 
+      // Traemos todos (si tu service ya soporta paginación real en DB, usalo aquí)
       const usuarios = await this.usuarioService.listarUsuarios()
-      
-      res.status(200).json({
+      let lista = usuarios.map(u => u.toJSON()) // sin password
+
+      // Filtro simple (usuario/username, email, rol, nombre, apellido, dni)
+      if (busqueda) {
+        lista = lista.filter(u => {
+          const usuario = (u.usuario || u.username || '').toLowerCase()
+          const email = (u.email || '').toLowerCase()
+          const rol = (u.rol || '').toLowerCase()
+          const nombre = (u.nombre || '').toLowerCase()
+          const apellido = (u.apellido || '').toLowerCase()
+          const dni = (u.dni ? String(u.dni) : '')
+          return (
+            usuario.includes(busqueda) ||
+            email.includes(busqueda) ||
+            rol.includes(busqueda) ||
+            nombre.includes(busqueda) ||
+            apellido.includes(busqueda) ||
+            dni.includes(busqueda)
+          )
+        })
+      }
+
+      const total = lista.length
+      const inicio = (pagina - 1) * limite
+      const data = lista.slice(inicio, inicio + limite)
+
+      return res.status(200).json({
         success: true,
-        message: `${usuarios.length} usuarios encontrados`,
-        data: usuarios.map(usuario => usuario.toJSON()) // Sin password
+        message: `${data.length} usuarios en esta página`,
+        total,           // <-- importante para el front
+        pagina,
+        limite,
+        data             // <-- la página solicitada
       })
     } catch (error) {
       logger.error('Error al obtener usuarios', {
@@ -35,8 +71,7 @@ export class UsuarioHandler {
         url: req.url,
         responseTime: `${Date.now() - req.startTime}ms`
       })
-      
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Error interno del servidor',
         error: error.message
@@ -51,7 +86,7 @@ export class UsuarioHandler {
   async getUsuarioById(req, res) {
     try {
       const { id } = req.params
-      
+
       logger.info('Solicitud: Obtener usuario por ID', {
         id,
         method: req.method,
@@ -60,7 +95,7 @@ export class UsuarioHandler {
       })
 
       const usuario = await this.usuarioService.obtenerUsuarioPorId(id)
-      
+
       res.status(200).json({
         success: true,
         message: 'Usuario encontrado',
@@ -74,9 +109,9 @@ export class UsuarioHandler {
         url: req.url,
         responseTime: `${Date.now() - req.startTime}ms`
       })
-      
+
       const status = error.message.includes('no encontrado') ? 404 : 500
-      
+
       res.status(status).json({
         success: false,
         message: error.message,
@@ -99,7 +134,7 @@ export class UsuarioHandler {
       })
 
       const nuevoUsuario = await this.usuarioService.crearUsuario(req.body)
-      
+
       res.status(201).json({
         success: true,
         message: 'Usuario creado exitosamente',
@@ -113,10 +148,10 @@ export class UsuarioHandler {
         usuario: req.body?.usuario,
         responseTime: `${Date.now() - req.startTime}ms`
       })
-      
-      const status = error.message.includes('Ya existe') || error.message.includes('registrado') ? 409 : 
-                     error.message.includes('requerido') || error.message.includes('inválido') ? 400 : 500
-      
+
+      const status = error.message.includes('Ya existe') || error.message.includes('registrado') ? 409 :
+        error.message.includes('requerido') || error.message.includes('inválido') ? 400 : 500
+
       res.status(status).json({
         success: false,
         message: error.message,
@@ -132,7 +167,7 @@ export class UsuarioHandler {
   async updateUsuario(req, res) {
     try {
       const { id } = req.params
-      
+
       logger.info('Solicitud: Actualizar usuario', {
         id,
         method: req.method,
@@ -141,7 +176,7 @@ export class UsuarioHandler {
       })
 
       const usuarioActualizado = await this.usuarioService.actualizarUsuario(id, req.body)
-      
+
       res.status(200).json({
         success: true,
         message: 'Usuario actualizado exitosamente',
@@ -155,11 +190,11 @@ export class UsuarioHandler {
         url: req.url,
         responseTime: `${Date.now() - req.startTime}ms`
       })
-      
+
       const status = error.message.includes('no encontrado') ? 404 :
-                     error.message.includes('Ya existe') ? 409 :
-                     error.message.includes('requerido') || error.message.includes('inválido') ? 400 : 500
-      
+        error.message.includes('Ya existe') ? 409 :
+          error.message.includes('requerido') || error.message.includes('inválido') ? 400 : 500
+
       res.status(status).json({
         success: false,
         message: error.message,
@@ -175,7 +210,7 @@ export class UsuarioHandler {
   async deleteUsuario(req, res) {
     try {
       const { id } = req.params
-      
+
       logger.info('Solicitud: Eliminar usuario', {
         id,
         method: req.method,
@@ -184,7 +219,7 @@ export class UsuarioHandler {
       })
 
       await this.usuarioService.eliminarUsuario(id)
-      
+
       res.status(200).json({
         success: true,
         message: 'Usuario eliminado exitosamente',
@@ -198,9 +233,9 @@ export class UsuarioHandler {
         url: req.url,
         responseTime: `${Date.now() - req.startTime}ms`
       })
-      
+
       const status = error.message.includes('no encontrado') ? 404 : 500
-      
+
       res.status(status).json({
         success: false,
         message: error.message,
@@ -216,7 +251,7 @@ export class UsuarioHandler {
   async getUsuariosByRol(req, res) {
     try {
       const { rol } = req.params
-      
+
       logger.info('Solicitud: Obtener usuarios por rol', {
         rol,
         method: req.method,
@@ -225,7 +260,7 @@ export class UsuarioHandler {
       })
 
       const usuarios = await this.usuarioService.listarUsuariosPorRol(rol)
-      
+
       res.status(200).json({
         success: true,
         message: `${usuarios.length} usuarios con rol "${rol}" encontrados`,
@@ -239,7 +274,7 @@ export class UsuarioHandler {
         url: req.url,
         responseTime: `${Date.now() - req.startTime}ms`
       })
-      
+
       res.status(500).json({
         success: false,
         message: 'Error interno del servidor',
@@ -255,7 +290,7 @@ export class UsuarioHandler {
   async authenticateUsuario(req, res) {
     try {
       const { usuario, password } = req.body
-      
+
       logger.info('Solicitud: Autenticar usuario', {
         usuario,
         method: req.method,
@@ -264,21 +299,21 @@ export class UsuarioHandler {
       })
 
       const usuarioAutenticado = await this.usuarioService.autenticarUsuario(usuario, password)
-      
+
       res.status(200).json({
         success: true,
         message: 'Autenticación exitosa',
         user: {
-        id: usuarioAutenticado.id,
-        usuario: usuarioAutenticado.usuario,
-        email: usuarioAutenticado.email,
-        rol: usuarioAutenticado.rol,
-        nombre: usuarioAutenticado.nombre,
-        apellido: usuarioAutenticado.apellido,
-        dni: usuarioAutenticado.dni        
-      }
-    })
-    
+          id: usuarioAutenticado.id,
+          usuario: usuarioAutenticado.usuario,
+          email: usuarioAutenticado.email,
+          rol: usuarioAutenticado.rol,
+          nombre: usuarioAutenticado.nombre,
+          apellido: usuarioAutenticado.apellido,
+          dni: usuarioAutenticado.dni
+        }
+      })
+
     } catch (error) {
       logger.error('Error en autenticación', {
         usuario: req.body?.usuario,
@@ -287,11 +322,11 @@ export class UsuarioHandler {
         url: req.url,
         responseTime: `${Date.now() - req.startTime}ms`
       })
-      
-      const status = error.message.includes('Credenciales inválidas') || 
-                     error.message.includes('desactivado') ? 401 : 
-                     error.message.includes('requeridos') ? 400 : 500
-      
+
+      const status = error.message.includes('Credenciales inválidas') ||
+        error.message.includes('desactivado') ? 401 :
+        error.message.includes('requeridos') ? 400 : 500
+
       res.status(status).json({
         success: false,
         message: error.message,

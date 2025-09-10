@@ -517,3 +517,12 @@ body {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
+.custom-page-btn {
+  background-color: #6b7280;
+  color: #fff;
+  border: 1px solid #6b7280;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease-in-out;
+}
+.custom-page-btn.active { filter: brightness(0.9); }

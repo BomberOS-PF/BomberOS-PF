@@ -46,8 +46,7 @@ const ConsultarBomberosDelGrupo = ({
                     <th className="border-end text-center">Legajo</th>
                     <th className="border-end text-center">Nombre</th>
                     <th className="border-end text-center">Apellido</th>
-                    <th className="border-end text-center">Teléfono</th>
-                    <th className="text-center">Email</th>
+                    <th className="text-center">Teléfono</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -57,8 +56,7 @@ const ConsultarBomberosDelGrupo = ({
                       <td className="border-end px-3">{b.legajo}</td>
                       <td className="border-end px-3">{b.nombre}</td>
                       <td className="border-end px-3">{b.apellido}</td>
-                      <td className="border-end px-3">{b.telefono}</td>
-                      <td className='px-3'>{b.email}</td>
+                      <td className="px-3">{b.telefono}</td>
                     </tr>
                   ))}
                 </tbody>

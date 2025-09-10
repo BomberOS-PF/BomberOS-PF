@@ -1,0 +1,83 @@
+/* ====== React-Select ====== */
+/* Usar classNamePrefix="rs" en todos los <Select /> */
+.rs__control {
+  background-color: #fff;
+  border: 1px solid #dc3545;
+  min-height: 38px;
+  box-shadow: none;
+}
+.rs__control:hover {
+  border-color: #dc3545;
+}
+.rs__control--is-focused {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.3);
+}
+.rs__single-value {
+  color: #000;
+}
+.rs__menu {
+  background: #fff;
+  z-index: 9999;
+}
+.rs__option {
+  background: #fff;
+  color: #000;
+  cursor: pointer;
+}
+.rs__option--is-focused {
+  background: #ff6b6b;
+}
+.rs__option--is-selected {
+  background: #dc3545;
+  color: #fff;
+}
+
+/* ====== FullCalendar: eventos de guardia ====== */
+.fc-guardia {
+  background-color: #f08080 !important;
+  border: 1px solid #b30000 !important;
+  color: transparent !important;
+  transition: background-color 0.2s ease;
+}
+.fc-guardia:hover {
+  background-color: #d52b1e !important;
+}
+
+/* ====== Tooltip dinámico ====== */
+.tooltip-dinamico {
+  position: absolute;
+  display: none;
+  pointer-events: none;
+  white-space: pre;
+  background: rgba(0,0,0,.85);
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: .85rem;
+  line-height: 1.2;
+  z-index: 9999;
+}
+
+/* ====== Modales: overlay y contenido ====== */
+.modal-backdrop-custom {
+  background: rgba(0,0,0,.5);
+}
+
+/* Forzamos fondo blanco del modal y texto negro, sin inline styles */
+.modal-content-white {
+  background: #fff !important;
+  color: #000 !important;
+  border-radius: 8px;
+}
+
+/* Margen superior agradable para el diálogo */
+.modal-backdrop-custom .modal-dialog {
+  margin-top: 10vh;
+}
+
+/* Botones del modal coherentes */
+.modal-footer .btn-danger,
+.modal-footer .btn-secondary {
+  min-width: 140px;
+}

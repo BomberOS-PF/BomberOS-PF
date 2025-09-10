@@ -3,6 +3,7 @@ import './CargarIncidente.css'
 import { Flame, AlertTriangle, FileText, User, Clock, MapPin, Phone } from 'lucide-react'
 // import '../../DisenioFormulario/DisenioFormulario.css'
 import { API_URLS, apiRequest } from '../../../config/api'
+import { BackToMenuButton } from '../../Common/Button.jsx'
 
 const CargarIncidente = ({ onVolver, onNotificar }) => {
   const now = new Date()
@@ -436,11 +437,10 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                 </div>
               )}
 
-              <button type="button" className="btn btn-secondary" onClick={onVolver}>
-                Volver al menú
-              </button>
+              <BackToMenuButton onClick={onVolver} />
             </div>
           </form>
+          
         </div>
       </div>
     </div>
