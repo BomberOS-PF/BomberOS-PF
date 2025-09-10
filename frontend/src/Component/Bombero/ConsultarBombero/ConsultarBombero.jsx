@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { API_URLS } from '../../../config/api'
 import FormularioBombero from '../FormularioBombero/FormularioBombero'
 import { User2, UsersIcon } from 'lucide-react'
+import { BackToMenuButton } from '../../Common/Button.jsx'
 import Pagination from '../../Common/Pagination'
 import '../../../../styles/global.css'
 
@@ -303,15 +304,7 @@ const ConsultarBombero = ({ onVolver }) => {
             </div>
           )}
 
-          <div className="d-grid gap-3 py-2"></div>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={onVolver}
-            disabled={loadingAccion}
-          >
-            Volver al menú
-          </button>
+          <BackToMenuButton onClick={onVolver} />
         </div>
       </div>
     </div>

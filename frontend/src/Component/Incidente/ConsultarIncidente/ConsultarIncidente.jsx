@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
 import { FileText, Search } from 'lucide-react'
+import { BackToMenuButton } from '../../Common/Button.jsx'
 import Pagination from '../../Common/Pagination'
 import Select from 'react-select'
 
@@ -732,15 +733,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
 
           {renderDetalleIncidente()}
 
-          <div className='d-grid gap-3 py-2 mt-4'></div>
-          <button
-            type='button'
-            className='btn btn-secondary'
-            onClick={() => onVolverMenu && onVolverMenu()}
-            disabled={loadingDetalle}
-          >
-            Volver al menú
-          </button>
+          <BackToMenuButton onClick={onVolverMenu} />
         </div>
       </div>
     </div>

@@ -72,24 +72,47 @@ body{
 /* =============================
    Botones
 ============================= */
-.btn{ border:none; }
+.btn{ 
+  border: none;
+  font-size: 1rem;      /* texto más grande o chico */
+  padding: 0.6rem 1.2rem; /* alto y ancho del botón */
+  border-radius: 6px;   /* bordes */
+}
+
+.btn-short {
+  width: 120px;  /* corto */
+}
+
 .btn-danger{
   background-color:#c95f58;
   border-color: var(--red-700);
   color:var(--white);
 }
+
 .btn-danger:hover{
   background-color: var(--red-800);
   border-color: var(--red-900);
 }
-.btn-secondary{
-  background-color: var(--gray-700);
-  border-color: var(--gray-700);
-  color:var(--white);
+  
+.btn-back{
+  background-color: transparent;
+  border: 1px solid #9ca3af;
+  color: #374151;
+  font-weight: 500;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
-.btn-secondary:hover{
-  background-color:#5a6268;
-  border-color: var(--gray-800);
+
+.btn-back:hover{
+  background-color:#bcbfc5;
+}
+
+.btn-sm-custom {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.75rem;
+  min-width: 90px;
 }
 
 /* =============================
