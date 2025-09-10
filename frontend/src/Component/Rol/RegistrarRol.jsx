@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { apiRequest, API_URLS } from '../../config/api'
 import { User, AlertTriangle, User2, FileText, UsersIcon, CreditCard } from 'lucide-react'
-import '../DisenioFormulario/DisenioFormulario.css'
 import { BackToMenuButton } from '../Common/Button'
 
 const RegistrarRol = ({ onVolver }) => {

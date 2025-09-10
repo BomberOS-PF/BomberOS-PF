@@ -1,5 +1,5 @@
 import React from 'react'
-import '../../DisenioFormulario/DisenioFormulario.css'
+import '../../../../styles/global.css'
 import { User2, UsersIcon } from 'lucide-react'
 
 const ConsultarBomberosDelGrupo = ({

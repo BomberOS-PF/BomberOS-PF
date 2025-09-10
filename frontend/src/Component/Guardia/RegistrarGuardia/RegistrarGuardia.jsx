@@ -1,9 +1,9 @@
 // src/Component/GrupoGuardia/RegistrarGuardia/RegistrarGuardia.jsx
 import React, { useEffect, useState } from 'react'
 import { API_URLS } from '../../../config/api'
-import './RegistrarGuardia.css'
+
 import { Users, AlertTriangle, Plus, FileText } from 'lucide-react'
-import '../../DisenioFormulario/DisenioFormulario.css'
+import '../../../../styles/global.css'
 import { BackToMenuButton } from '../../Common/Button'
 import Pagination from '../../Common/Pagination'
 

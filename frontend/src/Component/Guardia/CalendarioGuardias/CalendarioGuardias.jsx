@@ -307,7 +307,6 @@ const CalendarioGuardias = ({ dniUsuario, titulo = 'Mis Guardias' }) => {
     )
   }
 
-
   return (
     <div className='container-fluid'>
       <div className='card border-0 shadow-sm cal-mini-card'>

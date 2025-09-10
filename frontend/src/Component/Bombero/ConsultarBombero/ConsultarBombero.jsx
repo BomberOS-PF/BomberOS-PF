@@ -1,9 +1,9 @@
-// src/Component/Bombero/ConsultarBombero/ConsultarBombero.jsx
 import { useState } from 'react'
 import { API_URLS } from '../../../config/api'
 import FormularioBombero from '../FormularioBombero/FormularioBombero'
 import { User2, UsersIcon } from 'lucide-react'
 import Pagination from '../../Common/Pagination'
+import '../../../../styles/global.css'
 
 const PAGE_SIZE_DEFAULT = 10
 

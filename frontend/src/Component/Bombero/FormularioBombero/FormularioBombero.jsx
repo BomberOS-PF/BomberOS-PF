@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import './FormularioBombero.css'
-import '../../../Component/DisenioFormulario/DisenioFormulario.css'
 import { User, Phone, Mail, Shield, CreditCard, PillIcon } from 'lucide-react'
 import { API_URLS, apiRequest } from '../../../config/api'
+import Select from 'react-select'
 
 const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVolver, loading = false, ocultarTitulo = false }) => {
   const [rangosDisponibles, setRangosDisponibles] = useState([])
@@ -111,8 +111,8 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
   // Tema light mejorado con mejor presentación
   const cardClasses = "card bg-white text-dark border-0 shadow-sm p-4"
   const labelClasses = "form-label text-dark d-flex align-items-center gap-2 fw-semibold"
-  const inputClasses = esConsulta 
-    ? "form-control border-secondary bg-light" 
+  const inputClasses = esConsulta
+    ? "form-control border-secondary bg-light"
     : "form-control border-secondary focus-ring focus-ring-primary"
 
   return (
@@ -312,21 +312,25 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
                 <Shield className="text-primary" />
                 Rango
               </label>
-              <select
-                className="form-select form-control bg-secondary text-dark border-0"
-                id="rango"
-                value={formData.rango}
-                required={!soloLectura}
-                disabled={soloLectura || loading}
-                onChange={handleChange}
-              >
-                <option value="">Seleccione un rango</option>
-                {rangosDisponibles.map(r => (
-                  <option key={r.idRango} value={r.idRango}>
-                    {r.descripcion}
-                  </option>
-                ))}
-              </select>
+              <Select
+                classNamePrefix="rs"
+                inputId="rango"
+                placeholder="Seleccione un rango"
+                isClearable
+                isDisabled={soloLectura || loading}
+                options={rangosDisponibles.map(r => ({ value: String(r.idRango), label: r.descripcion }))}
+                value={
+                  formData.rango
+                    ? {
+                      value: String(formData.rango),
+                      label: rangosDisponibles.find(x => String(x.idRango) === String(formData.rango))?.descripcion || ''
+                    }
+                    : null
+                }
+                onChange={(opt) =>
+                  setFormData(prev => ({ ...prev, rango: opt ? opt.value : '' }))
+                }
+              />
             </div>
           </div>
 
@@ -406,24 +410,18 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
                 <PillIcon className="text-warning" />
                 Grupo Sanguíneo
               </label>
-              <select
-                className="form-select form-control bg-secondary text-dark border-0"
-                id="grupoSanguineo"
-                value={formData.grupoSanguineo || ''}
-                onChange={handleChange}
-                disabled={soloLectura || loading}
-                required={!soloLectura}
-              >
-                <option value="">Seleccione</option>
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
-              </select>
+              <Select
+                classNamePrefix="rs"
+                inputId="grupoSanguineo"
+                placeholder="Seleccione"
+                isClearable
+                isDisabled={soloLectura || loading}
+                options={["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(gs => ({ value: gs, label: gs }))}
+                value={formData.grupoSanguineo ? { value: formData.grupoSanguineo, label: formData.grupoSanguineo } : null}
+                onChange={(opt) =>
+                  setFormData(prev => ({ ...prev, grupoSanguineo: opt ? opt.value : '' }))
+                }
+              />
             </div>
           </div>
 

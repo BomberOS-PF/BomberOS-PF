@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { apiRequest, API_URLS } from '../../config/api'
 import { ShieldUser } from 'lucide-react'
 import { BackToMenuButton } from '../Common/Button'
+import '../../../styles/global.css'
 import Pagination from '../Common/Pagination'
 
 const PAGE_SIZE_DEFAULT = 10

@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
 import { FileText, Search } from 'lucide-react'
-import '../../DisenioFormulario/DisenioFormulario.css'
 import Pagination from '../../Common/Pagination'
+import Select from 'react-select'
 
-// Importar formularios específicos de tipos de incidente
 import AccidenteTransito from '../TipoIncidente/AccidenteTransito/AccidenteTransito'
 import FactorClimatico from '../TipoIncidente/FactorClimatico/FactorClimatico'
 import IncendioEstructural from '../TipoIncidente/IncendioEstructural/IncendioEstructural'
@@ -579,20 +578,38 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
               <div className='row g-3 mb-3 align-items-end'>
                 <div className='col-md-3'>
                   <label className='form-label text-dark fw-semibold'>Tipo de Incidente</label>
-                  <select
-                    className='text-dark form-select border-secondary'
-                    name='tipo'
-                    value={filtros.tipo}
-                    onChange={handleChange}
-                  >
-                    <option value=''>Todos los tipos</option>
-                    <option value='1'>Accidente de Tránsito</option>
-                    <option value='2'>Factores Climáticos</option>
-                    <option value='3'>Incendio Estructural</option>
-                    <option value='4'>Incendio Forestal</option>
-                    <option value='5'>Material Peligroso</option>
-                    <option value='6'>Rescate</option>
-                  </select>
+                  <Select
+                    classNamePrefix="rs"
+                    placeholder="Todos los tipos"
+                    isClearable
+                    options={[
+                      { value: '1', label: 'Accidente de Tránsito' },
+                      { value: '2', label: 'Factores Climáticos' },
+                      { value: '3', label: 'Incendio Estructural' },
+                      { value: '4', label: 'Incendio Forestal' },
+                      { value: '5', label: 'Material Peligroso' },
+                      { value: '6', label: 'Rescate' }
+                    ]}
+                    value={
+                      filtros.tipo
+                        ? {
+                          value: filtros.tipo,
+                          label: [
+                            'Accidente de Tránsito',
+                            'Factores Climáticos',
+                            'Incendio Estructural',
+                            'Incendio Forestal',
+                            'Material Peligroso',
+                            'Rescate'
+                          ][Number(filtros.tipo) - 1]
+                        }
+                        : null
+                    }
+                    onChange={(opt) =>
+                      setFiltros((prev) => ({ ...prev, tipo: opt ? opt.value : '' }))
+                    }
+                  />
+
                 </div>
                 <div className='col-md-3'>
                   <label className='form-label text-dark fw-semibold'>Fecha Desde</label>
@@ -618,7 +635,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
                   {/* Los filtros ya disparan reload automático del Pagination */}
                   <button
                     className='btn btn-danger d-flex align-items-center gap-2 px-3 py-2'
-                    onClick={() => {}}
+                    onClick={() => { }}
                     style={{ width: 'fit-content' }}
                   >
                     <i className='bi bi-search'></i>
