@@ -569,7 +569,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
                 <input
                   type='text'
                   className='form-control border-secondary ps-5 py-3'
-                  placeholder='Buscar por ID, DNI, denunciante...'
+                  placeholder='Buscar por ID...'
                   name='busqueda'
                   value={filtros.busqueda}
                   onChange={handleChange}

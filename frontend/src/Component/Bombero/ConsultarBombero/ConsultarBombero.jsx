@@ -161,7 +161,7 @@ const ConsultarBombero = ({ onVolver }) => {
                 <input
                   type="text"
                   className="form-control ps-5 py-3 border-secondary"
-                  placeholder="Buscar por DNI..."
+                  placeholder="Buscar por DNI, nombre o apellido..."
                   value={dniBusqueda}
                   onChange={(e) => setDniBusqueda(e.target.value)}
                   disabled={loadingAccion}
@@ -202,7 +202,8 @@ const ConsultarBombero = ({ onVolver }) => {
                         <table className="table table-hover align-middle mb-0">
                           <thead className="bg-light">
                             <tr>
-                              <th className="border-end text-center">Nombre completo</th>
+                              <th className="border-end text-center">Nombre</th>
+                              <th className="border-end text-center">Apellido</th>
                               <th className="border-end text-center">DNI</th>
                               <th className="border-end text-center">Teléfono</th>
                               <th className="border-end text-center">Plan</th>
@@ -214,7 +215,8 @@ const ConsultarBombero = ({ onVolver }) => {
                               .sort((a, b) => (a.apellido || '').localeCompare(b.apellido || ''))
                               .map((bombero) => (
                                 <tr key={bombero.dni}>
-                                  <td className="border-end px-3">{bombero.nombre} {bombero.apellido}</td>
+                                  <td className="border-end px-3">{bombero.nombre}</td>
+                                  <td className="border-end px-3">{bombero.apellido}</td>
                                   <td className="border-end px-3">{bombero.dni}</td>
                                   <td className="border-end px-2">{bombero.telefono || 'N/A'}</td>
                                   <td className="border-end">

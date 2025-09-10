@@ -154,7 +154,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
             <input
               type="text"
               className="form-control border-secondary ps-5 py-3"
-              placeholder="Buscar por nombre del grupo"
+              placeholder="Buscar por nombre del grupo..."
               value={busqueda}
               onChange={handleBusqueda}
             />
