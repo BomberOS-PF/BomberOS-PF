@@ -272,7 +272,7 @@ const RegistrarGuardia = ({
                                   <button
                                     onClick={() => agregarAlGrupo(b)}
                                     disabled={deshabilitarBtn}
-                                    className={`btn btn-sm btn-add ${deshabilitarBtn ? 'disabled' : ''}`}
+                                    className={`btn-sm btn-add ${deshabilitarBtn ? 'disabled' : ''}`}
                                   >
                                     <Plus className="h-4 w-4" />
                                   </button>
@@ -352,7 +352,7 @@ const RegistrarGuardia = ({
                 type="button"
                 onClick={guardarGrupo}
                 disabled={loading}
-                className="btn btn-danger btn-lg"
+                className="btn btn-danger btn-medium btn-lg"
               >
                 <Users size={16} className="me-1" />
                 {loading ? 'Espere...' : modoEdicion ? 'Actualizar Grupo' : 'Guardar Grupo'}

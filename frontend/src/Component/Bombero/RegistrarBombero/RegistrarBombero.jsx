@@ -477,7 +477,7 @@ const RegistrarBombero = ({ onVolver }) => {
               </div>
 
               <div className="d-grid gap-3">
-                <button type="submit" className="btn btn-danger btn-lg" onClick={handleSubmit} disabled={loading}>
+                <button type="submit" className="btn btn-danger btn-lg btn-medium" onClick={handleSubmit} disabled={loading}>
                   <UserPlus size={16} className="me-1" />
                   {loading ? 'Registrando...' : 'Registrar bombero'}
                 </button>

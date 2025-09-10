@@ -145,7 +145,7 @@ const RegistrarRol = ({ onVolver, rol }) => {
               </div>
 
               <div className="d-grid gap-3">
-                <button type="submit" className="btn btn-danger" disabled={loading}>
+                <button type="submit" className="btn btn-danger btn-medium btn-lg" disabled={loading}>
                   {loading ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>

@@ -312,7 +312,7 @@ const ConsultarRol = ({ onVolver }) => {
                   </div>
 
                   {modoEdicion && (
-                    <button type='submit' className='btn btn-danger w-100 mb-3' disabled={loadingAccion}>
+                    <button type='submit' className='btn btn-danger btn-medium btn-lg' disabled={loadingAccion}>
                       {loadingAccion ? 'Guardando...' : 'Guardar cambios'}
                     </button>
                   )}

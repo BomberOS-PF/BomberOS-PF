@@ -463,7 +463,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           {/* Botones */}
           <div className="d-grid gap-3">
             {!soloLectura && (
-              <button type="submit" className="btn btn-danger btn-lg" disabled={loading}>
+              <button type="submit" className="btn btn-danger btn-lg btn-medium" disabled={loading}>
                 {loading ? 'Procesando...' : modo === 'alta' ? 'Registrar Bombero' : 'Guardar Cambios'}
               </button>
             )}

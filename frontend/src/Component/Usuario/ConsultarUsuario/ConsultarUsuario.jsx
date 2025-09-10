@@ -424,7 +424,7 @@ const ConsultarUsuario = ({ onVolver }) => {
 
                     {modoEdicion && (
                       <div className='d-grid gap-3'>
-                        <button type='submit' className='btn btn-danger' disabled={loadingAccion}>
+                        <button type='submit' className='btn btn-danger  btn-medium btn-lg' disabled={loadingAccion}>
                           {loadingAccion ? 'Guardando...' : 'Guardar cambios'}
                         </button>
                       </div>
