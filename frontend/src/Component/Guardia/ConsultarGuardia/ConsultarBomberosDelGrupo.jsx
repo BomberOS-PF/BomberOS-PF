@@ -42,20 +42,18 @@ const ConsultarBomberosDelGrupo = ({
               <table className="table table-hover align-middle mb-0">
                 <thead className="bg-light">
                   <tr>
+                    <th className="border-end text-center">Nombre completo</th>
                     <th className="border-end text-center">DNI</th>
                     <th className="border-end text-center">Legajo</th>
-                    <th className="border-end text-center">Nombre</th>
-                    <th className="border-end text-center">Apellido</th>
                     <th className="text-center">Teléfono</th>
                   </tr>
                 </thead>
                 <tbody>
                   {bomberos.map((b, i) => (
                     <tr key={i}>
+                      <td className="border-end px-3">{b.nombre} {b.apellido}</td>
                       <td className="border-end px-3">{b.dni}</td>
                       <td className="border-end px-3">{b.legajo}</td>
-                      <td className="border-end px-3">{b.nombre}</td>
-                      <td className="border-end px-3">{b.apellido}</td>
                       <td className="px-3">{b.telefono}</td>
                     </tr>
                   ))}
@@ -86,7 +84,7 @@ const ConsultarBomberosDelGrupo = ({
                 </button>
               </div>
 
-              <button 
+              <button
                 className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
                 onClick={onVolver}
               >
