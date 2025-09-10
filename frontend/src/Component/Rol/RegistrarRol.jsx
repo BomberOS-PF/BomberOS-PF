@@ -3,12 +3,21 @@ import { apiRequest, API_URLS } from '../../config/api'
 import { User, AlertTriangle, User2, FileText, UsersIcon, CreditCard } from 'lucide-react'
 import { BackToMenuButton } from '../Common/Button'
 
-const RegistrarRol = ({ onVolver }) => {
+const RegistrarRol = ({ onVolver, rol }) => {
   const [formData, setFormData] = useState({ nombreRol: '', descripcion: '' })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('')
 
+  useEffect(() => {
+    if (rol) {
+      setFormData({
+        nombreRol: rol.nombreRol || '',
+        descripcion: rol.descripcion || ''
+      })
+    }
+  }, [rol])
+  
   useEffect(() => {
     if (message) {
       const timer = setTimeout(() => setMessage(''), 3000)
