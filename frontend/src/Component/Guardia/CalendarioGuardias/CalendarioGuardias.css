@@ -1,0 +1,247 @@
+/* Posiciona la tarjeta abajo a la derecha y le da tamaño fijo */
+.cal-mini-card {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: clamp(360px, 28vw, 560px);
+  z-index: 1049;
+}
+
+/* Alto fijo para que FullCalendar pueda usar height: 100% */
+.cal-mini-card .calendar-mini-wrapper {
+  height: 50vh;     /* mitad de la pantalla */
+  min-height: 320px;
+}
+
+/* Asegura que FullCalendar use todo el alto del wrapper */
+.cal-mini-card .fc,
+.cal-mini-card .fc .fc-view-harness,
+.cal-mini-card .fc .fc-scroller-harness,
+.cal-mini-card .fc .fc-scroller {
+  height: 100% !important;
+}
+
+/* Overlay del día con guardia (por encima del fondo del daygrid) */
+.cal-mini-card td.fc-daygrid-day {
+  position: relative;
+}
+.cal-mini-card .fc .fc-bg-event {
+  opacity: 1;
+}
+
+/* ===== Tooltip con el MISMO estilo que el componente de Asignar Guardia ===== */
+.tooltip-dinamico {
+  position: fixed;          /* evita clipping dentro de contenedores */
+  display: none;
+  pointer-events: none;     /* no captura el mouse */
+  white-space: pre;         /* respeta saltos de línea */
+  padding: 6px 8px;
+  background: #222;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+  z-index: 3000;            /* por encima del calendario */
+}
+
+/* Overlay visual para marcar el día */
+/* Valores compartidos con el otro componente */
+.cal-mini-card {
+  --guard-fill: rgba(240, 128, 128, 0.35); /* #f08080 con transparencia */
+  --guard-border: #b30000;
+}
+
+
+
+/* Contenedor mini: ya lo tenías; aquí sólo guardo las variables */
+.cal-mini-card {
+  --guard-fill: rgba(240, 128, 128, 0.35); /* #f08080 con transparencia */
+  --guard-border: #b30000;
+  --guard-fill-strong: rgba(213, 43, 30, 0.5); /* rojo más fuerte para HOY */
+}
+
+/* 1) NÚMEROS DE DÍA EN NEGRO (bootstrap suele pintarlos azul por ser <a>) */
+.cal-mini-card .fc a.fc-daygrid-day-number,
+.cal-mini-card .fc .fc-daygrid-day-number {
+  color: #111 !important;
+  text-decoration: none !important;
+}
+
+/* Opcional: quitar el subrayado al hover para que no parezca un link azul */
+.cal-mini-card .fc a.fc-daygrid-day-number:hover {
+  text-decoration: none !important;
+}
+
+/* 2) No dejar que el resaltado default de "hoy" tape nuestro overlay */
+.cal-mini-card .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-frame {
+  background: transparent !important;
+}
+
+/* 3) Overlay del día con guardia */
+.fc-guard-overlay {
+  position: absolute;
+  inset: 2px;
+  background: rgba(240,128,128,0.35); /* mismo BG que venías usando */
+  border: 1px solid #b30000;
+  border-radius: 6px;
+  pointer-events: none;
+
+  /* 👇 centrado perfecto del contenido dentro del casillero */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 4) Si además es HOY, usar rojo más fuerte */
+.fc-guard-overlay.is-today {
+  background: rgba(240, 64, 64, 0.45);
+  border-color: #b30000;
+  box-shadow: 0 0 0 2px #b30000 inset;
+}
+
+/* Hoy con guardia: más intenso */
+.cal-mini-card td.fc-daygrid-day .fc-guard-overlay.is-today {
+  background: rgba(213, 43, 30, 0.55); /* más oscuro que BG_FILL */
+  border-color: #b30000;
+}
+
+/* Números de día en negro (ya lo tenías) */
+.cal-mini-card .fc-daygrid-day-number {
+  color: #111 !important;
+}
+
+/* Hoy con guardia: más intenso */
+.cal-mini-card td.fc-daygrid-day .fc-guard-overlay.is-today {
+  background: rgba(213, 43, 30, 0.55);
+  border-color: #b30000;
+}
+
+/* Badge “¡Hoy Guardia!” dentro del casillero */
+.cal-mini-card td.fc-daygrid-day .fc-guard-overlay .hoy-guardia-badge {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;              /* abajo-izquierda para no tapar el número del día */
+  font-weight: 700;         /* negrita */
+  font-size: 12px;
+  color: #b30000;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(179, 0, 0, 0.35);
+  border-radius: 6px;
+  padding: 2px 6px;
+  pointer-events: none;     /* para no interferir con el hover del tooltip */
+  box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+
+.fc-guard-overlay.is-today::after {
+  content: "¡Hoy Guardia!";
+  font-weight: 700;
+  font-size: 12px;
+  color: #b30000;
+
+  /* (opcional) mejora de legibilidad sobre el fondo */
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.8);
+}
+
+/* ===== Ajustes móviles: 412 x 915 (y similares) ===== */
+@media (max-width: 430px) {
+  .cal-mini-card {
+    max-width: 100%;
+    margin: 8px auto;
+  }
+
+  /* Compactar paddings para ganar alto útil */
+  .cal-mini-card .card-body {
+    padding: 8px 8px 10px;
+  }
+
+  /* Darle mucho más alto al calendario en pantallas altas y estrechas */
+  .calendar-mini-wrapper {
+    height: 82vh !important; /* probá 86–90vh si aún no entra todo */
+  }
+
+  /* Compactar la barra de navegación del calendario */
+  .fc .fc-toolbar.fc-header-toolbar {
+    margin: 0 0 6px;
+    padding: 0;
+  }
+  .fc .fc-toolbar-title {
+    font-size: 1rem;
+    line-height: 1.1;
+  }
+  .fc .fc-button {
+    padding: 2px 6px;
+    font-size: .75rem;
+  }
+
+  /* Celdas más eficientes en vertical */
+  .fc .fc-daygrid-day-frame {
+    padding: 2px;
+  }
+  .fc .fc-daygrid-day-number {
+    padding: 2px;
+    font-size: .85rem; /* mantiene legible y ahorra alto */
+  }
+
+  /* Badge “¡Hoy Guardia!” un poco más chico en móvil */
+  .franja-hoy-guardia {
+    font-size: 11px;
+    padding: 2px 4px;
+  }
+}
+
+/* En móviles con MUCHA altura (p.ej. 412×915+), podemos usar más vh */
+@media (max-width: 430px) and (min-height: 800px) {
+  .calendar-mini-wrapper { height: 86vh !important; }
+}
+
+/* Seguridad para zonas con notch */
+@supports (height: env(safe-area-inset-top)) {
+  @media (max-width: 430px) {
+    .calendar-mini-wrapper {
+      height: calc(84vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    }
+  }
+}
+
+/* ===== Evitar que los botones se junten (móvil) ===== */
+@media (max-width: 430px) {
+  /* Permite que la toolbar salte de línea y tenga separación vertical */
+  .fc .fc-toolbar.fc-header-toolbar {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  /* Espacio entre el grupo (prev/next) y el botón "hoy" */
+  .fc .fc-toolbar-chunk {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* separa el grupo prev/next del botón "hoy" */
+  }
+
+  /* Dentro del grupo prev/next, separa los botones */
+  .fc .fc-button-group {
+    display: flex;
+    gap: 6px;            /* forma moderna */
+  }
+  /* Fallback por si gap no aplica en tu build */
+  .fc .fc-button-group .fc-button + .fc-button {
+    margin-left: 6px;
+  }
+
+  /* Tamaño mínimo/tappable sin que se peguen visualmente */
+  .fc .fc-button {
+    margin: 0 !important;   /* evita márgenes raros del tema */
+    padding: 4px 8px;
+    font-size: .8rem;
+    min-width: 36px;
+    line-height: 1.2;
+  }
+
+  /* El "hoy" no necesita margen; el gap ya lo separa */
+  .fc .fc-today-button {
+    margin-left: 0 !important;
+  }
+}
+

@@ -54,7 +54,21 @@ export const API_URLS = {
       // opcional
       reemplazarDia: (idGrupo) => `${API_BASE_URL}/grupos/${idGrupo}/guardias/dia`
     }
+    
   },
+
+    // Guardias (consulta por usuario/DNI para el CalendarioGuardias)
+ guardias: {
+   // Ajustá la ruta si tu backend usa otro path
+  // Ejemplo con query params:
+  //   GET /api/guardias/por-dni?dni=12345678&start=YYYY-MM-DD&end=YYYY-MM-DD
+  porDni: (dni, start, end) =>
+     `${API_BASE_URL}/guardias/por-dni?dni=${encodeURIComponent(dni)}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
+
+   // Si en tu backend la ruta es distinta, dejá una de estas variantes y borra la otra:
+   // porDni: (dni, start, end) => `${API_BASE_URL}/guardias?dni=${dni}&start=${start}&end=${end}`,
+   // porDni: (dni, start, end) => `${API_BASE_URL}/usuarios/${dni}/guardias?start=${start}&end=${end}`,
+ },
 
   // Roles
   roles: {
