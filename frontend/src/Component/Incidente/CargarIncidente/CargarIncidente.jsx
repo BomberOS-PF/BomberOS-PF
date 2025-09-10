@@ -402,11 +402,13 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                 </button>
               )}
 
-              {!incidenteCreado && (
-                <button type="submit" className="btn btn-danger btn-lg">
-                  Guardar Incidente (Sin Notificar)
-                </button>
-              )}
+              <div className='d-flex justify-content-end align-items-center gap-3 mb-3'>
+                {!incidenteCreado && (
+                  <button type="submit" className="btn btn-danger btn-medium btn-lg btn-sm-custom">
+                    Guardar Incidente (Sin Notificar)
+                  </button>
+                )}
+              </div>
 
               {incidenteCreado && (
                 <div className="alert alert-success mt-3">

@@ -97,7 +97,24 @@ body{
   background-color: var(--red-800);
   border-color: var(--red-900);
 }
-  
+
+.btn-warning{
+  background-color:#ffc107;
+  border-color: #ffc107;
+  color: #000;
+}
+
+.btn-warning:hover {
+  color: #000;
+  background-color: #ffca2c;
+  border-color: #ffc720;
+}
+
+.btn-warning:active {
+  background-color: #ffcd39;
+  border-color: #ffc720;
+}
+
 .btn-back{
   background-color: transparent;
   border: 1px solid #9ca3af;
@@ -118,6 +135,7 @@ body{
   padding: 0.25rem 0.75rem;
   min-width: 90px;
 }
+
 
 /* =============================
    Header de formularios
