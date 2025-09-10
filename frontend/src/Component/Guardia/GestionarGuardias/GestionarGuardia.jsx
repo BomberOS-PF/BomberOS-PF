@@ -745,8 +745,8 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                 <div className="modal fade show d-block modal-backdrop-custom" tabIndex="-1">
                   <div className="modal-dialog">
                     <div className="modal-content modal-content-white">
-                      <div className="modal-header">
-                        <h5 className="modal-title text-black">Confirmar acción</h5>
+                      <div className="modal-header bg-danger">
+                        <h5 className="modal-title text-white">Confirmar acción</h5>
                         <button type="button" className="btn-close" onClick={() => setModalConfirmar(false)}></button>
                       </div>
                       <div className="modal-body">
@@ -783,8 +783,8 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                 <div className="modal fade show d-block modal-backdrop-custom" tabIndex="-1">
                   <div className="modal-dialog modal-lg">
                     <div className="modal-content modal-content-white">
-                      <div className="modal-header">
-                        <h5 className="modal-title text-black">Modificar guardia</h5>
+                      <div className="modal-header bg-danger">
+                        <h5 className="modal-title text-white">Modificar guardia</h5>
                         <button type="button" className="btn-close" onClick={() => setModalAbierto(false)}></button>
                       </div>
                       <div className="modal-body">
@@ -868,12 +868,12 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                     />
                                   </div>
                                 </td>
-                                <td>
+                                <td className="text-center">
                                   <button
-                                    className="btn btn-sm btn-danger"
+                                    className="btn btn-outline-danger btn-sm"
                                     onClick={() => setBomberosEditados(prev => prev.filter((_, i) => i !== idx))}
                                   >
-                                    ❌
+                                    <i className="bi bi-trash"></i>
                                   </button>
                                 </td>
                               </tr>
