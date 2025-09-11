@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Select from 'react-select'
+import DamnificadosForm from '../../../Common/Damnificado.jsx'
 import { API_URLS, apiRequest } from '../../../../config/api'
 
 const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
@@ -256,187 +257,96 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center">
-      <div className="formulario-consistente p-4 shadow rounded">
-        <h2 className="text-black text-center mb-4">Factores Climáticos</h2>
-
-        {/* Información del incidente básico */}
-        {incidenteBasico && (
-          <div className="alert alert-info mb-4">
-            <h6 className="alert-heading">📋 Incidente Base Registrado</h6>
-            <div className="row">
-              <div className="col-md-6">
-                <strong>ID:</strong> {incidenteBasico.id}<br />
-                <strong>Tipo:</strong> {incidenteBasico.tipo}<br />
-                <strong>Fecha:</strong> {incidenteBasico.fecha}
-              </div>
-              <div className="col-md-6">
-                <strong>Localización:</strong> {incidenteBasico.localizacion}<br />
-                <strong>Lugar:</strong> {incidenteBasico.lugar}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <form>
-          {/* Superficie y personas evacuadas */}
-          <div className="row mb-3">
-            <div className="col">
-              <label htmlFor="superficie" className="text-black form-label">
-                Superficie evacuada *
-              </label>
-              <Select
-                options={opcionesSuperficie}
-                value={opcionesSuperficie.find(opt => opt.value === formData.superficie) || null}
-                onChange={(opcion) =>
-                  setFormData(prev => ({ ...prev, superficie: opcion ? opcion.value : '' }))
-                }
-                classNamePrefix="rs"
-                placeholder="Seleccione"
-                isClearable
-              />
-              {errors.superficie && <div className="invalid-feedback" id="error-superficie">{errors.superficie}</div>}
-            </div>
-            <div className="col">
-              <label htmlFor="personasEvacuadas" className="text-black form-label">
-                Cantidad de personas evacuadas *
-              </label>
-              <input
-                type="number"
-                min="0"
-                className={`form-control${errors.personasEvacuadas ? ' is-invalid' : ''}`}
-                id="personasEvacuadas"
-                value={formData.personasEvacuadas || ''}
-                onChange={handleChange}
-                aria-describedby="error-personasEvacuadas"
-                placeholder="Ej: 25"
-              />
-              {errors.personasEvacuadas && <div className="invalid-feedback" id="error-personasEvacuadas">{errors.personasEvacuadas}</div>}
-              <div className="form-text text-muted small">Número de personas (no puede ser negativo)</div>
-            </div>
-          </div>
-
-          {/* Detalle */}
-          <div className="mb-3">
-            <label htmlFor="detalle" className="text-black form-label">
-              Detalle de lo sucedido *
-            </label>
-            <textarea
-              className={`form-control${errors.detalle ? ' is-invalid' : ''}`}
-              rows="3"
-              id="detalle"
-              value={formData.detalle || ''}
-              onChange={handleChange}
-              aria-describedby="error-detalle"
-            ></textarea>
-            {errors.detalle && <div className="invalid-feedback" id="error-detalle">{errors.detalle}</div>}
-          </div>
-
-          {/* ---------- DAMNIFICADOS DINÁMICOS ---------- */}
-          <h5 className="text-white mt-4">Personas damnificadas</h5>
-          {formData.damnificados.map((d, index) => (
-            <div key={index} className="border rounded p-3 mb-3">
-              <div className="row mb-2">
-                <div className="col">
-                  <label className="text-black form-label">Nombre</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={d.nombre}
-                    onChange={(e) => handleDamnificadoChange(index, 'nombre', e.target.value)}
-                  />
-                </div>
-                <div className="col">
-                  <label className="text-black form-label">Apellido</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={d.apellido}
-                    onChange={(e) => handleDamnificadoChange(index, 'apellido', e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="row mb-2">
-                <div className="col">
-                  <label className="text-black form-label">Domicilio</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={d.domicilio}
-                    onChange={(e) => handleDamnificadoChange(index, 'domicilio', e.target.value)}
-                  />
-                </div>
-                <div className="col">
-                  <label className="text-black form-label">Teléfono</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={d.telefono}
-                    onChange={(e) => handleDamnificadoChange(index, 'telefono', e.target.value)}
-                  />
-                </div>
-                <div className="col">
-                  <label className="text-black form-label">DNI</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={d.dni}
-                    onChange={(e) => handleDamnificadoChange(index, 'dni', e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="form-check">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  checked={d.fallecio}
-                  onChange={(e) => handleDamnificadoChange(index, 'fallecio', e.target.checked)}
+    <div className="container-fluid py-5">
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+        <div className="card-body">
+          <form>
+            {/* Superficie y personas evacuadas */}
+            <div className="row mb-3">
+              <div className="col">
+                <label htmlFor="superficie" className="form-label text-dark d-flex align-items-center gap-2">
+                  Superficie evacuada *
+                </label>
+                <Select
+                  options={opcionesSuperficie}
+                  value={opcionesSuperficie.find(opt => opt.value === formData.superficie) || null}
+                  onChange={(opcion) =>
+                    setFormData(prev => ({ ...prev, superficie: opcion ? opcion.value : '' }))
+                  }
+                  classNamePrefix="rs"
+                  placeholder="Seleccione"
+                  isClearable
                 />
-                <label className="text-black form-check-label">¿Falleció?</label>
+                {errors.superficie && <div className="invalid-feedback" id="error-superficie">{errors.superficie}</div>}
               </div>
+              <div className="col">
+                <label htmlFor="personasEvacuadas" className="form-label text-dark d-flex align-items-center gap-2">
+                  Cantidad de personas evacuadas *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  className={`form-control${errors.personasEvacuadas ? ' is-invalid' : ''}`}
+                  id="personasEvacuadas"
+                  value={formData.personasEvacuadas || ''}
+                  onChange={handleChange}
+                  aria-describedby="error-personasEvacuadas"
+                  placeholder="Ej: 25"
+                />
+                {errors.personasEvacuadas && <div className="invalid-feedback" id="error-personasEvacuadas">{errors.personasEvacuadas}</div>}
+                <div className="form-text text-muted small">Número de personas (no puede ser negativo)</div>
+              </div>
+            </div>
 
+            {/* Detalle */}
+            <div className="mb-3">
+              <label htmlFor="detalle" className="form-label text-dark d-flex align-items-center gap-2">
+                Detalle de lo sucedido *
+              </label>
+              <textarea
+                className={`form-control${errors.detalle ? ' is-invalid' : ''}`}
+                rows="3"
+                id="detalle"
+                value={formData.detalle || ''}
+                onChange={handleChange}
+                aria-describedby="error-detalle"
+              ></textarea>
+              {errors.detalle && <div className="invalid-feedback" id="error-detalle">{errors.detalle}</div>}
+            </div>
+
+            <hr className="border-1 border-black mb-2" />
+
+            <DamnificadosForm
+              value={formData.damnificados}
+              onChange={(nuevoArray) => setFormData(prev => ({ ...prev, damnificados: nuevoArray }))}
+              title="Personas damnificadas"
+            />
+
+            <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
               <button
                 type="button"
-                className="btn btn-outline-danger btn-sm mt-2"
-                onClick={() => eliminarDamnificado(index)}
+                className="btn btn-accept btn-medium btn-lg btn-sm-custom"
+                disabled={loading}
+                onClick={() => handleFinalizar()}
               >
-                ❌ Eliminar damnificado
+                {loading
+                  ? 'Enviando...'
+                  : datosPrevios.idIncidente || datosPrevios.id
+                    ? 'Finalizar carga'
+                    : 'Finalizar carga'}
               </button>
-            </div>
-          ))}
 
-          <button
-            type="button"
-            className="btn btn-outline-primary w-100 mb-3"
-            onClick={agregarDamnificado}
-          >
-            ➕ Agregar damnificado
-          </button>
-
-          {/* BOTONES */}
-          <button
-            type="button"
-            className="btn btn-danger w-100 mt-3"
-            disabled={loading}
-            onClick={() => handleFinalizar()}
-          >
-            {loading
-              ? 'Enviando...'
-              : datosPrevios.idIncidente || datosPrevios.id
-                ? 'Actualizar factor climático'
-                : 'Finalizar carga'}
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary w-100 mt-2"
-            onClick={guardarLocalmente}
-            disabled={loading}
-          >
-            Guardar y continuar después
-          </button>
-        </form>
+              <button
+              type="button"
+              className="btn btn-back btn-medium btn-lg btn-sm-custom"
+              onClick={guardarLocalmente}
+              disabled={loading}
+            >
+              Guardar y continuar después
+            </button>
+            </div>            
+          </form>
+        </div>
 
         {errorMsg && (
           <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">

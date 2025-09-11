@@ -161,6 +161,12 @@ body{
   background-color: #1c910c;
 }
 
+.toggle-btn.selected {
+  background-color: #f06873; /* rojo Bootstrap */
+  color: #fff;
+  border-color: #dc3545;
+}
+
 /* =============================
    Header de formularios
 ============================= */

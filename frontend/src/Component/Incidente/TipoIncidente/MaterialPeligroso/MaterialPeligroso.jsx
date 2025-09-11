@@ -375,17 +375,21 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
             <div className="d-flex flex-wrap gap-3">
               <div>
                 {tiposMaterial.map((tipo, index) => {
+                  const key = `material${tipo.idTipoMatInvolucrado}`
                   const icons = ['🔥', '⚗️', '💥', '☢️', '🛢️', '🧪']
-                  const selected = formData[`material${tipo.idTipoMatInvolucrado}`]
+                  const selected = !!formData[key]
+
                   return (
                     <button
                       key={tipo.idTipoMatInvolucrado}
-                      type='button'
-                      className={`btn bnt-lg toggle-btn me-2 mb-2 ${selected ? 'selected' : ''}`}
-                      onClick={() => setFormData(prev => ({
-                        ...prev,
-                        [`material${tipo.idTipoMatInvolucrado}`]: !selected
-                      }))}
+                      type="button"
+                      className={`btn btn-lg toggle-btn me-2 mb-2 ${selected ? 'selected' : ''}`}
+                      onClick={() =>
+                        setFormData(prev => ({
+                          ...prev,
+                          [key]: !prev[key]   // ← toggle basado en el estado previo
+                        }))
+                      }
                     >
                       <span className="me-2">{icons[index % icons.length]}</span>
                       {tipo.nombre}
@@ -394,6 +398,7 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                 })}
               </div>
             </div>
+
 
             <hr className="border-1 border-black mb-2" />
 
