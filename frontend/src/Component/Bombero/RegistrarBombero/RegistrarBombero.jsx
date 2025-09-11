@@ -475,18 +475,18 @@ const RegistrarBombero = ({ onVolver }) => {
                   onChange={(opt) => setFormData(prev => ({ ...prev, rolUsuario: opt ? opt.value : '' }))}
                 />
               </div>
-
-              <div className="d-grid gap-3">
-                <button type="submit" className="btn btn-danger btn-lg btn-medium" onClick={handleSubmit} disabled={loading}>
-                  <UserPlus size={16} className="me-1" />
-                  {loading ? 'Registrando...' : 'Registrar bombero'}
-                </button>
-
+            </div>
+            <hr className="mb-4" />
+            
+            <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
                 {onVolver && (
                   <BackToMenuButton onClick={onVolver} />
                 )}
+                <button type="submit" className="btn btn-accept btn-lg btn-medium" onClick={handleSubmit} disabled={loading}>
+                  <UserPlus size={16} className="me-1" />
+                  {loading ? 'Registrando...' : 'Registrar bombero'}
+                </button>
               </div>
-            </div>
           </form>
         </div>
 

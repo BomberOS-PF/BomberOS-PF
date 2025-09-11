@@ -145,10 +145,9 @@ const ConsultarBombero = ({ onVolver }) => {
 
         <div className="card-body">
           {mensaje && (
-            <div className={`alert ${
-              mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' :
+            <div className={`alert ${mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' :
               mensaje.includes('✅') ? 'alert-success' : 'alert-info'
-            }`}>
+              }`}>
               {mensaje}
             </div>
           )}
@@ -291,7 +290,7 @@ const ConsultarBombero = ({ onVolver }) => {
 
               <hr className="border-4 border-danger mb-4" />
 
-              <div className="card bg-dark text-white border-0 shadow-lg py-4">
+              <div className="text-black border-2 shadow-lg">
                 <FormularioBombero
                   modo={modoEdicion ? 'edicion' : 'consulta'}
                   datosIniciales={bomberoSeleccionado}
@@ -303,8 +302,10 @@ const ConsultarBombero = ({ onVolver }) => {
               </div>
             </div>
           )}
-
-          <BackToMenuButton onClick={onVolver} />
+          
+          {!bomberoSeleccionado && onVolver && (
+            <BackToMenuButton onClick={onVolver} />
+          )}
         </div>
       </div>
     </div>

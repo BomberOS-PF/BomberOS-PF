@@ -144,10 +144,9 @@ const ConsultarRol = ({ onVolver }) => {
         <div className='card-body'>
           {/* Mensajes */}
           {mensaje && (
-            <div className={`alert ${
-              mensaje.includes('Error') ? 'alert-danger' :
-              mensaje.includes('✅') ? 'alert-success' : 'alert-info'
-            }`}>
+            <div className={`alert ${mensaje.includes('Error') ? 'alert-danger' :
+                mensaje.includes('✅') ? 'alert-success' : 'alert-info'
+              }`}>
               {mensaje}
             </div>
           )}
@@ -322,9 +321,11 @@ const ConsultarRol = ({ onVolver }) => {
           )}
 
           {/* Botón volver menú */}
-          <div className='d-grid gap-3 py-4'>
-            <BackToMenuButton onClick={onVolver} />
-          </div>
+          {!rolSeleccionado && onVolver && (
+            <div className='d-grid gap-3'>
+              <BackToMenuButton onClick={onVolver} />
+            </div>
+          )}
         </div>
       </div>
     </div>

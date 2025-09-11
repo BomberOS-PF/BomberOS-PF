@@ -341,17 +341,16 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuar
                   }
                 />
               </div>
-
-              <div className="d-grid gap-3">
-                <button type="submit" className="btn btn-danger btn-medium btn-lg" disabled={loading}>
+              
+              <div className="d-flex justify-content-center align-items-center gap-3">
+                {onVolver && (
+                  <BackToMenuButton onClick={onVolver} />
+                )}
+                <button type="submit" className="btn btn-accept btn-lg btn-medium" disabled={loading}>
                   {loading
                     ? usuario ? 'Actualizando...' : 'Registrando...'
                     : usuario ? 'Actualizar Usuario' : 'Registrar Usuario'}
                 </button>
-
-                {onVolver && (
-                  <BackToMenuButton onClick={onVolver} />
-                )}
               </div>
             </div>
           </form>

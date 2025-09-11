@@ -571,9 +571,9 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             </div>
           )}
 
-          <div className="row px-5">
+          <div className="row">
             {/* Columna izquierda */}
-            <div className="col-md-4 mb-3 px-5">
+            <div className="col-md-4 mb-3">
               <h4 className="text-black">Bomberos del grupo</h4>
 
               <Select
@@ -587,7 +587,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
 
               <div className="text-black mt-3">
                 <label>Día:</label>
-                <Select 
+                <Select
                   options={diasSemana}
                   value={diaSeleccionado}
                   onChange={setDiaSeleccionado}
@@ -665,11 +665,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                     isSearchable
                   />
                 </div>
-
-                <button className="btn btn-danger me-3 w-100 mt-3" onClick={asignarGuardia} disabled={guardando}>
-                  {guardando ? 'Guardando…' : 'Guardar'}
-                </button>
-                <BackToMenuButton onClick={onVolver} />
               </div>
             </div>
 
@@ -958,8 +953,13 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             </div>
 
           </div>
-
         </div>
+        <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+            <BackToMenuButton onClick={onVolver} />
+            <button className="btn btn-accept btn-lg btn-medium" onClick={asignarGuardia} disabled={guardando}>
+              {guardando ? 'Guardando…' : 'Guardar'}
+            </button>
+          </div>
       </div>
     </div>
   )

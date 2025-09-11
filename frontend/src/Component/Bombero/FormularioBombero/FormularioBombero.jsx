@@ -4,7 +4,7 @@ import { User, Phone, Mail, Shield, CreditCard, PillIcon } from 'lucide-react'
 import { API_URLS, apiRequest } from '../../../config/api'
 import Select from 'react-select'
 
-const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVolver, loading = false, ocultarTitulo = false }) => {
+const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loading = false, ocultarTitulo = false }) => {
   const [rangosDisponibles, setRangosDisponibles] = useState([])
 
   const [formData, setFormData] = useState({
@@ -133,8 +133,8 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           {esConsulta && (
             <div className="mb-4">
               <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
-                <div className="bg-danger p-2 rounded-circle me-3">
-                  <i className="bi bi-person-circle text-white fs-5"></i>
+                <div className="bg-danger icon-circle me-2">
+                  <i className="bi bi-person-circle text-white fs-6"></i>
                 </div>
                 <h5 className="text-danger mb-0 fw-bold">
                   Información Personal
@@ -200,7 +200,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           {esConsulta && (
             <div className="mb-4 mt-5">
               <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
-                <div className="bg-danger p-2 rounded-circle me-3">
+                <div className="bg-danger icon-circle me-2">
                   <i className="bi bi-telephone text-white fs-5"></i>
                 </div>
                 <h5 className="text-danger mb-0 fw-bold">
@@ -211,7 +211,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           )}
 
           {/* Contacto */}
-          <div className="row mb-3 py-4">
+          <div className="row mb-3">
             <div className="col-md-4">
               <label htmlFor="domicilio" className={labelClasses}>
                 Domicilio
@@ -266,7 +266,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           {esConsulta && (
             <div className="mb-4 mt-5">
               <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
-                <div className="bg-danger p-2 rounded-circle me-3">
+                <div className="bg-danger icon-circle me-2">
                   <i className="bi bi-shield-check text-white fs-5"></i>
                 </div>
                 <h5 className="text-danger mb-0 fw-bold">
@@ -338,7 +338,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           {esConsulta && (
             <div className="mb-4 mt-5">
               <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
-                <div className="bg-danger p-2 rounded-circle me-3">
+                <div className="bg-danger icon-circle me-2">
                   <i className="bi bi-heart-pulse text-white fs-5"></i>
                 </div>
                 <h5 className="text-danger mb-0 fw-bold">
@@ -348,7 +348,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
             </div>
           )}
 
-          <div className="row mb-3 py-4">
+          <div className="row mb-3">
             <div className="col-md-4">
               <label htmlFor="fichaMedica" className={labelClasses}>
                 Ficha médica (PDF)
@@ -426,7 +426,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           </div>
 
           {/* Switches */}
-          <div className="row mb-3 py-4">
+          <div className="row mb-3">
             <div className="col-md-6">
               <div className="form-check form-switch">
                 <input
@@ -461,9 +461,9 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, onVol
           </div>
 
           {/* Botones */}
-          <div className="d-grid gap-3">
+          <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
             {!soloLectura && (
-              <button type="submit" className="btn btn-danger btn-lg btn-medium" disabled={loading}>
+              <button type="submit" className="btn btn-accept btn-lg btn-medium" disabled={loading}>
                 {loading ? 'Procesando...' : modo === 'alta' ? 'Registrar Bombero' : 'Guardar Cambios'}
               </button>
             )}

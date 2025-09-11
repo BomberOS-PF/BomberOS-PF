@@ -262,10 +262,10 @@ const ConsultarUsuario = ({ onVolver }) => {
                                 <td className='border-end'>
                                   <span
                                     className={`badge ${(usuario.rol || '').toLowerCase() === 'administrador'
-                                        ? 'bg-danger'
-                                        : (usuario.rol || '').toLowerCase() === 'jefe_cuartel'
-                                          ? 'bg-warning'
-                                          : 'bg-info'
+                                      ? 'bg-danger'
+                                      : (usuario.rol || '').toLowerCase() === 'jefe_cuartel'
+                                        ? 'bg-warning'
+                                        : 'bg-info'
                                       }`}
                                   >
                                     {usuario.rol}
@@ -423,8 +423,8 @@ const ConsultarUsuario = ({ onVolver }) => {
                     </div>
 
                     {modoEdicion && (
-                      <div className='d-grid gap-3'>
-                        <button type='submit' className='btn btn-danger  btn-medium btn-lg' disabled={loadingAccion}>
+                      <div className='d-flex justify-content-center align-items-center gap-3'>
+                        <button type='submit' className='btn btn-accept btn-lg btn-medium' disabled={loadingAccion}>
                           {loadingAccion ? 'Guardando...' : 'Guardar cambios'}
                         </button>
                       </div>
@@ -435,9 +435,11 @@ const ConsultarUsuario = ({ onVolver }) => {
             </div>
           )}
 
-          <div className='d-grid gap-3 py-4'>
-            <BackToMenuButton onClick={onVolver} />
-          </div>
+          {!usuarioSeleccionado && onVolver && (
+            <div className='d-grid gap-3'>
+              <BackToMenuButton onClick={onVolver} />
+            </div>
+          )}
         </div>
       </div>
     </div>

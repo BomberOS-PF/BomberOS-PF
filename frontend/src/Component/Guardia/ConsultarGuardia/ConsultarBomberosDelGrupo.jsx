@@ -71,7 +71,7 @@ const ConsultarBomberosDelGrupo = ({
                   title="Editar información del grupo"
                 >
                   <i className="bi bi-pencil-square"></i>
-                  Editar
+                  Editar grupo
                 </button>
 
                 <button
