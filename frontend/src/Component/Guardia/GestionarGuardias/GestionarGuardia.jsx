@@ -7,6 +7,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import esLocale from '@fullcalendar/core/locales/es'
 import Select from 'react-select'
+import { BackToMenuButton } from '../../Common/Button.jsx'
 import '../../Guardia/GestionarGuardias/GestionarGuardia.css'
 
 const diasSemana = [
@@ -668,9 +669,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                 <button className="btn btn-danger me-3 w-100 mt-3" onClick={asignarGuardia} disabled={guardando}>
                   {guardando ? 'Guardando…' : 'Guardar'}
                 </button>
-                <button className="btn btn-secondary mt-2 w-100" onClick={onVolver}>
-                  Volver
-                </button>
+                <BackToMenuButton onClick={onVolver} />
               </div>
             </div>
 

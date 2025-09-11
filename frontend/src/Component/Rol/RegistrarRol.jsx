@@ -1,15 +1,23 @@
 import { useState, useEffect } from 'react'
 import { apiRequest, API_URLS } from '../../config/api'
 import { User, AlertTriangle, User2, FileText, UsersIcon, CreditCard } from 'lucide-react'
-import '../DisenioFormulario/DisenioFormulario.css'
 import { BackToMenuButton } from '../Common/Button'
 
-const RegistrarRol = ({ onVolver }) => {
+const RegistrarRol = ({ onVolver, rol }) => {
   const [formData, setFormData] = useState({ nombreRol: '', descripcion: '' })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('')
 
+  useEffect(() => {
+    if (rol) {
+      setFormData({
+        nombreRol: rol.nombreRol || '',
+        descripcion: rol.descripcion || ''
+      })
+    }
+  }, [rol])
+  
   useEffect(() => {
     if (message) {
       const timer = setTimeout(() => setMessage(''), 3000)
@@ -137,7 +145,7 @@ const RegistrarRol = ({ onVolver }) => {
               </div>
 
               <div className="d-grid gap-3">
-                <button type="submit" className="btn btn-danger" disabled={loading}>
+                <button type="submit" className="btn btn-danger btn-medium btn-lg" disabled={loading}>
                   {loading ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>

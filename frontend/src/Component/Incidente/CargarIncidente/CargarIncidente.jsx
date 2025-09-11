@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import './CargarIncidente.css'
 import { Flame, AlertTriangle, FileText, User, Clock, MapPin, Phone } from 'lucide-react'
-// import '../../DisenioFormulario/DisenioFormulario.css'
 import { API_URLS, apiRequest } from '../../../config/api'
 import { BackToMenuButton } from '../../Common/Button.jsx'
+import Select from 'react-select'
 
 const CargarIncidente = ({ onVolver, onNotificar }) => {
   const now = new Date()
@@ -169,7 +169,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
 
       const resp = await fetch(`/api/incidentes/${incidente.idIncidente}/notificar`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
         }
@@ -181,7 +181,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
       }
 
       const resultado = await resp.json()
-      
+
       if (resultado.success) {
         const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = resultado.data
         alert(`🚨 ALERTA ENVIADA POR WHATSAPP ✅
@@ -254,24 +254,23 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                   <AlertTriangle className="text-warning" />
                   Tipo de Siniestro
                 </label>
-                <select
-                  className="text-dark form-select"
-                  id="tipoSiniestro"
-                  value={formData.tipoSiniestro}
-                  required
-                  onChange={handleChange}
-                >
-                  <option value="" disabled>Seleccione tipo de siniestro</option>
-                  {loading ? (
-                    <option>Cargando tipos...</option>
-                  ) : (
-                    tiposIncidente.map(tipo => (
-                      <option key={tipo.idTipoIncidente} value={tipo.nombre}>
-                        {tipo.nombre}
-                      </option>
-                    ))
-                  )}
-                </select>
+                <Select
+                  classNamePrefix="rs"
+                  placeholder="Seleccione tipo de siniestro"
+                  options={tiposIncidente.map(t => ({ value: t.idTipoIncidente, label: t.nombre }))}
+                  value={
+                    (() => {
+                      const sel = tiposIncidente.find(t => t.nombre === formData.tipoSiniestro);
+                      return sel ? { value: sel.idTipoIncidente, label: sel.nombre } : null;
+                    })()
+                  }
+                  onChange={(opt) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      tipoSiniestro: opt ? tiposIncidente.find(t => t.idTipoIncidente === opt.value)?.nombre || '' : ''
+                    }));
+                  }}
+                  isClearable />
               </div>
             </div>
 
@@ -311,24 +310,24 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                   <MapPin className="text-purple" />
                   Localización
                 </label>
-                <select
-                  className="form-select text-dark"
-                  id="localizacion"
-                  value={formData.localizacion}
-                  required
-                  onChange={handleChange}
-                >
-                  <option value="" disabled>Seleccione localización</option>
-                  {loading ? (
-                    <option>Cargando localizaciones...</option>
-                  ) : (
-                    localizaciones.map(loc => (
-                      <option key={loc.idLocalizacion} value={loc.direccion}>
-                        {loc.direccion}
-                      </option>
-                    ))
-                  )}
-                </select>
+                <Select
+                  classNamePrefix="rs"
+                  placeholder="Seleccione localización"
+                  options={localizaciones.map(l => ({ value: l.idLocalizacion, label: l.direccion }))}
+                  value={
+                    (() => {
+                      const sel = localizaciones.find(l => l.direccion === formData.localizacion);
+                      return sel ? { value: sel.idLocalizacion, label: sel.direccion } : null;
+                    })()
+                  }
+                  onChange={(opt) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      localizacion: opt ? localizaciones.find(l => l.idLocalizacion === opt.value)?.direccion || '' : ''
+                    }));
+                  }}
+                  isClearable
+                />
               </div>
             </div>
 
@@ -413,8 +412,8 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                 <div className="alert alert-success mt-3">
                   <div className="d-flex justify-content-between align-items-center">
                     <span>✅ Incidente #{incidenteCreado.idIncidente} registrado exitosamente</span>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="btn btn-sm btn-outline-success"
                       onClick={() => {
                         // Redirigir directamente al formulario de edición del incidente
@@ -440,7 +439,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
               <BackToMenuButton onClick={onVolver} />
             </div>
           </form>
-          
+
         </div>
       </div>
     </div>

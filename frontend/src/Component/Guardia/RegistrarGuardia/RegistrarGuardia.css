@@ -4,15 +4,16 @@
 .tooltip-container {
   position: relative;
   display: inline-block;
+  align-items: center;
+  overflow: visible;
 }
 
 /* Tooltip oculto por defecto */
 .tooltip {
   visibility: hidden;
   position: absolute;
-  top: 50%;
-  left: 100%; /* Posicionar a la derecha del botón */
-  transform: translateY(-50%); /* Centrar verticalmente respecto al botón */
+  bottom: 100%;
+  transform: translate(-50%, -8px);
   background-color: rgba(0, 0, 0, 0.7);
   color: white;
   padding: 5px;
@@ -22,6 +23,7 @@
   white-space: nowrap;
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
+  pointer-events: none;
 }
 
 /* Mostrar el tooltip solo cuando el botón está deshabilitado y al pasar el mouse */
