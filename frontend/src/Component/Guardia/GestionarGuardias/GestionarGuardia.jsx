@@ -552,7 +552,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
           <h1 className="fw-bold text-white fs-3 mb-0">
-            Gestionar Guardias
+            Gestionar Guardiass
           </h1>
         </div>
         <span className="badge bg-danger-subtle text-danger">
