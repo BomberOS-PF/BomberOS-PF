@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import './IncendioForestal.css'
-import '../../../DisenioFormulario/DisenioFormulario.css'
+import Select from 'react-select'
 import { API_URLS, apiRequest } from '../../../../config/api'
 
 function toMySQLDatetime(date) {
@@ -22,14 +21,14 @@ function damnificadoVacio(d) {
 }
 
 const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
-  
+
   const incidenteId = datosPrevios.idIncidente || datosPrevios.id || 'temp'
   const storageKey = `incendioForestal-${incidenteId}`
 
   const [formData, setFormData] = useState(() => {
     const saved = localStorage.getItem(storageKey)
     const savedData = saved ? JSON.parse(saved) : { damnificados: [] }
-    
+
     // Mapear los nombres de campos del backend a los nombres que usa el frontend
     const datosPreviosMapeados = {
       ...datosPrevios,
@@ -41,15 +40,15 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
       detalle: datosPrevios.detalle,
       damnificados: datosPrevios.damnificados || []
     }
-    
+
     // Combinar datos guardados con datos previos mapeados, dando prioridad a los datos previos
     const combined = { ...savedData, ...datosPreviosMapeados }
-    
+
     // Asegurar que siempre haya al menos un damnificado vacío si no hay datos
     if (!combined.damnificados || combined.damnificados.length === 0) {
       combined.damnificados = [{ nombre: '', apellido: '', domicilio: '', telefono: '', dni: '', fallecio: false }]
     }
-    
+
     return combined
   })
 
@@ -76,7 +75,7 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
         detalle: datosPrevios.detalle,
         damnificados: datosPrevios.damnificados || []
       }
-      
+
       setFormData(prev => ({ ...prev, ...datosMapeados }))
     }
   }, [datosPrevios])
@@ -147,7 +146,7 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
 
   const validate = () => {
     const newErrors = {}
-    
+
     if (!formData.caracteristicaLugar || formData.caracteristicaLugar === "") {
       newErrors.caracteristicaLugar = 'Campo obligatorio'
     }
@@ -179,7 +178,7 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
 
   const handleSubmit = async (e) => {
     setSuccessMsg(''); setErrorMsg('');
-    
+
     if (!validate()) {
       setErrorMsg('Por favor complete los campos obligatorios.');
       if (toastRef.current) toastRef.current.focus();
@@ -194,7 +193,7 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
       fecha: datosPrevios?.fecha || toMySQLDatetime(new Date()),
       idLocalizacion: datosPrevios?.idLocalizacion || 1,
       descripcion: datosPrevios?.descripcion || `Incendio Forestal - ${formData.caracteristicaLugar ? 'Característica: ' + caracteristicasLugarOptions.find(opt => opt.idCaractLugar == formData.caracteristicaLugar)?.descripcion : ''} - ${formData.unidadAfectada ? 'Área: ' + areaAfectadaOptions.find(opt => opt.idAreaAfectada == formData.unidadAfectada)?.descripcion : ''}`,
-      
+
       // Datos específicos del incendio forestal (corregir nombres de campos)
       caracteristicasLugar: formData.caracteristicaLugar && formData.caracteristicaLugar !== "" ? Number(formData.caracteristicaLugar) : null,
       areaAfectada: formData.unidadAfectada && formData.unidadAfectada !== "" ? Number(formData.unidadAfectada) : null,
@@ -208,12 +207,12 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
     if (datosPrevios.idIncidente || datosPrevios.id) {
       data.idIncidente = datosPrevios.idIncidente || datosPrevios.id
     }
-    
+
     const esActualizacion = datosPrevios.idIncidente || datosPrevios.id
-    
+
     try {
       let response
-      
+
       if (esActualizacion) {
         // Actualizar incidente existente
         response = await apiRequest(API_URLS.incidentes.createIncendioForestal, {
@@ -227,19 +226,19 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
           body: JSON.stringify(data)
         });
       }
-      
-      const mensajeExito = esActualizacion ? 
-        'Incidente de incendio forestal actualizado con éxito' : 
+
+      const mensajeExito = esActualizacion ?
+        'Incidente de incendio forestal actualizado con éxito' :
         'Incidente de incendio forestal cargado con éxito'
-      
+
       setSuccessMsg(mensajeExito);
       setErrorMsg('');
-      
+
       // Solo limpiar localStorage si es una creación nueva, no en actualizaciones
       if (!esActualizacion) {
         localStorage.removeItem(storageKey);
       }
-      
+
       // Pasar el resultado al callback
       if (onFinalizar) {
         onFinalizar({
@@ -253,7 +252,7 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
       const mensajeError = 'Error al ' + (esActualizacion ? 'actualizar' : 'cargar') + ' el incidente: ' + (error.message || 'Error desconocido')
       setErrorMsg(mensajeError);
       setSuccessMsg('');
-      
+
       // También pasar el error al callback
       if (onFinalizar) {
         onFinalizar({
@@ -272,46 +271,74 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
     <div className="container d-flex justify-content-center align-items-center">
       <div className="formulario-consistente p-4 shadow rounded">
         <h2 className="text-black text-center mb-4">Incendio Forestal</h2>
-        
+
         {/* Información del incidente básico */}
         {incidenteBasico && (
           <div className="alert alert-info mb-4">
             <h6 className="alert-heading">📋 Incidente Base Registrado</h6>
             <div className="row">
               <div className="col-md-6">
-                <strong>ID:</strong> {incidenteBasico.id}<br/>
-                <strong>Tipo:</strong> {incidenteBasico.tipo}<br/>
+                <strong>ID:</strong> {incidenteBasico.id}<br />
+                <strong>Tipo:</strong> {incidenteBasico.tipo}<br />
                 <strong>Fecha:</strong> {incidenteBasico.fecha}
               </div>
               <div className="col-md-6">
-                <strong>Localización:</strong> {incidenteBasico.localizacion}<br/>
+                <strong>Localización:</strong> {incidenteBasico.localizacion}<br />
                 <strong>Lugar:</strong> {incidenteBasico.lugar}
               </div>
             </div>
           </div>
         )}
-        
+
         <form>
           <div className="mb-3">
             <label className="text-black form-label" htmlFor="caracteristicaLugar">Características del lugar *</label>
-            <select className={`form-select${errors.caracteristicaLugar ? ' is-invalid' : ''}`} id="caracteristicaLugar" value={formData.caracteristicaLugar || ''} onChange={handleChange} aria-describedby="error-caracteristicaLugar">
-              <option disabled value="">Seleccione</option>
-              {caracteristicasLugarOptions.map(opt => (
-                <option key={opt.idCaractLugar} value={opt.idCaractLugar}>{opt.descripcion}</option>
-              ))}
-            </select>
+            <Select
+              options={caracteristicasLugarOptions.map(opt => ({
+                value: String(opt.idCaractLugar),
+                label: opt.descripcion
+              }))}
+              value={
+                caracteristicasLugarOptions
+                  .map(opt => ({ value: String(opt.idCaractLugar), label: opt.descripcion }))
+                  .find(o => o.value === String(formData.caracteristicaLugar)) || null
+              }
+              onChange={(opt) =>
+                setFormData(prev => ({
+                  ...prev,
+                  caracteristicaLugar: opt ? opt.value : ''
+                }))
+              }
+              classNamePrefix="rs"
+              placeholder="Seleccione característica del lugar"
+              isClearable
+            />
             {errors.caracteristicaLugar && <div className="invalid-feedback" id="error-caracteristicaLugar">{errors.caracteristicaLugar}</div>}
           </div>
 
           <div className="row mb-3">
             <div className="col">
               <label className="text-black form-label" htmlFor="unidadAfectada">Área afectada *</label>
-              <select className={`form-select${errors.unidadAfectada ? ' is-invalid' : ''}`} id="unidadAfectada" value={formData.unidadAfectada || ''} onChange={handleChange} aria-describedby="error-unidadAfectada">
-                <option disabled value="">Seleccione</option>
-                {areaAfectadaOptions.map(opt => (
-                  <option key={opt.idAreaAfectada} value={opt.idAreaAfectada}>{opt.descripcion}</option>
-                ))}
-              </select>
+              <Select
+                options={areaAfectadaOptions.map(opt => ({
+                  value: String(opt.idAreaAfectada),
+                  label: opt.descripcion
+                }))}
+                value={
+                  areaAfectadaOptions
+                    .map(opt => ({ value: String(opt.idAreaAfectada), label: opt.descripcion }))
+                    .find(o => o.value === String(formData.unidadAfectada)) || null
+                }
+                onChange={(opt) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    unidadAfectada: opt ? opt.value : ''
+                  }))
+                }
+                classNamePrefix="rs"
+                placeholder="Seleccione unidad afectada"
+                isClearable
+              />
               {errors.unidadAfectada && <div className="invalid-feedback" id="error-unidadAfectada">{errors.unidadAfectada}</div>}
             </div>
             <div className="col">
@@ -324,12 +351,26 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
 
           <div className="mb-3">
             <label className="text-black form-label">Causa probable</label>
-            <select className="form-select" id="causaProbable" value={formData.causaProbable || ''} onChange={handleChange}>
-              <option disabled value="">Seleccione</option>
-              {causasProbablesOptions.map(opt => (
-                <option key={opt.idCausaProbable} value={opt.idCausaProbable}>{opt.descripcion}</option>
-              ))}
-            </select>
+            <Select
+              options={causasProbablesOptions.map(opt => ({
+                value: String(opt.idCausaProbable),
+                label: opt.descripcion
+              }))}
+              value={
+                causasProbablesOptions
+                  .map(opt => ({ value: String(opt.idCausaProbable), label: opt.descripcion }))
+                  .find(o => o.value === String(formData.causaProbable)) || null
+              }
+              onChange={(opt) =>
+                setFormData(prev => ({
+                  ...prev,
+                  causaProbable: opt ? opt.value : ''
+                }))
+              }
+              classNamePrefix="rs"
+              placeholder="Seleccione causa probable"
+              isClearable
+            />
           </div>
 
           <div className="mb-3">
@@ -384,9 +425,9 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
             Agregar damnificado
           </button>
 
-          <button 
-            type="button" 
-            className="btn btn-danger w-100 mt-3" 
+          <button
+            type="button"
+            className="btn btn-danger w-100 mt-3"
             disabled={loading}
             onClick={() => handleSubmit()}
           >

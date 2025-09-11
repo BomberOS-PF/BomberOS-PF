@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import './Rescate.css'
-import '../../../DisenioFormulario/DisenioFormulario.css'
+import Select from 'react-select'
 import { API_URLS, apiRequest } from '../../../../config/api'
 
 const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
@@ -12,12 +11,12 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
     const savedData = guardado
       ? JSON.parse(guardado)
       : {
-          lugar: '',
-          otroLugar: '',
-          detalle: '',
-          damnificados: []
-        }
-    
+        lugar: '',
+        otroLugar: '',
+        detalle: '',
+        damnificados: []
+      }
+
     // Mapear los nombres de campos del backend a los nombres que usa el frontend
     const datosPreviosMapeados = {
       ...datosPrevios,
@@ -29,10 +28,10 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
       // Mantener el lugar del incidente base por separado
       lugarIncidente: datosPrevios.descripcion // Lugar del incidente base (solo para mostrar)
     }
-    
+
     // Combinar datos guardados con datos previos mapeados, dando prioridad a los datos previos
     const combined = { ...savedData, ...datosPreviosMapeados }
-    
+
     return combined
   })
 
@@ -47,12 +46,12 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
   // Información del incidente base
   const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id
     ? {
-        id: datosPrevios.idIncidente || datosPrevios.id,
-        tipo: datosPrevios.tipoDescripcion,
-        fecha: datosPrevios.fechaHora || datosPrevios.fecha,
-        localizacion: datosPrevios.localizacion,
-        lugar: datosPrevios.lugar || 'No especificado'
-      }
+      id: datosPrevios.idIncidente || datosPrevios.id,
+      tipo: datosPrevios.tipoDescripcion,
+      fecha: datosPrevios.fechaHora || datosPrevios.fecha,
+      localizacion: datosPrevios.localizacion,
+      lugar: datosPrevios.lugar || 'No especificado'
+    }
     : null
 
   useEffect(() => {
@@ -67,7 +66,7 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
         detalle: datosPrevios.detalle || datosPrevios.descripcion,
         damnificados: datosPrevios.damnificados || []
       }
-      
+
       setFormData(prev => ({ ...prev, ...datosMapeados }))
     }
   }, [datosPrevios])
@@ -76,6 +75,16 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
   useEffect(() => {
     setMostrarOtroLugar((formData.lugar || '') === 'Otro')
   }, [formData.lugar])
+
+  const opcionesLugar = [
+    { value: 'Arroyo', label: 'Arroyo' },
+    { value: 'Lago', label: 'Lago' },
+    { value: 'Bar', label: 'Bar' },
+    { value: 'Montaña', label: 'Montaña' },
+    { value: 'Río', label: 'Río' },
+    { value: 'Restaurant-Comedor', label: 'Restaurant-Comedor' },
+    { value: 'Otro', label: 'Otro' }
+  ]
 
   // Handlers
   const handleChange = (e) => {
@@ -131,22 +140,22 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
 
   const validate = () => {
     const newErrors = {}
-    
+
     // Validar lugar (obligatorio)
     if (!formData.lugar || formData.lugar === "") {
       newErrors.lugar = 'Campo obligatorio'
     }
-    
+
     // Validar "otro lugar" si se seleccionó "Otro"
     if (formData.lugar === 'Otro' && (!formData.otroLugar || formData.otroLugar.trim() === '')) {
       newErrors.otroLugar = 'Debe especificar el tipo de lugar'
     }
-    
+
     // Validar detalle (obligatorio)
     if (!formData.detalle || formData.detalle.trim() === '') {
       newErrors.detalle = 'Campo obligatorio'
     }
-    
+
     // Validar damnificados (solo si tienen datos)
     const damErrors = (formData.damnificados || []).map(d => {
       if (damnificadoVacio(d)) return {};
@@ -157,7 +166,7 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
       if (d.dni && !validarDNI(d.dni)) e.dni = 'DNI inválido (7-10 dígitos)'
       return e
     })
-    
+
     setErrors(newErrors)
     setDamnificadosErrors(damErrors)
     return Object.keys(newErrors).length === 0 && damErrors.every((e, i) => damnificadoVacio(formData.damnificados[i]) || Object.keys(e).length === 0)
@@ -166,13 +175,13 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
   const handleSubmit = async () => {
     setSuccessMsg('')
     setErrorMsg('')
-    
+
     if (!validate()) {
       setErrorMsg('Por favor complete los campos obligatorios y corrija los errores.');
       if (toastRef.current) toastRef.current.focus();
       return;
     }
-    
+
     setLoading(true)
 
     try {
@@ -188,8 +197,8 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
 
       const esActualizacion = !!(datosPrevios.idIncidente || datosPrevios.id)
       const method = esActualizacion ? 'PUT' : 'POST'
-      const url = esActualizacion ? 
-        API_URLS.incidentes.updateRescate : 
+      const url = esActualizacion ?
+        API_URLS.incidentes.updateRescate :
         API_URLS.incidentes.createRescate
 
       const resp = await apiRequest(url, {
@@ -279,22 +288,16 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
         <form>
           <div className="mb-3">
             <label htmlFor="lugar" className="text-black form-label">Tipo de lugar específico del rescate *</label>
-            <select
-              className={`form-select${errors.lugar ? ' is-invalid' : ''}`}
-              id="lugar"
-              value={formData.lugar || ''}
-              onChange={handleChange}
-              aria-describedby="error-lugar"
-            >
-              <option disabled value="">Seleccione</option>
-              <option>Arroyo</option>
-              <option>Lago</option>
-              <option>Bar</option>
-              <option>Montaña</option>
-              <option>Río</option>
-              <option>Restaurant-Comedor</option>
-              <option>Otro</option>
-            </select>
+            <Select
+              options={opcionesLugar}
+              value={opcionesLugar.find(o => o.value === formData.lugar) || null}
+              onChange={(opt) =>
+                setFormData(prev => ({ ...prev, lugar: opt ? opt.value : '' }))
+              }
+              classNamePrefix="rs"
+              placeholder="Seleccione lugar"
+              isClearable
+            />
             {errors.lugar && <div className="invalid-feedback" id="error-lugar">{errors.lugar}</div>}
           </div>
 

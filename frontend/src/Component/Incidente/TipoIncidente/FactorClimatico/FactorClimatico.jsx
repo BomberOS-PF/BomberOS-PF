@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import './FactorClimatico.css'
-import '../../../DisenioFormulario/DisenioFormulario.css'
+import Select from 'react-select'
 import { API_URLS, apiRequest } from '../../../../config/api'
 
 const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
@@ -12,12 +11,12 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
     const savedData = guardado
       ? JSON.parse(guardado)
       : {
-          superficie: '',
-          personasEvacuadas: '',
-          detalle: '',
-          damnificados: []
-        }
-    
+        superficie: '',
+        personasEvacuadas: '',
+        detalle: '',
+        damnificados: []
+      }
+
     // Mapear los nombres de campos del backend a los nombres que usa el frontend
     const datosPreviosMapeados = {
       ...datosPrevios,
@@ -27,12 +26,19 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
       detalle: datosPrevios.detalle,
       damnificados: datosPrevios.damnificados || []
     }
-    
+
     // Combinar datos guardados con datos previos mapeados, dando prioridad a los datos previos
     const combined = { ...savedData, ...datosPreviosMapeados }
-    
+
     return combined
   })
+
+  const opcionesSuperficie = [
+    { value: 'Menos de 100 m²', label: 'Menos de 100 m²' },
+    { value: '100 - 500 m²', label: '100 - 500 m²' },
+    { value: '500 - 1000 m²', label: '500 - 1000 m²' },
+    { value: 'Más de 1000 m²', label: 'Más de 1000 m²' }
+  ]
 
   const [loading, setLoading] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
@@ -44,12 +50,12 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
   // Información del incidente base
   const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id
     ? {
-        id: datosPrevios.idIncidente || datosPrevios.id,
-        tipo: datosPrevios.tipoDescripcion,
-        fecha: datosPrevios.fechaHora || datosPrevios.fecha,
-        localizacion: datosPrevios.localizacion,
-        lugar: datosPrevios.lugar || 'No especificado'
-      }
+      id: datosPrevios.idIncidente || datosPrevios.id,
+      tipo: datosPrevios.tipoDescripcion,
+      fecha: datosPrevios.fechaHora || datosPrevios.fecha,
+      localizacion: datosPrevios.localizacion,
+      lugar: datosPrevios.lugar || 'No especificado'
+    }
     : null
 
   useEffect(() => {
@@ -64,7 +70,7 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
         detalle: datosPrevios.detalle,
         damnificados: datosPrevios.damnificados || []
       }
-      
+
       setFormData(prev => ({ ...prev, ...datosMapeados }))
     }
   }, [datosPrevios])
@@ -125,24 +131,24 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
 
   const validate = () => {
     const newErrors = {}
-    
+
     // Validar superficie evacuada (obligatorio)
     if (!formData.superficie || formData.superficie === "") {
       newErrors.superficie = 'Campo obligatorio'
     }
-    
+
     // Validar personas evacuadas (obligatorio y no negativo)
     if (!formData.personasEvacuadas && formData.personasEvacuadas !== 0) {
       newErrors.personasEvacuadas = 'Campo obligatorio'
     } else if (formData.personasEvacuadas < 0) {
       newErrors.personasEvacuadas = 'La cantidad no puede ser negativa'
     }
-    
+
     // Validar detalle (obligatorio)
     if (!formData.detalle || formData.detalle.trim() === '') {
       newErrors.detalle = 'Campo obligatorio'
     }
-    
+
     // Validar damnificados (solo si tienen datos)
     const damErrors = (formData.damnificados || []).map(d => {
       if (damnificadoVacio(d)) return {};
@@ -153,7 +159,7 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
       if (d.dni && !validarDNI(d.dni)) e.dni = 'DNI inválido (7-10 dígitos)'
       return e
     })
-    
+
     setErrors(newErrors)
     setDamnificadosErrors(damErrors)
     return Object.keys(newErrors).length === 0 && damErrors.every((e, i) => damnificadoVacio(formData.damnificados[i]) || Object.keys(e).length === 0)
@@ -162,13 +168,13 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
   const handleFinalizar = async () => {
     setSuccessMsg('')
     setErrorMsg('')
-    
+
     if (!validate()) {
       setErrorMsg('Por favor complete los campos obligatorios.');
       if (toastRef.current) toastRef.current.focus();
       return;
     }
-    
+
     setLoading(true)
 
     try {
@@ -185,8 +191,8 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
 
       const esActualizacion = !!(datosPrevios.idIncidente || datosPrevios.id)
       const method = esActualizacion ? 'PUT' : 'POST'
-      const url = esActualizacion ? 
-        API_URLS.incidentes.updateFactorClimatico : 
+      const url = esActualizacion ?
+        API_URLS.incidentes.updateFactorClimatico :
         API_URLS.incidentes.createFactorClimatico
 
       const resp = await apiRequest(url, {
@@ -195,46 +201,46 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
         body: JSON.stringify(payload)
       })
 
-    if (!resp?.success) {
-      throw new Error(resp?.message || 'Error al registrar factor climático')
-    }
+      if (!resp?.success) {
+        throw new Error(resp?.message || 'Error al registrar factor climático')
+      }
 
-    const mensajeExito = esActualizacion
-      ? 'Factor climático actualizado con éxito'
-      : '✅ Factor climático registrado correctamente'
-    
-    setSuccessMsg(mensajeExito)
-    
-    // Solo limpiar localStorage en creaciones, no en actualizaciones
-    if (!esActualizacion) {
-      localStorage.removeItem(storageKey)
-    }
-    
-    // Actualizar el estado local con los datos guardados para evitar problemas de timing
-    if (esActualizacion) {
-      setFormData(prev => ({
-        ...prev,
-        superficie: formData.superficie,
-        personasEvacuadas: formData.personasEvacuadas,
-        detalle: formData.detalle,
-        damnificados: formData.damnificados
-      }))
-    }
-    
-    // Pasar el resultado al callback
-    if (onFinalizar) {
-      onFinalizar({
-        success: true,
-        message: mensajeExito,
-        data: resp,
-        esActualizacion
-      })
-    }
+      const mensajeExito = esActualizacion
+        ? 'Factor climático actualizado con éxito'
+        : '✅ Factor climático registrado correctamente'
+
+      setSuccessMsg(mensajeExito)
+
+      // Solo limpiar localStorage en creaciones, no en actualizaciones
+      if (!esActualizacion) {
+        localStorage.removeItem(storageKey)
+      }
+
+      // Actualizar el estado local con los datos guardados para evitar problemas de timing
+      if (esActualizacion) {
+        setFormData(prev => ({
+          ...prev,
+          superficie: formData.superficie,
+          personasEvacuadas: formData.personasEvacuadas,
+          detalle: formData.detalle,
+          damnificados: formData.damnificados
+        }))
+      }
+
+      // Pasar el resultado al callback
+      if (onFinalizar) {
+        onFinalizar({
+          success: true,
+          message: mensajeExito,
+          data: resp,
+          esActualizacion
+        })
+      }
     } catch (error) {
       const mensajeError = `❌ Error al registrar factor climático: ${error.message}`
       setErrorMsg(mensajeError)
       setSuccessMsg('')
-      
+
       // También pasar el error al callback
       if (onFinalizar) {
         onFinalizar({
@@ -279,19 +285,16 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
               <label htmlFor="superficie" className="text-black form-label">
                 Superficie evacuada *
               </label>
-              <select
-                className={`form-select${errors.superficie ? ' is-invalid' : ''}`}
-                id="superficie"
-                value={formData.superficie || ''}
-                onChange={handleChange}
-                aria-describedby="error-superficie"
-              >
-                <option disabled value="">Seleccione</option>
-                <option>Menos de 100 m²</option>
-                <option>100 - 500 m²</option>
-                <option>500 - 1000 m²</option>
-                <option>Más de 1000 m²</option>
-              </select>
+              <Select
+                options={opcionesSuperficie}
+                value={opcionesSuperficie.find(opt => opt.value === formData.superficie) || null}
+                onChange={(opcion) =>
+                  setFormData(prev => ({ ...prev, superficie: opcion ? opcion.value : '' }))
+                }
+                classNamePrefix="rs"
+                placeholder="Seleccione"
+                isClearable
+              />
               {errors.superficie && <div className="invalid-feedback" id="error-superficie">{errors.superficie}</div>}
             </div>
             <div className="col">
@@ -422,8 +425,8 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
             {loading
               ? 'Enviando...'
               : datosPrevios.idIncidente || datosPrevios.id
-              ? 'Actualizar factor climático'
-              : 'Finalizar carga'}
+                ? 'Actualizar factor climático'
+                : 'Finalizar carga'}
           </button>
           <button
             type="button"

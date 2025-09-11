@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import './MaterialPeligroso.css'
-import '../../../DisenioFormulario/DisenioFormulario.css'
+import Select from 'react-select'
 import { API_URLS, apiRequest } from '../../../../config/api'
 import DamnificadosForm from '../../../Common/Damnificado.jsx'
 import { Flame, AlertTriangle, FileText, User } from 'lucide-react'
@@ -336,20 +335,23 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                   <User className="text-danger" />
                   Categoría
                 </label>
-                <select
-                  className="text-dark form-select"
-                  id="categoria"
-                  onChange={handleChange}
-                  value={formData.categoria || ''}
-                >
-                  <option disabled value="">Seleccione categoria
-                  </option>
-                  {categorias.map(cat => (
-                    <option key={cat.idCategoria} value={cat.idCategoria}>
-                      {cat.descripcion}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  options={categorias.map(cat => ({
+                    value: String(cat.idCategoria),
+                    label: cat.descripcion
+                  }))}
+                  value={
+                    categorias
+                      .map(cat => ({ value: String(cat.idCategoria), label: cat.descripcion }))
+                      .find(opt => opt.value === String(formData.categoria)) || null
+                  }
+                  onChange={(opt) =>
+                    setFormData(prev => ({ ...prev, categoria: opt ? opt.value : '' }))
+                  }
+                  classNamePrefix="rs"
+                  placeholder="Seleccione categoría"
+                  isClearable
+                />
               </div>
 
               <div className="col-md-6 py-4">

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import './IncendioEstructural.css'
-import '../../../DisenioFormulario/DisenioFormulario.css'
+import Select from 'react-select'
 import { API_URLS, apiRequest } from '../../../../config/api'
 
 const safeRead = (key, fallback) => {
@@ -27,7 +26,7 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
       descripcion: '',
       damnificados: []
     })
-    
+
     // Mapear los nombres de campos del backend a los nombres que usa el frontend
     const datosPreviosMapeados = {
       ...datosPrevios,
@@ -41,10 +40,10 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
       descripcion: datosPrevios.descripcion, // Campo específico del incendio estructural
       damnificados: datosPrevios.damnificados || []
     }
-    
+
     // Combinar datos guardados con datos previos mapeados, dando prioridad a los datos previos
     const combined = { ...savedData, ...datosPreviosMapeados }
-    
+
     return combined
   })
 
@@ -58,12 +57,12 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
   // Info del incidente base (solo display)
   const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id
     ? {
-        id: datosPrevios.idIncidente || datosPrevios.id,
-        tipo: datosPrevios.tipoDescripcion,
-        fecha: datosPrevios.fechaHora || datosPrevios.fecha,
-        localizacion: datosPrevios.localizacion,
-        lugar: datosPrevios.lugar || 'No especificado'
-      }
+      id: datosPrevios.idIncidente || datosPrevios.id,
+      tipo: datosPrevios.tipoDescripcion,
+      fecha: datosPrevios.fechaHora || datosPrevios.fecha,
+      localizacion: datosPrevios.localizacion,
+      lugar: datosPrevios.lugar || 'No especificado'
+    }
     : null
 
   useEffect(() => {
@@ -82,7 +81,7 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
         descripcion: datosPrevios.descripcion, // Campo específico del incendio estructural
         damnificados: datosPrevios.damnificados || []
       }
-      
+
       setFormData(prev => ({ ...prev, ...datosMapeados }))
     }
   }, [datosPrevios])
@@ -94,6 +93,21 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
     }, 300)
     return () => clearTimeout(t)
   }, [formData, storageKey])
+
+  const opcionesTipoTecho = [
+    { value: '1', label: 'Chapa aislada' },
+    { value: '2', label: 'Chapa metálica' },
+    { value: '3', label: 'Madera/paja' },
+    { value: '4', label: 'Teja' },
+    { value: '5', label: 'Yeso' }
+  ]
+
+  const opcionesTipoAbertura = [
+    { value: '1', label: 'Acero/Hierro' },
+    { value: '2', label: 'Aluminio' },
+    { value: '3', label: 'Madera' },
+    { value: '4', label: 'Plástico' }
+  ]
 
   // Handlers de inputs
   const handleChange = (e) => {
@@ -160,37 +174,37 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
 
   const isValid = () => {
     const newErrors = {}
-    
+
     // Validar tipo de techo (obligatorio)
     if (!formData.tipoTecho || formData.tipoTecho === "") {
       newErrors.tipoTecho = 'Campo obligatorio'
     }
-    
+
     // Validar tipo de abertura (obligatorio)
     if (!formData.tipoAbertura || formData.tipoAbertura === "") {
       newErrors.tipoAbertura = 'Campo obligatorio'
     }
-    
+
     // Validar pisos (no negativo si se proporciona)
     if (formData.pisos && formData.pisos < 0) {
       newErrors.pisos = 'La cantidad no puede ser negativa'
     }
-    
+
     // Validar ambientes (no negativo si se proporciona)
     if (formData.ambientes && formData.ambientes < 0) {
       newErrors.ambientes = 'La cantidad no puede ser negativa'
     }
-    
+
     // Validar superficie (no negativa si se proporciona)
     if (formData.superficie && formData.superficie < 0) {
       newErrors.superficie = 'La superficie no puede ser negativa'
     }
-    
+
     // Validar descripción (obligatorio)
     if (!formData.descripcion || formData.descripcion.trim() === '') {
       newErrors.descripcion = 'Campo obligatorio'
     }
-    
+
     // Validar damnificados (solo si tienen datos)
     const damErrors = (formData.damnificados || []).map(d => {
       if (damnificadoVacio(d)) return {};
@@ -201,7 +215,7 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
       if (d.dni && !validarDNI(d.dni)) e.dni = 'DNI inválido (7-10 dígitos)'
       return e
     })
-    
+
     setErrors(newErrors)
     setDamnificadosErrors(damErrors)
     return Object.keys(newErrors).length === 0 && damErrors.every((e, i) => damnificadoVacio(formData.damnificados[i]) || Object.keys(e).length === 0)
@@ -210,13 +224,13 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
   const handleFinalizar = async () => {
     setSuccessMsg('')
     setErrorMsg('')
-    
+
     if (!isValid()) {
       setErrorMsg('Por favor complete los campos obligatorios y corrija los errores.');
       if (toastRef.current) toastRef.current.focus();
       return;
     }
-    
+
     setLoading(true)
 
     try {
@@ -252,8 +266,8 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
 
       const esActualizacion = !!(datosPrevios.idIncidente || datosPrevios.id)
       const method = esActualizacion ? 'PUT' : 'POST'
-      const url = esActualizacion ? 
-        API_URLS.incidentes.updateIncendioEstructural : 
+      const url = esActualizacion ?
+        API_URLS.incidentes.updateIncendioEstructural :
         API_URLS.incidentes.createIncendioEstructural
 
       const resp = await apiRequest(url, {
@@ -270,15 +284,15 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
       const mensajeExito = esActualizacion
         ? 'Incendio estructural actualizado con éxito'
         : '✅ Incendio estructural registrado correctamente'
-      
+
       setSuccessMsg(mensajeExito)
       setErrorMsg('')
-      
+
       // Solo limpiar localStorage en creaciones, no en actualizaciones
       if (!esActualizacion) {
         localStorage.removeItem(storageKey)
       }
-      
+
       // Pasar el resultado al callback
       if (onFinalizar) {
         onFinalizar({
@@ -292,7 +306,7 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
       const mensajeError = `❌ Error al registrar incendio estructural: ${error.message}`
       setErrorMsg(mensajeError)
       setSuccessMsg('')
-      
+
       // También pasar el error al callback
       if (onFinalizar) {
         onFinalizar({
@@ -317,12 +331,12 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
             <h6 className="alert-heading">📋 Incidente Base Registrado</h6>
             <div className="row">
               <div className="col-md-6">
-                <strong>ID:</strong> {incidenteBasico.id}<br/>
-                <strong>Tipo:</strong> {incidenteBasico.tipo}<br/>
+                <strong>ID:</strong> {incidenteBasico.id}<br />
+                <strong>Tipo:</strong> {incidenteBasico.tipo}<br />
                 <strong>Fecha:</strong> {incidenteBasico.fecha}
               </div>
               <div className="col-md-6">
-                <strong>Localización:</strong> {incidenteBasico.localizacion}<br/>
+                <strong>Localización:</strong> {incidenteBasico.localizacion}<br />
                 <strong>Lugar:</strong> {incidenteBasico.lugar}
               </div>
             </div>
@@ -351,25 +365,30 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
           <div className="row mb-3">
             <div className="col">
               <label htmlFor="tipoTecho" className="text-black form-label">Tipo de techo *</label>
-              <select className={`form-select${errors.tipoTecho ? ' is-invalid' : ''}`} id="tipoTecho" value={formData.tipoTecho || ''} onChange={handleSelectChange} aria-describedby="error-tipoTecho">
-                <option disabled value="">Seleccione</option>
-                <option value="1">Chapa aislada</option>
-                <option value="2">Chapa metálica</option>
-                <option value="3">Madera/paja</option>
-                <option value="4">Teja</option>
-                <option value="5">Yeso</option>
-              </select>
+              <Select
+                options={opcionesTipoTecho}
+                value={opcionesTipoTecho.find(opt => opt.value === formData.tipoTecho) || null}
+                onChange={(opcion) =>
+                  setFormData(prev => ({ ...prev, tipoTecho: opcion ? opcion.value : '' }))
+                }
+                classNamePrefix="rs"
+                placeholder="Seleccione tipo de techo"
+                isClearable
+              />
               {errors.tipoTecho && <div className="invalid-feedback" id="error-tipoTecho">{errors.tipoTecho}</div>}
             </div>
             <div className="col">
               <label htmlFor="tipoAbertura" className="text-black form-label">Tipo de abertura *</label>
-              <select className={`form-select${errors.tipoAbertura ? ' is-invalid' : ''}`} id="tipoAbertura" value={formData.tipoAbertura || ''} onChange={handleSelectChange} aria-describedby="error-tipoAbertura">
-                <option disabled value="">Seleccione</option>
-                <option value="1">Acero/Hierro</option>
-                <option value="2">Aluminio</option>
-                <option value="3">Madera</option>
-                <option value="4">Plástico</option>
-              </select>
+              <Select
+                options={opcionesTipoAbertura}
+                value={opcionesTipoAbertura.find(o => o.value === String(formData.tipoAbertura)) || null}
+                onChange={(opt) =>
+                  setFormData(prev => ({ ...prev, tipoAbertura: opt ? opt.value : '' }))
+                }
+                classNamePrefix="rs"
+                placeholder="Seleccione tipo abertura"
+                isClearable
+              />
               {errors.tipoAbertura && <div className="invalid-feedback" id="error-tipoAbertura">{errors.tipoAbertura}</div>}
             </div>
             <div className="col">
