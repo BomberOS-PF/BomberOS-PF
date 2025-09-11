@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import './MaterialPeligroso.css'
 import '../../../DisenioFormulario/DisenioFormulario.css'
 import { API_URLS, apiRequest } from '../../../../config/api'
+import DamnificadosForm from '../../../Common/Damnificado.jsx'
 import { Flame, AlertTriangle, FileText, User } from 'lucide-react'
 
 const safeRead = (key, fallback) => {
@@ -130,31 +131,6 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
   const handleChange = (e) => {
     const { id, value, type, checked } = e.target
     setFormData(prev => ({ ...prev, [id]: type === 'checkbox' ? checked : value }))
-  }
-
-  const handleDamnificadoChange = (index, field, value) => {
-    setFormData(prev => {
-      const nuevos = [...prev.damnificados]
-      nuevos[index] = { ...nuevos[index], [field]: value }
-      return { ...prev, damnificados: nuevos }
-    })
-  }
-
-  const agregarDamnificado = () => {
-    setFormData(prev => ({
-      ...prev,
-      damnificados: [
-        ...prev.damnificados,
-        { nombre: '', apellido: '', domicilio: '', telefono: '', dni: '', fallecio: false }
-      ]
-    }))
-  }
-
-  const eliminarDamnificado = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      damnificados: prev.damnificados.filter((_, i) => i !== index)
-    }))
   }
 
   const guardarLocalmente = () => {
@@ -533,98 +509,31 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
 
             <hr className="border-1 border-black mb-2" />
 
-            {/* Damnificados */}
-            <h5 className="text-black mt-4">Personas damnificadas</h5>
-            {
-              formData.damnificados.map((d, index) => (
-                <div key={index} className="border rounded p-3 mb-3">
-                  <div className="row mb-2">
-                    <div className="col">
-                      <label className="text-black form-label">Nombre</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={d.nombre}
-                        onChange={(e) => handleDamnificadoChange(index, 'nombre', e.target.value)}
-                      />
-                    </div>
-                    <div className="col">
-                      <label className="text-black form-label">Apellido</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={d.apellido}
-                        onChange={(e) => handleDamnificadoChange(index, 'apellido', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="mb-2">
-                    <label className="text-black form-label">Domicilio</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={d.domicilio}
-                      onChange={(e) => handleDamnificadoChange(index, 'domicilio', e.target.value)}
-                    />
-                  </div>
-                  <div className="row mb-2">
-                    <div className="col">
-                      <label className="text-black form-label">Teléfono</label>
-                      <input
-                        type="tel"
-                        className="form-control"
-                        value={d.telefono}
-                        onChange={(e) => handleDamnificadoChange(index, 'telefono', e.target.value)}
-                      />
-                    </div>
-                    <div className="col">
-                      <label className="text-black form-label">DNI</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={d.dni}
-                        onChange={(e) => handleDamnificadoChange(index, 'dni', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="form-check mb-2">
-                    <input
-                      type="checkbox"
-                      className="form-check-input"
-                      checked={d.fallecio}
-                      onChange={(e) => handleDamnificadoChange(index, 'fallecio', e.target.checked)}
-                    />
-                    <label className="form-check-label text-black">¿Falleció?</label>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn btn-outline-danger btn-sm"
-                    onClick={() => eliminarDamnificado(index)}
-                  >
-                    ❌ Eliminar damnificado
-                  </button>
-                </div>
-              ))
-            }
+            <hr className="border-1 border-black mb-2" />
 
-            <div className="d-flex justify-content-end mb-3">
-              <button type="button" className="btn btn-sm btn-success" onClick={agregarDamnificado}>
-                + Agregar damnificado
+            <DamnificadosForm
+              value={formData.damnificados}
+              onChange={(nuevoArray) => setFormData(prev => ({ ...prev, damnificados: nuevoArray }))}
+              title="Personas damnificadas"
+            />
+
+            <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
+              <button type="submit" className="btn btn-accept btn-medium btn-lg btn-sm-custom" disabled={loading}>
+                {loading ? 'Cargando...' : 'Finalizar carga'}
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-back btn-medium btn-lg btn-sm-custom"
+                onClick={guardarLocalmente}
+                disabled={loading}
+              >
+                Guardar y continuar después
               </button>
             </div>
 
-            <button type="submit" className="btn btn-danger w-100 mt-3" disabled={loading}>
-              {loading ? 'Cargando...' : 'Finalizar carga'}
-            </button>
 
-            <button
-              type="button"
-              className="btn btn-secondary w-100 mt-2"
-              onClick={guardarLocalmente}
-              disabled={loading}
-            >
-              Guardar y continuar después
-            </button>
+
           </form>
           {errorMsg && (
             <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">

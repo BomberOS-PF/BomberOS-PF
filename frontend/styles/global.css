@@ -146,6 +146,21 @@ body{
   line-height: 1.2 !important;
 }
 
+.btn-added {
+  background-color: #31c51d;
+  border: 1px solid #2abe16;
+  color: white;
+  font-weight: 500;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-added:hover{
+  background-color: #1c910c;
+}
+
 /* =============================
    Header de formularios
 ============================= */

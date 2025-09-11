@@ -476,6 +476,7 @@ const RegistrarBombero = ({ onVolver }) => {
                 />
               </div>
             </div>
+            
             <hr className="mb-4" />
             
             <div className="d-flex justify-content-center align-items-center gap-3 mb-3">

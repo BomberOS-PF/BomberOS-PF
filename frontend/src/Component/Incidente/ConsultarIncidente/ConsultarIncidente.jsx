@@ -363,7 +363,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
             <div>
               <div className='mb-4'>
                 <div className='d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2'>
-                  <div className='bg-danger p-2 rounded-circle me-3'>
+                  <div className='bg-danger icon-circle me-2'>
                     <i className='bi bi-info-circle text-white fs-5'></i>
                   </div>
                   <h5 className='text-danger mb-0 fw-bold'>Información General del Incidente</h5>
@@ -733,6 +733,8 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
 
           {renderDetalleIncidente()}
 
+          <hr className="mb-4" />
+          
           <BackToMenuButton onClick={onVolverMenu} />
         </div>
       </div>
