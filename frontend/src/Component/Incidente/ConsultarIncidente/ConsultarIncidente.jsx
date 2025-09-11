@@ -462,7 +462,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
                 <div className='mt-5'>
                   <div className='d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-danger border-2'>
                     <div className='d-flex align-items-center'>
-                      <div className='bg-danger p-2 rounded-circle me-3'>
+                      <div className='bg-danger p-2 icon-circle me-3'>
                         <i className='bi bi-gear text-white fs-5'></i>
                       </div>
                       <h5 className='text-danger mb-0 fw-bold'>Detalles Específicos del Tipo de Incidente</h5>
