@@ -63,7 +63,7 @@ const DamnificadosForm = ({ value = [], onChange, className = '', title = 'Perso
                     <div key={index} className="border rounded p-3 mb-3">
                         <div className="row mb-2">
                             <div className="col">
-                                <label className="text-black form-label">Nombre</label>
+                                <label className="form-label text-dark d-flex align-items-center gap-2">Nombre</label>
                                 <input
                                     type="text"
                                     className={`form-control ${err.nombre ? 'is-invalid' : ''}`}
@@ -73,7 +73,7 @@ const DamnificadosForm = ({ value = [], onChange, className = '', title = 'Perso
                                 {err.nombre && <div className="invalid-feedback">{err.nombre}</div>}
                             </div>
                             <div className="col">
-                                <label className="text-black form-label">Apellido</label>
+                                <label className="form-label text-dark d-flex align-items-center gap-2">Apellido</label>
                                 <input
                                     type="text"
                                     className={`form-control ${err.apellido ? 'is-invalid' : ''}`}
@@ -85,7 +85,7 @@ const DamnificadosForm = ({ value = [], onChange, className = '', title = 'Perso
                         </div>
 
                         <div className="mb-2">
-                            <label className="text-black form-label">Domicilio</label>
+                            <label className="form-label text-dark d-flex align-items-center gap-2">Domicilio</label>
                             <input
                                 type="text"
                                 className="form-control"
@@ -96,7 +96,7 @@ const DamnificadosForm = ({ value = [], onChange, className = '', title = 'Perso
 
                         <div className="row mb-2">
                             <div className="col">
-                                <label className="text-black form-label">Teléfono</label>
+                                <label className="form-label text-dark d-flex align-items-center gap-2">Teléfono</label>
                                 <input
                                     type="tel"
                                     className={`form-control ${err.telefono ? 'is-invalid' : ''}`}
@@ -106,7 +106,7 @@ const DamnificadosForm = ({ value = [], onChange, className = '', title = 'Perso
                                 {err.telefono && <div className="invalid-feedback">{err.telefono}</div>}
                             </div>
                             <div className="col">
-                                <label className="text-black form-label">DNI</label>
+                                <label className="form-label text-dark d-flex align-items-center gap-2">DNI</label>
                                 <input
                                     type="text"
                                     className={`form-control ${err.dni ? 'is-invalid' : ''}`}
@@ -124,7 +124,7 @@ const DamnificadosForm = ({ value = [], onChange, className = '', title = 'Perso
                                 checked={!!d.fallecio}
                                 onChange={e => handleChange(index, 'fallecio', e.target.checked)}
                             />
-                            <label className="form-check-label text-black">¿Falleció?</label>
+                            <label className="form-label text-dark d-flex align-items-center gap-2">¿Falleció?</label>
                         </div>
 
                         <div className='d-flex justify-content-end'>
