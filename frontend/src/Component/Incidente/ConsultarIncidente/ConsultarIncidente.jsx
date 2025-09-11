@@ -707,7 +707,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
                               </td>
                               <td className='text-center'>
                                 <button
-                                  className='btn btn-outline-secondary btn-sm me-2'
+                                  className='btn btn-outline-secondary btn-detail me-2'
                                   onClick={() => verDetalle(it.idIncidente)}
                                   disabled={loading || loadingDetalle}
                                 >

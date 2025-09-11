@@ -202,7 +202,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
                             <td className="border-end px-3">{grupo.descripcion}</td>
                             <td className="border-end">
                               <button
-                                className="btn btn-outline-secondary btn-sm me-2"
+                                className="btn btn-outline-secondary btn-detail me-2"
                                 onClick={async () => {
                                   try {
                                     setLoadingAccion(true)
@@ -226,7 +226,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
                                 <i className="bi bi-eye me-1"></i> Ver
                               </button>
                               <button
-                                className="btn btn-outline-danger btn-sm"
+                                className="btn btn-outline-danger btn-detail"
                                 onClick={() => confirmarEliminacion(grupo)}
                                 disabled={loading || loadingAccion}
                                 title="Eliminar grupo"

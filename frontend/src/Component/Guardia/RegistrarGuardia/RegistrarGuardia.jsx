@@ -333,7 +333,7 @@ const RegistrarGuardia = ({
                           <td className="text-center">
                             <button
                               onClick={() => quitarDelGrupo(b.dni)}
-                              className="btn btn-outline-danger btn-sm"
+                              className="btn btn-outline-danger btn-detail"
                             >
                               <i className="bi bi-trash"></i>
                             </button>

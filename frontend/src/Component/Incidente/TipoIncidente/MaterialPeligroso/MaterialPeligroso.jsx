@@ -347,46 +347,11 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
     if (loading) return
     await handleFinalizar()
   }
-  
+
   return (
     <div className="container-fluid py-5">
-      <div className="text-center mb-4">
-        <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
-          <div className='bg-danger p-3 rounded-circle'>
-            <Flame size={32} color="white" />
-          </div>
-          <h1 className="fw-bold text-white fs-3 mb-0">Material Peligroso</h1>
-        </div>
-        <span className="badge bg-danger-subtle text-danger">
-          <AlertTriangle className="me-2" /> Sistema de Emergencias - Cuartel de Bomberos
-        </span>
-      </div>
-
       <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
-        <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
-          <FileText />
-          <strong>Datos del incidente</strong>
-        </div>
-
         <div className="card-body">
-          {/* Información del incidente */}
-          {incidenteBasico && (
-            <div className="alert alert-info mb-4">
-              <h6 className="alert-heading">📋 Incidente Base Registrado</h6>
-              <div className="row">
-                <div className="col-md-6">
-                  <strong>ID:</strong> {incidenteBasico.id}<br />
-                  <strong>Tipo:</strong> {incidenteBasico.tipo}<br />
-                  <strong>Fecha:</strong> {incidenteBasico.fecha}
-                </div>
-                <div className="col-md-6">
-                  <strong>Localización:</strong> {incidenteBasico.localizacion}<br />
-                  <strong>Lugar:</strong> {incidenteBasico.lugar}
-                </div>
-              </div>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit}>
             {/* Categoría y cantidad*/}
             <div className="row mb-3">
