@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Select from 'react-select'
+import DamnificadosForm from '../../../Common/Damnificado.jsx'
 import { API_URLS, apiRequest } from '../../../../config/api'
 
 const safeRead = (key, fallback) => {
@@ -322,143 +323,90 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center">
-      <div className="formulario-consistente p-4 shadow rounded">
-        <h2 className="text-black text-center mb-4">Incendio Estructural</h2>
+    <div className="container-fluid py-5">
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+        <div className="card-body">
+          <form>
+            <div className="mb-3">
+              <label htmlFor="nombreLugar" className="form-label text-dark d-flex align-items-center gap-2">Nombre del comercio/casa de familia</label>
+              <input type="text" className="form-control" id="nombreLugar" value={formData.nombreLugar || ''} onChange={handleChange} />
+            </div>
 
-        {incidenteBasico && (
-          <div className="alert alert-info mb-4">
-            <h6 className="alert-heading">📋 Incidente Base Registrado</h6>
-            <div className="row">
-              <div className="col-md-6">
-                <strong>ID:</strong> {incidenteBasico.id}<br />
-                <strong>Tipo:</strong> {incidenteBasico.tipo}<br />
-                <strong>Fecha:</strong> {incidenteBasico.fecha}
+            <div className="row mb-3">
+              <div className="col">
+                <label htmlFor="pisos" className="form-label text-dark d-flex align-items-center gap-2">Cantidad de pisos afectados</label>
+                <input type="number" min="0" className={`form-control${errors.pisos ? ' is-invalid' : ''}`} id="pisos" value={formData.pisos || ''} onChange={handleChange} aria-describedby="error-pisos" placeholder="Ej: 2" />
+                {errors.pisos && <div className="invalid-feedback" id="error-pisos">{errors.pisos}</div>}
               </div>
-              <div className="col-md-6">
-                <strong>Localización:</strong> {incidenteBasico.localizacion}<br />
-                <strong>Lugar:</strong> {incidenteBasico.lugar}
+              <div className="col">
+                <label htmlFor="ambientes" className="form-label text-dark d-flex align-items-center gap-2">Cantidad de ambientes afectados</label>
+                <input type="number" min="0" className={`form-control${errors.ambientes ? ' is-invalid' : ''}`} id="ambientes" value={formData.ambientes || ''} onChange={handleChange} aria-describedby="error-ambientes" placeholder="Ej: 5" />
+                {errors.ambientes && <div className="invalid-feedback" id="error-ambientes">{errors.ambientes}</div>}
               </div>
             </div>
-          </div>
-        )}
 
-        <form>
-          <div className="mb-3">
-            <label htmlFor="nombreLugar" className="text-black form-label">Nombre del comercio/casa de familia</label>
-            <input type="text" className="form-control" id="nombreLugar" value={formData.nombreLugar || ''} onChange={handleChange} />
-          </div>
-
-          <div className="row mb-3">
-            <div className="col">
-              <label htmlFor="pisos" className="text-black form-label">Cantidad de pisos afectados</label>
-              <input type="number" min="0" className={`form-control${errors.pisos ? ' is-invalid' : ''}`} id="pisos" value={formData.pisos || ''} onChange={handleChange} aria-describedby="error-pisos" placeholder="Ej: 2" />
-              {errors.pisos && <div className="invalid-feedback" id="error-pisos">{errors.pisos}</div>}
-            </div>
-            <div className="col">
-              <label htmlFor="ambientes" className="text-black form-label">Cantidad de ambientes afectados</label>
-              <input type="number" min="0" className={`form-control${errors.ambientes ? ' is-invalid' : ''}`} id="ambientes" value={formData.ambientes || ''} onChange={handleChange} aria-describedby="error-ambientes" placeholder="Ej: 5" />
-              {errors.ambientes && <div className="invalid-feedback" id="error-ambientes">{errors.ambientes}</div>}
-            </div>
-          </div>
-
-          <div className="row mb-3">
-            <div className="col">
-              <label htmlFor="tipoTecho" className="text-black form-label">Tipo de techo *</label>
-              <Select
-                options={opcionesTipoTecho}
-                value={opcionesTipoTecho.find(opt => opt.value === formData.tipoTecho) || null}
-                onChange={(opcion) =>
-                  setFormData(prev => ({ ...prev, tipoTecho: opcion ? opcion.value : '' }))
-                }
-                classNamePrefix="rs"
-                placeholder="Seleccione tipo de techo"
-                isClearable
-              />
-              {errors.tipoTecho && <div className="invalid-feedback" id="error-tipoTecho">{errors.tipoTecho}</div>}
-            </div>
-            <div className="col">
-              <label htmlFor="tipoAbertura" className="text-black form-label">Tipo de abertura *</label>
-              <Select
-                options={opcionesTipoAbertura}
-                value={opcionesTipoAbertura.find(o => o.value === String(formData.tipoAbertura)) || null}
-                onChange={(opt) =>
-                  setFormData(prev => ({ ...prev, tipoAbertura: opt ? opt.value : '' }))
-                }
-                classNamePrefix="rs"
-                placeholder="Seleccione tipo abertura"
-                isClearable
-              />
-              {errors.tipoAbertura && <div className="invalid-feedback" id="error-tipoAbertura">{errors.tipoAbertura}</div>}
-            </div>
-            <div className="col">
-              <label htmlFor="superficie" className="text-black form-label">Superficie afectada (m²)</label>
-              <input type="number" min="0" step="0.01" className={`form-control${errors.superficie ? ' is-invalid' : ''}`} id="superficie" value={formData.superficie || ''} onChange={handleChange} aria-describedby="error-superficie" placeholder="Ej: 150.5" />
-              {errors.superficie && <div className="invalid-feedback" id="error-superficie">{errors.superficie}</div>}
-              <div className="form-text text-muted small">Área en metros cuadrados (no puede ser negativa)</div>
-            </div>
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="descripcion" className="text-black form-label">Detalle de lo sucedido *</label>
-            <textarea className={`form-control${errors.descripcion ? ' is-invalid' : ''}`} rows="3" id="descripcion" value={formData.descripcion || ''} onChange={handleChange} aria-describedby="error-descripcion"></textarea>
-            {errors.descripcion && <div className="invalid-feedback" id="error-descripcion">{errors.descripcion}</div>}
-          </div>
-
-          <h5 className="text-white mt-4">Personas damnificadas</h5>
-          {formData.damnificados.map((d, index) => {
-            const base = `dam-${index}`
-            return (
-              <div key={index} className="border rounded p-3 mb-3">
-                <div className="row mb-2">
-                  <div className="col">
-                    <label htmlFor={`${base}-nombre`} className="text-black form-label">Nombre {!damnificadoVacio(d) ? '*' : ''}</label>
-                    <input id={`${base}-nombre`} type="text" className={`form-control${damnificadosErrors[index]?.nombre ? ' is-invalid' : ''}`} value={d.nombre} onChange={(e) => handleDamnificadoChange(index, 'nombre', e.target.value)} />
-                    {damnificadosErrors[index]?.nombre && <div className="invalid-feedback">{damnificadosErrors[index].nombre}</div>}
-                  </div>
-                  <div className="col">
-                    <label htmlFor={`${base}-apellido`} className="text-black form-label">Apellido {!damnificadoVacio(d) ? '*' : ''}</label>
-                    <input id={`${base}-apellido`} type="text" className={`form-control${damnificadosErrors[index]?.apellido ? ' is-invalid' : ''}`} value={d.apellido} onChange={(e) => handleDamnificadoChange(index, 'apellido', e.target.value)} />
-                    {damnificadosErrors[index]?.apellido && <div className="invalid-feedback">{damnificadosErrors[index].apellido}</div>}
-                  </div>
-                </div>
-
-                <div className="row mb-2">
-                  <div className="col">
-                    <label htmlFor={`${base}-dom`} className="text-black form-label">Domicilio</label>
-                    <input id={`${base}-dom`} type="text" className="form-control" value={d.domicilio} onChange={(e) => handleDamnificadoChange(index, 'domicilio', e.target.value)} />
-                  </div>
-                  <div className="col">
-                    <label htmlFor={`${base}-tel`} className="text-black form-label">Teléfono</label>
-                    <input id={`${base}-tel`} type="text" className="form-control" value={d.telefono} onChange={(e) => handleDamnificadoChange(index, 'telefono', e.target.value)} />
-                  </div>
-                  <div className="col">
-                    <label htmlFor={`${base}-dni`} className="text-black form-label">DNI</label>
-                    <input id={`${base}-dni`} type="text" className="form-control" value={d.dni} onChange={(e) => handleDamnificadoChange(index, 'dni', e.target.value)} />
-                  </div>
-                </div>
-
-                <div className="form-check">
-                  <input id={`${base}-fall`} type="checkbox" className="form-check-input" checked={d.fallecio} onChange={(e) => handleDamnificadoChange(index, 'fallecio', e.target.checked)} />
-                  <label htmlFor={`${base}-fall`} className="text-black form-check-label">¿Falleció?</label>
-                </div>
-
-                <button type="button" className="btn btn-outline-danger btn-sm mt-2" onClick={() => eliminarDamnificado(index)}>❌ Eliminar damnificado</button>
+            <div className="row mb-3">
+              <div className="col">
+                <label htmlFor="tipoTecho" className="form-label text-dark d-flex align-items-center gap-2">Tipo de techo *</label>
+                <Select
+                  options={opcionesTipoTecho}
+                  value={opcionesTipoTecho.find(opt => opt.value === formData.tipoTecho) || null}
+                  onChange={(opcion) =>
+                    setFormData(prev => ({ ...prev, tipoTecho: opcion ? opcion.value : '' }))
+                  }
+                  classNamePrefix="rs"
+                  placeholder="Seleccione tipo de techo"
+                  isClearable
+                />
+                {errors.tipoTecho && <div className="invalid-feedback" id="error-tipoTecho">{errors.tipoTecho}</div>}
               </div>
-            )
-          })}
+              <div className="col">
+                <label htmlFor="tipoAbertura" className="form-label text-dark d-flex align-items-center gap-2">Tipo de abertura *</label>
+                <Select
+                  options={opcionesTipoAbertura}
+                  value={opcionesTipoAbertura.find(o => o.value === String(formData.tipoAbertura)) || null}
+                  onChange={(opt) =>
+                    setFormData(prev => ({ ...prev, tipoAbertura: opt ? opt.value : '' }))
+                  }
+                  classNamePrefix="rs"
+                  placeholder="Seleccione tipo abertura"
+                  isClearable
+                />
+                {errors.tipoAbertura && <div className="invalid-feedback" id="error-tipoAbertura">{errors.tipoAbertura}</div>}
+              </div>
+              <div className="col">
+                <label htmlFor="superficie" className="form-label text-dark d-flex align-items-center gap-2">Superficie afectada (m²)</label>
+                <input type="number" min="0" step="0.01" className={`form-control${errors.superficie ? ' is-invalid' : ''}`} id="superficie" value={formData.superficie || ''} onChange={handleChange} aria-describedby="error-superficie" placeholder="Ej: 150.5" />
+                {errors.superficie && <div className="invalid-feedback" id="error-superficie">{errors.superficie}</div>}
+                <div className="form-text text-muted small">Área en metros cuadrados (no puede ser negativa)</div>
+              </div>
+            </div>
 
-          <button type="button" className="btn btn-outline-primary w-100 mb-3" onClick={agregarDamnificado}>
-            ➕ Agregar damnificado
-          </button>
+            <div className="mb-3">
+              <label htmlFor="descripcion" className="form-label text-dark d-flex align-items-center gap-2">Detalle de lo sucedido *</label>
+              <textarea className={`form-control${errors.descripcion ? ' is-invalid' : ''}`} rows="3" id="descripcion" value={formData.descripcion || ''} onChange={handleChange} aria-describedby="error-descripcion"></textarea>
+              {errors.descripcion && <div className="invalid-feedback" id="error-descripcion">{errors.descripcion}</div>}
+            </div>
 
-          <button type="button" className="btn btn-danger w-100 mt-3" disabled={loading} onClick={() => handleFinalizar()}>
-            {loading ? 'Enviando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Actualizar incendio estructural' : 'Finalizar carga')}
-          </button>
-          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={guardarLocalmente} disabled={loading}>
-            Guardar y continuar después
-          </button>
-        </form>
+            <DamnificadosForm
+              value={formData.damnificados}
+              onChange={(nuevoArray) => setFormData(prev => ({ ...prev, damnificados: nuevoArray }))}
+              title="Personas damnificadas"
+            />
+
+            <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
+              <button type="button" className="btn btn-accept btn-medium btn-lg btn-sm-custom" disabled={loading} onClick={() => handleFinalizar()}>
+                {loading ? 'Enviando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
+              </button>
+              <button type="button" className="btn btn-back btn-medium btn-lg btn-sm-custom" onClick={guardarLocalmente} disabled={loading}>
+                Guardar y continuar después
+              </button>
+            </div>
+
+          </form>
+        </div>
+
+
 
         {errorMsg && (
           <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">{errorMsg}</div>
