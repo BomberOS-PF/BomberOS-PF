@@ -5,6 +5,7 @@ import FormularioBombero from '../FormularioBombero/FormularioBombero'
 // import '../../DisenioFormulario/DisenioFormulario.css'
 import { User2, UsersIcon } from 'lucide-react'
 
+
 const ConsultarBombero = ({ onVolver }) => {
   const [bomberos, setBomberos] = useState([])
   const [dniBusqueda, setdniBusqueda] = useState('')
