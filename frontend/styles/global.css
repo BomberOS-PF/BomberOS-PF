@@ -87,17 +87,38 @@ body{
   width: 225px;
 }
 
-.btn-danger{
-  background-color:#c95f58;
-  border-color: var(--red-700);
-  color:var(--white);
+.btn-accept{
+  background-color: #f14b5b;
+  border: 1px solid #dc3545;
+  color: white;
+  font-weight: 500;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.btn-danger:hover{
-  background-color: var(--red-800);
-  border-color: var(--red-900);
+.btn-accept:hover{
+  background-color: #ce1225;
 }
-  
+
+.btn-warning{
+  background-color:#ffc107;
+  border-color: #ffc107;
+  color: #000;
+}
+
+.btn-warning:hover {
+  color: #000;
+  background-color: #ffca2c;
+  border-color: #ffc720;
+}
+
+.btn-warning:active {
+  background-color: #ffcd39;
+  border-color: #ffc720;
+}
+
 .btn-back{
   background-color: transparent;
   border: 1px solid #9ca3af;
@@ -128,8 +149,16 @@ body{
   padding:1rem 1.5rem; border-radius:8px 8px 0 0;
   border-bottom:4px solid var(--red-700); margin-bottom:1rem;
 }
-.form-header img{ height:40px; margin-right:1rem; }
-.form-header h2{ margin:0; font-size:1.5rem; font-weight:bold; color:var(--white); }
+.form-header img{ 
+  height:40px; 
+  margin-right:1rem; 
+}
+
+.form-header h2{ margin:0; 
+  font-size:1.5rem; 
+  font-weight:bold; 
+  color:var(--white); 
+}
 
 /* =============================
    Contenedor “formulario-consistente”
@@ -256,3 +285,15 @@ body{
   padding:.4rem .8rem; font-size:.875rem; transition:all .2s ease-in-out;
 }
 .custom-page-btn.active{ filter:brightness(.9); }
+
+/* =============================
+   Iconos
+============================= */
+.icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

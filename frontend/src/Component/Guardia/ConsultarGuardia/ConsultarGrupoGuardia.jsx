@@ -251,7 +251,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
           </Pagination>
         </div>
 
-        <div className="d-grid gap-3">
+        <div className="d-grid mb-3 px-3">
           <BackToMenuButton onClick={onVolver} />
         </div>
       </div>

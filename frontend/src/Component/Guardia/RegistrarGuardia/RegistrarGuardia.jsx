@@ -345,23 +345,21 @@ const RegistrarGuardia = ({
                 </table>
               </div>
             </div>
-
-            {/* Botones */}
-            <div className="d-grid gap-3">
+          </div>
+        </div>
+        {/* Botones */}
+            <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+              <BackToMenuButton onClick={onVolver} />
               <button
                 type="button"
                 onClick={guardarGrupo}
                 disabled={loading}
-                className="btn btn-danger btn-medium btn-lg"
+                className="btn btn-accept btn-lg btn-medium"
               >
                 <Users size={16} className="me-1" />
                 {loading ? 'Espere...' : modoEdicion ? 'Actualizar Grupo' : 'Guardar Grupo'}
               </button>
-
-              <BackToMenuButton onClick={onVolver} />
             </div>
-          </div>
-        </div>
       </div>
     </div>
   )

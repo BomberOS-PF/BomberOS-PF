@@ -402,11 +402,16 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                 </button>
               )}
 
-              {!incidenteCreado && (
-                <button type="submit" className="btn btn-danger btn-lg">
-                  Guardar Incidente (Sin Notificar)
-                </button>
-              )}
+              <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
+
+                <BackToMenuButton onClick={onVolver} />
+                
+                {!incidenteCreado && (
+                  <button type="submit" className="btn btn-accept btn-medium btn-lg btn-sm-custom">
+                    Guardar Incidente (Sin Notificar)
+                  </button>
+                )}
+              </div>
 
               {incidenteCreado && (
                 <div className="alert alert-success mt-3">
@@ -435,8 +440,6 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                   </small>
                 </div>
               )}
-
-              <BackToMenuButton onClick={onVolver} />
             </div>
           </form>
 

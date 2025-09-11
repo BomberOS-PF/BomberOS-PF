@@ -144,8 +144,11 @@ const RegistrarRol = ({ onVolver, rol }) => {
                 />
               </div>
 
-              <div className="d-grid gap-3">
-                <button type="submit" className="btn btn-danger btn-medium btn-lg" disabled={loading}>
+              <div className="d-flex justify-content-center align-items-center gap-3">
+                {onVolver && (
+                  <BackToMenuButton onClick={onVolver} />
+                )}
+                <button type="submit" className="btn btn-accept btn-lg btn-medium" disabled={loading}>
                   {loading ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -155,9 +158,6 @@ const RegistrarRol = ({ onVolver, rol }) => {
                     'Registrar Rol'
                   )}
                 </button>
-                {onVolver && (
-                  <BackToMenuButton onClick={onVolver} />
-                )}
               </div>
             </div>
           </form>
