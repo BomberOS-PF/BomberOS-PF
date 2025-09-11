@@ -509,8 +509,6 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
 
             <hr className="border-1 border-black mb-2" />
 
-            <hr className="border-1 border-black mb-2" />
-
             <DamnificadosForm
               value={formData.damnificados}
               onChange={(nuevoArray) => setFormData(prev => ({ ...prev, damnificados: nuevoArray }))}
@@ -531,8 +529,6 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                 Guardar y continuar después
               </button>
             </div>
-
-
 
           </form>
           {errorMsg && (
