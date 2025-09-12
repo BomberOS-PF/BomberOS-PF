@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import './Rescate.css'
-import '../../../DisenioFormulario/DisenioFormulario.css'
+import Select from 'react-select'
 import { API_URLS, apiRequest } from '../../../../config/api'
+import DamnificadosForm from '../../../Common/Damnificado.jsx'
 
 const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
   const incidenteId = datosPrevios.idIncidente || datosPrevios.id || 'temp'
@@ -12,12 +12,12 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
     const savedData = guardado
       ? JSON.parse(guardado)
       : {
-          lugar: '',
-          otroLugar: '',
-          detalle: '',
-          damnificados: []
-        }
-    
+        lugar: '',
+        otroLugar: '',
+        detalle: '',
+        damnificados: []
+      }
+
     // Mapear los nombres de campos del backend a los nombres que usa el frontend
     const datosPreviosMapeados = {
       ...datosPrevios,
@@ -29,10 +29,10 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
       // Mantener el lugar del incidente base por separado
       lugarIncidente: datosPrevios.descripcion // Lugar del incidente base (solo para mostrar)
     }
-    
+
     // Combinar datos guardados con datos previos mapeados, dando prioridad a los datos previos
     const combined = { ...savedData, ...datosPreviosMapeados }
-    
+
     return combined
   })
 
@@ -41,18 +41,18 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [errors, setErrors] = useState({})
-  const [damnificadosErrors, setDamnificadosErrors] = useState([])
+  const [setDamnificadosErrors] = useState([])
   const toastRef = useRef(null)
 
   // Información del incidente base
   const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id
     ? {
-        id: datosPrevios.idIncidente || datosPrevios.id,
-        tipo: datosPrevios.tipoDescripcion,
-        fecha: datosPrevios.fechaHora || datosPrevios.fecha,
-        localizacion: datosPrevios.localizacion,
-        lugar: datosPrevios.lugar || 'No especificado'
-      }
+      id: datosPrevios.idIncidente || datosPrevios.id,
+      tipo: datosPrevios.tipoDescripcion,
+      fecha: datosPrevios.fechaHora || datosPrevios.fecha,
+      localizacion: datosPrevios.localizacion,
+      lugar: datosPrevios.lugar || 'No especificado'
+    }
     : null
 
   useEffect(() => {
@@ -67,7 +67,7 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
         detalle: datosPrevios.detalle || datosPrevios.descripcion,
         damnificados: datosPrevios.damnificados || []
       }
-      
+
       setFormData(prev => ({ ...prev, ...datosMapeados }))
     }
   }, [datosPrevios])
@@ -77,34 +77,20 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
     setMostrarOtroLugar((formData.lugar || '') === 'Otro')
   }, [formData.lugar])
 
+  const opcionesLugar = [
+    { value: 'Arroyo', label: 'Arroyo' },
+    { value: 'Lago', label: 'Lago' },
+    { value: 'Bar', label: 'Bar' },
+    { value: 'Montaña', label: 'Montaña' },
+    { value: 'Río', label: 'Río' },
+    { value: 'Restaurant-Comedor', label: 'Restaurant-Comedor' },
+    { value: 'Otro', label: 'Otro' }
+  ]
+
   // Handlers
   const handleChange = (e) => {
     const { id, value } = e.target
     setFormData(prev => ({ ...prev, [id]: value }))
-  }
-
-  const handleDamnificadoChange = (index, e) => {
-    const { id, value, type, checked } = e.target
-    const updated = [...(formData.damnificados || [])]
-    updated[index] = { ...updated[index], [id]: type === 'checkbox' ? checked : value }
-    setFormData(prev => ({ ...prev, damnificados: updated }))
-  }
-
-  const agregarDamnificado = () => {
-    setFormData(prev => ({
-      ...prev,
-      damnificados: [
-        ...(prev.damnificados || []),
-        { nombre: '', apellido: '', domicilio: '', telefono: '', dni: '', fallecio: false }
-      ]
-    }))
-  }
-
-  const eliminarDamnificado = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      damnificados: (prev.damnificados || []).filter((_, i) => i !== index)
-    }))
   }
 
   const guardarLocalmente = () => {
@@ -131,22 +117,22 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
 
   const validate = () => {
     const newErrors = {}
-    
+
     // Validar lugar (obligatorio)
     if (!formData.lugar || formData.lugar === "") {
       newErrors.lugar = 'Campo obligatorio'
     }
-    
+
     // Validar "otro lugar" si se seleccionó "Otro"
     if (formData.lugar === 'Otro' && (!formData.otroLugar || formData.otroLugar.trim() === '')) {
       newErrors.otroLugar = 'Debe especificar el tipo de lugar'
     }
-    
+
     // Validar detalle (obligatorio)
     if (!formData.detalle || formData.detalle.trim() === '') {
       newErrors.detalle = 'Campo obligatorio'
     }
-    
+
     // Validar damnificados (solo si tienen datos)
     const damErrors = (formData.damnificados || []).map(d => {
       if (damnificadoVacio(d)) return {};
@@ -157,7 +143,7 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
       if (d.dni && !validarDNI(d.dni)) e.dni = 'DNI inválido (7-10 dígitos)'
       return e
     })
-    
+
     setErrors(newErrors)
     setDamnificadosErrors(damErrors)
     return Object.keys(newErrors).length === 0 && damErrors.every((e, i) => damnificadoVacio(formData.damnificados[i]) || Object.keys(e).length === 0)
@@ -166,13 +152,13 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
   const handleSubmit = async () => {
     setSuccessMsg('')
     setErrorMsg('')
-    
+
     if (!validate()) {
       setErrorMsg('Por favor complete los campos obligatorios y corrija los errores.');
       if (toastRef.current) toastRef.current.focus();
       return;
     }
-    
+
     setLoading(true)
 
     try {
@@ -188,8 +174,8 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
 
       const esActualizacion = !!(datosPrevios.idIncidente || datosPrevios.id)
       const method = esActualizacion ? 'PUT' : 'POST'
-      const url = esActualizacion ? 
-        API_URLS.incidentes.updateRescate : 
+      const url = esActualizacion ?
+        API_URLS.incidentes.updateRescate :
         API_URLS.incidentes.createRescate
 
       const resp = await apiRequest(url, {
@@ -255,134 +241,77 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center">
-      <div className="formulario-consistente p-4 shadow rounded">
-        <h2 className="text-black text-center mb-4">Rescate</h2>
-
-        {incidenteBasico && (
-          <div className="alert alert-info mb-4">
-            <h6 className="alert-heading">📋 Incidente Base Registrado</h6>
-            <div className="row">
-              <div className="col-md-6">
-                <strong>ID:</strong> {incidenteBasico.id}<br />
-                <strong>Tipo:</strong> {incidenteBasico.tipo}<br />
-                <strong>Fecha:</strong> {incidenteBasico.fecha}
-              </div>
-              <div className="col-md-6">
-                <strong>Localización:</strong> {incidenteBasico.localizacion}<br />
-                <strong>Lugar:</strong> {incidenteBasico.lugar}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <form>
-          <div className="mb-3">
-            <label htmlFor="lugar" className="text-black form-label">Tipo de lugar específico del rescate *</label>
-            <select
-              className={`form-select${errors.lugar ? ' is-invalid' : ''}`}
-              id="lugar"
-              value={formData.lugar || ''}
-              onChange={handleChange}
-              aria-describedby="error-lugar"
-            >
-              <option disabled value="">Seleccione</option>
-              <option>Arroyo</option>
-              <option>Lago</option>
-              <option>Bar</option>
-              <option>Montaña</option>
-              <option>Río</option>
-              <option>Restaurant-Comedor</option>
-              <option>Otro</option>
-            </select>
-            {errors.lugar && <div className="invalid-feedback" id="error-lugar">{errors.lugar}</div>}
-          </div>
-
-          {mostrarOtroLugar && (
+    <div className="container-fluid py-5">
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+        <div className="card-body">
+          <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label htmlFor="otroLugar" className="text-black form-label">Describa el otro tipo de lugar *</label>
-              <input
-                type="text"
-                className={`form-control${errors.otroLugar ? ' is-invalid' : ''}`}
-                id="otroLugar"
-                value={formData.otroLugar || ''}
-                onChange={handleChange}
-                aria-describedby="error-otroLugar"
-                placeholder="Ej: Cueva, Pozo, etc."
+              <label htmlFor="lugar" className="form-label text-dark d-flex align-items-center gap-2">Tipo de lugar específico del rescate *</label>
+              <Select
+                options={opcionesLugar}
+                value={opcionesLugar.find(o => o.value === formData.lugar) || null}
+                onChange={(opt) =>
+                  setFormData(prev => ({ ...prev, lugar: opt ? opt.value : '' }))
+                }
+                classNamePrefix="rs"
+                placeholder="Seleccione lugar"
+                isClearable
               />
-              {errors.otroLugar && <div className="invalid-feedback" id="error-otroLugar">{errors.otroLugar}</div>}
+              {errors.lugar && <div className="invalid-feedback" id="error-lugar">{errors.lugar}</div>}
             </div>
-          )}
 
-          <div className="mb-3">
-            <label htmlFor="detalle" className="text-black form-label">Detalle de lo sucedido *</label>
-            <textarea
-              className={`form-control${errors.detalle ? ' is-invalid' : ''}`}
-              rows="3"
-              id="detalle"
-              value={formData.detalle || ''}
-              onChange={handleChange}
-              aria-describedby="error-detalle"
-            ></textarea>
-            {errors.detalle && <div className="invalid-feedback" id="error-detalle">{errors.detalle}</div>}
-          </div>
-
-          <h5 className="text-white mt-4">Personas damnificadas</h5>
-
-          {(formData.damnificados || []).map((dam, index) => {
-            const base = `dam-${index}`
-            return (
-              <div key={index} className="border rounded p-3 mb-3 bg-light-subtle">
-                <div className="row mb-2">
-                  <div className="col">
-                    <label htmlFor={`${base}-nombre`} className="form-label text-black">Nombre</label>
-                    <input type="text" className="form-control" id="nombre" value={dam.nombre || ''} onChange={(e) => handleDamnificadoChange(index, e)} />
-                  </div>
-                  <div className="col">
-                    <label htmlFor={`${base}-apellido`} className="form-label text-black">Apellido</label>
-                    <input type="text" className="form-control" id="apellido" value={dam.apellido || ''} onChange={(e) => handleDamnificadoChange(index, e)} />
-                  </div>
-                </div>
-
-                <div className="row mb-2">
-                  <div className="col">
-                    <label htmlFor={`${base}-domicilio`} className="form-label text-black">Domicilio</label>
-                    <input type="text" className="form-control" id="domicilio" value={dam.domicilio || ''} onChange={(e) => handleDamnificadoChange(index, e)} />
-                  </div>
-                  <div className="col">
-                    <label htmlFor={`${base}-telefono`} className="form-label text-black">Teléfono</label>
-                    <input type="text" className="form-control" id="telefono" value={dam.telefono || ''} onChange={(e) => handleDamnificadoChange(index, e)} />
-                  </div>
-                  <div className="col">
-                    <label htmlFor={`${base}-dni`} className="form-label text-black">DNI</label>
-                    <input type="text" className="form-control" id="dni" value={dam.dni || ''} onChange={(e) => handleDamnificadoChange(index, e)} />
-                  </div>
-                </div>
-
-                <div className="form-check mb-2">
-                  <input type="checkbox" className="form-check-input" id="fallecio" checked={dam.fallecio || false} onChange={(e) => handleDamnificadoChange(index, e)} />
-                  <label className="form-check-label text-black" htmlFor="fallecio">¿Falleció?</label>
-                </div>
-
-                <div className="text-end">
-                  <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => eliminarDamnificado(index)}>❌ Eliminar</button>
-                </div>
+            {mostrarOtroLugar && (
+              <div className="mb-3">
+                <label htmlFor="otroLugar" className="form-label text-dark d-flex align-items-center gap-2">Describa el otro tipo de lugar *</label>
+                <input
+                  type="text"
+                  className={`form-control${errors.otroLugar ? ' is-invalid' : ''}`}
+                  id="otroLugar"
+                  value={formData.otroLugar || ''}
+                  onChange={handleChange}
+                  aria-describedby="error-otroLugar"
+                  placeholder="Ej: Cueva, Pozo, etc."
+                />
+                {errors.otroLugar && <div className="invalid-feedback" id="error-otroLugar">{errors.otroLugar}</div>}
               </div>
-            )
-          })}
+            )}
 
-          <button type="button" className="btn btn-sm btn-outline-primary mb-3" onClick={agregarDamnificado}>
-            ➕ Agregar damnificado
-          </button>
+            <div className="mb-3">
+              <label htmlFor="detalle" className="form-label text-dark d-flex align-items-center gap-2">Detalle de lo sucedido *</label>
+              <textarea
+                className={`form-control${errors.detalle ? ' is-invalid' : ''}`}
+                rows="3"
+                id="detalle"
+                value={formData.detalle || ''}
+                onChange={handleChange}
+                aria-describedby="error-detalle"
+              ></textarea>
+              {errors.detalle &&
+                <div className="invalid-feedback" id="error-detalle">{errors.detalle}
+                </div>}
+            </div>
 
-          <button type="button" className="btn btn-danger w-100 mt-3" disabled={loading} onClick={() => handleSubmit()}>
-            {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Actualizar rescate' : 'Finalizar carga')}
-          </button>
+            <hr className="border-1 border-black mb-2" />
 
-          <button type="button" className="btn btn-secondary w-100 mt-2" onClick={guardarLocalmente} disabled={loading}>
-            Guardar y continuar después
-          </button>
-        </form>
+            <DamnificadosForm
+              value={formData.damnificados}
+              onChange={(nuevoArray) => setFormData(prev => ({ ...prev, damnificados: nuevoArray }))}
+              title="Personas damnificadas"
+            />
+
+            <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
+              <button type="button" className="btn btn-accept btn-medium btn-lg btn-sm-custom" disabled={loading} onClick={() => handleSubmit()}>
+                {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
+              </button>
+
+              <button type="button" className="btn btn-back btn-medium btn-lg btn-sm-custom" onClick={guardarLocalmente} disabled={loading}>
+                Guardar y continuar después
+              </button>
+            </div>
+
+          </form>
+        </div>
+
 
         {errorMsg && <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">{errorMsg}</div>}
         {successMsg && <div ref={toastRef} tabIndex={-1} className="alert alert-success mt-3" role="alert">{successMsg}</div>}

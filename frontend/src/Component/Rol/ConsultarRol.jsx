@@ -213,14 +213,14 @@ const ConsultarRol = ({ onVolver }) => {
                                 </td>
                                 <td className='text-center'>
                                   <button
-                                    className='btn btn-outline-secondary btn-sm me-2'
+                                    className='btn btn-outline-secondary btn-detail me-2'
                                     onClick={() => seleccionarRol(rol)}
                                     disabled={loading || loadingAccion}
                                   >
                                     <i className='bi bi-eye me-1'></i> Ver
                                   </button>
                                   <button
-                                    className='btn btn-outline-danger btn-sm'
+                                    className='btn btn-outline-danger btn-detail'
                                     onClick={() => eliminarRol(rol)}
                                     disabled={loading || loadingAccion}
                                   >

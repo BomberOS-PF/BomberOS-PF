@@ -73,7 +73,6 @@ body{
    Botones
 ============================= */
 .btn{ 
-  border: none;
   font-size: 1rem;      /* texto más grande o chico */
   padding: 0.6rem 1.2rem; /* alto y ancho del botón */
   border-radius: 6px;   /* bordes */
@@ -138,6 +137,34 @@ body{
   font-size: 0.85rem;
   padding: 0.25rem 0.75rem;
   min-width: 90px;
+}
+
+.btn-detail {
+  padding: 0.375rem 0.75rem !important;
+  font-size: 0.85rem !important;
+  border-radius: 0.2rem !important;
+  line-height: 1.2 !important;
+}
+
+.btn-added {
+  background-color: #31c51d;
+  border: 1px solid #2abe16;
+  color: white;
+  font-weight: 500;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-added:hover{
+  background-color: #1c910c;
+}
+
+.toggle-btn.selected {
+  background-color: #f06873; /* rojo Bootstrap */
+  color: #fff;
+  border-color: #dc3545;
 }
 
 /* =============================
@@ -280,11 +307,16 @@ body{
 /* =============================
    Paginación reutilizable
 ============================= */
-.custom-page-btn{
-  background-color:#6b7280; color:#fff; border:1px solid #6b7280;
-  padding:.4rem .8rem; font-size:.875rem; transition:all .2s ease-in-out;
+.custom-page-btn {
+  padding: 0.375rem 0.75rem !important;
+  font-size: 0.85rem !important;
+  line-height: 1.2 !important;
+  transition: all .2s ease-in-out;
 }
-.custom-page-btn.active{ filter:brightness(.9); }
+
+.custom-page-btn.active { 
+  filter:brightness(.9); 
+}
 
 /* =============================
    Iconos

@@ -864,7 +864,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                 </td>
                                 <td className="text-center">
                                   <button
-                                    className="btn btn-outline-danger btn-sm"
+                                    className="btn btn-outline-danger btn-detail"
                                     onClick={() => setBomberosEditados(prev => prev.filter((_, i) => i !== idx))}
                                   >
                                     <i className="bi bi-trash"></i>
