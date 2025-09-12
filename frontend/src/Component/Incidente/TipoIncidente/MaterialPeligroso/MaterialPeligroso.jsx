@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import Select from 'react-select'
 import { API_URLS, apiRequest } from '../../../../config/api'
 import DamnificadosForm from '../../../Common/Damnificado.jsx'
-import { Flame, AlertTriangle, FileText, User } from 'lucide-react'
 
 const safeRead = (key, fallback) => {
   try {
@@ -52,8 +51,8 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
   const [loading, setLoading] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  const [errors, setErrors] = useState({})
-  const [damnificadosErrors, setDamnificadosErrors] = useState([])
+  const [setErrors] = useState({})
+  const [setDamnificadosErrors] = useState([])
   const [categorias, setCategorias] = useState([])
   const [tiposMaterial, setTiposMaterial] = useState([])
   const [accionesMaterial, setAccionesMaterial] = useState([])

@@ -91,37 +91,12 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
     alert('Datos guardados localmente. Podés continuar después.')
   }
 
-  // Los damnificados ahora se manejan dentro de formData, igual que en AccidenteTransito
-
-
-  const handleDamnificadoChange = (index, field, value) => {
-    const nuevos = [...formData.damnificados]
-    nuevos[index][field] = value
-    setFormData(prev => ({ ...prev, damnificados: nuevos }))
-  }
-
-  const agregarDamnificado = () => {
-    setFormData(prev => ({
-      ...prev,
-      damnificados: [
-        ...(prev.damnificados || []),
-        { nombre: '', apellido: '', domicilio: '', telefono: '', dni: '', fallecio: false }
-      ]
-    }))
-  }
-
-  const eliminarDamnificado = (index) => {
-    const nuevos = formData.damnificados.filter((_, i) => i !== index)
-    setFormData(prev => ({ ...prev, damnificados: nuevos }))
-  }
-
   const [errors, setErrors] = useState({})
-  const [damnificadosErrors, setDamnificadosErrors] = useState([])
+  const [setDamnificadosErrors] = useState([])
   const [loading, setLoading] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const toastRef = useRef(null)
-
 
   const [caracteristicasLugarOptions, setCaracteristicasLugarOptions] = useState([])
   const [areaAfectadaOptions, setAreaAfectadaOptions] = useState([])

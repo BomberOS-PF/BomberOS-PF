@@ -45,19 +45,8 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [errors, setErrors] = useState({})
-  const [damnificadosErrors, setDamnificadosErrors] = useState([])
+  const [setDamnificadosErrors] = useState([])
   const toastRef = useRef(null)
-
-  // Información del incidente base
-  const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id
-    ? {
-      id: datosPrevios.idIncidente || datosPrevios.id,
-      tipo: datosPrevios.tipoDescripcion,
-      fecha: datosPrevios.fechaHora || datosPrevios.fecha,
-      localizacion: datosPrevios.localizacion,
-      lugar: datosPrevios.lugar || 'No especificado'
-    }
-    : null
 
   useEffect(() => {
     // Solo actualizar si hay nuevos datosPrevios y son diferentes
@@ -80,32 +69,6 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
   const handleChange = (e) => {
     const { id, value } = e.target
     setFormData(prev => ({ ...prev, [id]: value }))
-  }
-
-  // ---------- DAMNIFICADOS ----------
-  const handleDamnificadoChange = (index, field, value) => {
-    setFormData(prev => {
-      const nuevos = [...prev.damnificados]
-      nuevos[index] = { ...nuevos[index], [field]: value }
-      return { ...prev, damnificados: nuevos }
-    })
-  }
-
-  const agregarDamnificado = () => {
-    setFormData(prev => ({
-      ...prev,
-      damnificados: [
-        ...prev.damnificados,
-        { nombre: '', apellido: '', domicilio: '', telefono: '', dni: '', fallecio: false }
-      ]
-    }))
-  }
-
-  const eliminarDamnificado = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      damnificados: prev.damnificados.filter((_, i) => i !== index)
-    }))
   }
 
   const guardarLocalmente = () => {

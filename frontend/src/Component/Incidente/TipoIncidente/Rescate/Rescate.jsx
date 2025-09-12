@@ -41,7 +41,7 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [errors, setErrors] = useState({})
-  const [damnificadosErrors, setDamnificadosErrors] = useState([])
+  const [setDamnificadosErrors] = useState([])
   const toastRef = useRef(null)
 
   // Información del incidente base
@@ -91,30 +91,6 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
   const handleChange = (e) => {
     const { id, value } = e.target
     setFormData(prev => ({ ...prev, [id]: value }))
-  }
-
-  const handleDamnificadoChange = (index, e) => {
-    const { id, value, type, checked } = e.target
-    const updated = [...(formData.damnificados || [])]
-    updated[index] = { ...updated[index], [id]: type === 'checkbox' ? checked : value }
-    setFormData(prev => ({ ...prev, damnificados: updated }))
-  }
-
-  const agregarDamnificado = () => {
-    setFormData(prev => ({
-      ...prev,
-      damnificados: [
-        ...(prev.damnificados || []),
-        { nombre: '', apellido: '', domicilio: '', telefono: '', dni: '', fallecio: false }
-      ]
-    }))
-  }
-
-  const eliminarDamnificado = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      damnificados: (prev.damnificados || []).filter((_, i) => i !== index)
-    }))
   }
 
   const guardarLocalmente = () => {

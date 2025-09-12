@@ -52,19 +52,8 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [errors, setErrors] = useState({})
-  const [damnificadosErrors, setDamnificadosErrors] = useState([])
+  const [setDamnificadosErrors] = useState([])
   const toastRef = useRef(null)
-
-  // Info del incidente base (solo display)
-  const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id
-    ? {
-      id: datosPrevios.idIncidente || datosPrevios.id,
-      tipo: datosPrevios.tipoDescripcion,
-      fecha: datosPrevios.fechaHora || datosPrevios.fecha,
-      localizacion: datosPrevios.localizacion,
-      lugar: datosPrevios.lugar || 'No especificado'
-    }
-    : null
 
   useEffect(() => {
     // Solo actualizar si hay nuevos datosPrevios y son diferentes
@@ -114,36 +103,6 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
   const handleChange = (e) => {
     const { id, value, type, checked } = e.target
     setFormData(prev => ({ ...prev, [id]: type === 'checkbox' ? checked : value }))
-  }
-
-  const handleSelectChange = (e) => {
-    handleChange(e)
-  }
-
-  // ---------- DAMNIFICADOS ----------
-  const handleDamnificadoChange = (index, field, value) => {
-    setFormData(prev => {
-      const nuevos = [...prev.damnificados]
-      nuevos[index] = { ...nuevos[index], [field]: value }
-      return { ...prev, damnificados: nuevos }
-    })
-  }
-
-  const agregarDamnificado = () => {
-    setFormData(prev => ({
-      ...prev,
-      damnificados: [
-        ...prev.damnificados,
-        { nombre: '', apellido: '', domicilio: '', telefono: '', dni: '', fallecio: false }
-      ]
-    }))
-  }
-
-  const eliminarDamnificado = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      damnificados: prev.damnificados.filter((_, i) => i !== index)
-    }))
   }
 
   const guardarLocalmente = () => {
