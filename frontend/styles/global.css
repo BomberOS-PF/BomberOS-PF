@@ -25,12 +25,8 @@
 body{
   background-color: var(--white);
   font-family: 'Segoe UI', sans-serif;
-  margin:0;
-  padding:0;
   color: var(--black);
 }
-
-.container{ width:100%; max-width:100%; padding:2.5rem; }
 
 /* =============================
    Form (inputs, labels)
@@ -300,18 +296,18 @@ body{
   justify-content: center;
 }
 
-@media (max-width: 576px){
-  .edge-to-edge{
-    width: 100%;
-    margin-left: 0;
-    margin-right: 0;
-  }
-}
-
 /* =============================
    Responsive
 ============================= */
 @media (max-width: 576px){
   .btn-short, .btn-medium { 
     width: auto; }
+}
+
+@media (max-width: 576px){
+  .edge-to-edge{
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
 }
