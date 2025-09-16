@@ -307,3 +307,11 @@ body{
     margin-right: 0;
   }
 }
+
+/* =============================
+   Responsive
+============================= */
+@media (max-width: 576px){
+  .btn-short, .btn-medium { 
+    width: auto; }
+}
