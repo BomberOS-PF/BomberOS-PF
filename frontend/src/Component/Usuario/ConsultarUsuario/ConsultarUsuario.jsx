@@ -186,7 +186,7 @@ const ConsultarUsuario = ({ onVolver }) => {
       </div>
 
       {/* Card */}
-      <div className='card shadow-sm border-0 bg-white'>
+      <div className='card edge-to-edge shadow-sm border-0 bg-white'>
         <div className='card-header bg-danger text-white d-flex align-items-center gap-2 py-4'>
           <i className='bi bi-person-fill fs-5'></i>
           <strong>Listado de Usuarios</strong>
