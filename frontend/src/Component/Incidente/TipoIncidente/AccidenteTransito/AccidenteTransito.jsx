@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import Select from 'react-select'
 import DamnificadosForm from '../../../Common/Damnificado.jsx'
 import VehiculosFormList from '../../../Common/VehiculoFormList.jsx'
+import { API_URLS, apiRequest } from '../../../../config/api'
 
 const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
   const incidenteId = datosPrevios.idIncidente || datosPrevios.id || 'temp'
@@ -32,7 +33,7 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [errors, setErrors] = useState({})
-  const [setDamnificadosErrors] = useState([])
+  const [damnificadosErrors, setDamnificadosErrors] = useState([])
   const toastRef = useRef(null)
 
 
@@ -56,12 +57,11 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
   useEffect(() => {
     const fetchCausas = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/causa-accidente')
-        const data = await res.json()
-        if (data.success) {
-          setCausasAccidente(data.data)
+        const data = await apiRequest(`${API_URLS.causasAccidente}`, { method: 'GET' })
+        if (data && (data.success !== false)) {
+          setCausasAccidente(data.data || data || [])
         } else {
-          console.error('Error en la respuesta:', data.error)
+          console.error('Error en la respuesta:', data?.error || data)
         }
       } catch (err) {
         console.error('Error al conectar con backend:', err)
@@ -157,20 +157,16 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
 
     try {
       const esActualizacion = datosPrevios.idIncidente || datosPrevios.id
-      const method = esActualizacion ? 'PUT' : 'POST'
       const url = esActualizacion ?
-        'http://localhost:3000/api/incidentes/accidente-transito' :
-        'http://localhost:3000/api/accidentes'
+        API_URLS.incidentes.updateAccidenteTransito :
+        API_URLS.incidentes.createAccidenteTransito
 
-      const res = await fetch(url, {
-        method: method,
-        headers: { 'Content-Type': 'application/json' },
+      const data = await apiRequest(url, {
+        method: esActualizacion ? 'PUT' : 'POST',
         body: JSON.stringify(payload)
       })
 
-      const data = await res.json()
-
-      if (data.success) {
+      if (data && (data.success !== false)) {
         const mensajeExito = esActualizacion ?
           'Accidente de tránsito actualizado con éxito' :
           'Accidente de tránsito registrado exitosamente'
@@ -189,7 +185,7 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
           })
         }
       } else {
-        const mensajeError = 'Error al ' + (esActualizacion ? 'actualizar' : 'registrar') + ': ' + (data.message || '')
+        const mensajeError = 'Error al ' + (esActualizacion ? 'actualizar' : 'registrar') + ': ' + (data?.message || data?.error || 'Error desconocido')
         setErrorMsg(mensajeError)
         setSuccessMsg('')
         console.error(data)

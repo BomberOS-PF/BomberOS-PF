@@ -1,5 +1,5 @@
 // Config API
-const API_BASE_URL = 'http://localhost:3000/api'
+const API_BASE_URL = '/api'
 
 // Helper para query strings
 const toQS = (params) => {
@@ -129,10 +129,11 @@ export const API_URLS = {
   tiposIncidente: `${API_BASE_URL}/tipos-incidente`,
   localizaciones: `${API_BASE_URL}/localizaciones`,
   causasProbables: `${API_BASE_URL}/causas-probables`,
+  causasAccidente: `${API_BASE_URL}/causa-accidente`,
   recuperarClave: `${API_BASE_URL}/recuperar-clave`,
 
   // Health check
-  health: 'http://localhost:3000/health'
+  health: '/health'
 }
 
 // Headers por defecto

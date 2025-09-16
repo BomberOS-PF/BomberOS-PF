@@ -92,7 +92,7 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
   }
 
   const [errors, setErrors] = useState({})
-  const [setDamnificadosErrors] = useState([])
+  const [damnificadosErrors, setDamnificadosErrors] = useState([])
   const [loading, setLoading] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
