@@ -1,3 +1,5 @@
+// arriba del archivo
+import { Flame, AlertTriangle, FileText, User as UserIcon } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import Select from 'react-select'
 import { API_URLS, apiRequest } from '../../../../config/api'
@@ -331,7 +333,7 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
             <div className="row mb-3">
               <div className="col-md-6 py-4">
                 <label className="form-label text-dark d-flex align-items-center gap-2">
-                  <User className="text-danger" />
+                  <UserIcon className="text-danger" />
                   Categoría
                 </label>
                 <Select
