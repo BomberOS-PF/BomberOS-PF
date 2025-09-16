@@ -515,7 +515,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
 
   // ------- Vista Listado -------
   return (
-    <div className='container-fluid py-5'>
+    <div className='container py-5'>
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
           <div className='bg-danger p-3 rounded-circle'>
