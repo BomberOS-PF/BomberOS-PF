@@ -41,7 +41,7 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [errors, setErrors] = useState({})
-  const [setDamnificadosErrors] = useState([])
+  const [damnificadosErrors, setDamnificadosErrors] = useState([])
   const toastRef = useRef(null)
 
   // Información del incidente base
