@@ -151,7 +151,7 @@ const RegistrarGuardia = ({
         </span>
       </div>
 
-      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+      <div className="card edge-to-edge shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
         <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <FileText />
           <strong>{modoEdicion ? 'Registrar cambios del grupo' : 'Registrar Grupo de Guardia'}</strong>
