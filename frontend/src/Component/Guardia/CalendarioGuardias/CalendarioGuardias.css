@@ -245,3 +245,41 @@
   }
 }
 
+/* ====== CARD DEL PADRE (no flotante) ====== */
+.cal-page-card {
+  position: static;   /* evita el fixed del mini */
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  max-width: 100%;
+  z-index: auto;
+}
+
+.cal-page-card .card-header {
+  position: relative;
+  z-index: 2;
+  overflow: visible;  /* por si algún style ocultaba el grupo de botones */
+}
+
+/* Botonera del header: que no colapse y tenga separación */
+.cal-page-card .card-header .btn-group {
+  display: flex;
+  gap: .5rem;
+}
+
+/* Contraste de botones outline sobre bg-danger */
+.cal-page-card .card-header .btn.btn-outline-light {
+  border-color: rgba(255,255,255,.6);
+  color: #fff;
+}
+
+/* En pantallas chicas, permití wrap sin que se pierdan botones */
+@media (max-width: 576px) {
+  .cal-page-card .card-header {
+    row-gap: .5rem;
+  }
+  .cal-page-card .card-header .btn-group .btn {
+    padding: .25rem .5rem;
+    font-size: .825rem;
+  }
+}
