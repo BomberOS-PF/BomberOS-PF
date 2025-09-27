@@ -116,33 +116,22 @@
   border-color: #b30000;
 }
 
-/* Badge “¡Hoy Guardia!” dentro del casillero */
+/* Badge “¡Hoy Guardia!” centrado dentro del casillero */
 .cal-mini-card td.fc-daygrid-day .fc-guard-overlay .hoy-guardia-badge {
-  position: absolute;
-  left: 6px;
-  bottom: 6px;              /* abajo-izquierda para no tapar el número del día */
-  font-weight: 700;         /* negrita */
+  position: static;          /* que lo centre el flex del overlay */
+  pointer-events: none;
+  font-weight: 700;
   font-size: 12px;
   color: #b30000;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(179, 0, 0, 0.35);
   border-radius: 6px;
   padding: 2px 6px;
-  pointer-events: none;     /* para no interferir con el hover del tooltip */
   box-shadow: 0 1px 3px rgba(0,0,0,.15);
+  margin: 0 auto;            /* por las dudas, mantiene centrado */
 }
 
-.fc-guard-overlay.is-today::after {
-  content: "¡Hoy Guardia!";
-  font-weight: 700;
-  font-size: 12px;
-  color: #b30000;
 
-  /* (opcional) mejora de legibilidad sobre el fondo */
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(255,255,255,0.8);
-}
 
 /* ===== Ajustes móviles: 412 x 915 (y similares) ===== */
 @media (max-width: 430px) {

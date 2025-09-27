@@ -31,7 +31,7 @@ const hash = s => {
 }
 
 const colorForGroup = id => {
-  // genera una paleta consistente por id
+  // paleta consistente por id
   const h = hash(id) % 360
   const bg = `hsla(${h}, 70%, 75%, .55)`
   const border = `hsla(${h}, 70%, 35%, 1)`
@@ -92,7 +92,7 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
       const legend = new Map()
 
       for (const r of rows) {
-        const f = typeof r.fecha === 'string' ? r.fecha.slice(0, 10) : new Date(r.fecha).toISOString().slice(0, 10)
+        const f = typeof r.fecha === 'string' ? r.fecha.slice(0, 10) : yyyyMmDd(new Date(r.fecha))
         const desde = (r.hora_desde || r.desde || '').toString().slice(0, 5)
         const hasta = (r.hora_hasta || r.hasta || '').toString().slice(0, 5)
         const gid = r.grupoId ?? r.idGrupo ?? r.grupo_id
@@ -194,7 +194,7 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
   const quitarTooltip = (fechaStr) => { const tip = tooltipsRef.current.get(fechaStr); tip?.parentNode?.removeChild(tip); tooltipsRef.current.delete(fechaStr) }
 
   const dayCellDidMount = info => {
-    const fechaStr = info.date?.toISOString?.().slice(0, 10)
+    const fechaStr = yyyyMmDd(info.date)
     if (!fechaStr) return
     const gmap = resumenGrupos.get(fechaStr)
     if (gmap && gmap.size) {
@@ -215,7 +215,7 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
   }
 
   const dayCellWillUnmount = info => {
-    const fechaStr = info.date?.toISOString?.().slice(0, 10)
+    const fechaStr = yyyyMmDd(info.date)
     quitarOverlay(fechaStr)
     quitarTooltip(fechaStr)
     if (info.el?.dataset) delete info.el.dataset.tipBound
@@ -252,8 +252,8 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
               events={eventos}
               eventContent={() => ({ domNodes: [] })}
               datesSet={arg => {
-                const s = arg.start?.toISOString?.() || ''
-                const e = arg.end?.toISOString?.() || ''
+                const s = yyyyMmDd(arg.start)
+                const e = yyyyMmDd(arg.end)
                 if (ultimoRangoRef.current.start !== s || ultimoRangoRef.current.end !== e) {
                   ultimoRangoRef.current = { start: s, end: e }
                   cargarMesServidor(arg.start, arg.end)

@@ -45,7 +45,7 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
   const overlaysRef = useRef(new Map())  // fechaStr -> overlay DIV
   const tooltipsRef = useRef(new Map())  // fechaStr -> tooltip DIV
 
-  // Fecha de HOY en formato YYYY-MM-DD
+  // Fecha de HOY en formato YYYY-MM-DD (local)
   const hoyStr = useMemo(() => yyyyMmDd(new Date()), [])
 
   // DNI del usuario actual
@@ -89,10 +89,10 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
       const resp = await apiRequest(API_URLS.guardias.porDni(dni, start, end))
       const rows = resp?.data || []
 
-      // Agrupo rangos por fecha
+      // Agrupo rangos por fecha (usando fecha local)
       const porFecha = new Map()
       for (const r of rows) {
-        const f = (typeof r.fecha === 'string') ? r.fecha.slice(0, 10) : new Date(r.fecha).toISOString().slice(0, 10)
+        const f = (typeof r.fecha === 'string') ? r.fecha.slice(0, 10) : yyyyMmDd(new Date(r.fecha))
         const desde = (r.hora_desde || r.desde || '').toString().slice(0, 5)
         const hasta = (r.hora_hasta || r.hasta || '').toString().slice(0, 5)
         if (!f || !desde || !hasta) continue
@@ -194,7 +194,7 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
 
   // ---------- Hooks de celdas ----------
   const dayCellDidMount = info => {
-    const fechaStr = info.date?.toISOString?.().slice(0, 10)
+    const fechaStr = yyyyMmDd(info.date)
     if (!fechaStr) return
 
     const rangos = resumenPorFecha.get(fechaStr)
@@ -231,7 +231,7 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
   }
 
   const dayCellWillUnmount = info => {
-    const fechaStr = info.date?.toISOString?.().slice(0, 10)
+    const fechaStr = yyyyMmDd(info.date)
     quitarOverlay(fechaStr)
     quitarTooltip(fechaStr)
     if (info.el?.dataset) delete info.el.dataset.tipBound
@@ -334,8 +334,8 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
               events={eventos}
               eventContent={() => ({ domNodes: [] })}
               datesSet={arg => {
-                const s = arg.start?.toISOString?.() || ''
-                const e = arg.end?.toISOString?.() || ''
+                const s = yyyyMmDd(arg.start)
+                const e = yyyyMmDd(arg.end)
                 if (ultimoRangoRef.current.start !== s || ultimoRangoRef.current.end !== e) {
                   ultimoRangoRef.current = { start: s, end: e }
                   cargarMesServidor(arg.start, arg.end)
