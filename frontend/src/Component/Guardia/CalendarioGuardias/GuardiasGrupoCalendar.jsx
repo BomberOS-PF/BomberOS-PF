@@ -32,7 +32,6 @@ const colorForGroup = id => {
   return { bg, border }
 }
 
-// ===== componente =====
 const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = null }) => {
   const [grupos, setGrupos] = useState([])
   const [cargandoGrupos, setCargandoGrupos] = useState(false)
@@ -44,11 +43,21 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
   const [legendGrupos, setLegendGrupos] = useState(new Map())
   const [cargandoGuardias, setCargandoGuardias] = useState(false)
 
+  const rootRef = useRef(null)
   const calendarRef = useRef()
   const ultimoRangoRef = useRef({ start: '', end: '' })
   const overlaysRef = useRef(new Map())
   const tooltipsRef = useRef(new Map())
+  const gridObserverRef = useRef(null)
+  const compIdRef = useRef(`gg-${Math.random().toString(36).slice(2)}`) // namespace
   const hoyStr = useMemo(() => yyyyMmDd(new Date()), [])
+  const [viewReady, setViewReady] = useState(false)
+  const [initialWindow, setInitialWindow] = useState(null)
+
+  const tipKey = (fechaStr) => `${compIdRef.current}:${fechaStr}`
+
+  const getDayCells = () =>
+    rootRef.current?.querySelectorAll('.fc-daygrid .fc-daygrid-day[data-date]') || []
 
   // ------- cargar lista de grupos -------
   useEffect(() => {
@@ -89,11 +98,13 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
     overlaysRef.current.clear()
     for (const tip of tooltipsRef.current.values()) tip?.parentNode?.removeChild(tip)
     tooltipsRef.current.clear()
+    gridObserverRef.current?.disconnect?.()
   }, [])
 
   // ===== Tooltip (solo el negro, sin title nativo) =====
   const ensureTooltip = fechaStr => {
-    if (tooltipsRef.current.has(fechaStr)) return tooltipsRef.current.get(fechaStr)
+    const key = tipKey(fechaStr)
+    if (tooltipsRef.current.has(key)) return tooltipsRef.current.get(key)
     const tip = document.createElement('div')
     tip.className = 'tooltip-dinamico'
     tip.style.position = 'fixed'
@@ -108,11 +119,12 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
     tip.style.boxShadow = '0 2px 8px rgba(0,0,0,.25)'
     tip.style.zIndex = '3000'
     document.body.appendChild(tip)
-    tooltipsRef.current.set(fechaStr, tip)
+    tooltipsRef.current.set(key, tip)
     return tip
   }
 
-  // <<< CAMBIO PEDIDO: encabezado "Guardias:" y debajo los nombres >>>
+  const getTooltip = (fechaStr) => tooltipsRef.current.get(tipKey(fechaStr))
+
   const textoTooltip = gmap => {
     const nombres = Array.from(gmap.values()).map(v => v?.nombre || 'Grupo')
     return ['Guardias:', ...nombres].join('\n')
@@ -136,13 +148,13 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
       t.style.top = `${e.pageY - 20}px`
     }
     const onMove  = e => {
-      const t = tooltipsRef.current.get(fechaStr)
+      const t = getTooltip(fechaStr)
       if (!t) return
       t.style.left = `${e.pageX + 10}px`
       t.style.top = `${e.pageY - 20}px`
     }
     const onLeave = () => {
-      const t = tooltipsRef.current.get(fechaStr)
+      const t = getTooltip(fechaStr)
       if (t) t.style.display = 'none'
     }
 
@@ -153,9 +165,9 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
   }
 
   const quitarTooltip = fechaStr => {
-    const tip = tooltipsRef.current.get(fechaStr)
+    const tip = getTooltip(fechaStr)
     if (tip?.parentNode) tip.parentNode.removeChild(tip)
-    tooltipsRef.current.delete(fechaStr)
+    tooltipsRef.current.delete(tipKey(fechaStr))
   }
 
   // ===== Overlays (bandas por grupo) =====
@@ -193,7 +205,7 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
         band.style.border = `1px solid ${border}`
         band.style.borderRadius = '6px'
         band.style.height = '12px'
-        band.style.boxShadow = 'inset 0 0 0 1px rgba(255,255,255,.15)'
+        band.style.boxShadow = 'inset 0 0 0 1px rgba(255,255,255,.15)' // <- FIX acá
 
         const label = document.createElement('span')
         label.className = 'band-label'
@@ -212,13 +224,12 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
       ov.style.display = 'none'
     }
 
-    // Handlers solo del tooltip negro (sin title)
     bindTooltipHandlers(cell, fechaStr, gmap)
   }
 
   // Redibuja overlays/tooltips sobre celdas visibles
   const bindOverlaysAndTooltips = () => {
-    const cells = document.querySelectorAll('.cal-mini-card td.fc-daygrid-day')
+    const cells = getDayCells()
     cells.forEach(td => {
       const fechaStr = td.getAttribute('data-date')
       if (!fechaStr) return
@@ -234,13 +245,22 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
     })
   }
 
-  // ===== Carga de guardias =====
-  const cargarMesTodosGrupos = async (startDate, endDate) => {
+  const forceRender = () => {
+    requestAnimationFrame(() => {
+      const api = calendarRef.current?.getApi?.()
+      api?.render?.()
+      requestAnimationFrame(() => bindOverlaysAndTooltips())
+    })
+  }
+
+  // ===== Carga de guardias (3 meses visibles) =====
+  const cargarRangoGrupos = async (startDate, endDate) => {
     try {
       setMensaje('')
       setCargandoGuardias(true)
+
       const start = yyyyMmDd(startDate)
-      const end = yyyyMmDd(endDate)
+      const end = yyyyMmDd(endDate) // exclusivo
       ultimoRangoRef.current = { start, end }
 
       if (!grupos.length) {
@@ -254,41 +274,59 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
         return
       }
 
-      const peticiones = grupos.map(g =>
-        apiRequest(API_URLS.grupos.guardias.listar(g.id, start, end))
-          .then(res => ({ grupo: g, ok: true, data: Array.isArray(res) ? res : (res?.data ?? []) }))
-          .catch(err => ({ grupo: g, ok: false, error: err }))
-      )
-      const resultados = await Promise.all(peticiones)
+      const endMinus1 = addDays(endDate, -1)
+      const center = new Date((startDate.getTime() + endDate.getTime()) / 2)
+
+      const months = [
+        { y: startDate.getFullYear(), m0: startDate.getMonth() },
+        { y: center.getFullYear(),    m0: center.getMonth() },
+        { y: endMinus1.getFullYear(), m0: endMinus1.getMonth() }
+      ]
+      const uniqKeys = []
+      const uniqMonths = []
+      for (const { y, m0 } of months) {
+        const k = `${y}-${m0}`
+        if (!uniqKeys.includes(k)) { uniqKeys.push(k); uniqMonths.push({ y, m0 }) }
+      }
 
       const porFecha = new Map()
       const leyenda = new Map()
 
-      for (const r of resultados) {
-        if (!r.ok) continue
-        const g = r.grupo
+      for (const g of grupos) {
         const { bg, border } = colorForGroup(g.id)
         leyenda.set(g.id, { nombre: g.nombre || `Grupo ${g.id}`, colors: { bg, border } })
 
-        for (const row of r.data) {
-          const fecha = typeof row.fecha === 'string'
-            ? row.fecha.slice(0, 10)
-            : (row.fecha ? yyyyMmDd(new Date(row.fecha)) : null)
-          const desde = (row.hora_desde || row.desde || '').toString().slice(0, 5)
-          const hasta = (row.hora_hasta || row.hasta || '').toString().slice(0, 5)
-          if (!fecha || !desde || !hasta) continue
-
-          if (!porFecha.has(fecha)) porFecha.set(fecha, new Map())
-          const gmap = porFecha.get(fecha)
-
-          if (!gmap.has(g.id)) {
-            gmap.set(g.id, { nombre: g.nombre || `Grupo ${g.id}`, bomberos: new Set(), rangos: new Set() })
+        for (const { y, m0 } of uniqMonths) {
+          const desde = yyyyMmDd(new Date(y, m0, 1))
+          const hasta = yyyyMmDd(new Date(y, m0 + 1, 1)) // exclusivo
+          let res
+          try {
+            res = await apiRequest(API_URLS.grupos.guardias.listar(g.id, desde, hasta))
+          } catch {
+            res = null
           }
-          const agg = gmap.get(g.id)
-          agg.rangos.add(`${desde}-${hasta}`)
-          const bombero =
-            row.bomberoNombre || row.bombero || row.nombreBombero || row.nombre_bombero || null
-          if (bombero) agg.bomberos.add(bombero)
+          const data = Array.isArray(res) ? res : (res?.data ?? [])
+
+          for (const row of data) {
+            const fecha = typeof row.fecha === 'string'
+              ? row.fecha.slice(0, 10)
+              : (row.fecha ? yyyyMmDd(new Date(row.fecha)) : null)
+            const desdeH = (row.hora_desde || row.desde || '').toString().slice(0, 5)
+            const hastaH = (row.hora_hasta || row.hasta || '').toString().slice(0, 5)
+            if (!fecha || !desdeH || !hastaH) continue
+
+            if (!porFecha.has(fecha)) porFecha.set(fecha, new Map())
+            const gmap = porFecha.get(fecha)
+
+            if (!gmap.has(g.id)) {
+              gmap.set(g.id, { nombre: g.nombre || `Grupo ${g.id}`, bomberos: new Set(), rangos: new Set() })
+            }
+            const agg = gmap.get(g.id)
+            agg.rangos.add(`${desdeH}-${hastaH}`)
+            const bombero =
+              row.bomberoNombre || row.bombero || row.nombreBombero || row.nombre_bombero || null
+            if (bombero) agg.bomberos.add(bombero)
+          }
         }
       }
 
@@ -312,11 +350,7 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
       setEventos(backEvents)
       setResumenGruposPorFecha(porFecha)
       setLegendGrupos(leyenda)
-
-      // doble RAF para asegurar DOM listo
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => bindOverlaysAndTooltips())
-      })
+      forceRender()
     } catch (e) {
       setMensaje(`Error al cargar guardias: ${e.message}`)
       setEventos([]); setResumenGruposPorFecha(new Map()); setLegendGrupos(new Map())
@@ -325,7 +359,6 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
     }
   }
 
-  // ===== hooks de celdas =====
   const dayCellDidMount = info => {
     const fechaStr = yyyyMmDd(info.date)
     const frame = info.el.querySelector('.fc-daygrid-day-frame') || info.el
@@ -338,13 +371,12 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
     if (info.el?.dataset) delete info.el.dataset.tipBound
   }
 
-  // ===== recarga al cambiar mes =====
   const recargarSiCambioRango = arg => {
     const s = yyyyMmDd(arg.start)
-    const e = yyyyMmDd(arg.end)
+    const e = yyyyMmDd(arg.end) // end exclusivo propio de la vista
     if (ultimoRangoRef.current.start !== s || ultimoRangoRef.current.end !== e) {
       ultimoRangoRef.current = { start: s, end: e }
-      if (grupos.length) cargarMesTodosGrupos(arg.start, arg.end)
+      if (grupos.length) cargarRangoGrupos(arg.start, arg.end)
     } else {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => bindOverlaysAndTooltips())
@@ -352,14 +384,35 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
     }
   }
 
-  // cargar cuando ya tengamos grupos y la vista esté lista
+  // Disparo inicial cuando la vista y los grupos están listos
   useEffect(() => {
-    const api = calendarRef.current?.getApi?.()
-    if (api && grupos.length) cargarMesTodosGrupos(api.view.currentStart, api.view.currentEnd)
-  }, [grupos])
+    if (!viewReady || !initialWindow || !grupos.length) return
+    const { startDate, endDate } = initialWindow
+    cargarRangoGrupos(startDate, endDate)
+    const t = setTimeout(() => {
+      const api = calendarRef.current?.getApi?.()
+      if (api) cargarRangoGrupos(api.view.currentStart, api.view.currentEnd)
+    }, 0)
+    return () => clearTimeout(t)
+  }, [viewReady, initialWindow, grupos])
+
+  // Observer para rebind confiable
+  useEffect(() => {
+    const grid = rootRef.current?.querySelector('.fc-daygrid-body')
+    if (!grid) return
+
+    gridObserverRef.current?.disconnect?.()
+    const obs = new MutationObserver(() => {
+      requestAnimationFrame(() => bindOverlaysAndTooltips())
+    })
+    obs.observe(grid, { childList: true, subtree: true })
+    gridObserverRef.current = obs
+
+    return () => obs.disconnect()
+  }, [eventos, resumenGruposPorFecha])
 
   return (
-    <div className='container-fluid'>
+    <div className='container-fluid' ref={rootRef}>
       <div className='card border-0 shadow-sm cal-mini-card'>
         <div className='card-header bg-danger text-white d-flex align-items-center justify-content-between flex-wrap'>
           <div className='d-flex align-items-center gap-2'>
@@ -389,6 +442,13 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
               contentHeight={650}
               events={eventos}
               eventContent={() => ({ domNodes: [] })}
+              viewDidMount={(arg) => {
+                setViewReady(true)
+                const startDate = arg.view?.currentStart ?? arg?.start ?? new Date()
+                const endDate   = arg.view?.currentEnd   ?? arg?.end   ?? addDays(new Date(), 42)
+                setInitialWindow({ startDate, endDate })
+                requestAnimationFrame(() => bindOverlaysAndTooltips())
+              }}
               datesSet={recargarSiCambioRango}
               dayCellDidMount={dayCellDidMount}
               dayCellWillUnmount={dayCellWillUnmount}

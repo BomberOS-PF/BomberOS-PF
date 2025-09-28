@@ -21,7 +21,6 @@ const addDays = (date, days) => {
   return d
 }
 
-// Colores (solo para la leyenda)
 const BG_FILL = 'rgba(240,128,128,0.35)'
 const BG_BORDER = '#b30000'
 
@@ -36,10 +35,15 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
   const [mensaje, setMensaje] = useState('')
   const [resumenPorFecha, setResumenPorFecha] = useState(new Map())
 
+  const rootRef = useRef(null)
   const calendarRef = useRef()
   const ultimoRangoRef = useRef({ start: '', end: '' })
   const overlaysRef = useRef(new Map())
   const tooltipsRef = useRef(new Map())
+  const gridObserverRef = useRef(null)
+
+  const getDayCells = () =>
+    rootRef.current?.querySelectorAll('.fc-daygrid .fc-daygrid-day[data-date]') || []
 
   const hoyStr = useMemo(() => yyyyMmDd(new Date()), [])
 
@@ -57,14 +61,15 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
 
   useEffect(() => {
     return () => {
+      // cleanup agresivo al desmontar
       for (const el of overlaysRef.current.values()) el?.parentNode?.removeChild(el)
       overlaysRef.current.clear()
       for (const tip of tooltipsRef.current.values()) tip?.parentNode?.removeChild(tip)
       tooltipsRef.current.clear()
+      gridObserverRef.current?.disconnect?.()
     }
   }, [])
 
-  // ====== NUEVO: helpers de carga por mes y merge ======
   const fetchMes = async (y, m0) => {
     const desde = yyyyMmDd(new Date(y, m0, 1))
     const hasta = yyyyMmDd(new Date(y, m0 + 1, 1)) // exclusivo
@@ -109,7 +114,6 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
     }
     return out
   }
-  // =====================================================
 
   const cargarMesServidor = async (startDate, endDate) => {
     if (!dni) {
@@ -122,7 +126,7 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
       const end = yyyyMmDd(endDate)
       ultimoRangoRef.current = { start, end }
 
-      // Identificamos hasta 3 meses visibles: start, centro, end-1
+      // tres meses visibles
       const startY = startDate.getFullYear(), startM0 = startDate.getMonth()
       const endMinus1 = addDays(endDate, -1)
       const endY = endMinus1.getFullYear(), endM0 = endMinus1.getMonth()
@@ -134,11 +138,9 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
         `${centerY}-${centerM0}`,
         `${endY}-${endM0}`
       ]
-      // de-dupe manteniendo orden
       const uniq = []
       for (const k of claves) if (!uniq.includes(k)) uniq.push(k)
 
-      // fetch en serie (puede hacerse en paralelo si querés)
       let merged = new Map()
       for (const k of uniq) {
         const [yStr, m0Str] = k.split('-')
@@ -149,7 +151,6 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
       setResumenPorFecha(merged)
       setEventos(buildBackEvents(merged))
 
-      // bind tras pintar
       requestAnimationFrame(() => {
         requestAnimationFrame(() => { bindOverlaysAndTooltips() })
       })
@@ -176,19 +177,20 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
     }
   }
 
-  const crearOverlay = (tdEl, fechaStr) => {
-    if (!tdEl) return
-    const existentes = tdEl.querySelectorAll('.fc-guard-overlay')
+  const crearOverlay = (cellEl, fechaStr) => {
+    if (!cellEl) return
+    const frame = cellEl.querySelector('.fc-daygrid-day-frame') || cellEl
+    const existentes = frame.querySelectorAll('.fc-guard-overlay')
     let ov = existentes[0] || null
     if (existentes.length > 1) {
       for (let i = 1; i < existentes.length; i++) existentes[i].parentNode?.removeChild(existentes[i])
     }
     if (!ov) {
-      tdEl.style.position = 'relative'
+      frame.style.position = 'relative'
       ov = document.createElement('div')
       ov.className = 'fc-guard-overlay'
-      ov.style.pointerEvents = 'none' // no bloquear hover
-      tdEl.appendChild(ov)
+      ov.style.pointerEvents = 'none'
+      frame.appendChild(ov)
     }
     overlaysRef.current.set(fechaStr, ov)
     ov.classList.toggle('is-today', fechaStr === hoyStr)
@@ -199,7 +201,7 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
     if (tooltipsRef.current.has(fechaStr)) return tooltipsRef.current.get(fechaStr)
     const tip = document.createElement('div')
     tip.className = 'tooltip-dinamico'
-    tip.style.position = 'fixed'   // coherente con tu CSS
+    tip.style.position = 'fixed'
     tip.style.display = 'none'
     tip.style.pointerEvents = 'none'
     tip.style.whiteSpace = 'pre'
@@ -229,8 +231,7 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
       const tip = crearTooltip(fechaStr)
       const texto = formatearTooltip(rangos)
       tip.textContent = texto
-      info.el.setAttribute('title', texto) // fallback nativo
-
+      info.el.removeAttribute?.('title')
       if (!info.el.dataset.tipBound) {
         const onEnter = e => { const t = tooltipsRef.current.get(fechaStr); if (!t) return; t.style.display = 'block'; t.style.left = `${e.pageX + 10}px`; t.style.top = `${e.pageY - 20}px` }
         const onMove  = e => { const t = tooltipsRef.current.get(fechaStr); if (!t) return; t.style.left = `${e.pageX + 10}px`; t.style.top = `${e.pageY - 20}px` }
@@ -240,6 +241,8 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
         info.el.addEventListener('mouseleave', onLeave)
         info.el.dataset.tipBound = '1'
       }
+    } else {
+      info.el.removeAttribute?.('title')
     }
   }
 
@@ -249,39 +252,37 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
     if (info.el?.dataset) delete info.el.dataset.tipBound
   }
 
-  // --- Función para (re)aplicar overlays y tooltips sobre las celdas visibles
   const bindOverlaysAndTooltips = () => {
-    const cells = document.querySelectorAll('.cal-mini-card td.fc-daygrid-day')
-    cells.forEach(td => {
-      const fechaStr = td.getAttribute('data-date')
+    const cells = getDayCells()
+    cells.forEach(cell => {
+      const fechaStr = cell.getAttribute('data-date')
       if (!fechaStr) return
       const rangos = resumenPorFecha.get(fechaStr)
 
       if (rangos && rangos.length) {
-        crearOverlay(td, fechaStr)
+        crearOverlay(cell, fechaStr)
         const tip = crearTooltip(fechaStr)
         const texto = formatearTooltip(rangos)
         tip.textContent = texto
-        td.setAttribute('title', texto) // fallback nativo
+        cell.removeAttribute?.('title')
 
-        if (!td.dataset.tipBound) {
+        if (!cell.dataset.tipBound) {
           const onEnter = e => { const t = tooltipsRef.current.get(fechaStr); if (!t) return; t.style.display = 'block'; t.style.left = `${e.pageX + 10}px`; t.style.top = `${e.pageY - 20}px` }
           const onMove  = e => { const t = tooltipsRef.current.get(fechaStr); if (!t) return; t.style.left = `${e.pageX + 10}px`; t.style.top = `${e.pageY - 20}px` }
           const onLeave = () => { const t = tooltipsRef.current.get(fechaStr); if (t) t.style.display = 'none' }
-          td.addEventListener('mouseenter', onEnter)
-          td.addEventListener('mousemove', onMove)
-          td.addEventListener('mouseleave', onLeave)
-          td.dataset.tipBound = '1'
+          cell.addEventListener('mouseenter', onEnter)
+          cell.addEventListener('mousemove', onMove)
+          cell.addEventListener('mouseleave', onLeave)
+          cell.dataset.tipBound = '1'
         }
       } else {
         quitarTooltip(fechaStr)
-        if (td?.dataset) delete td.dataset.tipBound
-        td.removeAttribute('title')
+        if (cell?.dataset) delete cell.dataset.tipBound
+        cell.removeAttribute?.('title')
       }
     })
   }
 
-  // Cuando cambia el resumen, (re)aplicamos con el DOM ya pintado (doble RAF)
   useEffect(() => {
     let raf1, raf2
     raf1 = requestAnimationFrame(() => {
@@ -295,11 +296,24 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
     }
   }, [resumenPorFecha])
 
-  // Cuando FullCalendar re-renderiza por 'events', aplicamos en el siguiente tick
   useEffect(() => {
     const t = setTimeout(() => { bindOverlaysAndTooltips() }, 0)
     return () => clearTimeout(t)
   }, [eventos])
+
+  useEffect(() => {
+    const grid = rootRef.current?.querySelector('.fc-daygrid-body')
+    if (!grid) return
+
+    gridObserverRef.current?.disconnect?.()
+    const obs = new MutationObserver(() => {
+      requestAnimationFrame(() => bindOverlaysAndTooltips())
+    })
+    obs.observe(grid, { childList: true, subtree: true })
+    gridObserverRef.current = obs
+
+    return () => obs.disconnect()
+  }, [eventos, resumenPorFecha])
 
   useEffect(() => {
     const api = calendarRef.current?.getApi?.()
@@ -308,7 +322,7 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
 
   if (!dni) {
     return (
-      <div className='container-fluid'>
+      <div className='container-fluid' ref={rootRef}>
         <div className='card border-0 shadow-sm cal-mini-card'>
           <div className='card-header bg-danger text-white d-flex align-items-center justify-content-between flex-wrap'>
             <div className='d-flex align-items-center gap-2'>
@@ -326,7 +340,7 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
   }
 
   return (
-    <div className='container-fluid'>
+    <div className='container-fluid' ref={rootRef}>
       <div className='card border-0 shadow-sm cal-mini-card'>
         <div className='card-header bg-danger text-white d-flex align-items-center justify-content-between flex-wrap'>
           <div className='d-flex align-items-center gap-2'>
@@ -352,6 +366,9 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
               height='100%'
               events={eventos}
               eventContent={() => ({ domNodes: [] })}
+              viewDidMount={() => {
+                requestAnimationFrame(() => bindOverlaysAndTooltips())
+              }}
               datesSet={arg => {
                 const s = yyyyMmDd(arg.start)
                 const e = yyyyMmDd(arg.end)

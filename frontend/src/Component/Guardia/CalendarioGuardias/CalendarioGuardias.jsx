@@ -29,6 +29,7 @@ const CalendarioGuardias = ({ dniUsuario }) => {
       {modo === 'mis'
         ? (
           <MisGuardiasCalendar
+            key='mis'                // fuerza unmount/mount limpio
             dniUsuario={dniUsuario}
             titulo='Mis Guardias'
             headerRight={headerRight}
@@ -36,6 +37,7 @@ const CalendarioGuardias = ({ dniUsuario }) => {
         )
         : (
           <GuardiasGrupoCalendar
+            key='grupos'            // fuerza unmount/mount limpio
             titulo='Guardias por Grupo'
             headerRight={headerRight}
           />
