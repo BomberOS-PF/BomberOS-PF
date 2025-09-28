@@ -50,6 +50,10 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
   const ultimoRangoRef = useRef({ start: '', end: '' })
   const hoyStr = useMemo(() => yyyyMmDd(new Date()), [])
 
+  // <<<< NUEVO: remount control >>>>
+  const [calKey, setCalKey] = useState(0)
+  const didFirstHydrateRef = useRef(false)
+
   // ========= Carga de grupos (una vez) =========
   useEffect(() => {
     const cargar = async () => {
@@ -66,7 +70,6 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
           return id != null ? { id: Number(id), nombre: String(nombre || `Grupo ${id}`) } : null
         }).filter(Boolean)
         setGrupos(lista)
-        // leyenda por color
         const leyenda = new Map()
         for (const g of lista) {
           const { bg, border } = colorForGroup(g.id)
@@ -180,7 +183,6 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
       ov.style.display = 'none'
     }
 
-    // tooltip
     if (gmap && gmap.size) {
       removeNativeTitles(cell)
       if (!cell.dataset.tipBound) {
@@ -211,7 +213,6 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
       if (gmap && gmap.size) {
         crearOverlay(td, fechaStr, td.classList.contains('fc-day-other'))
       } else {
-        // limpiar
         quitarTooltip(fechaStr)
         if (td?.dataset) delete td.dataset.tipBound
         const ov = frame.querySelector('.fc-guard-overlay')
@@ -255,7 +256,6 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
     })
     const results = await Promise.all(tasks)
 
-    // fecha -> Map(gid -> agg)
     const porFecha = new Map()
     for (const { g, rows } of results) {
       for (const r of rows) {
@@ -307,17 +307,15 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
       const end = yyyyMmDd(endDate)
       ultimoRangoRef.current = { start, end }
 
-      // === clave: pedir SIEMPRE los 3 meses que cubren el grid, incluido el mes del último día visible (end-1)
       const endMinus1 = addDays(endDate, -1)
       const center = new Date((startDate.getTime() + endDate.getTime()) / 2)
 
       const meses = [
-        { y: startDate.getFullYear(), m0: startDate.getMonth() },     // mes de inicio del grid
-        { y: center.getFullYear(),    m0: center.getMonth() },        // mes del centro
-        { y: endMinus1.getFullYear(), m0: endMinus1.getMonth() }      // mes del último día visible (suele ser el MES SIGUIENTE)
+        { y: startDate.getFullYear(), m0: startDate.getMonth() },
+        { y: center.getFullYear(),    m0: center.getMonth() },
+        { y: endMinus1.getFullYear(), m0: endMinus1.getMonth() }
       ]
 
-      // FIX CRÍTICO: merge **secuencial** para evitar condición de carrera
       let merged = new Map()
       for (const { y, m0 } of meses) {
         const part = await fetchMes(y, m0)
@@ -327,9 +325,16 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
       setResumenGruposPorFecha(merged)
       setEventos(buildBackEvents(merged))
 
-      // rebind en frames siguientes (idéntico a MisGuardias)
+      // <<<< CLAVE: una sola vez, remonto el calendario con datos ya cargados >>>>
+      const api = calendarRef.current?.getApi?.()
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => bindOverlaysAndTooltips())
+        if (!didFirstHydrateRef.current) {
+          didFirstHydrateRef.current = true
+          setCalKey(k => k + 1)   // fuerza remount => pinta tb. los días del mes siguiente visibles
+        } else {
+          api?.rerenderEvents?.()
+          requestAnimationFrame(() => bindOverlaysAndTooltips())
+        }
       })
     } catch (e) {
       setErrorMsg(`Error al cargar guardias por grupo: ${e.message}`)
@@ -383,7 +388,6 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
           {errorMsg && <div className='alert alert-danger py-2'>{errorMsg}</div>}
 
           <div className='calendar-mini-wrapper position-relative' style={{ minHeight: 520 }}>
-            {/* Loading overlay dentro del calendario */}
             {cargandoGuardias && (
               <div className='position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center'
                    style={{ background: 'rgba(0,0,0,0.05)', zIndex: 5 }}>
@@ -395,6 +399,7 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
             )}
 
             <FullCalendar
+              key={calKey}   // <<<< fuerza remount después del primer fetch
               ref={calendarRef}
               plugins={[dayGridPlugin, interactionPlugin]}
               initialView='dayGridMonth'
@@ -407,23 +412,40 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
               contentHeight={650}
               events={eventos}
               eventContent={() => ({ domNodes: [] })}
+
+              eventDidMount={info => {
+                const fecha = info.event.extendedProps?.fecha
+                if (!fecha) return
+                const td = rootRef.current?.querySelector(`.fc-daygrid-day[data-date="${fecha}"]`)
+                if (td) crearOverlay(td, fecha, td.classList.contains('fc-day-other'))
+              }}
+
               viewDidMount={() => {
-                // mismo patrón que MisGuardias
                 requestAnimationFrame(() => bindOverlaysAndTooltips())
                 const api = calendarRef.current?.getApi?.()
                 if (api && grupos.length) cargarMesServidor(api.view.currentStart, api.view.currentEnd)
               }}
+
               datesSet={arg => {
                 const s = yyyyMmDd(arg.start)
-                const e = yyyyMmDd(arg.end)       // end exclusivo del grid (incluye días del mes siguiente en la última fila)
+                const e = yyyyMmDd(arg.end)
                 if (ultimoRangoRef.current.start !== s || ultimoRangoRef.current.end !== e) {
                   ultimoRangoRef.current = { start: s, end: e }
-                  cargarMesServidor(arg.start, arg.end) // <-- pide SIEMPRE los 3 meses del grid (incluye el mes siguiente)
+                  cargarMesServidor(arg.start, arg.end)
                 } else {
                   requestAnimationFrame(() => { requestAnimationFrame(() => bindOverlaysAndTooltips()) })
                 }
               }}
-              dayCellDidMount={info => { info.el.removeAttribute?.('title') }}
+
+              dayCellDidMount={info => {
+                const fechaStr = yyyyMmDd(info.date)
+                info.el.removeAttribute?.('title')
+                const gmap = resumenGruposPorFecha.get(fechaStr)
+                if (gmap && gmap.size) {
+                  crearOverlay(info.el, fechaStr, info.el.classList.contains('fc-day-other'))
+                }
+              }}
+
               dayCellWillUnmount={info => {
                 const fechaStr = yyyyMmDd(info.date)
                 quitarTooltip(fechaStr)
