@@ -21,20 +21,16 @@ const addDays = (date, days) => {
   return d
 }
 
-// Colores alineados con GestionarGuardias
-const BG_FILL = 'rgba(240,128,128,0.35)' // #f08080 con transparencia
+// Colores (solo para la leyenda)
+const BG_FILL = 'rgba(240,128,128,0.35)'
 const BG_BORDER = '#b30000'
 
-// Utilidad: formatea los rangos "HH:MM-HH:MM" a líneas para el tooltip
 const formatearTooltip = (rangos = []) =>
   ['Guardias:', ...rangos.map(r => {
     const [d, h] = String(r).split('-')
     return `Desde ${d} hasta ${h}`
   })].join('\n')
 
-/**
- * Calendario mensual que pinta los días con guardias del bombero logueado
- */
 const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight = null }) => {
   const [eventos, setEventos] = useState([])
   const [mensaje, setMensaje] = useState('')
@@ -42,13 +38,11 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
 
   const calendarRef = useRef()
   const ultimoRangoRef = useRef({ start: '', end: '' })
-  const overlaysRef = useRef(new Map())  // fechaStr -> overlay DIV
-  const tooltipsRef = useRef(new Map())  // fechaStr -> tooltip DIV
+  const overlaysRef = useRef(new Map())
+  const tooltipsRef = useRef(new Map())
 
-  // Fecha de HOY en formato YYYY-MM-DD (local)
   const hoyStr = useMemo(() => yyyyMmDd(new Date()), [])
 
-  // DNI del usuario actual
   const dni = useMemo(() => {
     if (dniUsuario) return Number(dniUsuario)
     try {
@@ -61,19 +55,61 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
     }
   }, [dniUsuario])
 
-  // Limpieza total al desmontar
   useEffect(() => {
     return () => {
-      for (const el of overlaysRef.current.values()) {
-        if (el?.parentNode) el.parentNode.removeChild(el)
-      }
+      for (const el of overlaysRef.current.values()) el?.parentNode?.removeChild(el)
       overlaysRef.current.clear()
-      for (const tip of tooltipsRef.current.values()) {
-        if (tip?.parentNode) tip.parentNode.removeChild(tip)
-      }
+      for (const tip of tooltipsRef.current.values()) tip?.parentNode?.removeChild(tip)
       tooltipsRef.current.clear()
     }
   }, [])
+
+  // ====== NUEVO: helpers de carga por mes y merge ======
+  const fetchMes = async (y, m0) => {
+    const desde = yyyyMmDd(new Date(y, m0, 1))
+    const hasta = yyyyMmDd(new Date(y, m0 + 1, 1)) // exclusivo
+    const resp = await apiRequest(API_URLS.guardias.porDni(Number(dni), desde, hasta))
+    const rows = resp?.data || []
+
+    const map = new Map()
+    for (const r of rows) {
+      const f = (typeof r.fecha === 'string') ? r.fecha.slice(0, 10) : yyyyMmDd(new Date(r.fecha))
+      const desdeH = (r.hora_desde || r.desde || '').toString().slice(0, 5)
+      const hastaH = (r.hora_hasta || r.hasta || '').toString().slice(0, 5)
+      if (!f || !desdeH || !hastaH) continue
+      if (!map.has(f)) map.set(f, [])
+      map.get(f).push(`${desdeH}-${hastaH}`)
+    }
+    return map
+  }
+
+  const mergeResumen = (base, extra) => {
+    const res = new Map(base)
+    for (const [fecha, arr] of extra) {
+      if (!res.has(fecha)) res.set(fecha, [...arr])
+      else res.set(fecha, [...res.get(fecha), ...arr])
+    }
+    return res
+  }
+
+  const buildBackEvents = (mapa) => {
+    const out = []
+    for (const [fecha] of mapa) {
+      const [y, m, d] = fecha.split('-').map(Number)
+      const startCell = new Date(y, (m || 1) - 1, d || 1)
+      out.push({
+        id: `bg-${fecha}`,
+        start: startCell,
+        end: addDays(startCell, 1),
+        display: 'background',
+        backgroundColor: 'transparent',
+        borderColor: 'transparent',
+        extendedProps: { fecha }
+      })
+    }
+    return out
+  }
+  // =====================================================
 
   const cargarMesServidor = async (startDate, endDate) => {
     if (!dni) {
@@ -86,45 +122,43 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
       const end = yyyyMmDd(endDate)
       ultimoRangoRef.current = { start, end }
 
-      const resp = await apiRequest(API_URLS.guardias.porDni(dni, start, end))
-      const rows = resp?.data || []
+      // Identificamos hasta 3 meses visibles: start, centro, end-1
+      const startY = startDate.getFullYear(), startM0 = startDate.getMonth()
+      const endMinus1 = addDays(endDate, -1)
+      const endY = endMinus1.getFullYear(), endM0 = endMinus1.getMonth()
+      const center = new Date((startDate.getTime() + endDate.getTime()) / 2)
+      const centerY = center.getFullYear(), centerM0 = center.getMonth()
 
-      // Agrupo rangos por fecha (usando fecha local)
-      const porFecha = new Map()
-      for (const r of rows) {
-        const f = (typeof r.fecha === 'string') ? r.fecha.slice(0, 10) : yyyyMmDd(new Date(r.fecha))
-        const desde = (r.hora_desde || r.desde || '').toString().slice(0, 5)
-        const hasta = (r.hora_hasta || r.hasta || '').toString().slice(0, 5)
-        if (!f || !desde || !hasta) continue
-        if (!porFecha.has(f)) porFecha.set(f, [])
-        porFecha.get(f).push(`${desde}-${hasta}`)
+      const claves = [
+        `${startY}-${startM0}`,
+        `${centerY}-${centerM0}`,
+        `${endY}-${endM0}`
+      ]
+      // de-dupe manteniendo orden
+      const uniq = []
+      for (const k of claves) if (!uniq.includes(k)) uniq.push(k)
+
+      // fetch en serie (puede hacerse en paralelo si querés)
+      let merged = new Map()
+      for (const k of uniq) {
+        const [yStr, m0Str] = k.split('-')
+        const part = await fetchMes(Number(yStr), Number(m0Str))
+        merged = mergeResumen(merged, part)
       }
 
-      // Eventos de fondo (complemento; el overlay asegura el tooltip y hoy)
-      const backEvents = []
-      for (const [fecha, rangos] of porFecha) {
-        const [y, m, d] = fecha.split('-').map(Number)
-        const startCell = new Date(y, (m || 1) - 1, d || 1)
-        backEvents.push({
-          id: `bg-${fecha}`,
-          start: startCell,
-          end: addDays(startCell, 1),
-          display: 'background',
-          backgroundColor: BG_FILL,
-          borderColor: 'transparent',
-          extendedProps: { fecha, rangos }
-        })
-      }
+      setResumenPorFecha(merged)
+      setEventos(buildBackEvents(merged))
 
-      setEventos(backEvents)
-      setResumenPorFecha(porFecha)
+      // bind tras pintar
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => { bindOverlaysAndTooltips() })
+      })
     } catch (e) {
       setMensaje(`Error al cargar mis guardias: ${e.message}`)
       setTimeout(() => setMensaje(''), 4000)
     }
   }
 
-  // ---------- helpers de overlay/tooltip ----------
   const ensureTodayBadge = (ov, isToday) => {
     if (!ov) return
     const sel = '.hoy-guardia-badge'
@@ -134,10 +168,11 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
         const badge = document.createElement('div')
         badge.className = 'hoy-guardia-badge'
         badge.textContent = '¡Hoy Guardia!'
+        badge.style.pointerEvents = 'none'
         ov.appendChild(badge)
       }
     } else {
-      if (existing && existing.parentNode) existing.parentNode.removeChild(existing)
+      if (existing?.parentNode) existing.parentNode.removeChild(existing)
     }
   }
 
@@ -146,14 +181,13 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
     const existentes = tdEl.querySelectorAll('.fc-guard-overlay')
     let ov = existentes[0] || null
     if (existentes.length > 1) {
-      for (let i = 1; i < existentes.length; i++) {
-        existentes[i].parentNode?.removeChild(existentes[i])
-      }
+      for (let i = 1; i < existentes.length; i++) existentes[i].parentNode?.removeChild(existentes[i])
     }
     if (!ov) {
       tdEl.style.position = 'relative'
       ov = document.createElement('div')
       ov.className = 'fc-guard-overlay'
+      ov.style.pointerEvents = 'none' // no bloquear hover
       tdEl.appendChild(ov)
     }
     overlaysRef.current.set(fechaStr, ov)
@@ -161,17 +195,11 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
     ensureTodayBadge(ov, fechaStr === hoyStr)
   }
 
-  const quitarOverlay = (fechaStr) => {
-    const ov = overlaysRef.current.get(fechaStr)
-    if (ov?.parentNode) ov.parentNode.removeChild(ov)
-    overlaysRef.current.delete(fechaStr)
-  }
-
   const crearTooltip = (fechaStr) => {
     if (tooltipsRef.current.has(fechaStr)) return tooltipsRef.current.get(fechaStr)
     const tip = document.createElement('div')
     tip.className = 'tooltip-dinamico'
-    tip.style.position = 'absolute'
+    tip.style.position = 'fixed'   // coherente con tu CSS
     tip.style.display = 'none'
     tip.style.pointerEvents = 'none'
     tip.style.whiteSpace = 'pre'
@@ -181,6 +209,7 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
     tip.style.borderRadius = '6px'
     tip.style.fontSize = '12px'
     tip.style.boxShadow = '0 2px 8px rgba(0,0,0,.25)'
+    tip.style.zIndex = '3000'
     document.body.appendChild(tip)
     tooltipsRef.current.set(fechaStr, tip)
     return tip
@@ -192,36 +221,20 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
     tooltipsRef.current.delete(fechaStr)
   }
 
-  // ---------- Hooks de celdas ----------
   const dayCellDidMount = info => {
     const fechaStr = yyyyMmDd(info.date)
-    if (!fechaStr) return
-
     const rangos = resumenPorFecha.get(fechaStr)
     if (rangos && rangos.length) {
       crearOverlay(info.el, fechaStr)
       const tip = crearTooltip(fechaStr)
-      tip.textContent = formatearTooltip(rangos)
+      const texto = formatearTooltip(rangos)
+      tip.textContent = texto
+      info.el.setAttribute('title', texto) // fallback nativo
 
       if (!info.el.dataset.tipBound) {
-        const onEnter = (e) => {
-          const t = tooltipsRef.current.get(fechaStr)
-          if (!t) return
-          t.style.display = 'block'
-          t.style.left = `${e.pageX + 10}px`
-          t.style.top = `${e.pageY - 20}px`
-        }
-        const onMove = (e) => {
-          const t = tooltipsRef.current.get(fechaStr)
-          if (!t) return
-          t.style.left = `${e.pageX + 10}px`
-          t.style.top = `${e.pageY - 20}px`
-        }
-        const onLeave = () => {
-          const t = tooltipsRef.current.get(fechaStr)
-          if (t) t.style.display = 'none'
-        }
-
+        const onEnter = e => { const t = tooltipsRef.current.get(fechaStr); if (!t) return; t.style.display = 'block'; t.style.left = `${e.pageX + 10}px`; t.style.top = `${e.pageY - 20}px` }
+        const onMove  = e => { const t = tooltipsRef.current.get(fechaStr); if (!t) return; t.style.left = `${e.pageX + 10}px`; t.style.top = `${e.pageY - 20}px` }
+        const onLeave = () => { const t = tooltipsRef.current.get(fechaStr); if (t) t.style.display = 'none' }
         info.el.addEventListener('mouseenter', onEnter)
         info.el.addEventListener('mousemove', onMove)
         info.el.addEventListener('mouseleave', onLeave)
@@ -232,13 +245,12 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
 
   const dayCellWillUnmount = info => {
     const fechaStr = yyyyMmDd(info.date)
-    quitarOverlay(fechaStr)
     quitarTooltip(fechaStr)
     if (info.el?.dataset) delete info.el.dataset.tipBound
   }
 
-  // 🔁 Cuando llega/actualiza el resumen del servidor, (re)aplico overlay + tooltip
-  useEffect(() => {
+  // --- Función para (re)aplicar overlays y tooltips sobre las celdas visibles
+  const bindOverlaysAndTooltips = () => {
     const cells = document.querySelectorAll('.cal-mini-card td.fc-daygrid-day')
     cells.forEach(td => {
       const fechaStr = td.getAttribute('data-date')
@@ -248,40 +260,47 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
       if (rangos && rangos.length) {
         crearOverlay(td, fechaStr)
         const tip = crearTooltip(fechaStr)
-        tip.textContent = formatearTooltip(rangos)
+        const texto = formatearTooltip(rangos)
+        tip.textContent = texto
+        td.setAttribute('title', texto) // fallback nativo
 
         if (!td.dataset.tipBound) {
-          const onEnter = (e) => {
-            const t = tooltipsRef.current.get(fechaStr)
-            if (!t) return
-            t.style.display = 'block'
-            t.style.left = `${e.pageX + 10}px`
-            t.style.top = `${e.pageY - 20}px`
-          }
-          const onMove = (e) => {
-            const t = tooltipsRef.current.get(fechaStr)
-            if (!t) return
-            t.style.left = `${e.pageX + 10}px`
-            t.style.top = `${e.pageY - 20}px`
-          }
-          const onLeave = () => {
-            const t = tooltipsRef.current.get(fechaStr)
-            if (t) t.style.display = 'none'
-          }
+          const onEnter = e => { const t = tooltipsRef.current.get(fechaStr); if (!t) return; t.style.display = 'block'; t.style.left = `${e.pageX + 10}px`; t.style.top = `${e.pageY - 20}px` }
+          const onMove  = e => { const t = tooltipsRef.current.get(fechaStr); if (!t) return; t.style.left = `${e.pageX + 10}px`; t.style.top = `${e.pageY - 20}px` }
+          const onLeave = () => { const t = tooltipsRef.current.get(fechaStr); if (t) t.style.display = 'none' }
           td.addEventListener('mouseenter', onEnter)
           td.addEventListener('mousemove', onMove)
           td.addEventListener('mouseleave', onLeave)
           td.dataset.tipBound = '1'
         }
       } else {
-        quitarOverlay(fechaStr)
         quitarTooltip(fechaStr)
         if (td?.dataset) delete td.dataset.tipBound
+        td.removeAttribute('title')
       }
     })
-  }, [resumenPorFecha, hoyStr])
+  }
 
-  // ⚡ Carga inicial forzada
+  // Cuando cambia el resumen, (re)aplicamos con el DOM ya pintado (doble RAF)
+  useEffect(() => {
+    let raf1, raf2
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        bindOverlaysAndTooltips()
+      })
+    })
+    return () => {
+      if (raf1) cancelAnimationFrame(raf1)
+      if (raf2) cancelAnimationFrame(raf2)
+    }
+  }, [resumenPorFecha])
+
+  // Cuando FullCalendar re-renderiza por 'events', aplicamos en el siguiente tick
+  useEffect(() => {
+    const t = setTimeout(() => { bindOverlaysAndTooltips() }, 0)
+    return () => clearTimeout(t)
+  }, [eventos])
+
   useEffect(() => {
     const api = calendarRef.current?.getApi?.()
     if (api) cargarMesServidor(api.view.currentStart, api.view.currentEnd)
@@ -339,6 +358,10 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
                 if (ultimoRangoRef.current.start !== s || ultimoRangoRef.current.end !== e) {
                   ultimoRangoRef.current = { start: s, end: e }
                   cargarMesServidor(arg.start, arg.end)
+                } else {
+                  requestAnimationFrame(() => {
+                    requestAnimationFrame(() => bindOverlaysAndTooltips())
+                  })
                 }
               }}
               dayCellDidMount={dayCellDidMount}

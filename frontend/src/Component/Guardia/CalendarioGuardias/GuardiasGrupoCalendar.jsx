@@ -1,4 +1,3 @@
-// src/Component/Guardia/CalendarioGuardias/GuardiasGrupoCalendar.jsx
 // sin ;
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import './CalendarioGuardias.css'
@@ -31,7 +30,6 @@ const hash = s => {
 }
 
 const colorForGroup = id => {
-  // paleta consistente por id
   const h = hash(id) % 360
   const bg = `hsla(${h}, 70%, 75%, .55)`
   const border = `hsla(${h}, 70%, 35%, 1)`
@@ -190,12 +188,14 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
     return tip
   }
 
-  const quitarOverlay = (fechaStr) => { const ov = overlaysRef.current.get(fechaStr); ov?.parentNode?.removeChild(ov); overlaysRef.current.delete(fechaStr) }
-  const quitarTooltip = (fechaStr) => { const tip = tooltipsRef.current.get(fechaStr); tip?.parentNode?.removeChild(tip); tooltipsRef.current.delete(fechaStr) }
+  const quitarTooltip = (fechaStr) => {
+    const tip = tooltipsRef.current.get(fechaStr)
+    if (tip?.parentNode) tip.parentNode.removeChild(tip)
+    tooltipsRef.current.delete(fechaStr)
+  }
 
   const dayCellDidMount = info => {
     const fechaStr = yyyyMmDd(info.date)
-    if (!fechaStr) return
     const gmap = resumenGrupos.get(fechaStr)
     if (gmap && gmap.size) {
       crearOverlay(info.el, fechaStr, info.isOther)
@@ -216,7 +216,7 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
 
   const dayCellWillUnmount = info => {
     const fechaStr = yyyyMmDd(info.date)
-    quitarOverlay(fechaStr)
+    // No removemos overlay manualmente: evitamos parpadeo
     quitarTooltip(fechaStr)
     if (info.el?.dataset) delete info.el.dataset.tipBound
   }
