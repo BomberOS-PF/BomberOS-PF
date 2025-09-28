@@ -272,3 +272,70 @@
     font-size: .825rem;
   }
 }
+
+
+/* -----------------  css para calendario por */
+
+/* Capas donde dibujo bandas */
+.fc .fc-daygrid-day-frame { position: relative }
+.fc-guard-overlay {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  z-index: 15;
+  pointer-events: none
+}
+
+/* Banda más visible y con etiqueta */
+.band-grupo {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 4px
+}
+
+.band-grupo .band-label {
+  pointer-events: none;
+  background: rgba(255,255,255,.45);
+  border-radius: 4px
+}
+
+/* capa donde dibujo las bandas de colores */
+.fc-guard-overlay {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: 3px;
+  z-index: 2;
+  pointer-events: none
+}
+
+/* highlight de hoy centrado en la celda */
+.fc-guard-overlay.is-today::after {
+  content: "¡Hoy Guardia!";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 100%;
+  margin-bottom: 2px;
+  font-weight: 700;
+  font-size: 12px;
+  color: #b30000;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,.85)
+}
+
+/* tooltip flotante */
+.tooltip-dinamico {
+  z-index: 9999
+}
+
+/* evita parpadeos cuando FullCalendar re-renderiza */
+.fc .fc-daygrid-day-frame {
+  position: relative
+}
+
+/* _______________________*/
+
