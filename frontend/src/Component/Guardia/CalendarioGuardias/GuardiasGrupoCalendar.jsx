@@ -22,10 +22,9 @@ const addDays = (date, days) => {
   return d
 }
 
-const parseYmd = s => {
-  const [y, m, d] = s.split('-').map(Number)
-  return new Date(y, (m || 1) - 1, d || 1)
-}
+// Colores (alineado con MisGuardias)
+const CELL_BORDER = '#b30000'
+const CELL_FILL = 'rgba(240,128,128,0.35)'
 
 // Golden-angle hashing por grupo
 const goldenHue = n => Math.floor(n * 137.508) % 360
@@ -66,15 +65,6 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
   // ====== util DOM ======
   const getVisibleDateCells = () =>
     Array.from(rootRef.current?.querySelectorAll('.fc-daygrid .fc-daygrid-day[data-date]') || [])
-
-  const getVisibleDatesSet = () => {
-    const s = new Set()
-    for (const td of getVisibleDateCells()) {
-      const f = td.getAttribute('data-date')
-      if (f) s.add(f)
-    }
-    return s
-  }
 
   // ========= Carga de grupos (una vez) =========
   useEffect(() => {
@@ -149,20 +139,39 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
 
   const pintarCelda = (td, fechaStr, gmap) => {
     const frame = td.querySelector('.fc-daygrid-day-frame') || td
+    if (getComputedStyle(frame).position === 'static') frame.style.position = 'relative'
+
+    // ÚNICO overlay: ocupa todo el casillero, fondo rojo claro y borde rojo 1px
     let ov = frame.querySelector('.fc-guard-overlay')
     if (!ov) {
-      frame.style.position = 'relative'
       ov = document.createElement('div')
       ov.className = 'fc-guard-overlay'
+      ov.style.position = 'absolute'
+      ov.style.inset = '0'
+      ov.style.borderRadius = '8px'
       ov.style.pointerEvents = 'none'
+      ov.style.background = CELL_FILL            // ← fondo rojo claro
+      ov.style.border = `1px solid ${CELL_BORDER}`  // ← borde 1px
+      ov.style.boxShadow = 'inset 0 0 0 1px rgba(255,255,255,.15)'
       ov.style.display = 'flex'
       ov.style.flexDirection = 'column'
       ov.style.gap = '4px'
-      frame.appendChild(ov)
+      ov.style.paddingTop = '2px'
+      ov.style.zIndex = '0'                      // detrás del número
+      frame.insertBefore(ov, frame.firstChild)
+    } else {
+      ov.style.background = CELL_FILL
+      ov.style.border = `1px solid ${CELL_BORDER}`
+      ov.style.position = 'absolute'
+      ov.style.inset = '0'
+      ov.style.zIndex = '0'
+      ov.style.borderRadius = '8px'
+      ov.style.display = 'flex'
+      ov.style.flexDirection = 'column'
+      ov.style.gap = '4px'
+      ov.style.paddingTop = '2px'
+      ov.style.boxShadow = 'inset 0 0 0 1px rgba(255,255,255,.15)'
     }
-
-    const esHoy = fechaStr === hoyStr
-    ov.classList.toggle('is-today', esHoy && !td.classList.contains('fc-day-other'))
 
     // clave de contenido para evitar repintar igual → sin parpadeo
     const newKey = Array.from(gmap.keys()).sort((a, b) => Number(a) - Number(b)).join('|')
@@ -290,10 +299,8 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
 
   // ===== ciclo principal por rango visible (SIN events) =====
   const cargarYpintarRango = async (startDate, endDate) => {
-    // guardo el rango por si todavía no hay grupos
     lastRangeRef.current = { start: startDate, end: endDate }
 
-    // si no hay grupos, no podemos pedir guardias; apagamos y salimos
     if (!grupos.length) {
       setCargandoGuardias(false)
       return
@@ -306,13 +313,8 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
       // asegurar que la grilla esté dibujada
       await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)))
 
-      // 1) Fechas visibles reales
-      const visibles = getVisibleDatesSet()
-
-      // 2) Data para cubrir la vista
+      // Data y pintado SOLO de visibles
       const resumen = await fetchBloqueVisible(startDate, endDate)
-
-      // 3) Pintar SOLO visibles
       const cells = getVisibleDateCells()
       for (const td of cells) {
         const f = td.getAttribute('data-date')
@@ -334,10 +336,6 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
           <div className='d-flex align-items-center gap-2'>
             <i className='bi bi-people-fill'></i>
             <strong>{titulo}</strong>
-            {/* Mostrar texto de "Cargando grupos…" solo si NO está el overlay de guardias */}
-            {cargandoGrupos && !cargandoGuardias && (
-              <small className='ms-2 text-white-50'>Cargando grupos…</small>
-            )}
             {errorGrupos && <small className='ms-2 text-warning'>{errorGrupos}</small>}
           </div>
           {headerRight}
@@ -374,17 +372,8 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
               showNonCurrentDates={true}
               height='auto'
               contentHeight={650}
-
-              datesSet={arg => {
-                // cada cambio de rango: pintar y recién ahí apagar
-                cargarYpintarRango(arg.start, arg.end)
-              }}
-
-              dayCellDidMount={info => {
-                // sacar title nativo
-                info.el.removeAttribute?.('title')
-              }}
-
+              datesSet={arg => { cargarYpintarRango(arg.start, arg.end) }}
+              dayCellDidMount={info => { info.el.removeAttribute?.('title') }}
               dayCellWillUnmount={info => {
                 const fechaStr = yyyyMmDd(info.date)
                 quitarTooltip(fechaStr)

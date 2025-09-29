@@ -1,4 +1,4 @@
-// sin ;
+// MisGuardiasCalendar.jsx  // sin ;
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 import { API_URLS, apiRequest } from '../../../config/api'
@@ -21,6 +21,7 @@ const addDays = (date, days) => {
   return d
 }
 
+// MisGuardias: color único y borde (rellena el casillero completo)
 const BG_FILL = 'rgba(240,128,128,0.35)'
 const BG_BORDER = '#b30000'
 
@@ -31,19 +32,16 @@ const formatearTooltip = (rangos = []) =>
   })].join('\n')
 
 const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight = null }) => {
-  const [eventos, setEventos] = useState([])
+  // estado
   const [mensaje, setMensaje] = useState('')
   const [resumenPorFecha, setResumenPorFecha] = useState(new Map())
+  const [cargandoGuardias, setCargandoGuardias] = useState(false)
 
+  // refs
   const rootRef = useRef(null)
   const calendarRef = useRef()
-  const ultimoRangoRef = useRef({ start: '', end: '' })
-  const overlaysRef = useRef(new Map())
   const tooltipsRef = useRef(new Map())
-  const gridObserverRef = useRef(null)
-
-  const getDayCells = () =>
-    rootRef.current?.querySelectorAll('.fc-daygrid .fc-daygrid-day[data-date]') || []
+  const lastRangeRef = useRef({ start: null, end: null })
 
   const hoyStr = useMemo(() => yyyyMmDd(new Date()), [])
 
@@ -61,15 +59,17 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
 
   useEffect(() => {
     return () => {
-      // cleanup agresivo al desmontar
-      for (const el of overlaysRef.current.values()) el?.parentNode?.removeChild(el)
-      overlaysRef.current.clear()
+      // cleanup al desmontar
       for (const tip of tooltipsRef.current.values()) tip?.parentNode?.removeChild(tip)
       tooltipsRef.current.clear()
-      gridObserverRef.current?.disconnect?.()
     }
   }, [])
 
+  // ===== util DOM =====
+  const getVisibleDateCells = () =>
+    Array.from(rootRef.current?.querySelectorAll('.fc-daygrid .fc-daygrid-day[data-date]') || [])
+
+  // ===== fetch =====
   const fetchMes = async (y, m0) => {
     const desde = yyyyMmDd(new Date(y, m0, 1))
     const hasta = yyyyMmDd(new Date(y, m0 + 1, 1)) // exclusivo
@@ -97,107 +97,31 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
     return res
   }
 
-  const buildBackEvents = (mapa) => {
-    const out = []
-    for (const [fecha] of mapa) {
-      const [y, m, d] = fecha.split('-').map(Number)
-      const startCell = new Date(y, (m || 1) - 1, d || 1)
-      out.push({
-        id: `bg-${fecha}`,
-        start: startCell,
-        end: addDays(startCell, 1),
-        display: 'background',
-        backgroundColor: 'transparent',
-        borderColor: 'transparent',
-        extendedProps: { fecha }
-      })
+  const fetchBloqueVisible = async (startDate, endDate) => {
+    const endMinus1 = addDays(endDate, -1)
+    const center = new Date((startDate.getTime() + endDate.getTime()) / 2)
+    const meses = [
+      { y: startDate.getFullYear(), m0: startDate.getMonth() },
+      { y: center.getFullYear(),    m0: center.getMonth() },
+      { y: endMinus1.getFullYear(), m0: endMinus1.getMonth() }
+    ]
+
+    let merged = new Map()
+    const uniq = []
+    for (const { y, m0 } of meses) {
+      const key = `${y}-${m0}`
+      if (!uniq.includes(key)) uniq.push(key)
     }
-    return out
+    for (const key of uniq) {
+      const [yStr, m0Str] = key.split('-')
+      const part = await fetchMes(Number(yStr), Number(m0Str))
+      merged = mergeResumen(merged, part)
+    }
+    return merged
   }
 
-  const cargarMesServidor = async (startDate, endDate) => {
-    if (!dni) {
-      setMensaje('No se encontró el DNI del usuario')
-      return
-    }
-    try {
-      setMensaje('')
-      const start = yyyyMmDd(startDate)
-      const end = yyyyMmDd(endDate)
-      ultimoRangoRef.current = { start, end }
-
-      // tres meses visibles
-      const startY = startDate.getFullYear(), startM0 = startDate.getMonth()
-      const endMinus1 = addDays(endDate, -1)
-      const endY = endMinus1.getFullYear(), endM0 = endMinus1.getMonth()
-      const center = new Date((startDate.getTime() + endDate.getTime()) / 2)
-      const centerY = center.getFullYear(), centerM0 = center.getMonth()
-
-      const claves = [
-        `${startY}-${startM0}`,
-        `${centerY}-${centerM0}`,
-        `${endY}-${endM0}`
-      ]
-      const uniq = []
-      for (const k of claves) if (!uniq.includes(k)) uniq.push(k)
-
-      let merged = new Map()
-      for (const k of uniq) {
-        const [yStr, m0Str] = k.split('-')
-        const part = await fetchMes(Number(yStr), Number(m0Str))
-        merged = mergeResumen(merged, part)
-      }
-
-      setResumenPorFecha(merged)
-      setEventos(buildBackEvents(merged))
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => { bindOverlaysAndTooltips() })
-      })
-    } catch (e) {
-      setMensaje(`Error al cargar mis guardias: ${e.message}`)
-      setTimeout(() => setMensaje(''), 4000)
-    }
-  }
-
-  const ensureTodayBadge = (ov, isToday) => {
-    if (!ov) return
-    const sel = '.hoy-guardia-badge'
-    const existing = ov.querySelector(sel)
-    if (isToday) {
-      if (!existing) {
-        const badge = document.createElement('div')
-        badge.className = 'hoy-guardia-badge'
-        badge.textContent = '¡Hoy Guardia!'
-        badge.style.pointerEvents = 'none'
-        ov.appendChild(badge)
-      }
-    } else {
-      if (existing?.parentNode) existing.parentNode.removeChild(existing)
-    }
-  }
-
-  const crearOverlay = (cellEl, fechaStr) => {
-    if (!cellEl) return
-    const frame = cellEl.querySelector('.fc-daygrid-day-frame') || cellEl
-    const existentes = frame.querySelectorAll('.fc-guard-overlay')
-    let ov = existentes[0] || null
-    if (existentes.length > 1) {
-      for (let i = 1; i < existentes.length; i++) existentes[i].parentNode?.removeChild(existentes[i])
-    }
-    if (!ov) {
-      frame.style.position = 'relative'
-      ov = document.createElement('div')
-      ov.className = 'fc-guard-overlay'
-      ov.style.pointerEvents = 'none'
-      frame.appendChild(ov)
-    }
-    overlaysRef.current.set(fechaStr, ov)
-    ov.classList.toggle('is-today', fechaStr === hoyStr)
-    ensureTodayBadge(ov, fechaStr === hoyStr)
-  }
-
-  const crearTooltip = (fechaStr) => {
+  // ===== tooltips =====
+  const ensureTooltip = fechaStr => {
     if (tooltipsRef.current.has(fechaStr)) return tooltipsRef.current.get(fechaStr)
     const tip = document.createElement('div')
     tip.className = 'tooltip-dinamico'
@@ -217,109 +141,138 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
     return tip
   }
 
-  const quitarTooltip = (fechaStr) => {
+  const quitarTooltip = fechaStr => {
     const tip = tooltipsRef.current.get(fechaStr)
     if (tip?.parentNode) tip.parentNode.removeChild(tip)
     tooltipsRef.current.delete(fechaStr)
   }
 
-  const dayCellDidMount = info => {
-    const fechaStr = yyyyMmDd(info.date)
-    const rangos = resumenPorFecha.get(fechaStr)
-    if (rangos && rangos.length) {
-      crearOverlay(info.el, fechaStr)
-      const tip = crearTooltip(fechaStr)
-      const texto = formatearTooltip(rangos)
-      tip.textContent = texto
-      info.el.removeAttribute?.('title')
-      if (!info.el.dataset.tipBound) {
-        const onEnter = e => { const t = tooltipsRef.current.get(fechaStr); if (!t) return; t.style.display = 'block'; t.style.left = `${e.pageX + 10}px`; t.style.top = `${e.pageY - 20}px` }
-        const onMove  = e => { const t = tooltipsRef.current.get(fechaStr); if (!t) return; t.style.left = `${e.pageX + 10}px`; t.style.top = `${e.pageY - 20}px` }
-        const onLeave = () => { const t = tooltipsRef.current.get(fechaStr); if (t) t.style.display = 'none' }
-        info.el.addEventListener('mouseenter', onEnter)
-        info.el.addEventListener('mousemove', onMove)
-        info.el.addEventListener('mouseleave', onLeave)
-        info.el.dataset.tipBound = '1'
+  // ===== badge "¡Hoy Guardia!" — MISMO estilo que tu snippet (solo clase, sin inline) =====
+  const ensureTodayBadge = (overlayEl, show) => {
+    if (!overlayEl) return
+    const sel = '.hoy-guardia-badge'
+    let existing = overlayEl.querySelector(sel)
+    if (show) {
+      if (!existing) {
+        existing = document.createElement('div')
+        existing.className = 'hoy-guardia-badge'
+        // Mantengo el pointer-events: none como en tu código
+        existing.style.pointerEvents = 'none'
+        existing.textContent = '¡Hoy Guardia!'
+        overlayEl.appendChild(existing)
       }
     } else {
-      info.el.removeAttribute?.('title')
+      if (existing?.parentNode) existing.parentNode.removeChild(existing)
     }
   }
 
-  const dayCellWillUnmount = info => {
-    const fechaStr = yyyyMmDd(info.date)
+  // ===== pintado: casillero completo, borde 1px =====
+  const removeNativeTitles = el => {
+    el?.removeAttribute?.('title')
+    el?.querySelectorAll?.('[title]')?.forEach(n => n.removeAttribute('title'))
+  }
+
+  const crearOverlayFullCell = (cellEl, fechaStr, rangos) => {
+    if (!cellEl) return
+    const frame = cellEl.querySelector('.fc-daygrid-day-frame') || cellEl
+
+    if (getComputedStyle(frame).position === 'static') frame.style.position = 'relative'
+
+    let ov = frame.querySelector('.fc-guard-overlay')
+    if (!ov) {
+      ov = document.createElement('div')
+      ov.className = 'fc-guard-overlay'
+      ov.style.position = 'absolute'
+      ov.style.inset = '0'
+      ov.style.borderRadius = '8px'
+      ov.style.pointerEvents = 'none'
+      ov.style.background = BG_FILL
+      ov.style.border = `1px solid ${BG_BORDER}`  // mismo grosor que Grupos
+      ov.style.boxShadow = 'inset 0 0 0 1px rgba(255,255,255,.15)'
+      // No seteo z-index para que, al insertarlo primero, el número del día quede arriba
+      frame.insertBefore(ov, frame.firstChild)
+    } else {
+      ov.style.background = BG_FILL
+      ov.style.border = `1px solid ${BG_BORDER}`
+      ov.style.boxShadow = 'inset 0 0 0 1px rgba(255,255,255,.15)'
+    }
+
+    // clave para evitar recomposiciones idénticas
+    const newKey = String((rangos || []).join('|'))
+    if (ov.getAttribute('data-key') !== newKey) ov.setAttribute('data-key', newKey)
+
+    // Hoy: usa TU estilo del badge (clase .hoy-guardia-badge)
+    const showBadge = fechaStr === hoyStr && !cellEl.classList.contains('fc-day-other') && (rangos && rangos.length)
+    ensureTodayBadge(ov, showBadge)
+
+    // tooltips
+    removeNativeTitles(cellEl)
+    const tip = ensureTooltip(fechaStr)
+    tip.textContent = formatearTooltip(rangos || [])
+
+    if (!cellEl.dataset.tipBound) {
+      const onEnter = e => { const t = tooltipsRef.current.get(fechaStr); if (!t) return; t.style.display = 'block'; t.style.left = `${e.pageX + 10}px`; t.style.top = `${e.pageY - 20}px` }
+      const onMove  = e => { const t = tooltipsRef.current.get(fechaStr); if (!t) return; t.style.left = `${e.pageX + 10}px`; t.style.top = `${e.pageY - 20}px` }
+      const onLeave = () => { const t = tooltipsRef.current.get(fechaStr); if (t) t.style.display = 'none' }
+      cellEl.addEventListener('mouseenter', onEnter)
+      cellEl.addEventListener('mousemove', onMove)
+      cellEl.addEventListener('mouseleave', onLeave)
+      cellEl.dataset.tipBound = '1'
+    }
+  }
+
+  const limpiarCelda = cellEl => {
+    const frame = cellEl.querySelector('.fc-daygrid-day-frame') || cellEl
+    const ov = frame.querySelector('.fc-guard-overlay')
+    if (ov?.parentNode) ov.parentNode.removeChild(ov)
+    const fechaStr = cellEl.getAttribute('data-date')
     quitarTooltip(fechaStr)
-    if (info.el?.dataset) delete info.el.dataset.tipBound
+    if (cellEl?.dataset) delete cellEl.dataset.tipBound
+    removeNativeTitles(cellEl)
   }
 
-  const bindOverlaysAndTooltips = () => {
-    const cells = getDayCells()
-    cells.forEach(cell => {
+  const pintarVisibles = resumen => {
+    const cells = getVisibleDateCells()
+    for (const cell of cells) {
       const fechaStr = cell.getAttribute('data-date')
-      if (!fechaStr) return
-      const rangos = resumenPorFecha.get(fechaStr)
-
-      if (rangos && rangos.length) {
-        crearOverlay(cell, fechaStr)
-        const tip = crearTooltip(fechaStr)
-        const texto = formatearTooltip(rangos)
-        tip.textContent = texto
-        cell.removeAttribute?.('title')
-
-        if (!cell.dataset.tipBound) {
-          const onEnter = e => { const t = tooltipsRef.current.get(fechaStr); if (!t) return; t.style.display = 'block'; t.style.left = `${e.pageX + 10}px`; t.style.top = `${e.pageY - 20}px` }
-          const onMove  = e => { const t = tooltipsRef.current.get(fechaStr); if (!t) return; t.style.left = `${e.pageX + 10}px`; t.style.top = `${e.pageY - 20}px` }
-          const onLeave = () => { const t = tooltipsRef.current.get(fechaStr); if (t) t.style.display = 'none' }
-          cell.addEventListener('mouseenter', onEnter)
-          cell.addEventListener('mousemove', onMove)
-          cell.addEventListener('mouseleave', onLeave)
-          cell.dataset.tipBound = '1'
-        }
-      } else {
-        quitarTooltip(fechaStr)
-        if (cell?.dataset) delete cell.dataset.tipBound
-        cell.removeAttribute?.('title')
-      }
-    })
+      if (!fechaStr) continue
+      const rangos = resumen.get(fechaStr)
+      if (rangos && rangos.length) crearOverlayFullCell(cell, fechaStr, rangos)
+      else limpiarCelda(cell)
+    }
   }
 
-  useEffect(() => {
-    let raf1, raf2
-    raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => {
-        bindOverlaysAndTooltips()
-      })
-    })
-    return () => {
-      if (raf1) cancelAnimationFrame(raf1)
-      if (raf2) cancelAnimationFrame(raf2)
+  // ===== pipeline estable por rango visible =====
+  const cargarYpintarRango = async (startDate, endDate) => {
+    lastRangeRef.current = { start: startDate, end: endDate }
+
+    if (!dni) {
+      setMensaje('No se encontró el DNI del usuario')
+      return
     }
-  }, [resumenPorFecha])
 
-  useEffect(() => {
-    const t = setTimeout(() => { bindOverlaysAndTooltips() }, 0)
-    return () => clearTimeout(t)
-  }, [eventos])
+    setMensaje('')
+    setCargandoGuardias(true)
 
-  useEffect(() => {
-    const grid = rootRef.current?.querySelector('.fc-daygrid-body')
-    if (!grid) return
+    try {
+      // 1) fetch (meses que cubren la grilla visible)
+      const resumen = await fetchBloqueVisible(startDate, endDate)
+      setResumenPorFecha(resumen)
 
-    gridObserverRef.current?.disconnect?.()
-    const obs = new MutationObserver(() => {
-      requestAnimationFrame(() => bindOverlaysAndTooltips())
-    })
-    obs.observe(grid, { childList: true, subtree: true })
-    gridObserverRef.current = obs
+      // 2) esperar a que FullCalendar dibuje la grilla actual
+      await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)))
 
-    return () => obs.disconnect()
-  }, [eventos, resumenPorFecha])
+      // 3) pintar SOLO las celdas visibles (incluye días de otros meses)
+      pintarVisibles(resumen)
+    } catch (e) {
+      setMensaje(`Error al cargar mis guardias: ${e.message}`)
+      setTimeout(() => setMensaje(''), 4000)
+    } finally {
+      setCargandoGuardias(false)
+    }
+  }
 
-  useEffect(() => {
-    const api = calendarRef.current?.getApi?.()
-    if (api) cargarMesServidor(api.view.currentStart, api.view.currentEnd)
-  }, [])
-
+  // ===== render =====
   if (!dni) {
     return (
       <div className='container-fluid' ref={rootRef}>
@@ -353,7 +306,21 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
         <div className='card-body'>
           {mensaje && <div className='alert alert-warning'>{mensaje}</div>}
 
-          <div className='calendar-mini-wrapper'>
+          <div className='calendar-mini-wrapper position-relative' style={{ minHeight: 520 }}>
+            {cargandoGuardias && (
+              <div
+                className='position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center'
+                style={{ background: 'rgba(0,0,0,0.05)', zIndex: 5 }}
+              >
+                <div className='text-center'>
+                  <div className='spinner-border' role='status'>
+                    <span className='visually-hidden'>Cargando…</span>
+                  </div>
+                  <div className='mt-2 small text-muted'>Cargando mis guardias…</div>
+                </div>
+              </div>
+            )}
+
             <FullCalendar
               ref={calendarRef}
               plugins={[dayGridPlugin, interactionPlugin]}
@@ -364,25 +331,22 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
               fixedWeekCount={false}
               showNonCurrentDates={true}
               height='100%'
-              events={eventos}
-              eventContent={() => ({ domNodes: [] })}
-              viewDidMount={() => {
-                requestAnimationFrame(() => bindOverlaysAndTooltips())
-              }}
+
+              // SIN events: pintamos por DOM para evitar parpadeos
               datesSet={arg => {
-                const s = yyyyMmDd(arg.start)
-                const e = yyyyMmDd(arg.end)
-                if (ultimoRangoRef.current.start !== s || ultimoRangoRef.current.end !== e) {
-                  ultimoRangoRef.current = { start: s, end: e }
-                  cargarMesServidor(arg.start, arg.end)
-                } else {
-                  requestAnimationFrame(() => {
-                    requestAnimationFrame(() => bindOverlaysAndTooltips())
-                  })
-                }
+                cargarYpintarRango(arg.start, arg.end)
               }}
-              dayCellDidMount={dayCellDidMount}
-              dayCellWillUnmount={dayCellWillUnmount}
+
+              dayCellDidMount={info => {
+                // remover title nativo (usamos tooltip propio)
+                info.el.removeAttribute?.('title')
+              }}
+
+              dayCellWillUnmount={info => {
+                const fechaStr = yyyyMmDd(info.date)
+                quitarTooltip(fechaStr)
+                if (info.el?.dataset) delete info.el.dataset.tipBound
+              }}
             />
           </div>
 
