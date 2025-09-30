@@ -309,7 +309,7 @@ const Menu = ({ user, setUser }) => {
               icono: 'bi-fire',
               titulo: 'Incidentes',
               botones: [{ texto: 'Cargar Incidente', accion: 'cargarIncidente' },
-              { texto: 'Consultar Incidente', accion: 'consultarIncidente' }
+              { texto: 'Consultar Incidentes', accion: 'consultarIncidente' }
               ]
             },
             {
@@ -318,7 +318,7 @@ const Menu = ({ user, setUser }) => {
               titulo: 'Bomberos',
               botones: [
                 { texto: 'Registrar Bombero', accion: 'registrarBombero' },
-                { texto: 'Consultar Bombero', accion: 'consultarBombero' }
+                { texto: 'Consultar Bomberos', accion: 'consultarBombero' }
               ]
             }, {
               id: 'collapseUsuarios',
@@ -326,17 +326,17 @@ const Menu = ({ user, setUser }) => {
               titulo: 'Usuarios y Roles',
               botones: [
                 { texto: 'Registrar Usuario', accion: 'registrarUsuario' },
-                { texto: 'Consultar Usuario', accion: 'consultarUsuario' },
+                { texto: 'Consultar Usuarios', accion: 'consultarUsuario' },
                 { texto: 'Registrar Rol', accion: 'registrarRol' },
-                { texto: 'Consultar Rol', accion: 'consultarRol' }
+                { texto: 'Consultar Roles', accion: 'consultarRol' }
               ]
             }, {
               id: 'collapseGuardias',
               icono: 'bi-clock-history',
               titulo: 'Guardias',
               botones: [
-                { texto: 'Registrar Guardia', accion: 'registrarGuardia' },
-                { texto: 'Consultar Guardia', accion: 'consultarGuardia' }
+                { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
+                { texto: 'Consultar Grupos', accion: 'consultarGuardia' }
               ]
             }, {
               id: 'collapseWhatsApp',
