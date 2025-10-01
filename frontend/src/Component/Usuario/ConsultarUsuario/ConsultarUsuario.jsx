@@ -1,10 +1,10 @@
-// src/Component/Usuario/ConsultarUsuario/ConsultarUsuario.jsx
 import { useState, useEffect } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
 import { UsersIcon, Shield } from 'lucide-react'
+import Select from 'react-select'
+
 import { BackToMenuButton } from '../../Common/Button'
 import Pagination from '../../Common/Pagination'
-import '../../DisenioFormulario/DisenioFormulario.css'
 
 const PAGE_SIZE_DEFAULT = 10
 
@@ -124,8 +124,8 @@ const ConsultarUsuario = ({ onVolver }) => {
       const errorMsg = error?.response?.error || error.message || 'Error al guardar'
       setMensaje(
         errorMsg.toLowerCase().includes('disponible') ||
-        errorMsg.toLowerCase().includes('ya existe') ||
-        errorMsg.toLowerCase().includes('duplicado')
+          errorMsg.toLowerCase().includes('ya existe') ||
+          errorMsg.toLowerCase().includes('duplicado')
           ? 'El nombre de usuario o email ya está registrado'
           : errorMsg
       )
@@ -186,7 +186,7 @@ const ConsultarUsuario = ({ onVolver }) => {
       </div>
 
       {/* Card */}
-      <div className='card shadow-sm border-0 bg-white'>
+      <div className='card edge-to-edge shadow-sm border-0 bg-white'>
         <div className='card-header bg-danger text-white d-flex align-items-center gap-2 py-4'>
           <i className='bi bi-person-fill fs-5'></i>
           <strong>Listado de Usuarios</strong>
@@ -194,9 +194,8 @@ const ConsultarUsuario = ({ onVolver }) => {
 
         <div className='card-body'>
           {mensaje && (
-            <div className={`alert ${
-              mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' : 'alert-info'
-            }`}>
+            <div className={`alert ${mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' : 'alert-info'
+              }`}>
               {mensaje}
             </div>
           )}
@@ -262,27 +261,26 @@ const ConsultarUsuario = ({ onVolver }) => {
                                 <td className='border-end'>{usuario.email}</td>
                                 <td className='border-end'>
                                   <span
-                                    className={`badge ${
-                                      (usuario.rol || '').toLowerCase() === 'administrador'
-                                        ? 'bg-danger'
-                                        : (usuario.rol || '').toLowerCase() === 'jefe_cuartel'
-                                          ? 'bg-warning'
-                                          : 'bg-info'
-                                    }`}
+                                    className={`badge ${(usuario.rol || '').toLowerCase() === 'administrador'
+                                      ? 'bg-danger'
+                                      : (usuario.rol || '').toLowerCase() === 'jefe_cuartel'
+                                        ? 'bg-warning'
+                                        : 'bg-info'
+                                      }`}
                                   >
                                     {usuario.rol}
                                   </span>
                                 </td>
                                 <td className='text-center'>
                                   <button
-                                    className='btn btn-outline-secondary btn-sm me-2'
+                                    className='btn btn-outline-secondary btn-detail me-2'
                                     onClick={() => seleccionarUsuario(usuario)}
                                     disabled={loading || loadingAccion}
                                   >
                                     <i className='bi bi-eye me-1'></i> Ver
                                   </button>
                                   <button
-                                    className='btn btn-outline-danger btn-sm'
+                                    className='btn btn-outline-danger btn-detail'
                                     onClick={() => eliminarUsuario(usuario)}
                                     disabled={loading || loadingAccion}
                                   >
@@ -339,7 +337,7 @@ const ConsultarUsuario = ({ onVolver }) => {
 
               <hr className='border-4 border-danger mb-4' />
 
-              <div className='card bg-light border-0 shadow-sm py-4' style={{borderRadius: '12px'}}>
+              <div className='card bg-light border-0 shadow-sm py-4' style={{ borderRadius: '12px' }}>
                 <div className='card-body'>
                   <form
                     onSubmit={(e) => {
@@ -398,27 +396,35 @@ const ConsultarUsuario = ({ onVolver }) => {
                         <label className='form-label text-dark d-flex align-items-center gap-2'>
                           <Shield className='text-primary' /> Rol
                         </label>
-                        <select
-                          className='form-select form-control text-dark'
-                          value={usuarioSeleccionado.idRol || ''}
-                          onChange={(e) =>
-                            setUsuarioSeleccionado({ ...usuarioSeleccionado, idRol: e.target.value })
+                        <Select
+                          classNamePrefix="rs"
+                          placeholder="Seleccione un rol"
+                          isDisabled={!modoEdicion || loadingAccion}
+                          options={roles.map((rol) => ({
+                            value: String(rol.idRol),
+                            label: rol.nombreRol
+                          }))}
+                          value={
+                            usuarioSeleccionado.idRol
+                              ? {
+                                value: String(usuarioSeleccionado.idRol),
+                                label: roles.find(r => String(r.idRol) === String(usuarioSeleccionado.idRol))?.nombreRol || ''
+                              }
+                              : null
                           }
-                          disabled={!modoEdicion || loadingAccion}
-                        >
-                          <option value=''>Seleccione un rol</option>
-                          {roles.map((rol) => (
-                            <option key={rol.idRol} value={rol.idRol}>
-                              {rol.nombreRol}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={(opt) =>
+                            setUsuarioSeleccionado({
+                              ...usuarioSeleccionado,
+                              idRol: opt ? opt.value : ''
+                            })
+                          }
+                        />
                       </div>
                     </div>
 
                     {modoEdicion && (
-                      <div className='d-grid gap-3'>
-                        <button type='submit' className='btn btn-danger' disabled={loadingAccion}>
+                      <div className='d-flex justify-content-center align-items-center gap-3'>
+                        <button type='submit' className='btn btn-accept btn-lg btn-medium' disabled={loadingAccion}>
                           {loadingAccion ? 'Guardando...' : 'Guardar cambios'}
                         </button>
                       </div>
@@ -429,9 +435,11 @@ const ConsultarUsuario = ({ onVolver }) => {
             </div>
           )}
 
-          <div className='d-grid gap-3 py-4'>
-            <BackToMenuButton onClick={onVolver} />
-          </div>
+          {!usuarioSeleccionado && onVolver && (
+            <div className='d-grid gap-3'>
+              <BackToMenuButton onClick={onVolver} />
+            </div>
+          )}
         </div>
       </div>
     </div>

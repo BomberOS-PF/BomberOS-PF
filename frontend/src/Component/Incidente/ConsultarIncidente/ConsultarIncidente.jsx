@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
 import { FileText, Search } from 'lucide-react'
-import '../../DisenioFormulario/DisenioFormulario.css'
+import { BackToMenuButton } from '../../Common/Button.jsx'
 import Pagination from '../../Common/Pagination'
+import Select from 'react-select'
 
-// Importar formularios específicos de tipos de incidente
 import AccidenteTransito from '../TipoIncidente/AccidenteTransito/AccidenteTransito'
 import FactorClimatico from '../TipoIncidente/FactorClimatico/FactorClimatico'
 import IncendioEstructural from '../TipoIncidente/IncendioEstructural/IncendioEstructural'
@@ -191,132 +191,6 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
     )
   }
 
-  // ------- Render de Detalle Específico -------
-  const renderDetalleEspecifico = (idTipoIncidente, detalleEspecifico) => {
-    if (!detalleEspecifico) {
-      return (
-        <div className='text-center py-4'>
-          <i className='bi bi-info-circle text-muted fs-1 mb-3 d-block'></i>
-          <h6 className='text-muted mb-2'>Sin datos específicos para este incidente</h6>
-          <p className='text-muted mb-0'>Haz clic en "Editar/Completar" para agregar los detalles específicos del tipo de incidente.</p>
-        </div>
-      )
-    }
-
-    switch (Number(idTipoIncidente)) {
-      case 1:
-        return (
-          <>
-            <div className='mb-2'>
-              <strong>Causa:</strong> {detalleEspecifico?.causa?.descripcion || '-'}
-            </div>
-
-            <div className='mb-2'>
-              <strong>Vehículos involucrados</strong>
-              <div className='table-responsive mt-2'>
-                <table className='table table-dark table-striped table-sm align-middle'>
-                  <thead>
-                    <tr>
-                      <th>Patente</th><th>Marca</th><th>Modelo</th><th>Año</th><th>Aseguradora</th><th>Póliza</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(detalleEspecifico?.vehiculos || []).map(v => (
-                      <tr key={v.idVehiculo}>
-                        <td>{v.patente}</td><td>{v.marca}</td><td>{v.modelo}</td><td>{v.anio}</td>
-                        <td>{v.aseguradora || '-'}</td><td>{v.poliza || '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className='mb-2'>
-              <strong>Damnificados</strong>
-              <div className='table-responsive mt-2'>
-                <table className='table table-dark table-striped table-sm align-middle'>
-                  <thead>
-                    <tr><th>Nombre</th><th>DNI</th><th>Teléfono</th><th>Falleció</th></tr>
-                  </thead>
-                  <tbody>
-                    {(detalleEspecifico?.damnificados || []).map((d, i) => (
-                      <tr key={i}>
-                        <td>{`${d.nombre || ''} ${d.apellido || ''}`.trim()}</td>
-                        <td>{d.dni || '-'}</td>
-                        <td>{d.telefono || '-'}</td>
-                        <td>{d.fallecio ? 'Sí' : 'No'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </>
-        )
-
-      case 2:
-        return (
-          <div className='row g-3'>
-            <div className='col-md-4'><span className='badge bg-danger'>Fenómeno</span><div>{detalleEspecifico?.fenomeno || '-'}</div></div>
-            <div className='col-md-4'><span className='badge bg-danger'>Intensidad</span><div>{detalleEspecifico?.intensidad || '-'}</div></div>
-            <div className='col-md-4'><span className='badge bg-danger'>Duración</span><div>{detalleEspecifico?.duracion || '-'}</div></div>
-            <div className='col-12'><span className='badge bg-danger'>Detalle</span><div>{detalleEspecifico?.detalle || '-'}</div></div>
-          </div>
-        )
-
-      case 3:
-        return (
-          <div className='row g-3'>
-            <div className='col-md-4'><span className='badge bg-danger'>Estructura</span><div>{detalleEspecifico?.estructura || '-'}</div></div>
-            <div className='col-md-4'><span className='badge bg-danger'>Causa probable</span><div>{detalleEspecifico?.causaProbable || '-'}</div></div>
-            <div className='col-md-4'><span className='badge bg-danger'>Afectados</span><div>{detalleEspecifico?.afectados ?? '-'}</div></div>
-            <div className='col-12'><span className='badge bg-danger'>Detalle</span><div>{detalleEspecifico?.detalle || '-'}</div></div>
-          </div>
-        )
-
-      case 4:
-        return (
-          <div className='row g-3'>
-            <div className='col-md-4'><span className='badge bg-danger'>Características del lugar</span><div>{detalleEspecifico?.caracteristicasLugar || '-'}</div></div>
-            <div className='col-md-4'><span className='badge bg-danger'>Área afectada</span><div>{detalleEspecifico?.areaAfectada || '-'}</div></div>
-            <div className='col-md-4'><span className='badge bg-danger'>Cantidad afectada</span><div>{detalleEspecifico?.cantidadAfectada ?? '-'}</div></div>
-            <div className='col-md-6'><span className='badge bg-danger'>Causa probable</span><div>{detalleEspecifico?.causaProbable || detalleEspecifico?.idCausaProbable || '-'}</div></div>
-            <div className='col-md-6'><span className='badge bg-danger'>Detalle</span><div>{detalleEspecifico?.detalle || '-'}</div></div>
-          </div>
-        )
-
-      case 5:
-        return (
-          <div className='row g-3'>
-            <div className='col-md-4'><span className='badge bg-danger'>Categoría</span><div>{detalleEspecifico?.categoria || '-'}</div></div>
-            <div className='col-md-4'><span className='badge bg-danger'>Material</span><div>{detalleEspecifico?.material || detalleEspecifico?.tipoMaterial || '-'}</div></div>
-            <div className='col-md-4'><span className='badge bg-danger'>Acción sobre material</span><div>{detalleEspecifico?.accionMaterial || '-'}</div></div>
-            <div className='col-12'>
-              <span className='badge bg-danger'>Acciones sobre personas</span>
-              <div>
-                {Array.isArray(detalleEspecifico?.accionesPersona) && detalleEspecifico.accionesPersona.length > 0
-                  ? detalleEspecifico.accionesPersona.join(', ')
-                  : '-'}
-              </div>
-            </div>
-            <div className='col-12'><span className='badge bg-danger'>Observaciones</span><div>{detalleEspecifico?.observaciones || detalleEspecifico?.detalle || '-'}</div></div>
-          </div>
-        )
-
-      case 6:
-        return (
-          <div className='row g-3'>
-            <div className='col-md-4'><span className='badge bg-danger'>Tipo de rescate</span><div>{detalleEspecifico?.tipo || '-'}</div></div>
-            <div className='col-md-4'><span className='badge bg-danger'>Personas</span><div>{detalleEspecifico?.personas ?? '-'}</div></div>
-            <div className='col-12'><span className='badge bg-danger'>Detalle</span><div>{detalleEspecifico?.detalle || '-'}</div></div>
-          </div>
-        )
-
-      default:
-        return <pre className='mb-0'>{JSON.stringify(detalleEspecifico, null, 2)}</pre>
-    }
-  }
 
   // ------- Render del Detalle del Incidente -------
   const renderDetalleIncidente = () => {
@@ -363,7 +237,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
             <div>
               <div className='mb-4'>
                 <div className='d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2'>
-                  <div className='bg-danger p-2 rounded-circle me-3'>
+                  <div className='bg-danger icon-circle me-2'>
                     <i className='bi bi-info-circle text-white fs-5'></i>
                   </div>
                   <h5 className='text-danger mb-0 fw-bold'>Información General del Incidente</h5>
@@ -462,7 +336,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
                 <div className='mt-5'>
                   <div className='d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-danger border-2'>
                     <div className='d-flex align-items-center'>
-                      <div className='bg-danger p-2 rounded-circle me-3'>
+                      <div className='bg-danger p-2 icon-circle me-3'>
                         <i className='bi bi-gear text-white fs-5'></i>
                       </div>
                       <h5 className='text-danger mb-0 fw-bold'>Detalles Específicos del Tipo de Incidente</h5>
@@ -498,12 +372,6 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
                 </div>
               )}
 
-              <hr className='my-4' />
-
-              <div>
-                <h5 className='fw-bold mb-3'>Resumen de detalles específicos</h5>
-                {renderDetalleEspecifico(detalle?.idTipoIncidente, detalle?.detalleEspecifico)}
-              </div>
 
             </div>
 
@@ -515,7 +383,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
 
   // ------- Vista Listado -------
   return (
-    <div className='container-fluid py-5'>
+    <div className='container py-5'>
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
           <div className='bg-danger p-3 rounded-circle'>
@@ -528,7 +396,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
         </span>
       </div>
 
-      <div className='card shadow-sm border-0 bg-white'>
+      <div className='card edge-to-edge shadow-sm border-0 bg-white'>
         <div className='card-header bg-danger text-white d-flex align-items-center gap-2 py-4'>
           <Search />
           <strong>Búsqueda y Listado de Incidentes</strong>
@@ -569,7 +437,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
                 <input
                   type='text'
                   className='form-control border-secondary ps-5 py-3'
-                  placeholder='Buscar por ID, DNI, denunciante...'
+                  placeholder='Buscar por ID...'
                   name='busqueda'
                   value={filtros.busqueda}
                   onChange={handleChange}
@@ -579,20 +447,38 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
               <div className='row g-3 mb-3 align-items-end'>
                 <div className='col-md-3'>
                   <label className='form-label text-dark fw-semibold'>Tipo de Incidente</label>
-                  <select
-                    className='text-dark form-select border-secondary'
-                    name='tipo'
-                    value={filtros.tipo}
-                    onChange={handleChange}
-                  >
-                    <option value=''>Todos los tipos</option>
-                    <option value='1'>Accidente de Tránsito</option>
-                    <option value='2'>Factores Climáticos</option>
-                    <option value='3'>Incendio Estructural</option>
-                    <option value='4'>Incendio Forestal</option>
-                    <option value='5'>Material Peligroso</option>
-                    <option value='6'>Rescate</option>
-                  </select>
+                  <Select
+                    classNamePrefix="rs"
+                    placeholder="Todos los tipos"
+                    isClearable
+                    options={[
+                      { value: '1', label: 'Accidente de Tránsito' },
+                      { value: '2', label: 'Factores Climáticos' },
+                      { value: '3', label: 'Incendio Estructural' },
+                      { value: '4', label: 'Incendio Forestal' },
+                      { value: '5', label: 'Material Peligroso' },
+                      { value: '6', label: 'Rescate' }
+                    ]}
+                    value={
+                      filtros.tipo
+                        ? {
+                          value: filtros.tipo,
+                          label: [
+                            'Accidente de Tránsito',
+                            'Factores Climáticos',
+                            'Incendio Estructural',
+                            'Incendio Forestal',
+                            'Material Peligroso',
+                            'Rescate'
+                          ][Number(filtros.tipo) - 1]
+                        }
+                        : null
+                    }
+                    onChange={(opt) =>
+                      setFiltros((prev) => ({ ...prev, tipo: opt ? opt.value : '' }))
+                    }
+                  />
+
                 </div>
                 <div className='col-md-3'>
                   <label className='form-label text-dark fw-semibold'>Fecha Desde</label>
@@ -618,7 +504,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
                   {/* Los filtros ya disparan reload automático del Pagination */}
                   <button
                     className='btn btn-danger d-flex align-items-center gap-2 px-3 py-2'
-                    onClick={() => {}}
+                    onClick={() => { }}
                     style={{ width: 'fit-content' }}
                   >
                     <i className='bi bi-search'></i>
@@ -689,7 +575,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
                               </td>
                               <td className='text-center'>
                                 <button
-                                  className='btn btn-outline-secondary btn-sm me-2'
+                                  className='btn btn-outline-secondary btn-detail me-2'
                                   onClick={() => verDetalle(it.idIncidente)}
                                   disabled={loading || loadingDetalle}
                                 >
@@ -715,15 +601,9 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
 
           {renderDetalleIncidente()}
 
-          <div className='d-grid gap-3 py-2 mt-4'></div>
-          <button
-            type='button'
-            className='btn btn-secondary'
-            onClick={() => onVolverMenu && onVolverMenu()}
-            disabled={loadingDetalle}
-          >
-            Volver al menú
-          </button>
+          <hr className="mb-4" />
+          
+          <BackToMenuButton onClick={onVolverMenu} />
         </div>
       </div>
     </div>

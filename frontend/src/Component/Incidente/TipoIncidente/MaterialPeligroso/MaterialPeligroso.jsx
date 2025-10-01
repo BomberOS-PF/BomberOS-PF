@@ -1,8 +1,9 @@
+// arriba del archivo
+import { Flame, AlertTriangle, FileText, User as UserIcon } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
-import './MaterialPeligroso.css'
-import '../../../DisenioFormulario/DisenioFormulario.css'
+import Select from 'react-select'
 import { API_URLS, apiRequest } from '../../../../config/api'
-import { Flame, AlertTriangle, FileText, User } from 'lucide-react'
+import DamnificadosForm from '../../../Common/Damnificado.jsx'
 
 const safeRead = (key, fallback) => {
   try {
@@ -28,7 +29,7 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
       detalle: '',
       damnificados: []
     })
-    
+
     // Mapear los nombres de campos del backend a los nombres que usa el frontend
     const datosPreviosMapeados = {
       ...datosPrevios,
@@ -42,10 +43,10 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
       detalle: datosPrevios.detalle,
       damnificados: datosPrevios.damnificados || []
     }
-    
+
     // Combinar datos guardados con datos previos mapeados, dando prioridad a los datos previos
     const combined = { ...savedData, ...datosPreviosMapeados }
-    
+
     return combined
   })
 
@@ -62,12 +63,12 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
 
   const incidenteBasico = datosPrevios.idIncidente || datosPrevios.id
     ? {
-        id: datosPrevios.idIncidente || datosPrevios.id,
-        tipo: datosPrevios.tipoDescripcion,
-        fecha: datosPrevios.fechaHora || datosPrevios.fecha,
-        localizacion: datosPrevios.localizacion,
-        lugar: datosPrevios.lugar || 'No especificado'
-      }
+      id: datosPrevios.idIncidente || datosPrevios.id,
+      tipo: datosPrevios.tipoDescripcion,
+      fecha: datosPrevios.fechaHora || datosPrevios.fecha,
+      localizacion: datosPrevios.localizacion,
+      lugar: datosPrevios.lugar || 'No especificado'
+    }
     : null
 
   useEffect(() => {
@@ -86,7 +87,7 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
         detalle: datosPrevios.detalle,
         damnificados: datosPrevios.damnificados || []
       }
-      
+
       setFormData(prev => ({ ...prev, ...datosMapeados }))
     }
   }, [datosPrevios])
@@ -100,7 +101,7 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
           apiRequest(API_URLS.accionesMaterial),
           apiRequest(API_URLS.accionesPersona)
         ])
-        
+
         if (cat?.success) setCategorias(cat.data || [])
         if (tipo?.success) setTiposMaterial(tipo.data || [])
         if (accMat?.success) setAccionesMaterial(accMat.data || [])
@@ -132,31 +133,6 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
     setFormData(prev => ({ ...prev, [id]: type === 'checkbox' ? checked : value }))
   }
 
-  const handleDamnificadoChange = (index, field, value) => {
-    setFormData(prev => {
-      const nuevos = [...prev.damnificados]
-      nuevos[index] = { ...nuevos[index], [field]: value }
-      return { ...prev, damnificados: nuevos }
-    })
-  }
-
-  const agregarDamnificado = () => {
-    setFormData(prev => ({
-      ...prev,
-      damnificados: [
-        ...prev.damnificados,
-        { nombre: '', apellido: '', domicilio: '', telefono: '', dni: '', fallecio: false }
-      ]
-    }))
-  }
-
-  const eliminarDamnificado = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      damnificados: prev.damnificados.filter((_, i) => i !== index)
-    }))
-  }
-
   const guardarLocalmente = () => {
     localStorage.setItem(storageKey, JSON.stringify(formData))
     alert('Datos guardados localmente. Podés continuar después.')
@@ -186,30 +162,30 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
 
   const isValid = () => {
     const newErrors = {}
-    
+
     // Validar categoría (obligatorio)
     if (!formData.categoria || formData.categoria === "") {
       newErrors.categoria = 'Campo obligatorio'
     }
-    
+
     // Validar cantidad de materiales (obligatorio y ≥ 1)
     if (!formData.cantidadMateriales || formData.cantidadMateriales === "") {
       newErrors.cantidadMateriales = 'Campo obligatorio'
     } else if (Number(formData.cantidadMateriales) < 1) {
       newErrors.cantidadMateriales = 'Debe ser al menos 1'
     }
-    
+
     // Validar que haya al menos un tipo de material seleccionado
     const tieneTipos = Object.keys(formData).some(k => k.startsWith('material') && formData[k] === true)
     if (!tieneTipos) {
       newErrors.tiposMateriales = 'Debe seleccionar al menos un tipo de material'
     }
-    
+
     // Validar detalle (obligatorio)
     if (!formData.detalle || formData.detalle.trim() === '') {
       newErrors.detalle = 'Campo obligatorio'
     }
-    
+
     // Validar damnificados (solo si tienen datos)
     const damErrors = (formData.damnificados || []).map(d => {
       if (damnificadoVacio(d)) return {};
@@ -220,7 +196,7 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
       if (d.dni && !validarDNI(d.dni)) e.dni = 'DNI inválido (7-10 dígitos)'
       return e
     })
-    
+
     setErrors(newErrors)
     setDamnificadosErrors(damErrors)
     return Object.keys(newErrors).length === 0 && damErrors.every((e, i) => damnificadoVacio(formData.damnificados[i]) || Object.keys(e).length === 0)
@@ -270,11 +246,11 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
       localStorage.setItem(storageKey, JSON.stringify(formData))
 
       const payload = buildDto()
-      
+
       const esActualizacion = !!(datosPrevios.idIncidente || datosPrevios.id)
       const method = esActualizacion ? 'PUT' : 'POST'
-      const url = esActualizacion ? 
-        API_URLS.incidentes.updateMaterialPeligroso : 
+      const url = esActualizacion ?
+        API_URLS.incidentes.updateMaterialPeligroso :
         (API_URLS.materialesPeligrosos?.create || API_URLS.incidentes?.createMaterialPeligroso)
 
       const resp = await apiRequest(url, {
@@ -290,15 +266,15 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
       const mensajeExito = esActualizacion
         ? 'Material peligroso actualizado con éxito'
         : '✅ Material peligroso registrado correctamente'
-      
+
       setSuccessMsg(mensajeExito)
       setErrorMsg('')
-      
+
       // Solo limpiar localStorage en creaciones, no en actualizaciones
       if (!esActualizacion) {
         localStorage.removeItem(storageKey)
       }
-      
+
       // Actualizar el estado local con los datos guardados para evitar problemas de timing
       if (esActualizacion) {
         setFormData(prev => ({
@@ -313,7 +289,7 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
           damnificados: formData.damnificados
         }))
       }
-      
+
       // Pasar el resultado al callback
       if (onFinalizar) {
         onFinalizar({
@@ -327,7 +303,7 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
       const mensajeError = `❌ Error al registrar material peligroso: ${error.message}`
       setErrorMsg(mensajeError)
       setSuccessMsg('')
-      
+
       // También pasar el error al callback
       if (onFinalizar) {
         onFinalizar({
@@ -342,177 +318,182 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
     }
   }
 
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (loading) return
+    await handleFinalizar()
+  }
+
   return (
-    <div className="container d-flex justify-content-center align-items-center">
-      <div className="formulario-consistente">
-        <h2 className="text-black text-center mb-4">Material Peligroso</h2>
-        
-        {/* Información del incidente básico */}
-        {incidenteBasico && (
-          <div className="alert alert-info mb-4">
-            <h6 className="alert-heading">📋 Incidente Base Registrado</h6>
-            <div className="row">
-              <div className="col-md-6">
-                <strong>ID:</strong> {incidenteBasico.id}<br/>
-                <strong>Tipo:</strong> {incidenteBasico.tipo}<br/>
-                <strong>Fecha:</strong> {incidenteBasico.fecha}
+    <div className="container-fluid py-5">
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+        <div className="card-body">
+          <form onSubmit={handleSubmit}>
+            {/* Categoría y cantidad*/}
+            <div className="row mb-3">
+              <div className="col-md-6 py-4">
+                <label className="form-label text-dark d-flex align-items-center gap-2">
+                  <UserIcon className="text-danger" />
+                  Categoría
+                </label>
+                <Select
+                  options={categorias.map(cat => ({
+                    value: String(cat.idCategoria),
+                    label: cat.descripcion
+                  }))}
+                  value={
+                    categorias
+                      .map(cat => ({ value: String(cat.idCategoria), label: cat.descripcion }))
+                      .find(opt => opt.value === String(formData.categoria)) || null
+                  }
+                  onChange={(opt) =>
+                    setFormData(prev => ({ ...prev, categoria: opt ? opt.value : '' }))
+                  }
+                  classNamePrefix="rs"
+                  placeholder="Seleccione categoría"
+                  isClearable
+                />
               </div>
-              <div className="col-md-6">
-                <strong>Localización:</strong> {incidenteBasico.localizacion}<br/>
-                <strong>Lugar:</strong> {incidenteBasico.lugar}
-              </div>
-            </div>
-          </div>
-        )}
-        
-        <form>
-          {/* Categoría y cantidad - en una sola fila como AccidenteTransito */}
-          <div className="row mb-3">
-            <div className="col-md-6">
-              <label htmlFor="categoria" className="text-black form-label">Categoría *</label>
-              <select
-                className={`form-select${errors.categoria ? ' is-invalid' : ''}`}
-                id="categoria"
-                onChange={handleChange}
-                value={formData.categoria || ''}
-                aria-describedby="error-categoria"
-              >
-                <option disabled value="">Seleccione categoría</option>
-                {categorias.map(cat => (
-                  <option key={cat.idCategoria} value={cat.idCategoria}>
-                    {cat.descripcion}
-                  </option>
-                ))}
-              </select>
-              {errors.categoria && <div className="invalid-feedback" id="error-categoria">{errors.categoria}</div>}
-            </div>
-            
-            <div className="col-md-6">
-              <label htmlFor="cantidadMateriales" className="text-black form-label">Cantidad de materiales involucrados *</label>
-              <input
-                type="number"
-                min="1"
-                className={`form-control${errors.cantidadMateriales ? ' is-invalid' : ''}`}
-                id="cantidadMateriales"
-                value={formData.cantidadMateriales || ''}
-                onChange={handleChange}
-                aria-describedby="error-cantidadMateriales"
-                placeholder="Ej: 3"
-              />
-              {errors.cantidadMateriales && <div className="invalid-feedback" id="error-cantidadMateriales">{errors.cantidadMateriales}</div>}
-              <div className="form-text text-muted small">Debe ser al menos 1</div>
-            </div>
-          </div>
 
-          {/* Tipos de materiales involucrados */}
-          <div className="mb-3">
-            <label className="text-black form-label">Tipos de materiales involucrados</label>
-            {errors.tiposMateriales && (
-              <div className="alert alert-danger" role="alert">
-                {errors.tiposMateriales}
+              <div className="col-md-6 py-4">
+                <label className="text-dark form-label">Cantidad de materiales involucrados</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  id="cantidadMateriales"
+                  value={formData.cantidadMateriales || ''}
+                  onChange={handleChange}
+                />
               </div>
-            )}
-            <div className="row">
-              {tiposMaterial.map((tipo) => (
-                <div key={tipo.idTipoMatInvolucrado} className="col-md-6 mb-2">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id={`material${tipo.idTipoMatInvolucrado}`}
-                      checked={!!formData[`material${tipo.idTipoMatInvolucrado}`]}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        [`material${tipo.idTipoMatInvolucrado}`]: e.target.checked
-                      }))}
-                    />
-                    <label className="form-check-label text-black" htmlFor={`material${tipo.idTipoMatInvolucrado}`}>
+            </div>
+
+            <hr className="border-1 border-black mb-2" />
+
+            {/* Tipos de materiales involucrados */}
+            <h5 className="fw-bold text-dark mb-3 my-3">
+              Tipos de materiales involucrados
+            </h5>
+            <div className="d-flex flex-wrap gap-3">
+              <div>
+                {tiposMaterial.map((tipo, index) => {
+                  const key = `material${tipo.idTipoMatInvolucrado}`
+                  const icons = ['🔥', '⚗️', '💥', '☢️', '🛢️', '🧪']
+                  const selected = !!formData[key]
+
+                  return (
+                    <button
+                      key={tipo.idTipoMatInvolucrado}
+                      type="button"
+                      className={`btn btn-lg toggle-btn me-2 mb-2 ${selected ? 'selected' : ''}`}
+                      onClick={() =>
+                        setFormData(prev => ({
+                          ...prev,
+                          [key]: !prev[key]   // ← toggle basado en el estado previo
+                        }))
+                      }
+                    >
+                      <span className="me-2">{icons[index % icons.length]}</span>
                       {tipo.nombre}
-                    </label>
-                  </div>
-                </div>
-              ))}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
 
-          {/* Acciones sobre el material */}
-          <div className="mb-3">
-            <label className="text-black form-label">Acciones sobre el material</label>
-            <div className="row">
-              {accionesMaterial.map((accion) => (
-                <div key={accion.idAccionMaterial} className="col-md-6 mb-2">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id={`accion${accion.idAccionMaterial}`}
-                      checked={!!formData[`accion${accion.idAccionMaterial}`]}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        [`accion${accion.idAccionMaterial}`]: e.target.checked
-                      }))}
-                    />
-                    <label className="form-check-label text-black" htmlFor={`accion${accion.idAccionMaterial}`}>
-                      {accion.nombre}
-                    </label>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <div className="mb-3">
-            <label className="text-black form-label">Otra acción sobre el material</label>
-            <input
-              type="text"
-              className="form-control"
-              id="otraAccionMaterial"
-              value={formData.otraAccionMaterial || ''}
-              onChange={handleChange}
-              placeholder="Especifique otra acción realizada..."
-            />
-          </div>
 
-          {/* Acciones sobre las personas */}
-          <div className="mb-3">
-            <label className="text-black form-label">Acciones sobre las personas</label>
-            <div className="row">
-              {accionesPersona.map((accion) => (
-                <div key={accion.idAccionPersona} className="col-md-6 mb-2">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id={`personaAccion${accion.idAccionPersona}`}
-                      checked={!!formData[`personaAccion${accion.idAccionPersona}`]}
-                      onChange={(e) => setFormData(prev => ({
+            <hr className="border-1 border-black mb-2" />
+
+            {/* Acciones sobre el material */}
+            <h5 className="fw-bold text-dark mb-3 my-3">
+              Acciones sobre el material
+            </h5>
+            <div className="d-flex flex-wrap gap-3">
+              <div>
+                {accionesMaterial.map((accion, index) => {
+                  const icons = ['🔥', '💨', '💧', '⚖️', '🚛']
+                  const selected = formData[`accion${accion.idAccionMaterial}`]
+                  return (
+                    <button
+                      key={accion.idAccionMaterial}
+                      type="button"
+                      className={`btn bnt-lg toggle-btn me-2 mb-2 ${selected ? 'selected' : ''}`}
+                      onClick={() => setFormData(prev => ({
                         ...prev,
-                        [`personaAccion${accion.idAccionPersona}`]: e.target.checked
+                        [`accion${accion.idAccionMaterial}`]: !selected
                       }))}
-                    />
-                    <label className="form-check-label text-black" htmlFor={`personaAccion${accion.idAccionPersona}`}>
+                    >
+                      <span className="me-2">{icons[index % icons.length]}</span>
                       {accion.nombre}
-                    </label>
-                  </div>
-                </div>
-              ))}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="col-md-8">
+                <label className="form-label text-dark d-flex align-items-center gap-2">Otra acción sobre el material</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="otraAccionMaterial"
+                  value={formData.otraAccionMaterial || ''}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
-          </div>
-          
-          <div className="row mb-3">
-            <div className="col-md-6">
-              <label className="text-black form-label">Otra acción sobre las personas</label>
-              <input
-                type="text"
+
+            <hr className="border-1 border-black mb-2" />
+
+            {/* Acciones sobre las personas */}
+            <h5 className="fw-bold text-dark mb-3 my-3">
+              Acciones sobre las personas
+            </h5>
+            <div className="d-flex flex-wrap gap-3">
+              <div>
+                {accionesPersona.map((accion, index) => {
+                  const icons = ['🚨', '🧼', '🏠']
+                  const selected = formData[`personaAccion${accion.idAccionPersona}`]
+                  return (
+                    <button
+                      key={accion.idAccionPersona}
+                      type="button"
+                      className={`btn bnt-lg toggle-btn me-2 mb-2 ${selected ? 'selected' : ''}`}
+                      onClick={() => setFormData(prev => ({
+                        ...prev,
+                        [`personaAccion${accion.idAccionPersona}`]: !selected
+                      }))}
+                    >
+                      <span className="me-2">{icons[index % icons.length]}</span>
+                      {accion.nombre}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="col-md-8">
+                <label className="form-label text-dark d-flex align-items-center gap-2">Otra acción sobre las personas</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="otraAccionPersona"
+                  value={formData.otraAccionPersona || ''}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            {/* Detalles */}
+            <div className="mb-3">
+              <label className="text-black form-label">Detalle sobre otras acciones sobre personas</label>
+              <textarea
                 className="form-control"
-                id="otraAccionPersona"
-                value={formData.otraAccionPersona || ''}
+                rows="2"
+                id="detalleAccionesPersona"
+                value={formData.detalleAccionesPersona || ''}
                 onChange={handleChange}
-                placeholder="Especifique otra acción..."
-              />
+              ></textarea>
             </div>
-            
-            <div className="col-md-6">
+
+            <div className="mb-3">
               <label className="text-black form-label">Cantidad de superficie evacuada</label>
               <input
                 type="text"
@@ -520,138 +501,55 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
                 id="superficieEvacuada"
                 value={formData.superficieEvacuada || ''}
                 onChange={handleChange}
-                placeholder="Ej: 500 m²"
               />
             </div>
-          </div>
-          
-          <div className="mb-3">
-            <label className="text-black form-label">Detalle sobre otras acciones sobre personas</label>
-            <textarea
-              className="form-control"
-              rows="2"
-              id="detalleAccionesPersona"
-              value={formData.detalleAccionesPersona || ''}
-              onChange={handleChange}
-              placeholder="Describa en detalle las acciones realizadas sobre las personas..."
-            />
-          </div>
 
-          <div className="mb-3">
-            <label className="text-black form-label">Detalle de lo sucedido *</label>
-            <textarea
-              className={`form-control${errors.detalle ? ' is-invalid' : ''}`}
-              rows="3"
-              id="detalle"
-              value={formData.detalle || ''}
-              onChange={handleChange}
-              aria-describedby="error-detalle"
-              placeholder="Describa detalladamente lo sucedido con el material peligroso..."
-            />
-            {errors.detalle && <div className="invalid-feedback" id="error-detalle">{errors.detalle}</div>}
-          </div>
+            <div className="mb-3">
+              <label className="text-black form-label">Detalle de lo sucedido</label>
+              <textarea
+                className="form-control"
+                rows="3"
+                id="detalle"
+                value={formData.detalle || ''}
+                onChange={handleChange}
+              ></textarea>
+            </div>
 
-          <h5 className="text-black mt-4">Personas damnificadas</h5>
-          {formData.damnificados.map((d, index) => (
-            <div key={index} className="border rounded p-3 mb-3">
-              <div className="row mb-2">
-                <div className="col">
-                  <label className="text-black form-label">Nombre</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={d.nombre || ''}
-                    onChange={(e) => handleDamnificadoChange(index, 'nombre', e.target.value)}
-                  />
-                </div>
-                <div className="col">
-                  <label className="text-black form-label">Apellido</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={d.apellido || ''}
-                    onChange={(e) => handleDamnificadoChange(index, 'apellido', e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="mb-2">
-                <label className="text-black form-label">Domicilio</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={d.domicilio || ''}
-                  onChange={(e) => handleDamnificadoChange(index, 'domicilio', e.target.value)}
-                />
-              </div>
-              <div className="row mb-2">
-                <div className="col">
-                  <label className="text-black form-label">Teléfono</label>
-                  <input
-                    type="tel"
-                    className="form-control"
-                    value={d.telefono || ''}
-                    onChange={(e) => handleDamnificadoChange(index, 'telefono', e.target.value)}
-                  />
-                </div>
-                <div className="col">
-                  <label className="text-black form-label">DNI</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={d.dni || ''}
-                    onChange={(e) => handleDamnificadoChange(index, 'dni', e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="form-check mb-2">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  checked={!!d.fallecio}
-                  onChange={(e) => handleDamnificadoChange(index, 'fallecio', e.target.checked)}
-                />
-                <label className="form-check-label text-black">¿Falleció?</label>
-              </div>
+            <hr className="border-1 border-black mb-2" />
+
+            <DamnificadosForm
+              value={formData.damnificados}
+              onChange={(nuevoArray) => setFormData(prev => ({ ...prev, damnificados: nuevoArray }))}
+              title="Personas damnificadas"
+            />
+
+            <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
+              <button type="submit" className="btn btn-accept btn-medium btn-lg btn-sm-custom" disabled={loading}>
+                {loading ? 'Cargando...' : 'Finalizar carga'}
+              </button>
+
               <button
                 type="button"
-                className="btn btn-outline-danger btn-sm"
-                onClick={() => eliminarDamnificado(index)}
+                className="btn btn-back btn-medium btn-lg btn-sm-custom"
+                onClick={guardarLocalmente}
+                disabled={loading}
               >
-                ❌ Eliminar damnificado
+                Guardar y continuar después
               </button>
             </div>
-          ))}
 
-          <div className="d-flex justify-content-end mb-3">
-            <button type="button" className="btn btn-sm btn-success" onClick={agregarDamnificado}>
-              + Agregar damnificado
-            </button>
-          </div>
-
-          <button type="button" className="btn btn-danger w-100 mt-3" disabled={loading} onClick={() => handleFinalizar()}>
-            {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Actualizar material peligroso' : 'Finalizar carga')}
-          </button>
-
-          <button
-            type="button"
-            className="btn btn-secondary w-100 mt-2"
-            onClick={guardarLocalmente}
-            disabled={loading}
-          >
-            Guardar y continuar después
-          </button>
-        </form>
-
-        {errorMsg && (
-          <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">
-            {errorMsg}
-          </div>
-        )}
-        {successMsg && (
-          <div ref={toastRef} tabIndex={-1} className="alert alert-success mt-3" role="alert">
-            {successMsg}
-          </div>
-        )}
+          </form>
+          {errorMsg && (
+            <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">
+              {errorMsg}
+            </div>
+          )}
+          {successMsg && (
+            <div ref={toastRef} tabIndex={-1} className="alert alert-success mt-3" role="alert">
+              {successMsg}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

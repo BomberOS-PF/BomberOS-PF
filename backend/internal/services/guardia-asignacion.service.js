@@ -6,6 +6,24 @@ export class GuardiaAsignacionService {
     this.repo = guardiaRepo
   }
 
+    /**
++   * Obtiene asignaciones por DNI en un rango (end exclusivo)
++   * @param {{ dni:number, start:string, end:string, idGrupo?:number|null }} params
++   * @returns {Promise<Array<{idAsignacion,idGrupo,fecha,dni,hora_desde,hora_hasta}>>}
++   */
+  async obtenerAsignacionesPorDni({ dni, start, end, idGrupo = null }) {
+        if (!dni) throw new Error('dni requerido')
+   if (!start || !end) throw new Error('Parámetros start y end son requeridos')
+  const isYMD = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s)
+  if (!isYMD(start) || !isYMD(end)) throw new Error('Formato de fecha inválido. Use YYYY-MM-DD')
+
+  const dniNum = Number(dni)
+  if (!Number.isInteger(dniNum) || dniNum <= 0) throw new Error('dni inválido')
+
+  // El repo debe implementar findByDniAndRange({ dni, start, end, idGrupo })
+   return await this.repo.findByDniAndRange({ dni: dniNum, start, end, idGrupo })
+  }
+
   /**
    * Crea varias asignaciones
    * @param { number } idGrupo

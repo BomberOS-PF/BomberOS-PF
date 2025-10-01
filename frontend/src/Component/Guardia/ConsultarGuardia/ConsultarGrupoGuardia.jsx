@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { API_URLS } from '../../../config/api'
 import RegistrarGuardia from '../RegistrarGuardia/RegistrarGuardia'
 import '../RegistrarGuardia/RegistrarGuardia.css'
-import '../../DisenioFormulario/DisenioFormulario.css'
+import '../../../../styles/global.css'
 import ConsultarBomberosDelGrupo from './ConsultarBomberosDelGrupo'
 import * as bootstrap from 'bootstrap'
 import { User2, UsersIcon } from 'lucide-react'
@@ -142,7 +142,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
         </span>
       </div>
 
-      <div className="card shadow-sm border-0 bg-white">
+      <div className="card edge-to-edge shadow-sm border-0 bg-white">
         <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <User2 />
           <strong>Listado de Grupos de Guardia</strong>
@@ -154,7 +154,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
             <input
               type="text"
               className="form-control border-secondary ps-5 py-3"
-              placeholder="Buscar por nombre del grupo"
+              placeholder="Buscar por nombre del grupo..."
               value={busqueda}
               onChange={handleBusqueda}
             />
@@ -202,7 +202,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
                             <td className="border-end px-3">{grupo.descripcion}</td>
                             <td className="border-end">
                               <button
-                                className="btn btn-outline-secondary btn-sm me-2"
+                                className="btn btn-outline-secondary btn-detail me-2"
                                 onClick={async () => {
                                   try {
                                     setLoadingAccion(true)
@@ -226,7 +226,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
                                 <i className="bi bi-eye me-1"></i> Ver
                               </button>
                               <button
-                                className="btn btn-outline-danger btn-sm"
+                                className="btn btn-outline-danger btn-detail"
                                 onClick={() => confirmarEliminacion(grupo)}
                                 disabled={loading || loadingAccion}
                                 title="Eliminar grupo"
@@ -251,7 +251,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
           </Pagination>
         </div>
 
-        <div className="d-grid gap-3">
+        <div className="d-grid mb-3 px-3">
           <BackToMenuButton onClick={onVolver} />
         </div>
       </div>

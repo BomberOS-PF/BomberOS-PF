@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
-import { Flame, AlertTriangle, FileText, User, Mail, Shield} from 'lucide-react'
-import '../../DisenioFormulario/DisenioFormulario.css'
+import { Flame, AlertTriangle, FileText, User, Mail, Shield } from 'lucide-react'
+import Select from 'react-select'
 import { BackToMenuButton } from '../../Common/Button'
 
 const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuarios = [] }) => {
@@ -225,7 +225,7 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuar
         </span>
       </div>
 
-      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+      <div className="card edge-to-edge shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
         <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <FileText />
           <strong>Registrar Usuario</strong>
@@ -252,7 +252,7 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuar
 
               <div className="col-md-6 py-4">
                 <label htmlFor="password" className="text-dark form-label d-flex align-items-center gap-2">
-                  <Shield  className="text-warning" />Contraseña {usuario && '(nueva)'}</label>
+                  <Shield className="text-warning" />Contraseña {usuario && '(nueva)'}</label>
                 <input
                   type="password"
                   className="form-control"
@@ -314,37 +314,43 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuar
               </div>
 
               <div className="col-md-6 py-4">
-                <label htmlFor="rol" className="text-dark form-label d-flex align-items-center gap-2"> 
-                  <Shield  className="text-primary"
-                />Rol
+                <label htmlFor="rol" className="text-dark form-label d-flex align-items-center gap-2">
+                  <Shield className="text-primary"
+                  />Rol
                 </label>
-                <select
-                  className="text-dark form-select"
-                  id="rol"
-                  value={formData.rol}
-                  required
-                  disabled={loading || roles.length === 0}
-                  onChange={handleChange}
-                >
-                  <option value="">Seleccione un rol</option>
-                  {roles.map((rol) => (
-                    <option key={rol.idRol} value={rol.idRol}>
-                      {rol.nombreRol}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  classNamePrefix="rs"
+                  inputId="rol"
+                  placeholder="Seleccione un rol"
+                  isClearable
+                  isDisabled={loading || roles.length === 0}
+                  options={roles.map((rol) => ({
+                    value: String(rol.idRol),
+                    label: rol.nombreRol
+                  }))}
+                  value={
+                    formData.rol
+                      ? {
+                        value: String(formData.rol),
+                        label: roles.find(r => String(r.idRol) === String(formData.rol))?.nombreRol || ''
+                      }
+                      : null
+                  }
+                  onChange={(opt) =>
+                    setFormData(prev => ({ ...prev, rol: opt ? opt.value : '' }))
+                  }
+                />
               </div>
-
-              <div className="d-grid gap-3">
-                <button type="submit" className="btn btn-danger" disabled={loading}>
+              
+              <div className="d-flex justify-content-center align-items-center gap-3">
+                {onVolver && (
+                  <BackToMenuButton onClick={onVolver} />
+                )}
+                <button type="submit" className="btn btn-accept btn-lg btn-medium" disabled={loading}>
                   {loading
                     ? usuario ? 'Actualizando...' : 'Registrando...'
                     : usuario ? 'Actualizar Usuario' : 'Registrar Usuario'}
                 </button>
-
-                {onVolver && (
-                  <BackToMenuButton onClick={onVolver} />
-                )}
               </div>
             </div>
           </form>

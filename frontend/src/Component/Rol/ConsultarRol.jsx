@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { apiRequest, API_URLS } from '../../config/api'
 import { ShieldUser } from 'lucide-react'
 import { BackToMenuButton } from '../Common/Button'
+import '../../../styles/global.css'
 import Pagination from '../Common/Pagination'
 
 const PAGE_SIZE_DEFAULT = 10
@@ -134,7 +135,7 @@ const ConsultarRol = ({ onVolver }) => {
       </div>
 
       {/* Card principal */}
-      <div className='card shadow-sm border-0 bg-white'>
+      <div className='card edge-to-edge shadow-sm border-0 bg-white'>
         <div className='card-header bg-danger text-white d-flex align-items-center gap-2 py-4'>
           <i className='bi bi-people-fill fs-5'></i>
           <strong>Listado de Roles</strong>
@@ -143,10 +144,9 @@ const ConsultarRol = ({ onVolver }) => {
         <div className='card-body'>
           {/* Mensajes */}
           {mensaje && (
-            <div className={`alert ${
-              mensaje.includes('Error') ? 'alert-danger' :
-              mensaje.includes('✅') ? 'alert-success' : 'alert-info'
-            }`}>
+            <div className={`alert ${mensaje.includes('Error') ? 'alert-danger' :
+                mensaje.includes('✅') ? 'alert-success' : 'alert-info'
+              }`}>
               {mensaje}
             </div>
           )}
@@ -213,14 +213,14 @@ const ConsultarRol = ({ onVolver }) => {
                                 </td>
                                 <td className='text-center'>
                                   <button
-                                    className='btn btn-outline-secondary btn-sm me-2'
+                                    className='btn btn-outline-secondary btn-detail me-2'
                                     onClick={() => seleccionarRol(rol)}
                                     disabled={loading || loadingAccion}
                                   >
                                     <i className='bi bi-eye me-1'></i> Ver
                                   </button>
                                   <button
-                                    className='btn btn-outline-danger btn-sm'
+                                    className='btn btn-outline-danger btn-detail'
                                     onClick={() => eliminarRol(rol)}
                                     disabled={loading || loadingAccion}
                                   >
@@ -311,7 +311,7 @@ const ConsultarRol = ({ onVolver }) => {
                   </div>
 
                   {modoEdicion && (
-                    <button type='submit' className='btn btn-danger w-100 mb-3' disabled={loadingAccion}>
+                    <button type='submit' className='btn btn-danger btn-medium btn-lg' disabled={loadingAccion}>
                       {loadingAccion ? 'Guardando...' : 'Guardar cambios'}
                     </button>
                   )}
@@ -321,9 +321,11 @@ const ConsultarRol = ({ onVolver }) => {
           )}
 
           {/* Botón volver menú */}
-          <div className='d-grid gap-3 py-4'>
-            <BackToMenuButton onClick={onVolver} />
-          </div>
+          {!rolSeleccionado && onVolver && (
+            <div className='d-grid gap-3'>
+              <BackToMenuButton onClick={onVolver} />
+            </div>
+          )}
         </div>
       </div>
     </div>

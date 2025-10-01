@@ -7,6 +7,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import esLocale from '@fullcalendar/core/locales/es'
 import Select from 'react-select'
+import { BackToMenuButton } from '../../Common/Button.jsx'
 import '../../Guardia/GestionarGuardias/GestionarGuardia.css'
 
 const diasSemana = [
@@ -547,7 +548,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   }, [mensaje])
 
   return (
-    <div className="container-fluid py-5">
+    <div className="container-fluid py-5 px-0">
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
           <h1 className="fw-bold text-white fs-3 mb-0">
@@ -559,7 +560,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
         </span>
       </div>
 
-      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+      <div className="card edge-to-edge shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
         <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <strong>Gestión de guardias - {nombreGrupo}</strong>
         </div>
@@ -570,9 +571,9 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             </div>
           )}
 
-          <div className="row px-5">
+          <div className="row">
             {/* Columna izquierda */}
-            <div className="col-md-4 mb-3 px-5">
+            <div className="col-md-4 mb-3">
               <h4 className="text-black">Bomberos del grupo</h4>
 
               <Select
@@ -586,7 +587,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
 
               <div className="text-black mt-3">
                 <label>Día:</label>
-                <Select 
+                <Select
                   options={diasSemana}
                   value={diaSeleccionado}
                   onChange={setDiaSeleccionado}
@@ -664,13 +665,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                     isSearchable
                   />
                 </div>
-
-                <button className="btn btn-danger me-3 w-100 mt-3" onClick={asignarGuardia} disabled={guardando}>
-                  {guardando ? 'Guardando…' : 'Guardar'}
-                </button>
-                <button className="btn btn-secondary mt-2 w-100" onClick={onVolver}>
-                  Volver
-                </button>
               </div>
             </div>
 
@@ -745,8 +739,8 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                 <div className="modal fade show d-block modal-backdrop-custom" tabIndex="-1">
                   <div className="modal-dialog">
                     <div className="modal-content modal-content-white">
-                      <div className="modal-header">
-                        <h5 className="modal-title text-black">Confirmar acción</h5>
+                      <div className=" bg-danger modal-header">
+                        <h5 className="modal-title text-white">Confirmar acción</h5>
                         <button type="button" className="btn-close" onClick={() => setModalConfirmar(false)}></button>
                       </div>
                       <div className="modal-body">
@@ -783,8 +777,8 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                 <div className="modal fade show d-block modal-backdrop-custom" tabIndex="-1">
                   <div className="modal-dialog modal-lg">
                     <div className="modal-content modal-content-white">
-                      <div className="modal-header">
-                        <h5 className="modal-title text-black">Modificar guardia</h5>
+                      <div className="bg-danger modal-header">
+                        <h5 className="modal-title text-white">Modificar guardia</h5>
                         <button type="button" className="btn-close" onClick={() => setModalAbierto(false)}></button>
                       </div>
                       <div className="modal-body">
@@ -868,12 +862,12 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                     />
                                   </div>
                                 </td>
-                                <td>
+                                <td className="text-center">
                                   <button
-                                    className="btn btn-sm btn-danger"
+                                    className="btn btn-outline-danger btn-detail"
                                     onClick={() => setBomberosEditados(prev => prev.filter((_, i) => i !== idx))}
                                   >
-                                    ❌
+                                    <i className="bi bi-trash"></i>
                                   </button>
                                 </td>
                               </tr>
@@ -959,8 +953,13 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
             </div>
 
           </div>
-
         </div>
+        <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+            <BackToMenuButton onClick={onVolver} />
+            <button className="btn btn-accept btn-lg btn-medium" onClick={asignarGuardia} disabled={guardando}>
+              {guardando ? 'Guardando…' : 'Guardar'}
+            </button>
+          </div>
       </div>
     </div>
   )

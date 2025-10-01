@@ -1,3 +1,5 @@
+@import '../styles/global.css';
+
 html, body, #root {
   margin: 0;
   padding: 0;
@@ -19,13 +21,7 @@ main {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  /* background-color: #f8f9fa; */
-}
 
-.container-custom {
-  width: 100%;
-  max-width: 1140px;
-  padding: 2rem;
 }
 
 canvas {
