@@ -27,8 +27,6 @@ import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
 import DashboardRespuestas from '../Respuestas/DashboardRespuestas'
 import EstadoWhatsApp from '../WhatsApp/EstadoWhatsApp'
 
-import CalendarioGuardias from '../Guardia/CalendarioGuardias/CalendarioGuardias'
-
 const Menu = ({ user, setUser }) => {
   const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
   const [usuario, setUsuario] = useState(null)
@@ -230,15 +228,6 @@ const Menu = ({ user, setUser }) => {
         return <DashboardRespuestas onVolver={() => setOpcionSeleccionada(null)} />
       case 'estado-whatsapp':
         return <EstadoWhatsApp onVolver={() => setOpcionSeleccionada(null)} />
-      default:
-      // Contenido por defecto (pantalla de inicio): tu calendario mensual de guardias
-     return (
-      <CalendarioGuardias
-        dniUsuario={usuario?.dni ?? usuarioActual?.dni}
-          titulo="Tus Guardias"
-     />
-     )
-
     }
   }
 
@@ -309,7 +298,7 @@ const Menu = ({ user, setUser }) => {
               icono: 'bi-fire',
               titulo: 'Incidentes',
               botones: [{ texto: 'Cargar Incidente', accion: 'cargarIncidente' },
-              { texto: 'Consultar Incidentes', accion: 'consultarIncidente' }
+              { texto: 'Consultar Incidente', accion: 'consultarIncidente' }
               ]
             },
             {
@@ -318,7 +307,7 @@ const Menu = ({ user, setUser }) => {
               titulo: 'Bomberos',
               botones: [
                 { texto: 'Registrar Bombero', accion: 'registrarBombero' },
-                { texto: 'Consultar Bomberos', accion: 'consultarBombero' }
+                { texto: 'Consultar Bombero', accion: 'consultarBombero' }
               ]
             }, {
               id: 'collapseUsuarios',
@@ -326,17 +315,17 @@ const Menu = ({ user, setUser }) => {
               titulo: 'Usuarios y Roles',
               botones: [
                 { texto: 'Registrar Usuario', accion: 'registrarUsuario' },
-                { texto: 'Consultar Usuarios', accion: 'consultarUsuario' },
+                { texto: 'Consultar Usuario', accion: 'consultarUsuario' },
                 { texto: 'Registrar Rol', accion: 'registrarRol' },
-                { texto: 'Consultar Roles', accion: 'consultarRol' }
+                { texto: 'Consultar Rol', accion: 'consultarRol' }
               ]
             }, {
               id: 'collapseGuardias',
               icono: 'bi-clock-history',
               titulo: 'Guardias',
               botones: [
-                { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
-                { texto: 'Consultar Grupos', accion: 'consultarGuardia' }
+                { texto: 'Registrar Guardia', accion: 'registrarGuardia' },
+                { texto: 'Consultar Guardia', accion: 'consultarGuardia' }
               ]
             }, {
               id: 'collapseWhatsApp',

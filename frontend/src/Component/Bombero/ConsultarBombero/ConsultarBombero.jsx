@@ -1,10 +1,9 @@
+// src/Component/Bombero/ConsultarBombero/ConsultarBombero.jsx
 import { useState } from 'react'
 import { API_URLS } from '../../../config/api'
 import FormularioBombero from '../FormularioBombero/FormularioBombero'
 import { User2, UsersIcon } from 'lucide-react'
-import { BackToMenuButton } from '../../Common/Button.jsx'
 import Pagination from '../../Common/Pagination'
-import '../../../../styles/global.css'
 
 const PAGE_SIZE_DEFAULT = 10
 
@@ -137,7 +136,7 @@ const ConsultarBombero = ({ onVolver }) => {
         </span>
       </div>
 
-      <div className="card edge-to-edge shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
         <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <User2 />
           <strong>Listado de Bomberos</strong>
@@ -145,9 +144,10 @@ const ConsultarBombero = ({ onVolver }) => {
 
         <div className="card-body">
           {mensaje && (
-            <div className={`alert ${mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' :
+            <div className={`alert ${
+              mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' :
               mensaje.includes('✅') ? 'alert-success' : 'alert-info'
-              }`}>
+            }`}>
               {mensaje}
             </div>
           )}
@@ -161,7 +161,7 @@ const ConsultarBombero = ({ onVolver }) => {
                 <input
                   type="text"
                   className="form-control ps-5 py-3 border-secondary"
-                  placeholder="Buscar por DNI, nombre o apellido..."
+                  placeholder="Buscar por DNI..."
                   value={dniBusqueda}
                   onChange={(e) => setDniBusqueda(e.target.value)}
                   disabled={loadingAccion}
@@ -224,14 +224,14 @@ const ConsultarBombero = ({ onVolver }) => {
                                   </td>
                                   <td className="text-center">
                                     <button
-                                      className="btn btn-outline-secondary btn-detail me-2"
+                                      className="btn btn-outline-secondary btn-sm me-2"
                                       onClick={() => seleccionarBombero(bombero)}
                                       disabled={loading || loadingAccion}
                                     >
                                       <i className="bi bi-eye me-1"></i> Ver
                                     </button>
                                     <button
-                                      className="btn btn-outline-danger btn-detail"
+                                      className="btn btn-outline-danger btn-sm"
                                       onClick={() => eliminarBombero(bombero)}
                                       disabled={loading || loadingAccion}
                                     >
@@ -290,7 +290,7 @@ const ConsultarBombero = ({ onVolver }) => {
 
               <hr className="border-4 border-danger mb-4" />
 
-              <div className="text-black border-2 shadow-lg">
+              <div className="card bg-dark text-white border-0 shadow-lg py-4">
                 <FormularioBombero
                   modo={modoEdicion ? 'edicion' : 'consulta'}
                   datosIniciales={bomberoSeleccionado}
@@ -302,10 +302,16 @@ const ConsultarBombero = ({ onVolver }) => {
               </div>
             </div>
           )}
-          
-          {!bomberoSeleccionado && onVolver && (
-            <BackToMenuButton onClick={onVolver} />
-          )}
+
+          <div className="d-grid gap-3 py-2"></div>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onVolver}
+            disabled={loadingAccion}
+          >
+            Volver al menú
+          </button>
         </div>
       </div>
     </div>

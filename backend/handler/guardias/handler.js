@@ -84,25 +84,6 @@ export function buildGuardiaHandlers(guardiaService) {
         return res.status(400).json({ success: false, error: error.message, path, method })
       }
     },
-    obtenerAsignacionesPorDni: async (req, res) => {
-  const path = req.originalUrl
-  const method = req.method
-  try {
-    let { dni, start, end, idGrupo } = req.query
-    if (!dni) throw new Error('Parámetro requerido: dni')
-    const data = await guardiaService.obtenerAsignacionesPorDni({
-      dni,
-      start,
-      end,
-      idGrupo: idGrupo != null ? Number(idGrupo) : null
-    })
-    return res.json({ success: true, data, path, method })
-  } catch (error) {
-    logger.error('obtenerAsignacionesPorDni error', { error: error.message, query: req.query })
-    return res.status(400).json({ success: false, error: error.message, path, method })
-  }
-},
-
 
     // DELETE /api/grupos/:id/guardias?start=YYYY-MM-DD&end=YYYY-MM-DD
     eliminarAsignaciones: async (req, res) => {
@@ -126,8 +107,6 @@ export function buildGuardiaHandlers(guardiaService) {
         return res.status(400).json({ success: false, error: error.message, path, method })
       }
     }
-
-    
   }
 }
 

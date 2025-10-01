@@ -112,17 +112,17 @@ const Pagination = ({
           </small>
           <div className='btn-group'>
             <button
-              className='btn custom-page-btn'
+              className='btn btn-outline-secondary btn-sm'
               onClick={goPrev}
               disabled={page <= 1 || loading}
             >
               {l.prev}
             </button>
-            <span className='btn btn-detail disabled'>
+            <span className='btn btn-outline-secondary btn-sm disabled'>
               {page} {l.of} {totalPages}
             </span>
             <button
-              className='btn custom-page-btn'
+              className='btn btn-outline-secondary btn-sm'
               onClick={goNext}
               disabled={page >= totalPages || loading}
             >

@@ -26,8 +26,7 @@
   cursor: pointer;
 }
 .rs__option--is-focused {
-  background: #ff6b6b !important;
-  color: #fff;
+  background: #ff6b6b;
 }
 .rs__option--is-selected {
   background: #dc3545;
