@@ -116,33 +116,22 @@
   border-color: #b30000;
 }
 
-/* Badge “¡Hoy Guardia!” dentro del casillero */
+/* Badge “¡Hoy Guardia!” centrado dentro del casillero */
 .cal-mini-card td.fc-daygrid-day .fc-guard-overlay .hoy-guardia-badge {
-  position: absolute;
-  left: 6px;
-  bottom: 6px;              /* abajo-izquierda para no tapar el número del día */
-  font-weight: 700;         /* negrita */
+  position: static;          /* que lo centre el flex del overlay */
+  pointer-events: none;
+  font-weight: 700;
   font-size: 12px;
   color: #b30000;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(179, 0, 0, 0.35);
   border-radius: 6px;
   padding: 2px 6px;
-  pointer-events: none;     /* para no interferir con el hover del tooltip */
   box-shadow: 0 1px 3px rgba(0,0,0,.15);
+  margin: 0 auto;            /* por las dudas, mantiene centrado */
 }
 
-.fc-guard-overlay.is-today::after {
-  content: "¡Hoy Guardia!";
-  font-weight: 700;
-  font-size: 12px;
-  color: #b30000;
 
-  /* (opcional) mejora de legibilidad sobre el fondo */
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(255,255,255,0.8);
-}
 
 /* ===== Ajustes móviles: 412 x 915 (y similares) ===== */
 @media (max-width: 430px) {
@@ -244,4 +233,109 @@
     margin-left: 0 !important;
   }
 }
+
+/* ====== CARD DEL PADRE (no flotante) ====== */
+.cal-page-card {
+  position: static;   /* evita el fixed del mini */
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  max-width: 100%;
+  z-index: auto;
+}
+
+.cal-page-card .card-header {
+  position: relative;
+  z-index: 2;
+  overflow: visible;  /* por si algún style ocultaba el grupo de botones */
+}
+
+/* Botonera del header: que no colapse y tenga separación */
+.cal-page-card .card-header .btn-group {
+  display: flex;
+  gap: .5rem;
+}
+
+/* Contraste de botones outline sobre bg-danger */
+.cal-page-card .card-header .btn.btn-outline-light {
+  border-color: rgba(255,255,255,.6);
+  color: #fff;
+}
+
+/* En pantallas chicas, permití wrap sin que se pierdan botones */
+@media (max-width: 576px) {
+  .cal-page-card .card-header {
+    row-gap: .5rem;
+  }
+  .cal-page-card .card-header .btn-group .btn {
+    padding: .25rem .5rem;
+    font-size: .825rem;
+  }
+}
+
+
+/* -----------------  css para calendario por */
+
+/* Capas donde dibujo bandas */
+.fc .fc-daygrid-day-frame { position: relative }
+.fc-guard-overlay {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  z-index: 15;
+  pointer-events: none
+}
+
+/* Banda más visible y con etiqueta */
+.band-grupo {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 4px
+}
+
+.band-grupo .band-label {
+  pointer-events: none;
+  background: rgba(255,255,255,.45);
+  border-radius: 4px
+}
+
+/* capa donde dibujo las bandas de colores */
+.fc-guard-overlay {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: 3px;
+  z-index: 2;
+  pointer-events: none
+}
+
+/* highlight de hoy centrado en la celda */
+.fc-guard-overlay.is-today::after {
+  content: "¡Hoy Guardia!";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 100%;
+  margin-bottom: 2px;
+  font-weight: 700;
+  font-size: 12px;
+  color: #b30000;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,.85)
+}
+
+/* tooltip flotante */
+.tooltip-dinamico {
+  z-index: 9999
+}
+
+/* evita parpadeos cuando FullCalendar re-renderiza */
+.fc .fc-daygrid-day-frame {
+  position: relative
+}
+
+
 
