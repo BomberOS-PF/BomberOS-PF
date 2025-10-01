@@ -80,10 +80,6 @@ export function setupRoutes(app, container) {
   // opcional
   app.put('/api/grupos/:id/guardias/dia', guardiaHandlers.reemplazarDia)
 
-  
-   // Mis guardias por DNI (rango: start inclusivo, end exclusivo)
-  app.get('/api/guardias/por-dni', guardiaHandlers.obtenerAsignacionesPorDni)
-
   // ACCIDENTES DE TRÁNSITO
   app.post('/api/accidentes', async (req, res) => {
     try {
@@ -799,44 +795,25 @@ export function setupRoutes(app, container) {
     try {
       logger.info('📱 Webhook WhatsApp recibido', {
         body: req.body,
-        headers: req.headers,
-        timestamp: new Date().toISOString()
+        headers: req.headers
       })
 
       const { From, Body, MessageSid } = req.body
       
       if (!From || !Body) {
         logger.warn('📱 Webhook WhatsApp incompleto', { From, Body })
-        // Devolver TwiML vacío en lugar de JSON
-        res.set('Content-Type', 'text/xml')
-        return res.status(200).send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>')
+        return res.status(400).json({ error: 'Datos incompletos' })
       }
 
       // Extraer número de teléfono (remover prefijo whatsapp:)
       const telefono = From.replace('whatsapp:', '')
       const respuesta = Body.trim()
       
-      logger.info('📱 Procesando respuesta de WhatsApp', {
-        telefono,
-        respuesta,
-        messageSid: MessageSid
-      })
-      
       // Procesar respuesta usando el servicio especializado
       const resultado = await respuestaIncidenteService.procesarRespuestaWebhook(
         { From, Body, MessageSid },
         req.ip
       )
-      
-      logger.info('📱 Resultado del procesamiento', {
-        success: resultado.success,
-        tipoRespuesta: resultado.tipoRespuesta,
-        bombero: resultado.bombero,
-        error: resultado.error
-      })
-      
-      // Construir respuesta TwiML
-      let mensajeRespuesta = ''
       
       if (resultado.success) {
         logger.info('📱 Respuesta procesada y guardada', {
@@ -846,81 +823,14 @@ export function setupRoutes(app, container) {
           tipoRespuesta: resultado.tipoRespuesta
         })
         
-        // Obtener mensaje de confirmación basado en el tipo de respuesta
-        const nombreBombero = resultado.bombero || 'Bombero'
-        const tipoRespuesta = resultado.tipoRespuesta
-        const incidenteId = resultado.incidenteId
-        
-        if (tipoRespuesta === 'CONFIRMADO') {
-          mensajeRespuesta = `✅ *Confirmación recibida*
-
-Hola ${nombreBombero},
-
-Tu confirmación de asistencia ha sido registrada exitosamente para el incidente #${incidenteId}.
-
-Gracias por tu compromiso con el servicio.
-
-_Cuerpo de Bomberos - Sistema BomberOS_`
-        } else if (tipoRespuesta === 'DECLINADO') {
-          mensajeRespuesta = `❌ *Declinación registrada*
-
-Hola ${nombreBombero},
-
-Tu declinación de asistencia ha sido registrada para el incidente #${incidenteId}.
-
-Gracias por informar tu disponibilidad.
-
-_Cuerpo de Bomberos - Sistema BomberOS_`
-        } else {
-          mensajeRespuesta = `⚠️ *Respuesta no reconocida*
-
-Hola ${nombreBombero},
-
-Tu mensaje "${respuesta}" no pudo ser procesado. 
-
-Para responder a las alertas de emergencia, puedes enviar:
-
-✅ *Para CONFIRMAR asistencia:*
-• SI, SÍ, SIP, OK, VOY, ASISTO, LISTO, ✅, 👍
-
-❌ *Para DECLINAR asistencia:*
-• NO, NO PUEDO, OCUPADO, ❌, 👎
-
-_Cuerpo de Bomberos - Sistema BomberOS_`
-        }
+        res.status(200).json(resultado)
       } else {
-        logger.error('📱 Error al procesar respuesta', { error: resultado.error })
-        mensajeRespuesta = `⚠️ *Error al procesar respuesta*
-
-Lo siento, hubo un problema al procesar tu mensaje. Por favor intenta nuevamente.
-
-Para responder a las alertas puedes enviar:
-✅ *SI, OK, VOY, ASISTO* - Para confirmar  
-❌ *NO, NO PUEDO, OCUPADO* - Para declinar
-
-_Cuerpo de Bomberos - Sistema BomberOS_`
+        res.status(400).json(resultado)
       }
-      
-      // Devolver TwiML con el mensaje de respuesta
-      const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Message>${mensajeRespuesta}</Message>
-</Response>`
-      
-      res.set('Content-Type', 'text/xml')
-      res.status(200).send(twimlResponse)
       
     } catch (error) {
       logger.error('Error en webhook WhatsApp:', error)
-      
-      // Devolver TwiML de error en lugar de JSON
-      const errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Message>⚠️ Error interno del sistema. Por favor intenta más tarde.</Message>
-</Response>`
-      
-      res.set('Content-Type', 'text/xml')
-      res.status(200).send(errorTwiml)
+      res.status(500).json({ error: 'Error interno' })
     }
   })
 
@@ -988,6 +898,8 @@ _Cuerpo de Bomberos - Sistema BomberOS_`
         'GET /api/factor-climatico/:idIncidente',
         'GET /api/acciones-persona',
         'GET /api/acciones-material',
+        'POST /api/rescate',
+        'GET /api/rescate',
         'GET /api/rescate/:id',
         'GET /api/incidentes/:id/detalle',
         'POST /api/denunciantes',
@@ -1001,8 +913,7 @@ _Cuerpo de Bomberos - Sistema BomberOS_`
         'PUT /api/grupos/:id',
         'POST /api/rescate',
         'GET /api/rescate',
-        'GET /api/guardias/por-dni'
-        
+        'GET /api/rescate/:id'
       ]
     })
   })

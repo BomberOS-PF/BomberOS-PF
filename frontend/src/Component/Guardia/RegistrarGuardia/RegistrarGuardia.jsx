@@ -1,9 +1,9 @@
 // src/Component/GrupoGuardia/RegistrarGuardia/RegistrarGuardia.jsx
 import React, { useEffect, useState } from 'react'
 import { API_URLS } from '../../../config/api'
-
+import './RegistrarGuardia.css'
 import { Users, AlertTriangle, Plus, FileText } from 'lucide-react'
-import '../../../../styles/global.css'
+import '../../DisenioFormulario/DisenioFormulario.css'
 import { BackToMenuButton } from '../../Common/Button'
 import Pagination from '../../Common/Pagination'
 
@@ -151,7 +151,7 @@ const RegistrarGuardia = ({
         </span>
       </div>
 
-      <div className="card edge-to-edge shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
         <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <FileText />
           <strong>{modoEdicion ? 'Registrar cambios del grupo' : 'Registrar Grupo de Guardia'}</strong>
@@ -235,12 +235,12 @@ const RegistrarGuardia = ({
                     <table className="table table-hover align-middle mb-0">
                       <thead className="bg-light">
                         <tr>
-                          <th className="border-end text-center">Nombre completo</th>
+                          <th className="border-end text-center">Seleccionar</th>
                           <th className="border-end text-center">DNI</th>
                           <th className="border-end text-center">Legajo</th>
-                          <th className="border-end text-center">Teléfono</th>
-                          <th className="border-end text-center">Grupo</th>
-                          <th className="text-center">Seleccionar</th>
+                          <th className="border-end text-center">Nombre</th>
+                          <th className="border-end text-center">Apellido</th>
+                          <th className="border-end text-center">Teléfono</th>     
                         </tr>
                       </thead>
 
@@ -261,18 +261,13 @@ const RegistrarGuardia = ({
                           const mostrarTooltip = asignado
 
                           return (
-                            <tr key={b.dni} className="border-b">
-                              <td className="border-end px-4">{b.nombre} {b.apellido}</td>
-                              <td className="border-end px-3">{b.dni}</td>
-                              <td className="border-end px-3">{b.legajo || '-'}</td>
-                              <td className="border-end px-2">{b.telefono}</td>
-                              <td className="border-end px-2">{b.grupos}</td>
+                            <tr key={b.dni}>
                               <td className="border-end px-3 text-center">
                                 <div className="tooltip-container">
                                   <button
                                     onClick={() => agregarAlGrupo(b)}
                                     disabled={deshabilitarBtn}
-                                    className={`btn-sm btn-add ${deshabilitarBtn ? 'disabled' : ''}`}
+                                    className={`btn btn-sm btn-add ${deshabilitarBtn ? 'disabled' : ''}`}
                                   >
                                     <Plus className="h-4 w-4" />
                                   </button>
@@ -283,6 +278,11 @@ const RegistrarGuardia = ({
                                   )}
                                 </div>
                               </td>
+                              <td className="border-end px-3">{b.dni}</td>
+                              <td className="border-end px-3">{b.legajo || '-'}</td>
+                              <td className="border-end px-4">{b.nombre}</td>
+                              <td className="border-end px-4">{b.apellido}</td>
+                              <td className="border-end px-2">{b.telefono}</td>
                             </tr>
                           )
                         })}
@@ -309,9 +309,10 @@ const RegistrarGuardia = ({
                 <table className="table table-hover align-middle mb-0">
                   <thead className="bg-light">
                     <tr>
-                      <th className="border-end text-center">Nombre completo</th>
                       <th className="border-end text-center">DNI</th>
                       <th className="border-end text-center">Legajo</th>
+                      <th className="border-end text-center">Nombre</th>
+                      <th className="border-end text-center">Apellido</th>
                       <th className="border-end text-center">Teléfono</th>
                       <th className="text-center">Quitar</th>
                     </tr>
@@ -326,14 +327,15 @@ const RegistrarGuardia = ({
                     ) : (
                       grupo.map((b) => (
                         <tr key={b.dni} className="border-b">
-                          <td className="border-end text-center">{b.nombre} {b.apellido}</td>
                           <td className="border-end text-center">{b.dni}</td>
                           <td className="border-end text-center">{b.legajo || '-'}</td>
+                          <td className="border-end text-center">{b.nombre}</td>
+                          <td className="border-end text-center">{b.apellido}</td>
                           <td className="border-end text-center">{b.telefono}</td>
                           <td className="text-center">
                             <button
                               onClick={() => quitarDelGrupo(b.dni)}
-                              className="btn btn-outline-danger btn-detail"
+                              className="btn btn-outline-danger btn-sm"
                             >
                               <i className="bi bi-trash"></i>
                             </button>
@@ -345,21 +347,23 @@ const RegistrarGuardia = ({
                 </table>
               </div>
             </div>
-          </div>
-        </div>
-        {/* Botones */}
-            <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
-              <BackToMenuButton onClick={onVolver} />
+
+            {/* Botones */}
+            <div className="d-grid gap-3">
               <button
                 type="button"
                 onClick={guardarGrupo}
                 disabled={loading}
-                className="btn btn-accept btn-lg btn-medium"
+                className="btn btn-danger btn-lg"
               >
                 <Users size={16} className="me-1" />
                 {loading ? 'Espere...' : modoEdicion ? 'Actualizar Grupo' : 'Guardar Grupo'}
               </button>
+
+              <BackToMenuButton onClick={onVolver} />
             </div>
+          </div>
+        </div>
       </div>
     </div>
   )

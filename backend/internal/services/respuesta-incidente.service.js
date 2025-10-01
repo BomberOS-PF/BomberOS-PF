@@ -75,7 +75,8 @@ export class RespuestaIncidenteService {
         incidente: idIncidente
       })
       
-      // Nota: El mensaje de confirmación se envía directamente desde el webhook usando TwiML
+      // Enviar mensaje de confirmación por WhatsApp
+      await this.enviarMensajeConfirmacion(telefono, nombreBombero, tipoRespuesta, idIncidente)
       
       return {
         success: true,
@@ -136,48 +137,17 @@ export class RespuestaIncidenteService {
   }
 
   /**
-   * Determinar tipo de respuesta - Acepta múltiples variaciones de SI/NO (case insensitive)
+   * Determinar tipo de respuesta - Solo acepta SI o NO (case insensitive)
    */
   determinarTipoRespuesta(respuestaNormalizada) {
-    // Convertir a mayúsculas y limpiar espacios
-    const respuestaUpper = respuestaNormalizada.toUpperCase().trim()
+    // Convertir a mayúsculas para comparación case insensitive
+    const respuestaUpper = respuestaNormalizada.toUpperCase()
     
-    // Variaciones para CONFIRMACIÓN (SI)
-    const confirmaciones = [
-      'SI', 'SÍ', 'SII', 'SIII', 'SIP', 'SEP',
-      'YES', 'Y', 'OK', 'OKAY', 'VALE', 'BUENO',
-      'ACEPTO', 'CONFIRMO', 'VOY', 'ASISTO',
-      'PRESENTE', 'LISTO', 'DALE', 'VAMOS',
-      '✓', '✅', '👍', '1'
-    ]
-    
-    // Variaciones para DECLINACIÓN (NO)
-    const declinaciones = [
-      'NO', 'NOP', 'NOPE', 'NEL', 'NADA',
-      'NO PUEDO', 'NO VOY', 'NO ASISTO',
-      'OCUPADO', 'TRABAJANDO', 'FUERA',
-      'RECHAZAR', 'RECHAZO', 'DECLINO',
-      'IMPOSIBLE', 'NEGATIVO', 'CANCEL',
-      '❌', '✖', '👎', '0', 'X'
-    ]
-    
-    // Verificar confirmaciones
-    if (confirmaciones.includes(respuestaUpper)) {
+    if (['SI', 'SÍ'].includes(respuestaUpper)) {
       return 'CONFIRMADO'
     }
     
-    // Verificar si contiene palabras de confirmación
-    if (confirmaciones.some(palabra => respuestaUpper.includes(palabra))) {
-      return 'CONFIRMADO'
-    }
-    
-    // Verificar declinaciones
-    if (declinaciones.includes(respuestaUpper)) {
-      return 'DECLINADO'
-    }
-    
-    // Verificar si contiene palabras de declinación
-    if (declinaciones.some(palabra => respuestaUpper.includes(palabra))) {
+    if (['NO'].includes(respuestaUpper)) {
       return 'DECLINADO'
     }
     
@@ -239,88 +209,5 @@ export class RespuestaIncidenteService {
       logger.error('Error al obtener incidente más reciente', { error: error.message })
       return null
     }
-  }
-
-  /**
-   * Enviar mensaje de confirmación por WhatsApp
-   */
-  async enviarMensajeConfirmacion(telefono, nombreBombero, tipoRespuesta, idIncidente) {
-    if (!this.whatsappService) {
-      logger.warn('📱 WhatsAppService no disponible, no se puede enviar confirmación')
-      return { success: false, error: 'WhatsApp service not available' }
-    }
-
-    try {
-      const mensaje = this.construirMensajeConfirmacion(nombreBombero, tipoRespuesta, idIncidente)
-      
-      const resultado = await this.whatsappService.enviarMensaje(telefono, mensaje)
-      
-      if (resultado.exito) {
-        logger.info('📱 Mensaje de confirmación enviado', {
-          telefono,
-          bombero: nombreBombero,
-          tipoRespuesta,
-          messageSid: resultado.messageSid
-        })
-      } else {
-        logger.error('📱 Error al enviar mensaje de confirmación', {
-          telefono,
-          error: resultado.error
-        })
-      }
-      
-      return resultado
-      
-    } catch (error) {
-      logger.error('📱 Error al enviar mensaje de confirmación', {
-        telefono,
-        error: error.message
-      })
-      
-      return { success: false, error: error.message }
-    }
-  }
-
-  /**
-   * Construir mensaje de confirmación
-   */
-  construirMensajeConfirmacion(nombreBombero, tipoRespuesta, idIncidente) {
-    const nombre = nombreBombero || 'Bombero'
-    
-    const mensajes = {
-      'CONFIRMADO': `✅ *Confirmación recibida*
-
-Hola ${nombre},
-
-Tu confirmación de asistencia ha sido registrada exitosamente para el incidente #${idIncidente}.
-
-Gracias por tu compromiso con el servicio.
-
-_Cuerpo de Bomberos - Sistema BomberOS_`,
-
-      'DECLINADO': `❌ *Declinación registrada*
-
-Hola ${nombre},
-
-Tu declinación de asistencia ha sido registrada para el incidente #${idIncidente}.
-
-Gracias por informar tu disponibilidad.
-
-_Cuerpo de Bomberos - Sistema BomberOS_`,
-
-      'NO_RECONOCIDA': `⚠️ *Respuesta no reconocida*
-
-Hola ${nombre},
-
-Tu mensaje no pudo ser procesado. 
-
-Para responder a las alertas de emergencia, solo envía:
-✅ *SI* - Para confirmar asistencia
-❌ *NO* - Si no puedes asistir
-
-_Cuerpo de Bomberos - Sistema BomberOS_`
-    }
-    
-    return mensajes[tipoRespuesta] || mensajes['NO_RECONOCIDA']
   }
 }

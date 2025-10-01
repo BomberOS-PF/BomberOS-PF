@@ -46,51 +46,19 @@ export class WhatsAppService {
         throw new Error(`Teléfono inválido para ${nombreValue}: ${telefonoValue}`)
       }
 
-      // Intentar enviar con botones interactivos primero
-      let result
-      try {
-        // Opción 1: Usar Content Template con botones (si está configurado)
-        if (this.config.contentSid) {
-          result = await this.client.messages.create({
-            from: this.config.whatsappNumber,
-            to: `whatsapp:${telefono}`,
-            contentSid: this.config.contentSid,
-            contentVariables: JSON.stringify({
-              '1': bombero.nombre || 'Bombero',
-              '2': incidente.tipo,
-              '3': new Date(incidente.fecha).toLocaleString('es-AR'),
-              '4': incidente.ubicacion,
-              '5': incidente.id
-            })
-          })
-          
-          logger.info('📱 Mensaje enviado con template y botones', {
-            contentSid: this.config.contentSid
-          })
-        } else {
-          throw new Error('ContentSid no configurado')
-        }
-      } catch (templateError) {
-        logger.warn('📱 Template con botones no disponible, usando mensaje simple', {
-          error: templateError.message
-        })
-        
-        // Opción 2: Mensaje simple con instrucciones claras
-        const mensaje = this.construirMensajeIncidenteConBotones(bombero, incidente)
-        
-        result = await this.client.messages.create({
-          from: this.config.whatsappNumber,
-          to: `whatsapp:${telefono}`,
-          body: mensaje
-        })
-      }
+      const mensaje = this.construirMensajeIncidente(bombero, incidente)
+      
+      const result = await this.client.messages.create({
+        from: this.config.whatsappNumber,
+        to: `whatsapp:${telefono}`,
+        body: mensaje
+      })
 
       logger.info('📱 WhatsApp enviado exitosamente', {
         bombero: nombreValue,
         telefono: telefono,
         messageSid: result.sid,
-        incidente: incidente.id || incidente.idIncidente,
-        conTemplate: !!this.config.contentSid
+        incidente: incidente.id
       })
 
       return { 
@@ -104,7 +72,7 @@ export class WhatsAppService {
         bombero: nombreValue,
         telefono: telefonoValue,
         error: error.message,
-        incidente: incidente.id || incidente.idIncidente
+        incidente: incidente.id
       })
 
       return { 
@@ -165,7 +133,7 @@ export class WhatsAppService {
   }
 
   /**
-   * Construir mensaje de notificación de incidente (versión simple)
+   * Construir mensaje de notificación de incidente
    */
   construirMensajeIncidente(bombero, incidente) {
     const fecha = new Date(incidente.fecha).toLocaleString('es-AR', {
@@ -193,39 +161,6 @@ Responde:
 ❌ *NO* - Si no puedes asistir
 
 ⏰ Se requiere respuesta urgente.
-
-_Cuerpo de Bomberos - Sistema BomberOS_`
-  }
-
-  /**
-   * Construir mensaje con botones visuales mejorados
-   */
-  construirMensajeIncidenteConBotones(bombero, incidente) {
-    const fecha = new Date(incidente.fecha).toLocaleString('es-AR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-
-    return `🚨 *ALERTA DE EMERGENCIA* 🚨
-
-Hola ${bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : 'Bombero'},
-
-Se ha reportado un incidente que requiere atención inmediata:
-
-📋 *Tipo:* ${incidente.tipo}
-📅 *Fecha/Hora:* ${fecha}
-📍 *Ubicación:* ${incidente.ubicacion}
-🆔 *Incidente #${incidente.id || 'N/A'}*
-
-🚨 *¿PUEDES ASISTIR?* 🚨
-
-🟢 Responde *SI* para CONFIRMAR
-🔴 Responde *NO* para DECLINAR
-
-⏰ *RESPUESTA URGENTE REQUERIDA*
 
 _Cuerpo de Bomberos - Sistema BomberOS_`
   }

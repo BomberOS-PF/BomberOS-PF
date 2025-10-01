@@ -130,7 +130,7 @@ import { DenuncianteService } from '../internal/services/denunciante.service.js'
 // --- Respuestas de incidentes ---
 import { RespuestaIncidenteService } from '../internal/services/respuesta-incidente.service.js'
 import { MySQLRespuestaIncidenteRepository } from '../internal/repositories/respuesta-incidente.repository.js'
-import { RespuestaIncidenteHandler } from '../handler/respuestas/handler.js' 
+import { RespuestaIncidenteHandler } from '../handler/respuestas/handler.js'
 
 export async function createServer(config) {
   try {

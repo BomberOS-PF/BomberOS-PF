@@ -1,23 +1,15 @@
 import { useState, useEffect } from 'react'
 import { apiRequest, API_URLS } from '../../config/api'
 import { User, AlertTriangle, User2, FileText, UsersIcon, CreditCard } from 'lucide-react'
+import '../DisenioFormulario/DisenioFormulario.css'
 import { BackToMenuButton } from '../Common/Button'
 
-const RegistrarRol = ({ onVolver, rol }) => {
+const RegistrarRol = ({ onVolver }) => {
   const [formData, setFormData] = useState({ nombreRol: '', descripcion: '' })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('')
 
-  useEffect(() => {
-    if (rol) {
-      setFormData({
-        nombreRol: rol.nombreRol || '',
-        descripcion: rol.descripcion || ''
-      })
-    }
-  }, [rol])
-  
   useEffect(() => {
     if (message) {
       const timer = setTimeout(() => setMessage(''), 3000)
@@ -97,7 +89,7 @@ const RegistrarRol = ({ onVolver, rol }) => {
         </span>
       </div>
 
-      <div className="card edge-to-edge shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
         <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <FileText />
           <strong>Registrar Rol</strong>
@@ -144,11 +136,8 @@ const RegistrarRol = ({ onVolver, rol }) => {
                 />
               </div>
 
-              <div className="d-flex justify-content-center align-items-center gap-3">
-                {onVolver && (
-                  <BackToMenuButton onClick={onVolver} />
-                )}
-                <button type="submit" className="btn btn-accept btn-lg btn-medium" disabled={loading}>
+              <div className="d-grid gap-3">
+                <button type="submit" className="btn btn-danger" disabled={loading}>
                   {loading ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -158,6 +147,9 @@ const RegistrarRol = ({ onVolver, rol }) => {
                     'Registrar Rol'
                   )}
                 </button>
+                {onVolver && (
+                  <BackToMenuButton onClick={onVolver} />
+                )}
               </div>
             </div>
           </form>

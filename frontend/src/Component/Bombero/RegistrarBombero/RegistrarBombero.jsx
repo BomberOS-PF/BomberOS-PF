@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api.js'
 import { User, Phone, Mail, Shield, UserPlus, AlertTriangle, Home, CreditCard, TriangleAlert, Bone, PillIcon, FileText } from 'lucide-react'
+import '../../DisenioFormulario/DisenioFormulario.css'
 import { BackToMenuButton } from '../../Common/Button.jsx'
-import Select from 'react-select'
 
 const RegistrarBombero = ({ onVolver }) => {
   const [formData, setFormData] = useState({
@@ -166,7 +166,7 @@ const RegistrarBombero = ({ onVolver }) => {
         </span>
       </div>
 
-      <div className="card edge-to-edge shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
         <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <FileText />
           <strong>Registrar Bombero</strong>
@@ -316,16 +316,13 @@ const RegistrarBombero = ({ onVolver }) => {
                   <Shield size={16} className="text-primary" />
                   Rango
                 </label>
-                <Select
-                  classNamePrefix="rs"
-                  inputId="rango"
-                  placeholder="Seleccione rango"
-                  isClearable
-                  isDisabled={loading}
-                  options={rangosDisponibles.map(r => ({ value: r.descripcion, label: r.descripcion }))}
-                  value={formData.rango ? { value: formData.rango, label: formData.rango } : null}
-                  onChange={(opt) => setFormData(prev => ({ ...prev, rango: opt ? opt.value : '' }))}
-                />
+                <select id="rango" className="text-dark form-select" value={formData.rango}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                ><option disabled value="">Seleccione rango</option>
+                  {rangosDisponibles.map(r => <option key={r.idRango} value={r.descripcion}>{r.descripcion}</option>)}
+                </select>
               </div>
 
               <div className="col-md-4 py-4">
@@ -356,16 +353,10 @@ const RegistrarBombero = ({ onVolver }) => {
                 <label htmlFor="grupoSanguineo" className="form-label text-dark fw-semibold d-flex align-items-center gap-2">
                   <PillIcon className="text-warning" />
                   Grupo Sanguíneo</label>
-                <Select
-                  classNamePrefix="rs"
-                  inputId="grupoSanguineo"
-                  placeholder="Seleccione grupo"
-                  isClearable
-                  isDisabled={loading}
-                  options={["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(gs => ({ value: gs, label: gs }))}
-                  value={formData.grupoSanguineo ? { value: formData.grupoSanguineo, label: formData.grupoSanguineo } : null}
-                  onChange={(opt) => setFormData(prev => ({ ...prev, grupoSanguineo: opt ? opt.value : '' }))}
-                />
+                <select id="grupoSanguineo" className="text-dark form-select" value={formData.grupoSanguineo} onChange={handleChange} required disabled={loading}>
+                  <option disabled value="">Seleccione grupo</option>
+                  {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(gs => <option key={gs} value={gs}>{gs}</option>)}
+                </select>
               </div>
 
               <div className="form-check form-switch mb-2">
@@ -457,37 +448,26 @@ const RegistrarBombero = ({ onVolver }) => {
                   <Shield className="text-primary" />
                   Rol
                 </label>
-                <Select
-                  classNamePrefix="rs"
-                  inputId="rolUsuario"
-                  placeholder="Seleccione rol"
-                  isClearable
-                  isDisabled={loading}
-                  options={rolesDisponibles.map(r => ({ value: String(r.idRol), label: r.nombreRol }))}
-                  value={
-                    formData.rolUsuario
-                      ? {
-                        value: String(formData.rolUsuario),
-                        label: rolesDisponibles.find(x => String(x.idRol) === String(formData.rolUsuario))?.nombreRol || ''
-                      }
-                      : null
-                  }
-                  onChange={(opt) => setFormData(prev => ({ ...prev, rolUsuario: opt ? opt.value : '' }))}
-                />
+                <select id="rolUsuario" className="text-dark form-select" value={formData.rolUsuario}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                ><option disabled value="">Seleccione rol</option>
+                  {rolesDisponibles.map(r => <option key={r.idRol} value={r.descripcion}>{r.nombreRol}</option>)}
+                </select>
               </div>
-            </div>
-            
-            <hr className="mb-4" />
-            
-            <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
-                {onVolver && (
-                  <BackToMenuButton onClick={onVolver} />
-                )}
-                <button type="submit" className="btn btn-accept btn-lg btn-medium" onClick={handleSubmit} disabled={loading}>
+
+              <div className="d-grid gap-3">
+                <button type="submit" className="btn btn-danger btn-lg" onClick={handleSubmit} disabled={loading}>
                   <UserPlus size={16} className="me-1" />
                   {loading ? 'Registrando...' : 'Registrar bombero'}
                 </button>
+                
+                {onVolver && (
+                  <BackToMenuButton onClick={onVolver} />
+                )}
               </div>
+            </div>
           </form>
         </div>
 

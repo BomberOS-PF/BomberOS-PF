@@ -269,37 +269,13 @@ export class IncidenteService extends IncidenteServiceInterface {
         return { success: false, message: 'No hay bomberos activos con teléfono válido', total: 0, exitosos: 0, fallidos: 0 }
       }
 
-      // Obtener ubicación real de la base de datos
-      let ubicacionReal = incidente.localizacion || incidente.descripcion || 'Ubicación no especificada'
-      
-      // Si hay idLocalizacion, intentar obtener la dirección real
-      if (incidente.idLocalizacion && !incidente.localizacion) {
-        try {
-          // Aquí deberías tener un método para obtener la localización por ID
-          // Por ahora usamos la descripción como ubicación si está disponible
-          ubicacionReal = incidente.descripcion || 'Ubicación por confirmar'
-        } catch (error) {
-          logger.warn('No se pudo obtener ubicación real', { idLocalizacion: incidente.idLocalizacion })
-        }
-      }
-
       const incidenteParaMensaje = {
-        id: incidente.idIncidente,
+        id: incidente.id,
         tipo: await this.mapearTipoIncidente(incidente.idTipoIncidente),
         fecha: incidente.fecha,
-        ubicacion: ubicacionReal,
+        ubicacion: incidente.localizacion || `Localización ID: ${incidente.idLocalizacion}`,
         descripcion: incidente.descripcion
       }
-
-      logger.info('📋 Datos del incidente para mensaje WhatsApp', {
-        incidenteOriginal: {
-          idIncidente: incidente.idIncidente,
-          localizacion: incidente.localizacion,
-          idLocalizacion: incidente.idLocalizacion,
-          descripcion: incidente.descripcion
-        },
-        incidenteParaMensaje
-      })
 
       const resultado = await this.whatsappService.notificarBomberosIncidente(bomberosActivos, incidenteParaMensaje)
 

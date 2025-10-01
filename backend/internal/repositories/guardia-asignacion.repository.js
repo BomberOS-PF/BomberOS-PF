@@ -99,28 +99,4 @@ export class MySQLGuardiaAsignacionRepository {
       }
     }
   }
-
-  async findByDniAndRange({ dni, start, end, idGrupo = null }) {
-  const conn = await getConnection()
-  if (idGrupo != null) {
-    const [rows] = await conn.execute(
-      `SELECT idAsignacion, idGrupo, fecha, dni, hora_desde, hora_hasta
-       FROM guardiaAsignacion
-       WHERE dni = ? AND idGrupo = ? AND fecha >= ? AND fecha < ?
-       ORDER BY fecha, hora_desde`,
-      [dni, idGrupo, start, end]
-    )
-    return rows
-  } else {
-    const [rows] = await conn.execute(
-      `SELECT idAsignacion, idGrupo, fecha, dni, hora_desde, hora_hasta
-       FROM guardiaAsignacion
-       WHERE dni = ? AND fecha >= ? AND fecha < ?
-       ORDER BY fecha, hora_desde`,
-      [dni, start, end]
-    )
-    return rows
-  }
-}
-
 }
