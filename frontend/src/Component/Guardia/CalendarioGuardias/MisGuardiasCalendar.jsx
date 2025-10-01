@@ -21,6 +21,14 @@ const addDays = (date, days) => {
   return d
 }
 
+const formatoFechaLarga = s => {
+  try {
+    const [y, m, d] = s.split('-').map(Number)
+    const date = new Date(y, (m || 1) - 1, d || 1)
+    return date.toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  } catch { return s }
+}
+
 // MisGuardias: color único y borde (rellena el casillero completo)
 const BG_FILL = 'rgba(240,128,128,0.35)'
 const BG_BORDER = '#b30000'
@@ -36,6 +44,9 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
   const [mensaje, setMensaje] = useState('')
   const [resumenPorFecha, setResumenPorFecha] = useState(new Map())
   const [cargandoGuardias, setCargandoGuardias] = useState(false)
+
+  // NUEVO: modal
+  const [modalFecha, setModalFecha] = useState(null)
 
   // refs
   const rootRef = useRef(null)
@@ -79,8 +90,8 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
     const map = new Map()
     for (const r of rows) {
       const f = (typeof r.fecha === 'string') ? r.fecha.slice(0, 10) : yyyyMmDd(new Date(r.fecha))
-      const desdeH = (r.hora_desde || r.desde || '').toString().slice(0, 5)
-      const hastaH = (r.hora_hasta || r.hasta || '').toString().slice(0, 5)
+      const desdeH = (r.hora_desde || r.desde || r.horaDesde || r.hora_inicio || r.horaInicio || r.inicio || '').toString().slice(0, 5)
+      const hastaH = (r.hora_hasta || r.hasta || r.horaHasta || r.hora_fin || r.horaFin || r.fin || '').toString().slice(0, 5)
       if (!f || !desdeH || !hastaH) continue
       if (!map.has(f)) map.set(f, [])
       map.get(f).push(`${desdeH}-${hastaH}`)
@@ -147,7 +158,7 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
     tooltipsRef.current.delete(fechaStr)
   }
 
-  // ===== badge "¡Hoy Guardia!" — MISMO estilo que tu snippet (solo clase, sin inline) =====
+  // ===== badge "¡Hoy Guardia!" — MISMO estilo (clase) =====
   const ensureTodayBadge = (overlayEl, show) => {
     if (!overlayEl) return
     const sel = '.hoy-guardia-badge'
@@ -156,7 +167,6 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
       if (!existing) {
         existing = document.createElement('div')
         existing.className = 'hoy-guardia-badge'
-        // Mantengo el pointer-events: none como en tu código
         existing.style.pointerEvents = 'none'
         existing.textContent = '¡Hoy Guardia!'
         overlayEl.appendChild(existing)
@@ -187,9 +197,8 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
       ov.style.borderRadius = '8px'
       ov.style.pointerEvents = 'none'
       ov.style.background = BG_FILL
-      ov.style.border = `1px solid ${BG_BORDER}`  // mismo grosor que Grupos
+      ov.style.border = `1px solid ${BG_BORDER}`
       ov.style.boxShadow = 'inset 0 0 0 1px rgba(255,255,255,.15)'
-      // No seteo z-index para que, al insertarlo primero, el número del día quede arriba
       frame.insertBefore(ov, frame.firstChild)
     } else {
       ov.style.background = BG_FILL
@@ -197,15 +206,12 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
       ov.style.boxShadow = 'inset 0 0 0 1px rgba(255,255,255,.15)'
     }
 
-    // clave para evitar recomposiciones idénticas
     const newKey = String((rangos || []).join('|'))
     if (ov.getAttribute('data-key') !== newKey) ov.setAttribute('data-key', newKey)
 
-    // Hoy: usa TU estilo del badge (clase .hoy-guardia-badge)
     const showBadge = fechaStr === hoyStr && !cellEl.classList.contains('fc-day-other') && (rangos && rangos.length)
     ensureTodayBadge(ov, showBadge)
 
-    // tooltips
     removeNativeTitles(cellEl)
     const tip = ensureTooltip(fechaStr)
     tip.textContent = formatearTooltip(rangos || [])
@@ -255,14 +261,11 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
     setCargandoGuardias(true)
 
     try {
-      // 1) fetch (meses que cubren la grilla visible)
       const resumen = await fetchBloqueVisible(startDate, endDate)
       setResumenPorFecha(resumen)
 
-      // 2) esperar a que FullCalendar dibuje la grilla actual
       await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)))
 
-      // 3) pintar SOLO las celdas visibles (incluye días de otros meses)
       pintarVisibles(resumen)
     } catch (e) {
       setMensaje(`Error al cargar mis guardias: ${e.message}`)
@@ -272,7 +275,8 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
     }
   }
 
-  // ===== render =====
+  const closeModal = () => setModalFecha(null)
+
   if (!dni) {
     return (
       <div className='container-fluid' ref={rootRef}>
@@ -332,13 +336,20 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
               showNonCurrentDates={true}
               height='100%'
 
+              // Click para abrir el modal con horarios
+              dateClick={arg => {
+                const f = arg.dateStr?.slice(0, 10)
+                if (!f) return
+                const rangos = resumenPorFecha.get(f)
+                if (rangos && rangos.length) setModalFecha(f)
+              }}
+
               // SIN events: pintamos por DOM para evitar parpadeos
               datesSet={arg => {
                 cargarYpintarRango(arg.start, arg.end)
               }}
 
               dayCellDidMount={info => {
-                // remover title nativo (usamos tooltip propio)
                 info.el.removeAttribute?.('title')
               }}
 
@@ -349,6 +360,74 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
               }}
             />
           </div>
+
+          {/* Modal — igual estilo que Guardias por Grupo, pero sólo horarios */}
+          {modalFecha && (() => {
+            const rangos = resumenPorFecha.get(modalFecha) || []
+            const items = rangos
+              .map(r => {
+                const [desde, hasta] = String(r).split('-')
+                return { desde, hasta }
+              })
+              .filter(it => it.desde && it.hasta)
+              .sort((a, b) => {
+                const t = s => {
+                  const [hh, mm] = String(s || '').split(':').map(n => parseInt(n, 10) || 0)
+                  return hh * 60 + mm
+                }
+                return t(a.desde) - t(b.desde)
+              })
+
+            return (
+              <>
+                <div
+                  className='modal-backdrop show'
+                  style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 1050 }}
+                  onClick={closeModal}
+                />
+                <div className='modal d-block' tabIndex='-1' role='dialog' style={{ zIndex: 1055 }}>
+                  <div className='modal-dialog modal-dialog-centered modal-lg' role='document'>
+                    <div className='modal-content modal-content-white'>
+                      <div className='bg-danger modal-header'>
+                        <h5 className='modal-title text-white'>Guardias — {formatoFechaLarga(modalFecha)}</h5>
+                        <button type='button' className='btn-close' aria-label='Cerrar' onClick={closeModal} />
+                      </div>
+                      <div className='modal-body'>
+                        {items.length === 0 ? (
+                          <div className='text-muted'>No tenés guardias para esta fecha.</div>
+                        ) : (
+                          
+                          <div className='table-responsive'>
+                            <strong className='me-2'>Tus guardias</strong>
+                            <table className='table table-sm align-middle mb-0'>
+
+                              <thead>
+                                <tr>
+                                  <th style={{ width: '50%' }}>Desde</th>
+                                  <th style={{ width: '50%' }}>Hasta</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {items.map((it, idx) => (
+                                  <tr key={`it-${idx}`}>
+                                    <td>{it.desde}</td>
+                                    <td>{it.hasta}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                      <div className='modal-footer'>
+                        <button type='button' className='btn btn-secondary' onClick={closeModal}>Cerrar</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )
+          })()}
 
           <div className='mt-3 d-flex align-items-center gap-2'>
             <span
