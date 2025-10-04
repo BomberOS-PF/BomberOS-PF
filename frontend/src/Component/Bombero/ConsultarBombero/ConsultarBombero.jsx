@@ -57,6 +57,31 @@ const ConsultarBombero = ({ onVolver }) => {
 
     setLoadingAccion(true)
     try {
+      // Si hay un nuevo archivo de ficha médica, subirlo primero
+      if (datosActualizados.fichaMedica && datosActualizados.fichaMedica instanceof File) {
+        try {
+          const formDataFile = new FormData()
+          formDataFile.append('fichaMedica', datosActualizados.fichaMedica)
+          
+          const uploadResponse = await fetch(`/api/bomberos/${dni}/ficha-medica`, {
+            method: 'POST',
+            body: formDataFile
+          })
+          
+          if (uploadResponse.ok) {
+            // El PDF se guardó en la BD, solo marcar que tiene ficha médica
+            datosActualizados.fichaMedica = 1
+            // NO enviar fichaMedicaArchivo en el PUT para no sobrescribir lo que guardó el POST
+            delete datosActualizados.fichaMedicaArchivo
+          } else {
+            const errorText = await uploadResponse.text()
+            console.error('Error al subir ficha médica:', errorText)
+          }
+        } catch (uploadError) {
+          console.error('Error al subir archivo:', uploadError)
+        }
+      }
+
       const url = API_URLS.bomberos.update(dni)
       const res = await fetch(url, {
         method: 'PUT',

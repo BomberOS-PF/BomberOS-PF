@@ -103,6 +103,20 @@ import { MySQLCaracteristicasLugarRepository } from '../internal/repositories/ca
 import { AreaAfectadaService } from '../internal/services/areaAfectada.service.js'
 import { CaracteristicasLugarService } from '../internal/services/caracteristicasLugar.service.js'
 
+// --- Catálogos Incendio Estructural ---
+import { MySQLTipoTechoRepository } from '../internal/repositories/tipoTecho.repository.js'
+import { TipoTechoService } from '../internal/services/tipoTecho.service.js'
+import { obtenerTiposTecho, obtenerTipoTechoPorId } from '../handler/tipoTecho/handler.js'
+
+import { MySQLTipoAberturaRepository } from '../internal/repositories/tipoAbertura.repository.js'
+import { TipoAberturaService } from '../internal/services/tipoAbertura.service.js'
+import { obtenerTiposAbertura, obtenerTipoAberturaPorId } from '../handler/tipoAbertura/handler.js'
+
+// --- Catálogos Rescate ---
+import { MySQLLugarRescateRepository } from '../internal/repositories/lugarRescate.repository.js'
+import { LugarRescateService } from '../internal/services/lugarRescate.service.js'
+import { obtenerLugaresRescate, obtenerLugarRescatePorId } from '../handler/lugarRescate/handler.js'
+
 // --- Seguridad de cuenta (recuperar/restablecer) ---
 import { MySQLTokenRepository } from '../internal/repositories/token.repository.js'
 import { TokenService } from '../internal/services/token.service.js'
@@ -224,6 +238,17 @@ export async function createServer(config) {
       caracteristicasLugarService,
       areaAfectadaService
     )
+
+    // Catálogos Incendio Estructural
+    const tipoTechoRepository = new MySQLTipoTechoRepository()
+    const tipoTechoService = new TipoTechoService(tipoTechoRepository)
+    
+    const tipoAberturaRepository = new MySQLTipoAberturaRepository()
+    const tipoAberturaService = new TipoAberturaService(tipoAberturaRepository)
+
+    // Catálogos Rescate
+    const lugarRescateRepository = new MySQLLugarRescateRepository()
+    const lugarRescateService = new LugarRescateService(lugarRescateRepository)
 
     const tokenService = new TokenService(tokenRepository, usuarioRepository)
 
@@ -367,6 +392,13 @@ export async function createServer(config) {
       validarTokenHandler,
       restablecerClaveHandler,
       respuestaIncidenteHandler,
+
+      // Catálogos Incendio Estructural
+      tipoTechoService,
+      tipoAberturaService,
+
+      // Catálogos Rescate
+      lugarRescateService,
 
       // infra
       dbConnection,

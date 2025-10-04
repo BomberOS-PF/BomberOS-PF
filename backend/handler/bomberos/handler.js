@@ -136,8 +136,9 @@ async getAllBomberos(req, res) {
         responseTime: `${Date.now() - req.startTime}ms`
       })
       
-      const status = error.message.includes('Ya existe') ? 409 : 
-                     error.message.includes('requerido') || error.message.includes('inválido') ? 400 : 500
+      // El repository ya maneja los errores y devuelve mensajes amigables
+      const status = error.message.includes('Ya existe') || error.message.includes('DNI') ? 409 :
+                     error.message.includes('obligatorio') || error.message.includes('requerido') ? 400 : 500
       
       res.status(status).json({
         success: false,
@@ -177,9 +178,11 @@ async getAllBomberos(req, res) {
         responseTime: `${Date.now() - req.startTime}ms`
       })
       
+      // Mapear errores técnicos a mensajes user-friendly
+      // El repository ya maneja los errores y devuelve mensajes amigables
       const status = error.message.includes('no encontrado') ? 404 :
                      error.message.includes('Ya existe') ? 409 :
-                     error.message.includes('requerido') || error.message.includes('inválido') ? 400 : 500
+                     error.message.includes('obligatorio') || error.message.includes('requerido') ? 400 : 500
       
       res.status(status).json({
         success: false,
@@ -277,6 +280,96 @@ async getAllBomberos(req, res) {
     } catch (error) {
       logger.error('Error al crear bombero + usuario', { error: error.message })
       res.status(500).json({ success: false, message: error.message })
+    }
+  }
+
+  /**
+   * Subir ficha médica para un bombero (almacena en BD como BLOB)
+   */
+  async uploadFichaMedica(req, res) {
+    try {
+      const { dni } = req.params
+      
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'No se proporcionó ningún archivo'
+        })
+      }
+
+      // Validar que sea un PDF
+      if (req.file.mimetype !== 'application/pdf') {
+        return res.status(400).json({
+          success: false,
+          message: 'Solo se permiten archivos PDF'
+        })
+      }
+
+      logger.info('Subiendo ficha médica a BD', { dni, nombreArchivo: req.file.originalname })
+
+      // Guardar el PDF en la base de datos como BLOB
+      const fechaActual = new Date().toISOString().split('T')[0]
+      await this.bomberoService.actualizarFichaMedica(
+        dni,
+        req.file.buffer,  // Buffer del archivo
+        req.file.originalname,  // Nombre original del archivo
+        fechaActual
+      )
+
+      res.status(200).json({
+        success: true,
+        message: 'Ficha médica subida exitosamente',
+        data: {
+          size: req.file.size,
+          fecha: fechaActual
+        }
+      })
+    } catch (error) {
+      logger.error('Error al subir ficha médica', {
+        dni: req.params.dni,
+        error: error.message
+      })
+      res.status(500).json({
+        success: false,
+        message: error.message
+      })
+    }
+  }
+
+  /**
+   * Descargar ficha médica de un bombero (desde BD)
+   */
+  async downloadFichaMedica(req, res) {
+    try {
+      const { dni } = req.params
+
+      logger.info('Descargando ficha médica desde BD', { dni })
+
+      const fichaMedica = await this.bomberoService.obtenerFichaMedica(dni)
+      
+      if (!fichaMedica) {
+        return res.status(404).json({
+          success: false,
+          message: 'Ficha médica no encontrada'
+        })
+      }
+
+      // Configurar headers para descarga de PDF
+      res.setHeader('Content-Type', 'application/pdf')
+      res.setHeader('Content-Disposition', `inline; filename="ficha-medica-${dni}.pdf"`)
+      res.setHeader('Content-Length', fichaMedica.pdf.length)
+
+      // Enviar el PDF
+      res.send(fichaMedica.pdf)
+    } catch (error) {
+      logger.error('Error al descargar ficha médica', {
+        dni: req.params.dni,
+        error: error.message
+      })
+      res.status(500).json({
+        success: false,
+        message: error.message
+      })
     }
   }
 }

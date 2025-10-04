@@ -28,6 +28,7 @@ const VehiculosFormList = ({
   }, [value, onChange, getEmptyItem])
 
   const eliminar = useCallback((index) => {
+    if (!window.confirm('¿Eliminar este vehículo del formulario?')) return
     const arr = (Array.isArray(value) ? value : []).filter((_, i) => i !== index)
     onChange?.(arr)
   }, [value, onChange])

@@ -17,7 +17,8 @@ export class RescateService {
       // Actualizar rescate existente
       await this.rescateRepository.actualizar(rescateExistente.idRescate, {
         descripcion: datos.descripcion,
-        lugar: datos.lugar
+        lugar: datos.lugar,
+        otroLugar: datos.otroLugar
       })
       idRescate = rescateExistente.idRescate
       logger.info('🔄 Rescate actualizado', { idRescate })
@@ -26,7 +27,8 @@ export class RescateService {
       const resultado = await this.rescateRepository.guardar({
         idIncidente: datos.idIncidente,
         descripcion: datos.descripcion,
-        lugar: datos.lugar
+        lugar: datos.lugar,
+        otroLugar: datos.otroLugar
       })
       idRescate = resultado.idRescate
       logger.info('➕ Nuevo rescate creado', { idRescate })
