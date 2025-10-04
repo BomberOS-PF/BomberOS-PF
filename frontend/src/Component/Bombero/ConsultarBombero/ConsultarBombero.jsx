@@ -214,7 +214,7 @@ const ConsultarBombero = ({ onVolver }) => {
                               .sort((a, b) => (a.apellido || '').localeCompare(b.apellido || ''))
                               .map((bombero) => (
                                 <tr key={bombero.dni}>
-                                  <td className="border-end px-3">{bombero.nombre} {bombero.apellido}</td>
+                                  <td className="border-end px-3">{bombero.apellido} {bombero.nombre}</td>
                                   <td className="border-end px-3">{bombero.dni}</td>
                                   <td className="border-end px-2">{bombero.telefono || 'N/A'}</td>
                                   <td className="border-end">
