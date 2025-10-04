@@ -49,10 +49,13 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
   })
 
   const [loading, setLoading] = useState(false)
+  const [notificando, setNotificando] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [errors, setErrors] = useState({})
   const [damnificadosErrors, setDamnificadosErrors] = useState([])
+  const [opcionesTipoTecho, setOpcionesTipoTecho] = useState([])
+  const [opcionesTipoAbertura, setOpcionesTipoAbertura] = useState([])
   const toastRef = useRef(null)
 
   useEffect(() => {
@@ -76,6 +79,36 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
     }
   }, [datosPrevios])
 
+  // Cargar catálogos desde el backend
+  useEffect(() => {
+    const cargarCatalogos = async () => {
+      try {
+        const [tiposTecho, tiposAbertura] = await Promise.all([
+          apiRequest('/api/tipos-techo'),
+          apiRequest('/api/tipos-abertura')
+        ])
+        
+        setOpcionesTipoTecho(tiposTecho.data || [])
+        setOpcionesTipoAbertura(tiposAbertura.data || [])
+      } catch (error) {
+        console.error('Error al cargar catálogos:', error)
+        setErrorMsg('Error al cargar opciones de formulario')
+      }
+    }
+    
+    cargarCatalogos()
+  }, [])
+
+  useEffect(() => {
+    if (successMsg || errorMsg) {
+      const timer = setTimeout(() => {
+        setSuccessMsg('')
+        setErrorMsg('')
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [successMsg, errorMsg])
+
   // Autosave con debounce
   useEffect(() => {
     const t = setTimeout(() => {
@@ -83,21 +116,6 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
     }, 300)
     return () => clearTimeout(t)
   }, [formData, storageKey])
-
-  const opcionesTipoTecho = [
-    { value: '1', label: 'Chapa aislada' },
-    { value: '2', label: 'Chapa metálica' },
-    { value: '3', label: 'Madera/paja' },
-    { value: '4', label: 'Teja' },
-    { value: '5', label: 'Yeso' }
-  ]
-
-  const opcionesTipoAbertura = [
-    { value: '1', label: 'Acero/Hierro' },
-    { value: '2', label: 'Aluminio' },
-    { value: '3', label: 'Madera' },
-    { value: '4', label: 'Plástico' }
-  ]
 
   // Handlers de inputs
   const handleChange = (e) => {
@@ -179,6 +197,63 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
     setErrors(newErrors)
     setDamnificadosErrors(damErrors)
     return Object.keys(newErrors).length === 0 && damErrors.every((e, i) => damnificadoVacio(formData.damnificados[i]) || Object.keys(e).length === 0)
+  }
+
+  const notificarBomberos = async () => {
+    const idIncidente = datosPrevios.idIncidente || datosPrevios.id
+    
+    if (!idIncidente) {
+      alert('❌ No se puede notificar: el incidente aún no ha sido guardado')
+      return
+    }
+
+    const confirmar = window.confirm(
+      `¿Deseas notificar a los bomberos sobre el Incidente #${idIncidente}?\n\n` +
+      `Se enviará una alerta por WhatsApp a todos los bomberos activos.`
+    )
+
+    if (!confirmar) return
+
+    setNotificando(true)
+
+    try {
+      const resp = await fetch(`/api/incidentes/${idIncidente}/notificar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        }
+      })
+
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}))
+        throw new Error(errorData.message || `Error ${resp.status}: ${resp.statusText}`)
+      }
+
+      const resultado = await resp.json()
+
+      if (resultado.success) {
+        const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = resultado.data
+        alert(`🚨 ALERTA ENVIADA POR WHATSAPP ✅
+        
+📊 Resumen:
+• Total bomberos: ${totalBomberos}
+• Notificaciones exitosas: ${notificacionesExitosas}
+• Notificaciones fallidas: ${notificacionesFallidas}
+
+Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
+        
+        setSuccessMsg('✅ Notificación enviada exitosamente a los bomberos')
+      } else {
+        throw new Error(resultado.message || 'Error al enviar notificación')
+      }
+    } catch (error) {
+      console.error('❌ Error al notificar por WhatsApp:', error)
+      alert(`❌ Error al notificar por WhatsApp: ${error.message}`)
+      setErrorMsg(`Error al notificar: ${error.message}`)
+    } finally {
+      setNotificando(false)
+    }
   }
 
   const handleFinalizar = async () => {
@@ -309,7 +384,7 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
                 <label htmlFor="tipoTecho" className="form-label text-dark d-flex align-items-center gap-2">Tipo de techo *</label>
                 <Select
                   options={opcionesTipoTecho}
-                  value={opcionesTipoTecho.find(opt => opt.value === formData.tipoTecho) || null}
+                  value={opcionesTipoTecho.find(opt => String(opt.value) === String(formData.tipoTecho)) || null}
                   onChange={(opcion) =>
                     setFormData(prev => ({ ...prev, tipoTecho: opcion ? opcion.value : '' }))
                   }
@@ -323,7 +398,7 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
                 <label htmlFor="tipoAbertura" className="form-label text-dark d-flex align-items-center gap-2">Tipo de abertura *</label>
                 <Select
                   options={opcionesTipoAbertura}
-                  value={opcionesTipoAbertura.find(o => o.value === String(formData.tipoAbertura)) || null}
+                  value={opcionesTipoAbertura.find(o => String(o.value) === String(formData.tipoAbertura)) || null}
                   onChange={(opt) =>
                     setFormData(prev => ({ ...prev, tipoAbertura: opt ? opt.value : '' }))
                   }
@@ -354,11 +429,28 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
             />
 
             <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
-              <button type="button" className="btn btn-accept btn-medium btn-lg btn-sm-custom" disabled={loading} onClick={() => handleFinalizar()}>
+              <button type="button" className="btn btn-accept btn-medium" disabled={loading || notificando} onClick={() => handleFinalizar()}>
                 {loading ? 'Enviando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
               </button>
-              <button type="button" className="btn btn-back btn-medium btn-lg btn-sm-custom" onClick={guardarLocalmente} disabled={loading}>
-                Guardar y continuar después
+              <button 
+                type="button" 
+                className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2" 
+                onClick={notificarBomberos} 
+                disabled={loading || notificando}
+              >
+                {notificando ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    Notificando...
+                  </>
+                ) : (
+                  <>
+                    <i className='bi bi-megaphone'></i> Notificar Bomberos
+                  </>
+                )}
+              </button>
+              <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
+                Continuar después
               </button>
             </div>
 

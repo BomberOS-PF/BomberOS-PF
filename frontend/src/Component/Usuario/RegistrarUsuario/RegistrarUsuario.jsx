@@ -37,11 +37,11 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuar
   }, [usuario])
 
   useEffect(() => {
-    if (messageType === 'error') {
-      const timer = setTimeout(() => setMessage(''), 2000)
+    if (message) {
+      const timer = setTimeout(() => setMessage(''), 3000)
       return () => clearTimeout(timer)
     }
-  }, [message, messageType])
+  }, [message])
 
   const validatePasswordStrength = (password) => {
     if (!password) {
@@ -124,9 +124,6 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuar
       if (emailRepetido) {
         setMessage('❌ Correo electrónico ya registrado')
         setMessageType('error')
-
-        // Limpiar mensaje tras unos segundos
-        setTimeout(() => setMessage(''), 2000)
       }
     }
   }
@@ -161,12 +158,8 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuar
         })
 
         if (response.success) {
-          setMessage('✅ Usuario actualizado correctamente. Volviendo al listado...')
+          setMessage('✅ Usuario actualizado correctamente')
           setMessageType('success')
-
-          setTimeout(() => {
-            if (onVolver) onVolver()
-          }, 1500)
         } else {
           throw new Error(response.message || 'Error al actualizar usuario')
         }
@@ -194,10 +187,6 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuar
             email: '',
             rol: ''
           })
-
-          setTimeout(() => {
-            if (onVolver) onVolver()
-          }, 1500)
         } else {
           throw new Error(response.message || 'Error al crear usuario')
         }
@@ -232,6 +221,11 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuar
         </div>
 
         <div className="card-body">
+          {message && (
+            <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'} mb-3`}>
+              {message}
+            </div>
+          )}
           <form onSubmit={handleSubmit}>
             <div className="row mb-3">
               <div className="col-md-6 py-4">
@@ -318,6 +312,15 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuar
                   <Shield className="text-primary"
                   />Rol
                 </label>
+                {/* Campo oculto para validación HTML5 */}
+                <input
+                  type="text"
+                  value={formData.rol || ''}
+                  required
+                  style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
+                  tabIndex={-1}
+                  onChange={() => {}}
+                />
                 <Select
                   classNamePrefix="rs"
                   inputId="rol"

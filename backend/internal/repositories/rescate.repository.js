@@ -11,13 +11,14 @@ export class MySQLRescateRepository {
   async guardar(rescate) {
     const query = `
       INSERT INTO ${this.table}
-        (idIncidente, descripcion, lugar)
-      VALUES (?, ?, ?)
+        (idIncidente, descripcion, lugar, otroLugar)
+      VALUES (?, ?, ?, ?)
     `
     const values = [
       rescate.idIncidente,
       rescate.descripcion ?? null,
-      rescate.lugar ?? null
+      rescate.lugar ?? null,
+      rescate.otroLugar ?? null
     ]
     const conn = await getConnection()
     try {
@@ -47,12 +48,13 @@ export class MySQLRescateRepository {
   async actualizar(idRescate, rescate) {
     const query = `
       UPDATE ${this.table} 
-      SET descripcion = ?, lugar = ?
+      SET descripcion = ?, lugar = ?, otroLugar = ?
       WHERE idRescate = ?
     `
     const values = [
       rescate.descripcion ?? null,
       rescate.lugar ?? null,
+      rescate.otroLugar ?? null,
       idRescate
     ]
     const conn = await getConnection()

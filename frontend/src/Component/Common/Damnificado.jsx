@@ -38,6 +38,7 @@ const DamnificadosForm = ({ value = [], onChange, className = '', title = 'Perso
     }, [value, onChange])
 
     const eliminar = useCallback((index) => {
+        if (!window.confirm('¿Eliminar este damnificado del formulario?')) return
         const copia = (Array.isArray(value) ? value : []).filter((_, i) => i !== index)
         onChange?.(copia)
     }, [value, onChange])

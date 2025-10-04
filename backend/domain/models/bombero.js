@@ -149,23 +149,33 @@ export class Bombero {
 
   // Serialización para persistencia
   toDatabase() {
+    // Validar campos obligatorios antes de serializar
+    if (!this._dni) throw new Error('DNI es obligatorio')
+    if (!this._nombre) throw new Error('Nombre es obligatorio')
+    if (!this._apellido) throw new Error('Apellido es obligatorio')
+    if (!this._rango?.id) throw new Error('Rango es obligatorio')
+    if (!this._email) throw new Error('Email es obligatorio')
+    if (!this._telefono) throw new Error('Teléfono es obligatorio')
+    if (!this._domicilio) throw new Error('Domicilio es obligatorio')
+    if (!this._grupoSanguineo) throw new Error('Grupo sanguíneo es obligatorio')
+    
     return {
       dni: this._dni,
       nombre: this._nombre,
       apellido: this._apellido,
-      legajo: this._legajo,
+      legajo: this._legajo || null, // Opcional
       antiguedad: this._antiguedad,
-      idRango: this._rango?.id,
-      correo: this._email?.toString(),
-      telefono: this._telefono?.toString(),
-      esDelPlan: this._esPlan,
-      fichaMedica: this._fichaMedica,
-      fichaMedicaArchivo: this._fichaMedicaArchivo,
-      fechaFichaMedica: this._fechaFichaMedica,
-      aptoPsicologico: this._aptoPsicologico,
-      domicilio: this._domicilio?.toString(),
-      grupoSanguineo: this._grupoSanguineo?.toString(),
-      idUsuario: this._idUsuario
+      idRango: this._rango.id,
+      correo: this._email.toString(),
+      telefono: this._telefono.toString(),
+      esDelPlan: Boolean(this._esPlan),
+      fichaMedica: this._fichaMedica || null, // Opcional
+      fichaMedicaArchivo: this._fichaMedicaArchivo || null, // Opcional
+      fechaFichaMedica: this._fechaFichaMedica || null, // Opcional
+      aptoPsicologico: Boolean(this._aptoPsicologico),
+      domicilio: this._domicilio.toString(),
+      grupoSanguineo: this._grupoSanguineo.toString(),
+      idUsuario: this._idUsuario || null // Opcional en actualizaciones
     }
   }
 

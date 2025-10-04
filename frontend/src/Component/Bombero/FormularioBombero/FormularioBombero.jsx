@@ -61,7 +61,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
         esDelPlan: datosIniciales.esDelPlan ?? datosIniciales.es_del_plan ?? prev.esDelPlan ?? false,
         aptoPsicologico: datosIniciales.aptoPsicologico ?? prev.aptoPsicologico ?? true,
         grupoSanguineo: datosIniciales.grupoSanguineo ?? datosIniciales.grupo_sanguineo ?? prev.grupoSanguineo,
-        fichaMedica: datosIniciales.fichaMedicaArchivo ?? datosIniciales.ficha_medica_archivo ?? prev.fichaMedica,
+        fichaMedica: datosIniciales.fichaMedica ?? datosIniciales.ficha_medica ?? prev.fichaMedica,
         fichaMedicaArchivo: datosIniciales.fichaMedicaArchivo ?? datosIniciales.ficha_medica_archivo ?? prev.fichaMedicaArchivo,
         fechaFichaMedica: datosIniciales.fechaFichaMedica ?? datosIniciales.fecha_ficha_medica ?? prev.fechaFichaMedica,
         idUsuario: datosIniciales.idUsuario ?? datosIniciales.id_usuario ?? prev.idUsuario
@@ -94,10 +94,9 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
       esDelPlan: formData.esDelPlan,
       aptoPsicologico: formData.aptoPsicologico,
       grupoSanguineo: formData.grupoSanguineo,
-      fichaMedica: formData.fichaMedica ? 1 : null,
-      fichaMedicaArchivo: formData.fichaMedica
-        ? (typeof formData.fichaMedica === 'string' ? formData.fichaMedica : formData.fichaMedica.name)
-        : null,
+      // Si es un File object (nuevo archivo), pasarlo directamente para que ConsultarBombero lo suba
+      // Si no, solo enviar el flag booleano
+      fichaMedica: formData.fichaMedica instanceof File ? formData.fichaMedica : (formData.fichaMedica ? 1 : null),
       fechaFichaMedica: formData.fechaFichaMedica || null,
       idUsuario: formData.idUsuario || null
     }
@@ -312,6 +311,15 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
                 <Shield className="text-primary" />
                 Rango
               </label>
+              {/* Campo oculto para validación HTML5 */}
+              <input
+                type="text"
+                value={formData.rango || ''}
+                required={!soloLectura}
+                style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
+                tabIndex={-1}
+                onChange={() => {}}
+              />
               <Select
                 classNamePrefix="rs"
                 inputId="rango"
@@ -354,30 +362,59 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
                 Ficha médica (PDF)
               </label>
 
-              {formData.fichaMedicaArchivo && typeof formData.fichaMedicaArchivo === 'string' ? (
-                <div className="d-flex align-items-center justify-content-between border rounded p-2 bg-light">
-                  <small className="text-muted me-2" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {formData.fichaMedicaArchivo}
-                  </small>
-                  {!soloLectura && (
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-danger"
-                      onClick={() => {
-                        const confirmar = window.confirm('¿Eliminar la ficha médica actual? Podrás subir una nueva.')
-                        if (confirmar) {
-                          setFormData(prev => ({
-                            ...prev,
-                            fichaMedica: null,
-                            fichaMedicaArchivo: null
-                          }))
-                        }
-                      }}
-                      title="Eliminar archivo"
-                    >
-                      ❌
-                    </button>
-                  )}
+              {formData.fichaMedica && !(formData.fichaMedica instanceof File) ? (
+                <div>
+                  <div className="d-flex align-items-center gap-2" style={{ minWidth: 0 }}>
+                    <div className="flex-grow-1 border rounded p-2 bg-light" style={{ minWidth: 0, overflow: 'hidden' }}>
+                      <small className="text-muted" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                        📄 {formData.fichaMedicaArchivo || 'Ficha médica disponible'}
+                      </small>
+                    </div>
+                    <div className="d-flex gap-2" style={{ flexShrink: 0 }}>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(`/api/bomberos/${formData.dni}/ficha-medica`)
+                            if (response.ok) {
+                              const blob = await response.blob()
+                              const url = window.URL.createObjectURL(blob)
+                              window.open(url, '_blank')
+                              setTimeout(() => window.URL.revokeObjectURL(url), 100)
+                            } else {
+                              alert('Error al descargar la ficha médica')
+                            }
+                          } catch (error) {
+                            console.error('Error:', error)
+                            alert('Error al descargar la ficha médica')
+                          }
+                        }}
+                        title="Ver/Descargar PDF"
+                      >
+                        <i className="bi bi-download"></i>
+                      </button>
+                      {!soloLectura && (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => {
+                            const confirmar = window.confirm('¿Eliminar la ficha médica actual? Podrás subir una nueva.')
+                            if (confirmar) {
+                              setFormData(prev => ({
+                                ...prev,
+                                fichaMedica: null,
+                                fichaMedicaArchivo: null
+                              }))
+                            }
+                          }}
+                          title="Eliminar archivo"
+                        >
+                          <i className="bi bi-trash"></i>
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <input
@@ -410,6 +447,15 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
                 <PillIcon className="text-warning" />
                 Grupo Sanguíneo
               </label>
+              {/* Campo oculto para validación HTML5 */}
+              <input
+                type="text"
+                value={formData.grupoSanguineo || ''}
+                required={!soloLectura}
+                style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
+                tabIndex={-1}
+                onChange={() => {}}
+              />
               <Select
                 classNamePrefix="rs"
                 inputId="grupoSanguineo"
