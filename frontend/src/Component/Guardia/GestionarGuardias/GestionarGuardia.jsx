@@ -926,8 +926,8 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                 <div className="modal fade show d-block modal-backdrop-custom" tabIndex="-1">
                   <div className="modal-dialog">
                     <div className="modal-content modal-content-white">
-                      <div className="modal-header">
-                        <h5 className="modal-title text-black">Confirmar guardado</h5>
+                      <div className="bg-danger modal-header">
+                        <h5 className="modal-title text-white">Confirmar guardado</h5>
                         <button type="button" className="btn-close" onClick={() => setModalConfirmarGuardar(false)}></button>
                       </div>
                       <div className="modal-body">
@@ -937,9 +937,89 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                         <button
                           className="btn btn-danger"
                           onClick={async () => {
-                            // ... (misma lógica de guardar del modal)
-                            // se mantiene igual; solo se movieron estilos al CSS
-                            // (tu implementación original sigue acá)
+                            // 1) Consolido por DNI antes de recalcular bloques
+                            const bomberosNormalizados = mergeByDni(bomberosEditados)
+
+                            // 2) Recalculo bloques (por solape en tiempo)
+                            const bomberosOrdenados = [...bomberosNormalizados].sort(
+                              (a, b) => a.desde.localeCompare(b.desde)
+                            )
+
+                            const nuevosBloques = []
+                            let bloqueActual = {
+                              start: bomberosOrdenados[0].desde,
+                              end: bomberosOrdenados[0].hasta,
+                              bomberos: [bomberosOrdenados[0]]
+                            }
+
+                            for (let i = 1; i < bomberosOrdenados.length; i++) {
+                              const b = bomberosOrdenados[i]
+                              if (b.desde > bloqueActual.end) {
+                                nuevosBloques.push({ ...bloqueActual, bomberos: mergeByDni(bloqueActual.bomberos) })
+                                bloqueActual = { start: b.desde, end: b.hasta, bomberos: [b] }
+                              } else {
+                                if (b.hasta > bloqueActual.end) bloqueActual.end = b.hasta
+                                bloqueActual.bomberos.push(b)
+                              }
+                            }
+                            nuevosBloques.push({ ...bloqueActual, bomberos: mergeByDni(bloqueActual.bomberos) })
+
+                            // 3) Construyo 'merged' completo de la UI
+                            const fechaBase = new Date(eventoSeleccionado.start)
+                            const sinEvento = eventos.filter((ev) => ev.id !== eventoSeleccionado.id)
+
+                            const nuevosEventos = nuevosBloques.map((bloque, idx) => {
+                              const [hStart, mStart] = bloque.start.split(':').map(Number)
+                              const [hEnd, mEnd] = bloque.end.split(':').map(Number)
+                              return {
+                                id: `${eventoSeleccionado.id}-split-${idx}-${Date.now()}`,
+                                title: '',
+                                start: new Date(
+                                  fechaBase.getFullYear(),
+                                  fechaBase.getMonth(),
+                                  fechaBase.getDate(),
+                                  hStart, mStart
+                                ),
+                                end: new Date(
+                                  fechaBase.getFullYear(),
+                                  fechaBase.getMonth(),
+                                  fechaBase.getDate(),
+                                  hEnd, mEnd
+                                ),
+                                backgroundColor: '#f08080',
+                                borderColor: '#b30000',
+                                textColor: 'transparent',
+                                allDay: false,
+                                extendedProps: { bomberos: mergeByDni(bloque.bomberos) }
+                              }
+                            })
+
+                            const merged = fusionarEventos([...sinEvento, ...nuevosEventos])
+
+                            // 4) UI
+                            setEventos(merged)
+
+                            // 5) Persisto TODO el día consolidado (por DNI)
+                            const fechaStr = yyyyMmDd(fechaBase)
+                            const asignacionesDia = asignacionesDelDiaDesdeEventos(merged, fechaStr)
+
+                            try {
+                              await apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
+                                method: 'PUT',
+                                body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDia })
+                              })
+                              setMensaje('Cambios guardados para ese día con exito')
+                              const api = calendarRef.current?.getApi()
+                              if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
+                              setTimeout(() => setMensaje(''), 3000)
+                            } catch (e) {
+                              console.error(e)
+                              setMensaje(`Error al guardar: ${e.message}`)
+                              setTimeout(() => setMensaje(''), 5000)
+                            }
+
+                            setModalConfirmarGuardar(false)
+                            setModalAbierto(false)
                           }}
                         >
                           Aceptar
@@ -955,11 +1035,11 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
           </div>
         </div>
         <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
-            <BackToMenuButton onClick={onVolver} />
-            <button className="btn btn-accept btn-lg btn-medium" onClick={asignarGuardia} disabled={guardando}>
-              {guardando ? 'Guardando…' : 'Guardar'}
-            </button>
-          </div>
+          <BackToMenuButton onClick={onVolver} />
+          <button className="btn btn-accept btn-lg btn-medium" onClick={asignarGuardia} disabled={guardando}>
+            {guardando ? 'Guardando…' : 'Guardar'}
+          </button>
+        </div>
       </div>
     </div>
   )
