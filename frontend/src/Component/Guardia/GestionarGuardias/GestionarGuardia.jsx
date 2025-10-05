@@ -598,72 +598,83 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
 
                 <label className="mt-2">Desde:</label>
                 <div className="d-flex gap-3">
-                  <Select
-                    options={horas}
-                    value={
-                      horaDesde
-                        ? { label: horaDesde.split(':')[0], value: horaDesde.split(':')[0] }
-                        : null
-                    }
-                    onChange={(selected) => {
-                      const nuevo = selected?.value || ''
-                      setHoraDesde(`${nuevo}:${horaDesde.split(':')[1] || '00'}`)
-                    }}
-                    classNamePrefix="rs"
-                    placeholder="HH"
-                    isClearable
-                  />
-                  <Select
-                    options={minutos}
-                    value={
-                      horaDesde
-                        ? { label: horaDesde.split(':')[1], value: horaDesde.split(':')[1] }
-                        : null
-                    }
-                    onChange={(selected) => {
-                      const nuevosMin = selected?.value || ''
-                      setHoraDesde(`${horaDesde.split(':')[0] || '00'}:${nuevosMin}`)
-                    }}
-                    classNamePrefix="rs"
-                    placeholder="MM"
-                    isClearable
-                    isSearchable
-                  />
+                  <div className="flex-grow-1 time-select">
+                    <Select
+                      options={horas}
+                      value={
+                        horaDesde
+                          ? { label: horaDesde.split(':')[0], value: horaDesde.split(':')[0] }
+                          : null
+                      }
+                      onChange={(selected) => {
+                        const nuevo = selected?.value || ''
+                        setHoraDesde(`${nuevo}:${horaDesde.split(':')[1] || '00'}`)
+                      }}
+                      classNamePrefix="rs"
+                      placeholder="HH"
+                      isClearable
+                    />
+                  </div>
+
+                  <div className="flex-grow-1 time-select">
+                    <Select
+                      options={minutos}
+                      value={
+                        horaDesde
+                          ? { label: horaDesde.split(':')[1], value: horaDesde.split(':')[1] }
+                          : null
+                      }
+                      onChange={(selected) => {
+                        const nuevosMin = selected?.value || ''
+                        setHoraDesde(`${horaDesde.split(':')[0] || '00'}:${nuevosMin}`)
+                      }}
+                      classNamePrefix="rs"
+                      placeholder="MM"
+                      isClearable
+                      isSearchable
+                    />
+                  </div>
                 </div>
 
                 <label className="mt-2">Hasta:</label>
                 <div className="d-flex gap-3">
-                  <Select
-                    options={horas}
-                    value={
-                      horaHasta
-                        ? { label: horaHasta.split(':')[0], value: horaHasta.split(':')[0] }
-                        : null
-                    }
-                    onChange={(selected) => {
-                      const nueva = selected?.value || ''
-                      setHoraHasta(`${nueva}:${horaHasta.split(':')[1] || '00'}`)
-                    }}
-                    classNamePrefix="rs"
-                    placeholder="HH"
-                    isClearable
-                  />
-                  <Select
-                    options={minutos}
-                    value={
-                      horaHasta
-                        ? { label: horaHasta.split(':')[1], value: horaHasta.split(':')[1] }
-                        : null
-                    }
-                    onChange={(selected) => {
-                      const nuevosMin = selected?.value || ''
-                      setHoraHasta(`${horaHasta.split(':')[0] || '00'}:${nuevosMin}`)
-                    }}
-                    classNamePrefix="rs"
-                    placeholder="MM"
-                    isClearable
-                    isSearchable
-                  />
+                  <div className="flex-grow-1 time-select">
+                    <Select
+                      options={horas}
+                      value={
+                        horaHasta
+                          ? { label: horaHasta.split(':')[0], value: horaHasta.split(':')[0] }
+                          : null
+                      }
+                      onChange={(selected) => {
+                        const nueva = selected?.value || ''
+                        setHoraHasta(`${nueva}:${horaHasta.split(':')[1] || '00'}`)
+                      }}
+                      classNamePrefix="rs"
+                      placeholder="HH"
+                      isClearable
+                    />
+                  </div>
+
+                  <div className="flex-grow-1 time-select">
+                    <Select
+                      options={minutos}
+                      value={
+                        horaHasta
+                          ? { label: horaHasta.split(':')[1], value: horaHasta.split(':')[1] }
+                          : null
+                      }
+                      onChange={(selected) => {
+                        const nuevosMin = selected?.value || ''
+                        setHoraHasta(`${horaHasta.split(':')[0] || '00'}:${nuevosMin}`)
+                      }}
+                      classNamePrefix="rs"
+                      placeholder="MM"
+                      isClearable
+                      isSearchable
+                    />
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -731,7 +742,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                   if (tooltip && tooltip.parentNode) tooltip.parentNode.removeChild(tooltip)
                   delete tooltipsRef.current[info.event.id]
                 }}
-                
+
                 eventClick={(info) => {
                   info.jsEvent.preventDefault()
                   const tooltip = tooltipsRef.current[info.event.id]

@@ -260,6 +260,10 @@ body{
   font-size:0 !important; padding:0 !important;
 }
 
+.time-select { 
+  min-width: 40%; 
+}
+
 /* Tooltip dinámico (fullcalendar) */
 .tooltip-dinamico{
   position: fixed;
