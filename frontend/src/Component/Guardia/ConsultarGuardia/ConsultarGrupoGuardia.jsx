@@ -200,7 +200,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
                           <tr key={grupo.idGrupo}>
                             <td className="border-end px-3">{grupo.nombre}</td>
                             <td className="border-end px-3">{grupo.descripcion}</td>
-                            <td className="border-end">
+                            <td className="text-center">
                               <button
                                 className="btn btn-outline-secondary btn-detail me-2"
                                 onClick={async () => {
