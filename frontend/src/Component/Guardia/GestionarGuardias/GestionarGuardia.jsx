@@ -819,6 +819,13 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                       }}
                                       classNamePrefix="rs"
                                       placeholder="HH"
+                                      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                                      menuPosition="fixed"
+                                      menuShouldScrollIntoView={false}
+                                      styles={{
+                                        menuPortal: (base) => ({ ...base, zIndex: 99999 }),
+                                        menu: (base) => ({ ...base, zIndex: 99999 })
+                                      }}
                                     />
                                     <Select
                                       options={minutos}
@@ -831,6 +838,13 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                       }}
                                       classNamePrefix="rs"
                                       placeholder="MM"
+                                      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                                      menuPosition="fixed"
+                                      menuShouldScrollIntoView={false}
+                                      styles={{
+                                        menuPortal: (base) => ({ ...base, zIndex: 99999 }),
+                                        menu: (base) => ({ ...base, zIndex: 99999 })
+                                      }}
                                     />
                                   </div>
                                 </td>
@@ -847,6 +861,13 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                       }}
                                       classNamePrefix="rs"
                                       placeholder="HH"
+                                      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                                      menuPosition="fixed"
+                                      menuShouldScrollIntoView={false}
+                                      styles={{
+                                        menuPortal: (base) => ({ ...base, zIndex: 99999 }),
+                                        menu: (base) => ({ ...base, zIndex: 99999 })
+                                      }}
                                     />
                                     <Select
                                       options={minutos}
@@ -859,6 +880,13 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                       }}
                                       classNamePrefix="rs"
                                       placeholder="MM"
+                                      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                                      menuPosition="fixed"
+                                      menuShouldScrollIntoView={false}
+                                      styles={{
+                                        menuPortal: (base) => ({ ...base, zIndex: 99999 }),
+                                        menu: (base) => ({ ...base, zIndex: 99999 })
+                                      }}
                                     />
                                   </div>
                                 </td>
