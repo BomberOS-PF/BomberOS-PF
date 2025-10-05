@@ -686,7 +686,8 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                 eventClassNames={() => ['fc-guardia']}
                 eventContent={() => ({ domNodes: [] })}
                 eventDidMount={(info) => {
-                  // === Tooltip (solo manejo de DOM, el estilo está en CSS) ===
+                  info.el.removeAttribute('title');
+                  info.el.querySelectorAll('[title]').forEach(el => el.removeAttribute('title'));
                   const tooltip = document.createElement('div')
                   tooltip.className = 'tooltip-dinamico'
                   document.body.appendChild(tooltip)
@@ -699,24 +700,38 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                     .map((b) => `${b.nombre || nombrePorDni.get(Number(b.dni)) || b.dni} (${b.desde}-${b.hasta})`)
                     .join('\n')
 
-                  info.el.addEventListener('mouseenter', (e) => {
-                    tooltip.style.display = 'block'
-                    tooltip.style.left = `${e.pageX + 10}px`
-                    tooltip.style.top = `${e.pageY - 20}px`
-                  })
-                  info.el.addEventListener('mousemove', (e) => {
-                    tooltip.style.left = `${e.pageX + 10}px`
-                    tooltip.style.top = `${e.pageY - 20}px`
-                  })
-                  info.el.addEventListener('mouseleave', () => {
-                    tooltip.style.display = 'none'
-                  })
+                  const place = (e) => {
+                    const margin = 10;
+                    const x = Math.min(e.clientX + margin, window.innerWidth - tooltip.offsetWidth - margin);
+                    const y = Math.min(e.clientY + margin, window.innerHeight - tooltip.offsetHeight - margin);
+                    tooltip.style.left = `${x}px`;
+                    tooltip.style.top = `${y}px`;
+                  };
+
+                  const onEnter = (e) => { tooltip.style.display = 'block'; place(e); };
+                  const onMove = (e) => place(e);
+                  const onLeave = () => { tooltip.style.display = 'none'; };
+
+                  info.el.addEventListener('mouseenter', onEnter);
+                  info.el.addEventListener('mousemove', onMove);
+                  info.el.addEventListener('mouseleave', onLeave);
+
+                  info.el._ttHandlers = { onEnter, onMove, onLeave };
                 }}
+
                 eventWillUnmount={(info) => {
+                  const h = info.el._ttHandlers;
+                  if (h) {
+                    info.el.removeEventListener('mouseenter', h.onEnter);
+                    info.el.removeEventListener('mousemove', h.onMove);
+                    info.el.removeEventListener('mouseleave', h.onLeave);
+                    delete info.el._ttHandlers;
+                  }
                   const tooltip = tooltipsRef.current[info.event.id]
                   if (tooltip && tooltip.parentNode) tooltip.parentNode.removeChild(tooltip)
                   delete tooltipsRef.current[info.event.id]
                 }}
+                
                 eventClick={(info) => {
                   info.jsEvent.preventDefault()
                   const tooltip = tooltipsRef.current[info.event.id]

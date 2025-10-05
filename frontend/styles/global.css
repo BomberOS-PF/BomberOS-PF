@@ -262,9 +262,18 @@ body{
 
 /* Tooltip dinámico (fullcalendar) */
 .tooltip-dinamico{
-  position:fixed; z-index:99999; background:rgba(0,0,0,.9); color:#fff;
-  padding:6px 10px; font-size:.9rem; border-radius:6px; display:none;
-  max-width:250px; white-space:pre-line; pointer-events:none;
+  position: fixed;
+  display: none;
+  pointer-events: none;
+  white-space: pre-line;
+  background: rgba(0,0,0,.90);
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: .85rem;
+  line-height: 1.2;
+  z-index: 99999;
+  max-width: 260px;
 }
 
 /* =============================
