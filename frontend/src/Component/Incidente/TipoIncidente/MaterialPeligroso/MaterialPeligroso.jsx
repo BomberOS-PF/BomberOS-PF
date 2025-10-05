@@ -399,7 +399,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
           <form onSubmit={handleSubmit}>
             {/* Categoría y cantidad*/}
             <div className="row mb-3">
-              <div className="col-md-6 py-4">
+              <div className="col-md-4 py-4">
                 <label className="form-label text-dark d-flex align-items-center gap-2">
                   <UserIcon className="text-danger" />
                   Categoría
@@ -423,7 +423,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                 />
               </div>
 
-              <div className="col-md-6 py-4">
+              <div className="col-md-5 py-4">
                 <label className="text-dark form-label">Cantidad de materiales involucrados</label>
                 <input
                   type="number"

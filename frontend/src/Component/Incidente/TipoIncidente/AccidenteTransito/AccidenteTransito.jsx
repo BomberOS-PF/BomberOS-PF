@@ -291,7 +291,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
       <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
         <div className="card-body">
           <form onSubmit={handleSubmit}>
-            <div className="mb-3">
+            <div className="mb-3 col-md-5">
               <label htmlFor="idCausaAccidente" className="form-label text-dark d-flex align-items-center gap-2">Causa del accidente *</label>
               <Select
                 options={causasAccidente.map(c => ({

@@ -492,11 +492,11 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
 
           {!detalle && (
             <>
-              <div className='mb-3 position-relative'>
+              <div className='mb-3 position-relative col-md-3'>
                 <i className='bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary'></i>
                 <input
                   type='text'
-                  className='form-control border-secondary ps-5 py-3'
+                  className='form-control border-secondary ps-5 py-2'
                   placeholder='Buscar por ID...'
                   name='busqueda'
                   value={filtros.busqueda}

@@ -249,7 +249,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                 <input type="text" className="form-control" value={nombreCompleto || 'Desconocido'} disabled readOnly />
               </div>
 
-              <div className="col-md-6 py-4">
+              <div className="col-md-4 py-4">
                 <label htmlFor="tipoSiniestro" className="text-dark form-label d-flex align-items-center gap-2">
                   <AlertTriangle className="text-warning" />
                   Tipo de Siniestro

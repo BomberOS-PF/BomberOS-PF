@@ -321,7 +321,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
       <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
         <div className="card-body">
           <form onSubmit={handleSubmit}>
-            <div className="mb-3">
+            <div className="mb-3 col-md-4">
               <label htmlFor="lugar" className="form-label text-dark d-flex align-items-center gap-2">Tipo de lugar específico del rescate *</label>
               <Select
                 options={opcionesLugar}
