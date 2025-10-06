@@ -1,18 +1,6 @@
 // src/Component/common/Pagination.jsx
 import { useEffect, useMemo, useState, useRef } from 'react'
 
-/**
- * Componente de paginado reutilizable
- *
- * Props:
- * - fetchPage: async ({ page, limit, filters }) => { data: [], total: number }
- * - initialPage: number = 1
- * - initialPageSize: number = 10
- * - filters: objeto con filtros (si cambia, reinicia a página 1)
- * - children: render-prop: ({ items, total, page, totalPages, limit, setPage, setLimit, loading, error, reload })
- * - showControls: boolean = true
- * - labels?: { prev?, next?, of?, showing?: (shown, total) => string }
- */
 const Pagination = ({
   fetchPage,
   initialPage = 1,
@@ -76,7 +64,7 @@ const Pagination = ({
       lastFiltersRef.current = now
       load({ reset: true })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [filters])
 
   const goPrev = () => setPage(p => Math.max(1, p - 1))
