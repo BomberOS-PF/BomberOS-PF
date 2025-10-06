@@ -135,7 +135,7 @@ const RegistrarGuardia = ({
   }
 
   return (
-    <div className="container-fluid py-5">
+    <div className="container-fluid py-5 registrar-guardia">
       <div className="text-center mb-4">
         <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
           <div className="bg-danger p-3 rounded-circle">
@@ -204,100 +204,103 @@ const RegistrarGuardia = ({
             </div>
 
             {/* Listado de bomberos con paginación reutilizable */}
-            <Pagination
-              fetchPage={fetchBomberosPage}
-              initialPage={1}
-              initialPageSize={PAGE_SIZE_DEFAULT}
-              filters={{ q: busqueda, _tick: reloadTick }}
-              showControls
-              labels={{
-                prev: '‹ Anterior',
-                next: 'Siguiente ›',
-                of: '/',
-                showing: (shown, total) => `Mostrando ${shown} de ${total} bomberos`
-              }}
-            >
-              {({ items, loading, error }) => (
-                <>
-                  {error && (
-                    <div className="alert alert-danger mb-3">
-                      {String(error)}
+            <div className='rg-pager'>
+              <Pagination
+                fetchPage={fetchBomberosPage}
+                initialPage={1}
+                initialPageSize={PAGE_SIZE_DEFAULT}
+                filters={{ q: busqueda, _tick: reloadTick }}
+                showControls
+                labels={{
+                  prev: '‹ Anterior',
+                  next: 'Siguiente ›',
+                  of: '/',
+                  showing: (shown, total) => `Mostrando ${shown} de ${total} bomberos`
+                }}
+              >
+                {({ items, loading, error }) => (
+                  <>
+                    {error && (
+                      <div className="alert alert-danger mb-3">
+                        {String(error)}
+                      </div>
+                    )}
+
+                    {loading && (
+                      <div className="text-center mb-3">
+                        <div className="spinner-border text-danger" role="status"></div>
+                      </div>
+                    )}
+
+                    <div className="table-responsive rounded border">
+                      <table className="table table-hover align-middle mb-0 rg-table">
+                        <thead className="bg-light">
+                          <tr>
+                            <th className="border-end text-center">Nombre completo</th>
+                            <th className="border-end text-center">DNI</th>
+                            <th className="border-end text-center col-legajo">Legajo</th>
+                            <th className="border-end text-center col-telefono">Teléfono</th>
+                            <th className="border-end text-center col-grupo">Grupo</th>
+                            <th className="text-center">Seleccionar</th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {items.map((b) => {
+                            const yaEstaEnGrupoActual = grupo.some((g) => g.dni === b.dni)
+                            const asignado = b.grupos !== 'No asignado'
+
+                            let perteneceAOtroGrupo = false
+                            if (modoEdicion && asignado) {
+                              const gruposAsignados = b.grupos.split(',').map((g) => g.trim().toLowerCase())
+                              perteneceAOtroGrupo = !gruposAsignados.includes((nombreGrupo || '').toLowerCase())
+                            } else if (!modoEdicion && asignado) {
+                              perteneceAOtroGrupo = true
+                            }
+
+                            const deshabilitarBtn = yaEstaEnGrupoActual || perteneceAOtroGrupo
+                            const mostrarTooltip = asignado
+
+                            return (
+                              <tr key={b.dni} className="border-b">
+                                <td className="border-end px-3" data-label="Nombre">{b.nombre} {b.apellido}</td>
+                                <td className="border-end px-3" data-label="DNI">{b.dni}</td>
+                                <td className="border-end px-3" data-label="Legajo">{b.legajo || '-'}</td>
+                                <td className="border-end px-3" data-label="Teléfono">{b.telefono}</td>
+                                <td className="border-end px-3" data-label="Grupo">{b.grupos}</td>
+                                <td className="border-end px-3 text-center" data-label="Acción">
+                                  <div className="tooltip-container">
+                                    <button
+                                      onClick={() => agregarAlGrupo(b)}
+                                      disabled={deshabilitarBtn}
+                                      className={`btn-sm btn-add ${deshabilitarBtn ? 'disabled' : ''}`}
+                                    >
+                                      <Plus className="h-4 w-4" />
+                                    </button>
+                                    {mostrarTooltip && (
+                                      <div className="tooltip">
+                                        Pertenece a: {b.grupos}
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
                     </div>
-                  )}
 
-                  {loading && (
-                    <div className="text-center mb-3">
-                      <div className="spinner-border text-danger" role="status"></div>
-                    </div>
-                  )}
+                    {!loading && items.length === 0 && (
+                      <div className="text-center py-3 text-muted">
+                        {mensaje || 'No hay resultados para la búsqueda.'}
+                      </div>
+                    )}
+                  </>
+                )}
+              </Pagination>
+            </div>
 
-                  <div className="table-responsive rounded border">
-                    <table className="table table-hover align-middle mb-0">
-                      <thead className="bg-light">
-                        <tr>
-                          <th className="border-end text-center">Nombre completo</th>
-                          <th className="border-end text-center">DNI</th>
-                          <th className="border-end text-center">Legajo</th>
-                          <th className="border-end text-center">Teléfono</th>
-                          <th className="border-end text-center">Grupo</th>
-                          <th className="text-center">Seleccionar</th>
-                        </tr>
-                      </thead>
-
-                      <tbody>
-                        {items.map((b) => {
-                          const yaEstaEnGrupoActual = grupo.some((g) => g.dni === b.dni)
-                          const asignado = b.grupos !== 'No asignado'
-
-                          let perteneceAOtroGrupo = false
-                          if (modoEdicion && asignado) {
-                            const gruposAsignados = b.grupos.split(',').map((g) => g.trim().toLowerCase())
-                            perteneceAOtroGrupo = !gruposAsignados.includes((nombreGrupo || '').toLowerCase())
-                          } else if (!modoEdicion && asignado) {
-                            perteneceAOtroGrupo = true
-                          }
-
-                          const deshabilitarBtn = yaEstaEnGrupoActual || perteneceAOtroGrupo
-                          const mostrarTooltip = asignado
-
-                          return (
-                            <tr key={b.dni} className="border-b">
-                              <td className="border-end px-4">{b.nombre} {b.apellido}</td>
-                              <td className="border-end px-3">{b.dni}</td>
-                              <td className="border-end px-3">{b.legajo || '-'}</td>
-                              <td className="border-end px-2">{b.telefono}</td>
-                              <td className="border-end px-2">{b.grupos}</td>
-                              <td className="border-end px-3 text-center">
-                                <div className="tooltip-container">
-                                  <button
-                                    onClick={() => agregarAlGrupo(b)}
-                                    disabled={deshabilitarBtn}
-                                    className={`btn-sm btn-add ${deshabilitarBtn ? 'disabled' : ''}`}
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </button>
-                                  {mostrarTooltip && (
-                                    <div className="tooltip">
-                                      Pertenece a: {b.grupos}
-                                    </div>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {!loading && items.length === 0 && (
-                    <div className="text-center py-3 text-muted">
-                      {mensaje || 'No hay resultados para la búsqueda.'}
-                    </div>
-                  )}
-                </>
-              )}
-            </Pagination>
 
             {/* Bomberos seleccionados */}
             <div className="mt-4">
@@ -306,14 +309,14 @@ const RegistrarGuardia = ({
               </div>
 
               <div className="table-responsive rounded border">
-                <table className="table table-hover align-middle mb-0">
+                <table className="table table-hover align-middle mb-0 rg-table">
                   <thead className="bg-light">
                     <tr>
                       <th className="border-end text-center">Nombre completo</th>
                       <th className="border-end text-center">DNI</th>
-                      <th className="border-end text-center">Legajo</th>
-                      <th className="border-end text-center">Teléfono</th>
-                      <th className="text-center">Quitar</th>
+                      <th className="border-end text-center col-legajo">Legajo</th>
+                      <th className="border-end text-center col-telefono">Teléfono</th>
+                      <th className="border-end text-center">Quitar</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -326,14 +329,14 @@ const RegistrarGuardia = ({
                     ) : (
                       grupo.map((b) => (
                         <tr key={b.dni} className="border-b">
-                          <td className="border-end text-center">{b.nombre} {b.apellido}</td>
-                          <td className="border-end text-center">{b.dni}</td>
-                          <td className="border-end text-center">{b.legajo || '-'}</td>
-                          <td className="border-end text-center">{b.telefono}</td>
-                          <td className="text-center">
+                          <td className="border-end text-center" data-label="Nombre">{b.nombre} {b.apellido}</td>
+                          <td className="border-end text-center" data-label="DNI">{b.dni}</td>
+                          <td className="border-end text-center" data-label="Legajo">{b.legajo || '-'}</td>
+                          <td className="border-end text-center" data-label="Teléfono">{b.telefono}</td>
+                          <td className="border-end text-center" data-label="Quitar">
                             <button
                               onClick={() => quitarDelGrupo(b.dni)}
-                              className="btn btn-outline-danger btn-detail"
+                              className="btn btn-outline-danger btn-detail btn-trash"
                             >
                               <i className="bi bi-trash"></i>
                             </button>
@@ -348,18 +351,18 @@ const RegistrarGuardia = ({
           </div>
         </div>
         {/* Botones */}
-            <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
-              <BackToMenuButton onClick={onVolver} />
-              <button
-                type="button"
-                onClick={guardarGrupo}
-                disabled={loading}
-                className="btn btn-accept btn-lg btn-medium"
-              >
-                <Users size={16} className="me-1" />
-                {loading ? 'Espere...' : modoEdicion ? 'Actualizar Grupo' : 'Guardar Grupo'}
-              </button>
-            </div>
+        <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+          <BackToMenuButton onClick={onVolver} />
+          <button
+            type="button"
+            onClick={guardarGrupo}
+            disabled={loading}
+            className="btn btn-accept btn-lg btn-medium"
+          >
+            <Users size={16} className="me-1" />
+            {loading ? 'Espere...' : modoEdicion ? 'Actualizar Grupo' : 'Guardar Grupo'}
+          </button>
+        </div>
       </div>
     </div>
   )
