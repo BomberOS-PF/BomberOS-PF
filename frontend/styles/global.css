@@ -1,28 +1,28 @@
 /* =============================
    Paleta BomberOS (variables)
 ============================= */
-:root{
-  --red-700:#d52b1e;
-  --red-600:#dc3545;
-  --red-500:#ff6b6b;
-  --red-800:#b02118;
-  --red-900:#a11c15;
+:root {
+  --red-700: #d52b1e;
+  --red-600: #dc3545;
+  --red-500: #ff6b6b;
+  --red-800: #b02118;
+  --red-900: #a11c15;
 
-  --gray-900:#1d1d1d;
-  --gray-800:#545b62;
-  --gray-700:#6c757d;
-  --gray-600:#6b6b6b;
-  --gray-500:#838383;
-  --gray-300:#dee2e6;
-  --gray-200:#f8f9fa;
-  --black:#000;
-  --white:#fff;
+  --gray-900: #1d1d1d;
+  --gray-800: #545b62;
+  --gray-700: #6c757d;
+  --gray-600: #6b6b6b;
+  --gray-500: #838383;
+  --gray-300: #dee2e6;
+  --gray-200: #f8f9fa;
+  --black: #000;
+  --white: #fff;
 }
 
 /* =============================
    Base
 ============================= */
-body{
+body {
   background-color: var(--white);
   font-family: 'Segoe UI', sans-serif;
   color: var(--black);
@@ -31,57 +31,89 @@ body{
 /* =============================
    Form (inputs, labels)
 ============================= */
-.form-label,.form-check-label{ font-weight:600; color:var(--black); }
-
-.form-control,.form-select{
-  background-color: var(--gray-200);
-  border:1px solid #ccc;
-  color:var(--black);
+.form-label,
+.form-check-label {
+  font-weight: 600;
+  color: var(--black);
 }
-.form-control::placeholder{ color:#888; }
 
-.form-control:focus,.form-select:focus{
+.form-control,
+.form-select {
+  background-color: var(--gray-200);
+  border: 1px solid #ccc;
+  color: var(--black);
+}
+
+.form-control::placeholder {
+  color: #888;
+}
+
+.form-control:focus,
+.form-select:focus {
   background-color: var(--white);
   border-color: var(--red-700);
-  box-shadow:0 0 0 .2rem rgba(213,43,30,.25);
-  color:var(--black);
+  box-shadow: 0 0 0 .2rem rgba(213, 43, 30, .25);
+  color: var(--black);
 }
 
-.form-control:disabled::placeholder,.form-select:disabled::placeholder{ color:#bdc3c7; }
+.form-control:disabled::placeholder,
+.form-select:disabled::placeholder {
+  color: #bdc3c7;
+}
 
 /* Checks */
-.form-check-input{ cursor:pointer; }
-.form-check-input:focus{
-  border-color: var(--red-700);
-  box-shadow:0 0 0 .2rem rgba(213,43,30,.25);
+.form-check-input {
+  cursor: pointer;
 }
-.form-check-input:checked{
+
+.form-check-input:focus {
+  border-color: var(--red-700);
+  box-shadow: 0 0 0 .2rem rgba(213, 43, 30, .25);
+}
+
+.form-check-input:checked {
   background-color: var(--red-700);
   border-color: var(--red-700);
 }
+
 /* sin fondo rojo cuando no está checkeado */
-.form-check-input:not(:checked){
+.form-check-input:not(:checked) {
   background-color: var(--white);
   border-color: var(--gray-800);
 }
 
-.edge-to-edge{
-  width: 80vw;         /* ocupa el 90% del ancho de la ventana */
-  margin: 0 auto;      /* centra horizontalmente */
-  border-radius: 0.5rem; /* opcional */
+.only-thumb .form-check-label {
+  pointer-events: none
+}
+
+.only-thumb .form-check-input {
+  pointer-events: auto
+}
+
+.edge-to-edge {
+  width: 80vw;
+  /* ocupa el 90% del ancho de la ventana */
+  margin: 0 auto;
+  /* centra horizontalmente */
+  border-radius: 0.5rem;
+  /* opcional */
 }
 
 /* =============================
    Botones
 ============================= */
-.btn{ 
-  font-size: 1rem;      /* texto más grande o chico */
-  padding: 0.6rem 1.2rem; /* alto y ancho del botón */
-  border-radius: 6px;   /* bordes */
+.btn {
+  font-size: 1rem;
+  /* texto más grande o chico */
+  padding: 0.6rem 1.2rem;
+  /* alto y ancho del botón */
+  border-radius: 6px;
+  /* bordes */
 }
 
 .btn-short {
-  width: 120px;  /* corto */
+  width: 120px;
+  /* corto */
 }
 
 .btn-medium {
@@ -93,7 +125,7 @@ body{
   text-overflow: ellipsis;
 }
 
-.btn-accept{
+.btn-accept {
   background-color: #f14b5b;
   border: 1px solid #dc3545;
   color: white;
@@ -104,12 +136,12 @@ body{
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.btn-accept:hover{
+.btn-accept:hover {
   background-color: #ce1225;
 }
 
-.btn-warning{
-  background-color:#ffc107;
+.btn-warning {
+  background-color: #ffc107;
   border-color: #ffc107;
   color: #000;
 }
@@ -125,7 +157,7 @@ body{
   border-color: #ffc720;
 }
 
-.btn-back{
+.btn-back {
   background-color: transparent;
   border: 1px solid #9ca3af;
   color: #374151;
@@ -136,8 +168,8 @@ body{
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.btn-back:hover{
-  background-color:#bcbfc5;
+.btn-back:hover {
+  background-color: #bcbfc5;
 }
 
 .btn-sm-custom {
@@ -164,12 +196,20 @@ body{
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.btn-added:hover{
+.btn-added:hover {
   background-color: #1c910c;
 }
 
+.toggle-btn {
+  border-color: #000000;
+}
+
+.toggle-btn:hover {
+  background-color: #f06873;
+}
+
 .toggle-btn.selected {
-  background-color: #f06873; /* rojo Bootstrap */
+  background-color: #f06873;
   color: #fff;
   border-color: #dc3545;
 }
@@ -177,100 +217,159 @@ body{
 /* =============================
    Header de formularios
 ============================= */
-.form-header{
-  display:flex; align-items:center; justify-content:flex-start;
+.form-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   background-color: var(--gray-900);
-  padding:1rem 1.5rem; border-radius:8px 8px 0 0;
-  border-bottom:4px solid var(--red-700); margin-bottom:1rem;
-}
-.form-header img{ 
-  height:40px; 
-  margin-right:1rem; 
+  padding: 1rem 1.5rem;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 4px solid var(--red-700);
+  margin-bottom: 1rem;
 }
 
-.form-header h2{ margin:0; 
-  font-size:1.5rem; 
-  font-weight:bold; 
-  color:var(--white); 
+.form-header img {
+  height: 40px;
+  margin-right: 1rem;
+}
+
+.form-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--white);
 }
 
 /* =============================
    React-Select (usar classNamePrefix="rs")
 ============================= */
-.rs__control{
+.rs__control {
   background-color: var(--white);
   border: 1px solid var(--black);
-  min-height: 38px; 
+  min-height: 38px;
   box-shadow: none;
 }
-.rs__control:hover{ 
-  border-color: var(--red-600); 
+
+.rs__control:hover {
+  border-color: var(--red-600);
 }
 
-.rs__control--is-focused{
+.rs__control--is-focused {
   border-color: var(--red-600) !important;
-  box-shadow:0 0 0 2px rgba(220,53,69,.3) !important;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, .3) !important;
 }
-.rs__single-value{ color: var(--black); }
-.rs__menu{ background: var(--white); z-index:9999; }
-.rs__option{
-  background: var(--white); color: var(--black); cursor:pointer;
+
+.rs__single-value {
+  color: var(--black);
 }
-.rs__option--is-focused{
-  background: var(--red-500) !important; color: var(--white) !important;
+
+.rs__menu {
+  background: var(--white);
+  z-index: 9999;
 }
-.rs__option--is-selected{
-  background: var(--red-600) !important; color: var(--white) !important;
+
+.rs__option {
+  background: var(--white);
+  color: var(--black);
+  cursor: pointer;
 }
-.rs__option--is-selected.rs__option--is-focused{
-  background:#c82333 !important; color:var(--white) !important;
+
+.rs__option--is-focused {
+  background: var(--red-500) !important;
+  color: var(--white) !important;
+}
+
+.rs__option--is-selected {
+  background: var(--red-600) !important;
+  color: var(--white) !important;
+}
+
+.rs__option--is-selected.rs__option--is-focused {
+  background: #c82333 !important;
+  color: var(--white) !important;
 }
 
 /* =============================
    Tablas (lista de bomberos)
 ============================= */
-.tabla-bomberos{
-  width:100%; border-collapse:collapse; margin-bottom:1rem;
-  color:var(--black); background-color:#b3b1b1; border:1px solid var(--gray-600);
-  font-size:.9rem;
+.tabla-bomberos {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  color: var(--black);
+  background-color: #b3b1b1;
+  border: 1px solid var(--gray-600);
+  font-size: .9rem;
 }
-.tabla-bomberos thead{ background-color: var(--gray-500); }
-.tabla-bomberos th,.tabla-bomberos td{
-  padding:8px 12px; border:1px solid var(--gray-600); text-align:left;
+
+.tabla-bomberos thead {
+  background-color: var(--gray-500);
 }
-.tabla-bomberos tr:hover{ background-color:#a1a0a0; }
-.tabla-bomberos th:last-child,.tabla-bomberos td:last-child{ border-right:0 !important; }
-.tabla-bomberos td:last-child{ width:1%; white-space:nowrap; }
+
+.tabla-bomberos th,
+.tabla-bomberos td {
+  padding: 8px 12px;
+  border: 1px solid var(--gray-600);
+  text-align: left;
+}
+
+.tabla-bomberos tr:hover {
+  background-color: #a1a0a0;
+}
+
+.tabla-bomberos th:last-child,
+.tabla-bomberos td:last-child {
+  border-right: 0 !important;
+}
+
+.tabla-bomberos td:last-child {
+  width: 1%;
+  white-space: nowrap;
+}
 
 /* =============================
    FullCalendar (bloques/tooltip)
 ============================= */
 .fc-toolbar-chunk .fc-toolbar-title,
-.fc-col-header-cell-cushion{ color: var(--black) !important; }
-
-.fc-timegrid-event{
-  width:100% !important; left:0 !important; right:0 !important; transform:none !important;
-  background-color:#f08080 !important; border:1px solid #b30000 !important;
-  transition:background-color .2s ease;
-}
-.fc-timegrid-event:hover{ background-color: var(--red-700) !important; }
-
-.fc-event-title,.fc-event-time,.fc-event-main{
-  color:transparent !important; background:none !important; border:none !important;
-  font-size:0 !important; padding:0 !important;
+.fc-col-header-cell-cushion {
+  color: var(--black) !important;
 }
 
-.time-select { 
-  min-width: 40%; 
+.fc-timegrid-event {
+  width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  transform: none !important;
+  background-color: #f08080 !important;
+  border: 1px solid #b30000 !important;
+  transition: background-color .2s ease;
+}
+
+.fc-timegrid-event:hover {
+  background-color: var(--red-700) !important;
+}
+
+.fc-event-title,
+.fc-event-time,
+.fc-event-main {
+  color: transparent !important;
+  background: none !important;
+  border: none !important;
+  font-size: 0 !important;
+  padding: 0 !important;
+}
+
+.time-select {
+  min-width: 40%;
 }
 
 /* Tooltip dinámico (fullcalendar) */
-.tooltip-dinamico{
+.tooltip-dinamico {
   position: fixed;
   display: none;
   pointer-events: none;
   white-space: pre-line;
-  background: rgba(0,0,0,.90);
+  background: rgba(0, 0, 0, .90);
   color: #fff;
   padding: 6px 8px;
   border-radius: 6px;
@@ -283,10 +382,23 @@ body{
 /* =============================
    Modales
 ============================= */
-.modal-backdrop{ background-color:rgba(0,0,0,.5); }
-.modal-backdrop-custom{ background:rgba(0,0,0,.5); }
-.modal-content-white{ background:#fff !important; color:#000 !important; border-radius:8px; }
-.modal-backdrop-custom .modal-dialog{ margin-top:10vh; }
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, .5);
+}
+
+.modal-backdrop-custom {
+  background: rgba(0, 0, 0, .5);
+}
+
+.modal-content-white {
+  background: #fff !important;
+  color: #000 !important;
+  border-radius: 8px;
+}
+
+.modal-backdrop-custom .modal-dialog {
+  margin-top: 10vh;
+}
 
 /* =============================
    Paginación reutilizable
@@ -298,8 +410,8 @@ body{
   transition: all .2s ease-in-out;
 }
 
-.custom-page-btn.active { 
-  filter:brightness(.9); 
+.custom-page-btn.active {
+  filter: brightness(.9);
 }
 
 /* =============================
@@ -317,15 +429,150 @@ body{
 /* =============================
    Responsive
 ============================= */
-@media (max-width: 576px){
-  .btn-short, .btn-medium { 
-    width: auto; }
+@media (max-width: 576px) {
+
+  .btn-short,
+  .btn-medium {
+    width: auto;
+  }
 }
 
-@media (max-width: 576px){
-  .edge-to-edge{
+@media (max-width: 576px) {
+  .edge-to-edge {
     width: 100%;
     margin-left: 0;
     margin-right: 0;
+  }
+}
+
+/* md- (≤ 991.98px): tipografía y botones un toque más compactos */
+@media (max-width: 991.98px) {
+  .consultar-incidente .table {
+    font-size: .95rem;
+  }
+
+  .consultar-incidente .btn-detail {
+    font-size: .85rem;
+    padding: .35rem .6rem;
+  }
+}
+
+/* sm- (≤ 767.98px): cabecera del detalle apilada y botones con wrap */
+@media (max-width: 767.98px) {
+
+  /* La caja de búsqueda ocupa 100% del ancho */
+  .consultar-incidente .search-box {
+    width: 100%;
+  }
+
+  /* Header del detalle apilado */
+  .consultar-incidente .detalle-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .5rem;
+  }
+
+  /* Botonera del detalle con wrap y ancho completo */
+  .consultar-incidente .detalle-actions {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    justify-content: flex-start;
+  }
+}
+
+/* xs- (≤ 575.98px): padding compacto y ocultamos columnas largas para evitar desborde */
+@media (max-width: 575.98px) {
+  .consultar-incidente .card .card-body {
+    padding: 1rem;
+  }
+
+  .consultar-incidente .table thead th,
+  .consultar-incidente .table tbody td {
+    padding: .5rem .5rem;
+    vertical-align: middle;
+  }
+
+  .consultar-incidente .btn-detail {
+    font-size: .8rem;
+    padding: .35rem .5rem;
+  }
+
+  .consultar-incidente .badge {
+    white-space: nowrap;
+  }
+}
+
+/* ===== Tabla responsive tipo cards ===== */
+@media (max-width: 863px) {
+
+  /* Ocultamos encabezados y “apilamos” filas/celdas */
+  .consultar-incidente .responsive-table thead {
+    display: none;
+  }
+
+  .consultar-incidente .responsive-table,
+  .consultar-incidente .responsive-table tbody,
+  .consultar-incidente .responsive-table tr,
+  .consultar-incidente .responsive-table td {
+    display: block;
+    width: 100%;
+  }
+
+  /* Cada fila se vuelve una “card” */
+  .consultar-incidente .responsive-table tr {
+    margin-bottom: .75rem;
+    background: #fff;
+    color: #000;
+    border: 1px solid #e5e7eb;
+    border-radius: .5rem;
+    overflow: hidden;
+  }
+
+  /* Cada celda muestra su etiqueta (del data-label) */
+  .consultar-incidente .responsive-table td {
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    padding: .75rem .75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+  }
+
+  .consultar-incidente .responsive-table td:last-child {
+    border-bottom: none;
+  }
+
+  .consultar-incidente .responsive-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #6b7280;
+    /* gris */
+    flex: 0 0 auto;
+  }
+
+  /* Ajustes visuales */
+  .consultar-incidente .responsive-table .badge {
+    white-space: nowrap;
+  }
+
+  /* Acciones a la derecha (opcional) */
+  .consultar-incidente .responsive-table td[data-label="Acciones"] {
+    justify-content: flex-end;
+  }
+}
+
+
+/* micro (≤ 400px): aún más compacto si hace falta */
+@media (max-width: 400px) {
+  .consultar-incidente .table {
+    font-size: .9rem;
+  }
+
+  .consultar-incidente .badge {
+    font-size: .75rem;
+    padding: .25rem .4rem;
   }
 }

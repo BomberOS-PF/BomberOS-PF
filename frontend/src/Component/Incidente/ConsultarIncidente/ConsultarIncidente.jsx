@@ -259,7 +259,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
 
     return (
       <div className='mt-4'>
-        <div className='d-flex align-items-center justify-content-between mb-3'>
+        <div className='d-flex align-items-center justify-content-between mb-3 detalle-header'>
           <div className='d-flex align-items-center gap-2'>
             <i className='text-secondary fs-5'></i>
             <h3 className='text-dark mb-0'>
@@ -270,7 +270,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
             </h3>
           </div>
 
-          <div className='d-flex gap-2'>
+          <div className='d-flex gap-2 detalle-actions'>
             {!modoEdicion && (
               <>
                 <button
@@ -462,7 +462,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
 
   // ------- Vista Listado -------
   return (
-    <div className='container py-5'>
+    <div className='container py-5 consultar-incidente'>
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
           <div className='bg-danger p-3 rounded-circle'>
@@ -492,7 +492,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
 
           {!detalle && (
             <>
-              <div className='mb-3 position-relative col-md-3'>
+              <div className='mb-3 position-relative col-md-3 search-box'>
                 <i className='bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary'></i>
                 <input
                   type='text'
@@ -606,7 +606,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
 
                   {items.length > 0 ? (
                     <div className='table-responsive rounded border'>
-                      <table className='table table-hover align-middle mb-0'>
+                      <table className='table table-hover align-middle mb-0 responsive-table'>
                         <thead className='bg-light'>
                           <tr>
                             <th className='border-end text-center'>ID</th>
@@ -621,19 +621,19 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                         <tbody>
                           {items.map(it => (
                             <tr key={it.idIncidente}>
-                              <td className='border-end px-3 text-center fw-bold'>{it.idIncidente}</td>
-                              <td className='border-end px-3'>{it.fecha}</td>
-                              <td className='border-end px-3'>
+                              <td className='border-end px-3 text-center fw-bold' data-label='ID'>{it.idIncidente}</td>
+                              <td className='border-end px-3' data-label='Fecha'>{it.fecha}</td>
+                              <td className='border-end px-3' data-label='Tipo'>
                                 <span className={`badge ${getIncidentTypeColor(it.tipoDescripcion)}`}>
                                   {it.tipoDescripcion}
                                 </span>
                               </td>
-                              <td className='border-end px-3'>{it.descripcion || '-'}</td>
-                              <td className='border-end px-3'>{it.localizacion || '-'}</td>
-                              <td className='border-end px-3'>
+                              <td className='border-end px-3' data-label='Descripción'>{it.descripcion || '-'}</td>
+                              <td className='border-end px-3' data-label='Localización'>{it.localizacion || '-'}</td>
+                              <td className='border-end px-3' data-label='Estado'>
                                 <span className='badge bg-success'>{it.estado || 'Activo'}</span>
                               </td>
-                              <td className='text-center'>
+                              <td className='text-center' data-label='Acciones'>
                                 <button
                                   className='btn btn-outline-secondary btn-detail me-2'
                                   onClick={() => verDetalle(it.idIncidente)}

@@ -38,6 +38,8 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
   const [incidenteCreado, setIncidenteCreado] = useState(null)
   const [notificandoBomberos, setNotificandoBomberos] = useState(false)
 
+  const [alinearIzquierda, setAlinearIzquierda] = useState(false)
+
   // Catálogos
   const [tiposIncidente, setTiposIncidente] = useState([])
   const [localizaciones, setLocalizaciones] = useState([])
@@ -154,6 +156,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
       return
     }
 
+    setAlinearIzquierda(true)
     setNotificandoBomberos(true)
 
     try {
@@ -261,7 +264,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                   required
                   style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
                   tabIndex={-1}
-                  onChange={() => {}}
+                  onChange={() => { }}
                 />
                 <Select
                   classNamePrefix="rs"
@@ -326,7 +329,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                   required
                   style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
                   tabIndex={-1}
-                  onChange={() => {}}
+                  onChange={() => { }}
                 />
                 <Select
                   classNamePrefix="rs"
@@ -420,17 +423,6 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                 </button>
               )}
 
-              <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
-
-                <BackToMenuButton onClick={onVolver} />
-                
-                {!incidenteCreado && (
-                  <button type="submit" className="btn btn-accept btn-medium">
-                    Guardar Incidente
-                  </button>
-                )}
-              </div>
-
               {incidenteCreado && (
                 <div className="alert alert-success mt-3">
                   <div className="d-flex justify-content-between align-items-center">
@@ -458,6 +450,19 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                   </small>
                 </div>
               )}
+
+              <div
+                className={`d-flex ${notificandoBomberos || alinearIzquierda ? 'justify-content-start' : 'justify-content-center'} align-items-center gap-3 mb-3`}
+              >
+                <BackToMenuButton onClick={onVolver} />
+                {!incidenteCreado && (
+                  <button type="submit" className="btn btn-accept btn-medium">
+                    Guardar Incidente
+                  </button>
+                )}
+              </div>
+
+
             </div>
           </form>
 

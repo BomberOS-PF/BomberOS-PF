@@ -81,10 +81,10 @@ const RegistrarBombero = ({ onVolver }) => {
       email: formData.emailUsuario?.trim(),
       rol: formData.rolUsuario
     }
-    
+
     const camposLlenos = Object.values(camposUsuario).filter(val => val && val !== '').length
     const totalCampos = Object.keys(camposUsuario).length
-    
+
     if (camposLlenos > 0 && camposLlenos < totalCampos) {
       setMessage('Si completa datos de usuario, debe completar todos los campos: Nombre de usuario, Contraseña, Email y Rol')
       setMessageType('error')
@@ -162,12 +162,12 @@ const RegistrarBombero = ({ onVolver }) => {
           try {
             const formDataFile = new FormData()
             formDataFile.append('fichaMedica', formData.fichaMedica)
-            
+
             const uploadResponse = await fetch(`/api/bomberos/${formData.dni}/ficha-medica`, {
               method: 'POST',
               body: formDataFile
             })
-            
+
             if (!uploadResponse.ok) {
               console.error('Error al subir ficha médica:', await uploadResponse.text())
               setMessage('⚠️ Bombero registrado pero hubo un error al subir la ficha médica')
@@ -185,7 +185,7 @@ const RegistrarBombero = ({ onVolver }) => {
           setMessage('¡Bombero registrado exitosamente!')
           setMessageType('success')
         }
-        
+
         setFormData({ dni: '', nombre: '', apellido: '', domicilio: '', email: '', telefono: '', legajo: '', antiguedad: '', rango: 'Bombero', esPlan: false, fichaMedica: null, fechaFicha: new Date().toISOString().split('T')[0], aptoPsico: true, grupoSanguineo: '', username: '', password: '', emailUsuario: '', rolUsuario: '' })
       } else {
         const errorMessage = result.message || result.error || 'Error al registrar bombero'
@@ -381,7 +381,7 @@ const RegistrarBombero = ({ onVolver }) => {
                   required
                   style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
                   tabIndex={-1}
-                  onChange={() => {}}
+                  onChange={() => { }}
                 />
                 <Select
                   classNamePrefix="rs"
@@ -430,7 +430,7 @@ const RegistrarBombero = ({ onVolver }) => {
                   required
                   style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
                   tabIndex={-1}
-                  onChange={() => {}}
+                  onChange={() => { }}
                 />
                 <Select
                   classNamePrefix="rs"
@@ -444,7 +444,7 @@ const RegistrarBombero = ({ onVolver }) => {
                 />
               </div>
 
-              <div className="form-check form-switch mb-2">
+              <div className="form-check form-switch mb-2 only-thumb">
                 <input
                   className="form-check-input"
                   type="checkbox"
@@ -453,12 +453,12 @@ const RegistrarBombero = ({ onVolver }) => {
                   disabled={loading}
                   onChange={handleChange}
                 />
-                <label className="form-label text-dark d-flex align-items-center gap-2" htmlFor="aptoPsico">
+                <label id="lbl-aptoPsico" className="form-label text-dark d-flex align-items-center gap-2">
                   Apto psicológico
                 </label>
               </div>
 
-              <div className="form-check form-switch mb-4">
+              <div className="form-check form-switch mb-4 only-thumb">
                 <input
                   className="form-check-input"
                   type="checkbox"
@@ -467,7 +467,7 @@ const RegistrarBombero = ({ onVolver }) => {
                   disabled={loading}
                   onChange={handleChange}
                 />
-                <label className="form-label text-dark d-flex align-items-center gap-2" htmlFor="esPlan">
+                <label id="lbl-esPlan" className="form-label text-dark d-flex align-items-center gap-2">
                   Es del plan (guardias pagas)
                 </label>
               </div>
@@ -549,18 +549,18 @@ const RegistrarBombero = ({ onVolver }) => {
                 />
               </div>
             </div>
-            
+
             <hr className="mb-4" />
-            
+
             <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
-                {onVolver && (
-                  <BackToMenuButton onClick={onVolver} />
-                )}
-                <button type="submit" className="btn btn-accept btn-lg btn-medium" onClick={handleSubmit} disabled={loading}>
-                  <UserPlus size={16} className="me-1" />
-                  {loading ? 'Registrando...' : 'Registrar bombero'}
-                </button>
-              </div>
+              {onVolver && (
+                <BackToMenuButton onClick={onVolver} />
+              )}
+              <button type="submit" className="btn btn-accept btn-lg btn-medium" onClick={handleSubmit} disabled={loading}>
+                <UserPlus size={16} className="me-1" />
+                {loading ? 'Registrando...' : 'Registrar bombero'}
+              </button>
+            </div>
           </form>
         </div>
 

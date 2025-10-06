@@ -148,7 +148,7 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
 
   const notificarBomberos = async () => {
     const idIncidente = datosPrevios.idIncidente || datosPrevios.id
-    
+
     if (!idIncidente) {
       alert('❌ No se puede notificar: el incidente aún no ha sido guardado')
       return
@@ -189,7 +189,7 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
 • Notificaciones fallidas: ${notificacionesFallidas}
 
 Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
-        
+
         setSuccessMsg('✅ Notificación enviada exitosamente a los bomberos')
       } else {
         throw new Error(resultado.message || 'Error al enviar notificación')
@@ -327,7 +327,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
             )}
 
             <hr className="border-1 border-black mb-2" />
-            
+
             <div className="mb-3">
               <label className="form-label text-dark d-flex align-items-center gap-2">Detalle de lo sucedido *</label>
               <textarea className={`form-control${errors.detalle ? ' is-invalid' : ''}`} rows="3" id="detalle" value={formData.detalle || ''} onChange={handleChange} aria-describedby="error-detalle"></textarea>
@@ -343,14 +343,15 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
             />
 
             <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
-              <button type="button" className="btn btn-accept btn-medium" disabled={loading || notificando} onClick={() => handleSubmit()}>
-                {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
+              <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
+                Continuar después
               </button>
 
-              <button 
-                type="button" 
-                className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2" 
-                onClick={notificarBomberos} 
+
+              <button
+                type="button"
+                className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2"
+                onClick={notificarBomberos}
                 disabled={loading || notificando}
               >
                 {notificando ? (
@@ -365,8 +366,8 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                 )}
               </button>
 
-              <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
-                Continuar después
+              <button type="button" className="btn btn-accept btn-medium" disabled={loading || notificando} onClick={() => handleSubmit()}>
+                {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
               </button>
             </div>
 
