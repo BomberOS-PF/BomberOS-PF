@@ -168,8 +168,16 @@ body{
   background-color: #1c910c;
 }
 
+.toggle-btn {
+  border-color: #000000;
+}
+
+.toggle-btn:hover {
+  background-color: #f06873;
+}
+
 .toggle-btn.selected {
-  background-color: #f06873; /* rojo Bootstrap */
+  background-color: #f06873;
   color: #fff;
   border-color: #dc3545;
 }
