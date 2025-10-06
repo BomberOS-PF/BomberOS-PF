@@ -781,9 +781,10 @@ body {
 
 /* ===== ÚNICO BLOQUE: paginado con SOLO flechas en ≤820px ===== */
 @media (max-width: 820px) {
+
   /* layout */
   .registrar-guardia .pagination,
-  .consultar-grupo   .pagination {
+  .consultar-grupo .pagination {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -792,24 +793,26 @@ body {
   }
 
   /* oculta “1 / n” u otros nodos sueltos dentro del contenedor */
-  .registrar-guardia .pagination > :not(.page-item),
-  .consultar-grupo   .pagination > :not(.page-item) {
+  .registrar-guardia .pagination> :not(.page-item),
+  .consultar-grupo .pagination> :not(.page-item) {
     display: none !important;
   }
 
   /* deja solo el primer y último LI (.page-item) = prev/next */
   .registrar-guardia .pagination .page-item:not(:first-of-type):not(:last-of-type),
-  .consultar-grupo   .pagination .page-item:not(:first-of-type):not(:last-of-type) {
+  .consultar-grupo .pagination .page-item:not(:first-of-type):not(:last-of-type) {
     display: none !important;
   }
 
   /* oculta texto “Anterior/Siguiente” y muestra flechas */
   .registrar-guardia .pagination .page-item:first-of-type .page-link,
-  .registrar-guardia .pagination .page-item:last-of-type  .page-link,
-  .consultar-grupo   .pagination .page-item:first-of-type .page-link,
-  .consultar-grupo   .pagination .page-item:last-of-type  .page-link {
-    font-size: 0 !important;          /* por si viene como texto */
-    text-indent: -9999px !important;  /* lo saco del flujo */
+  .registrar-guardia .pagination .page-item:last-of-type .page-link,
+  .consultar-grupo .pagination .page-item:first-of-type .page-link,
+  .consultar-grupo .pagination .page-item:last-of-type .page-link {
+    font-size: 0 !important;
+    /* por si viene como texto */
+    text-indent: -9999px !important;
+    /* lo saco del flujo */
     overflow: hidden !important;
     white-space: nowrap !important;
 
@@ -823,16 +826,16 @@ body {
   }
 
   /* por si el texto está envuelto en spans/hijos */
-  .registrar-guardia .pagination .page-item:first-of-type .page-link > *,
-  .registrar-guardia .pagination .page-item:last-of-type  .page-link > *,
-  .consultar-grupo   .pagination .page-item:first-of-type .page-link > *,
-  .consultar-grupo   .pagination .page-item:last-of-type  .page-link > * {
+  .registrar-guardia .pagination .page-item:first-of-type .page-link>*,
+  .registrar-guardia .pagination .page-item:last-of-type .page-link>*,
+  .consultar-grupo .pagination .page-item:first-of-type .page-link>*,
+  .consultar-grupo .pagination .page-item:last-of-type .page-link>* {
     display: none !important;
   }
 
   /* flechas */
   .registrar-guardia .pagination .page-item:first-of-type .page-link::after,
-  .consultar-grupo   .pagination .page-item:first-of-type .page-link::after {
+  .consultar-grupo .pagination .page-item:first-of-type .page-link::after {
     content: "‹";
     position: absolute;
     inset: 0;
@@ -843,8 +846,9 @@ body {
     line-height: 1;
     text-indent: 0;
   }
+
   .registrar-guardia .pagination .page-item:last-of-type .page-link::after,
-  .consultar-grupo   .pagination .page-item:last-of-type  .page-link::after {
+  .consultar-grupo .pagination .page-item:last-of-type .page-link::after {
     content: "›";
     position: absolute;
     inset: 0;
@@ -859,13 +863,163 @@ body {
 
 /* ===== Desktop > 820px: asegura que vuelva el texto normal ===== */
 @media (min-width: 821px) {
+
   .registrar-guardia .pagination .page-item .page-link,
-  .consultar-grupo   .pagination .page-item .page-link {
+  .consultar-grupo .pagination .page-item .page-link {
     font-size: .875rem;
     text-indent: 0;
   }
+
   .registrar-guardia .pagination .page-item .page-link::after,
-  .consultar-grupo   .pagination .page-item .page-link::after {
+  .consultar-grupo .pagination .page-item .page-link::after {
     content: none;
+  }
+}
+
+/* ===== ConsultarBomberosDelGrupo (≤820px) — compacto ===== */
+@media (max-width: 820px) {
+
+  /* título y avatar más chicos */
+  .cbg .hero-avatar {
+    padding: .45rem !important;
+  }
+
+  .cbg h1.fs-3 {
+    font-size: 1.125rem !important;
+  }
+
+  /* header de la card más bajo y texto más chico */
+  .cbg .card-header {
+    padding: .6rem .9rem !important;
+  }
+
+  .cbg .card-header strong {
+    font-size: .95rem !important;
+  }
+
+  /* tabla como “cards” (ya heredado por .registrar-guardia .rg-table) */
+  .cbg .table-responsive {
+    overflow: visible !important;
+  }
+
+  /* acciones compactas y sin texto (icon-only) */
+  .cbg .cbg-actions .btn {
+    padding: .375rem .5rem !important;
+    font-size: .85rem !important;
+    line-height: 1.1 !important;
+    border-radius: .35rem !important;
+    min-width: 36px;
+  }
+
+  .cbg .cbg-actions .btn .btn-label {
+    display: none !important;
+  }
+
+  .cbg .cbg-actions .btn i {
+    font-size: 1rem;
+    margin: 0 !important;
+  }
+}
+
+/* ===== ConsultarBomberosDelGrupo — botones igual tamaño ===== */
+
+/* Desktop / tablet grande */
+@media (min-width: 821px) {
+
+  /* ajustá este ancho/alto si querés milimétrico */
+  .cbg .cbg-actions .btn {
+    --cbg-btn-w: 110px;
+    /* aprox. ancho del botón Guardias */
+    --cbg-btn-h: 36px;
+
+    width: var(--cbg-btn-w) !important;
+    height: var(--cbg-btn-h) !important;
+    padding: 0 .75rem !important;
+    font-size: .85rem !important;
+    line-height: 1 !important;
+    border-radius: .5rem !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+  }
+
+  .cbg .cbg-actions .btn i {
+    font-size: 1rem !important;
+    margin: 0 !important;
+  }
+}
+
+/* Mobile / tablet chica: icon-only y todos iguales */
+@media (max-width: 820px) {
+  .cbg .cbg-actions .btn {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    border-radius: .5rem !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cbg .cbg-actions .btn .btn-label {
+    display: none !important;
+    /* oculta el texto */
+  }
+
+  .cbg .cbg-actions .btn i {
+    font-size: 1rem !important;
+    margin: 0 !important;
+  }
+}
+
+/* ===== ConsultarBomberosDelGrupo — tres botones mismo tamaño ===== */
+
+/* Desktop / tablet grande: todos como "Guardias" */
+@media (min-width: 821px) {
+  .registrar-guardia .card .card-body .d-flex.align-items-center.justify-content-between.mb-3 .btn {
+    width: 110px !important;
+    /* ajustá si querés más/menos ancho */
+    height: 36px !important;
+    padding: 0 .75rem !important;
+    font-size: .85rem !important;
+    line-height: 1 !important;
+    border-radius: .5rem !important;
+    white-space: normal !important;
+    /* deja que el texto parta en 2 líneas */
+    text-align: center !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+  }
+
+  .registrar-guardia .card .card-body .d-flex.align-items-center.justify-content-between.mb-3 .btn i {
+    font-size: 1rem !important;
+    margin: 0 !important;
+  }
+}
+
+/* Mobile / tablet chica: icon-only, cuadrados iguales */
+@media (max-width: 820px) {
+  .registrar-guardia .card .card-body .d-flex.align-items-center.justify-content-between.mb-3 .btn {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    border-radius: .5rem !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    /* oculta texto sobrante */
+    text-overflow: clip;
+    font-size: 0 !important;
+    /* oculta texto "Editar grupo", "Volver..." */
+  }
+
+  .registrar-guardia .card .card-body .d-flex.align-items-center.justify-content-between.mb-3 .btn i {
+    font-size: 1rem !important;
+    /* reponemos tamaño del ícono */
   }
 }

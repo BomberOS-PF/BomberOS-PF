@@ -12,7 +12,7 @@ const ConsultarBomberosDelGrupo = ({
   onIrAGestionarGuardias
 }) => {
   return (
-    <div className="container-fluid py-5 registrar-guardia">
+    <div className="ontainer-fluid py-5 registrar-guardia">
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
           <div className="bg-danger p-3 rounded-circle">
@@ -33,13 +33,13 @@ const ConsultarBomberosDelGrupo = ({
           <User2 />
           <strong>Bomberos del grupo: {nombreGrupo || 'Sin nombre'}</strong>
         </div>
-
+        
         <div className="card-body">
           {bomberos.length === 0 ? (
             <div className="text-center py-3 text-muted">No hay bomberos asignados a este grupo.</div>
           ) : (
             <div className="table-responsive rounded border">
-              <table className="table table-hover align-middle mb-0">
+              <table className="table table-hover align-middle mb-0 rg-table">
                 <thead className="bg-light">
                   <tr>
                     <th className="border-end text-center">Nombre completo</th>
@@ -66,31 +66,30 @@ const ConsultarBomberosDelGrupo = ({
             <div className="d-flex align-items-center justify-content-between mb-3">
               <div className="d-flex align-items-center gap-2">
                 <button
-                  className="btn btn-warning btn-sm d-flex align-items-center gap-1"
+                  className="btn btn-primary btn-sm d-flex align-items-center gap-1"
                   onClick={() => onEditar?.({ idGrupo, nombre: nombreGrupo, descripcion })}
                   title="Editar información del grupo"
                 >
                   <i className="bi bi-pencil-square"></i>
-                  Editar grupo
+                  <span className="btn-text">Editar grupo</span>
                 </button>
-
+                
                 <button
-                  className="btn btn-primary btn-sm d-flex align-items-center gap-1"
+                  className="btn btn-success btn-sm d-flex align-items-center gap-1"
                   onClick={() => onIrAGestionarGuardias?.({ idGrupo, nombreGrupo, bomberos })}
                   title="Gestionar guardias de este grupo"
                 >
                   <i className="bi bi-calendar2-week"></i>
-                  Guardias
+                  <span className="btn-text">Guardias</span>
+                </button>
+                <button
+                  className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
+                  onClick={onVolver}
+                >
+                  <i className="bi bi-arrow-left"></i>
+                  <span className="btn-text">Volver al listado</span>
                 </button>
               </div>
-
-              <button
-                className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
-                onClick={onVolver}
-              >
-                <i className="bi bi-arrow-left"></i>
-                Volver a grupos
-              </button>
             </div>
           </div>
         </div>
