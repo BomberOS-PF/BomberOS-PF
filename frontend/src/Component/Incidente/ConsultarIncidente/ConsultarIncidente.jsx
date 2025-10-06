@@ -188,7 +188,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
 • Notificaciones fallidas: ${notificacionesFallidas}
 
 Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
-        
+
         setMensaje('✅ Notificación enviada exitosamente a los bomberos')
         setTimeout(() => setMensaje(''), 5000)
       } else {
@@ -575,94 +575,97 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
             </>
           )}
 
-          {!detalle && (
-            <Pagination
-              fetchPage={fetchIncidentes}
-              initialPage={1}
-              initialPageSize={PAGE_SIZE_DEFAULT}
-              filters={filtros}
-              showControls
-              labels={{
-                prev: '‹ Anterior',
-                next: 'Siguiente ›',
-                of: '/',
-                showing: (shown, total) => `Mostrando ${shown} de ${total} incidentes`
-              }}
-            >
-              {({ items, loading, error }) => (
-                <>
-                  {error && (
-                    <div className='alert alert-danger d-flex align-items-center'>
-                      <i className='bi bi-exclamation-triangle-fill me-2'></i>
-                      {error}
-                    </div>
-                  )}
-
-                  {loading && (
-                    <div className='text-center mb-3'>
-                      <div className='spinner-border text-danger' role='status'></div>
-                    </div>
-                  )}
-
-                  {items.length > 0 ? (
-                    <div className='table-responsive rounded border'>
-                      <table className='table table-hover align-middle mb-0 responsive-table'>
-                        <thead className='bg-light'>
-                          <tr>
-                            <th className='border-end text-center'>ID</th>
-                            <th className='border-end text-center'>Fecha</th>
-                            <th className='border-end text-center'>Tipo</th>
-                            <th className='border-end text-center'>Descripción</th>
-                            <th className='border-end text-center'>Localización</th>
-                            <th className='border-end text-center'>Estado</th>
-                            <th className='text-center'>Acciones</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {items.map(it => (
-                            <tr key={it.idIncidente}>
-                              <td className='border-end px-3 text-center fw-bold' data-label='ID'>{it.idIncidente}</td>
-                              <td className='border-end px-3' data-label='Fecha'>{it.fecha}</td>
-                              <td className='border-end px-3' data-label='Tipo'>
-                                <span className={`badge ${getIncidentTypeColor(it.tipoDescripcion)}`}>
-                                  {it.tipoDescripcion}
-                                </span>
-                              </td>
-                              <td className='border-end px-3' data-label='Descripción'>{it.descripcion || '-'}</td>
-                              <td className='border-end px-3' data-label='Localización'>{it.localizacion || '-'}</td>
-                              <td className='border-end px-3' data-label='Estado'>
-                                <span className='badge bg-success'>{it.estado || 'Activo'}</span>
-                              </td>
-                              <td className='text-center' data-label='Acciones'>
-                                <button
-                                  className='btn btn-outline-secondary btn-detail me-2'
-                                  onClick={() => verDetalle(it.idIncidente)}
-                                  disabled={loading || loadingDetalle}
-                                >
-                                  <i className='bi bi-eye me-1'></i> Ver
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    !loading && (
-                      <div className='text-center py-3 text-muted'>
-                        No hay resultados para la búsqueda.
+          <div className='rg-pager'>
+            {!detalle && (
+              <Pagination
+                fetchPage={fetchIncidentes}
+                initialPage={1}
+                initialPageSize={PAGE_SIZE_DEFAULT}
+                filters={filtros}
+                showControls
+                labels={{
+                  prev: '‹ Anterior',
+                  next: 'Siguiente ›',
+                  of: '/',
+                  showing: (shown, total) => `Mostrando ${shown} de ${total} incidentes`
+                }}
+              >
+                {({ items, loading, error }) => (
+                  <>
+                    {error && (
+                      <div className='alert alert-danger d-flex align-items-center'>
+                        <i className='bi bi-exclamation-triangle-fill me-2'></i>
+                        {error}
                       </div>
-                    )
-                  )}
-                </>
-              )}
-            </Pagination>
-          )}
+                    )}
 
-          {renderDetalleIncidente()}
+                    {loading && (
+                      <div className='text-center mb-3'>
+                        <div className='spinner-border text-danger' role='status'></div>
+                      </div>
+                    )}
+
+                    {items.length > 0 ? (
+                      <div className='table-responsive rounded border'>
+                        <table className='table table-hover align-middle mb-0 responsive-table'>
+                          <thead className='bg-light'>
+                            <tr>
+                              <th className='border-end text-center'>ID</th>
+                              <th className='border-end text-center'>Fecha</th>
+                              <th className='border-end text-center'>Tipo</th>
+                              <th className='border-end text-center'>Descripción</th>
+                              <th className='border-end text-center'>Localización</th>
+                              <th className='border-end text-center'>Estado</th>
+                              <th className='text-center'>Acciones</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {items.map(it => (
+                              <tr key={it.idIncidente}>
+                                <td className='border-end px-3 text-center fw-bold' data-label='ID'>{it.idIncidente}</td>
+                                <td className='border-end px-3' data-label='Fecha'>{it.fecha}</td>
+                                <td className='border-end px-3' data-label='Tipo'>
+                                  <span className={`badge ${getIncidentTypeColor(it.tipoDescripcion)}`}>
+                                    {it.tipoDescripcion}
+                                  </span>
+                                </td>
+                                <td className='border-end px-3' data-label='Descripción'>{it.descripcion || '-'}</td>
+                                <td className='border-end px-3' data-label='Localización'>{it.localizacion || '-'}</td>
+                                <td className='border-end px-3' data-label='Estado'>
+                                  <span className='badge bg-success'>{it.estado || 'Activo'}</span>
+                                </td>
+                                <td className='text-center' data-label='Acciones'>
+                                  <button
+                                    className='btn btn-outline-secondary btn-detail me-2'
+                                    onClick={() => verDetalle(it.idIncidente)}
+                                    disabled={loading || loadingDetalle}
+                                  >
+                                    <i className='bi bi-eye me-1'></i> Ver
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      !loading && (
+                        <div className='text-center py-3 text-muted'>
+                          No hay resultados para la búsqueda.
+                        </div>
+                      )
+                    )}
+                  </>
+                )}
+              </Pagination>
+            )}
+
+            {renderDetalleIncidente()}
+          </div>
+
 
           <hr className="mb-4" />
-          
+
           <BackToMenuButton onClick={onVolverMenu} />
         </div>
       </div>

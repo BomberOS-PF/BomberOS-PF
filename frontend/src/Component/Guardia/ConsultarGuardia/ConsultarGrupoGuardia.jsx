@@ -161,99 +161,102 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
           </div>
 
           {/* ✅ Pagination igual que en Incidentes/Bomberos */}
-          <Pagination
-            fetchPage={fetchGruposPage}
-            initialPage={1}
-            initialPageSize={PAGE_SIZE_DEFAULT}
-            // filtros + tick para recargar
-            filters={{ q: busqueda, _tick: refreshKey }}
-            showControls
-            labels={{
-              prev: '‹ Anterior',
-              next: 'Siguiente ›',
-              of: '/',
-              showing: (shown, total) => `Mostrando ${shown} de ${total} grupos`
-            }}
-          >
-            {({ items, loading, error }) => (
-              <>
-                {error && <div className="alert alert-danger mb-3">{String(error)}</div>}
+          <div className='rg-pager'>
+            <Pagination
+              fetchPage={fetchGruposPage}
+              initialPage={1}
+              initialPageSize={PAGE_SIZE_DEFAULT}
+              // filtros + tick para recargar
+              filters={{ q: busqueda, _tick: refreshKey }}
+              showControls
+              labels={{
+                prev: '‹ Anterior',
+                next: 'Siguiente ›',
+                of: '/',
+                showing: (shown, total) => `Mostrando ${shown} de ${total} grupos`
+              }}
+            >
+              {({ items, loading, error }) => (
+                <>
+                  {error && <div className="alert alert-danger mb-3">{String(error)}</div>}
 
-                {loading && (
-                  <div className="text-center mb-3">
-                    <div className="spinner-border text-danger" role="status"></div>
-                  </div>
-                )}
-
-                {items.length > 0 ? (
-                  <div className="table-responsive rounded border">
-                    <table className="table table-hover align-middle mb-0 rg-table">
-                      <thead className="bg-light">
-                        <tr>
-                          <th className="border-end text-center">Nombre</th>
-                          <th className="border-end text-center">Descripción</th>
-                          <th className="text-center">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {items.map((grupo) => (
-                          <tr key={grupo.idGrupo}>
-                            <td className="border-end px-3" data-label="Nombre">{grupo.nombre}</td>
-                            <td className="border-end px-3" data-label="Descripción">{grupo.descripcion}</td>
-                            <td className="text-center" data-label="Acción">
-                              <div className='d-inline-flex align-items-center justify-content-center gap-2 flex-nowrap actions-inline'>
-                                <button
-                                  className="btn btn-outline-secondary btn-detail btn-ver"
-                                  title='Ver'
-                                  onClick={async () => {
-                                    try {
-                                      setLoadingAccion(true)
-                                      const res = await fetch(API_URLS.grupos.obtenerBomberosDelGrupo(grupo.idGrupo))
-                                      const data = await res.json()
-                                      if (res.ok && data.success) {
-                                        setBomberosDelGrupo(data.data || [])
-                                        setGrupoSeleccionado(grupo)
-                                        setMensaje('')
-                                      } else {
-                                        setMensaje(data.message || 'No se pudieron obtener los bomberos del grupo')
-                                      }
-                                    } catch (e) {
-                                      setMensaje('Error de conexión al obtener bomberos del grupo')
-                                    } finally {
-                                      setLoadingAccion(false)
-                                    }
-                                  }}
-                                  disabled={loading || loadingAccion}
-                                >
-                                  <i className="bi bi-eye"></i>
-                                  <span className="btn-label ms-1">Ver</span>
-                                </button>
-                                <button
-                                  className="btn btn-outline-danger btn-detail btn-trash"
-                                  onClick={() => confirmarEliminacion(grupo)}
-                                  disabled={loading || loadingAccion}
-                                  title="Eliminar grupo"
-                                >
-                                  <i className="bi bi-trash"></i>
-                                </button>
-                              </div>
-
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  !loading && (
-                    <div className="text-center py-3 text-muted">
-                      {mensaje || 'No hay resultados para la búsqueda.'}
+                  {loading && (
+                    <div className="text-center mb-3">
+                      <div className="spinner-border text-danger" role="status"></div>
                     </div>
-                  )
-                )}
-              </>
-            )}
-          </Pagination>
+                  )}
+
+                  {items.length > 0 ? (
+                    <div className="table-responsive rounded border">
+                      <table className="table table-hover align-middle mb-0 rg-table">
+                        <thead className="bg-light">
+                          <tr>
+                            <th className="border-end text-center">Nombre</th>
+                            <th className="border-end text-center">Descripción</th>
+                            <th className="text-center">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {items.map((grupo) => (
+                            <tr key={grupo.idGrupo}>
+                              <td className="border-end px-3" data-label="Nombre">{grupo.nombre}</td>
+                              <td className="border-end px-3" data-label="Descripción">{grupo.descripcion}</td>
+                              <td className="text-center" data-label="Acción">
+                                <div className='d-inline-flex align-items-center justify-content-center gap-2 flex-nowrap actions-inline'>
+                                  <button
+                                    className="btn btn-outline-secondary btn-detail btn-ver"
+                                    title='Ver'
+                                    onClick={async () => {
+                                      try {
+                                        setLoadingAccion(true)
+                                        const res = await fetch(API_URLS.grupos.obtenerBomberosDelGrupo(grupo.idGrupo))
+                                        const data = await res.json()
+                                        if (res.ok && data.success) {
+                                          setBomberosDelGrupo(data.data || [])
+                                          setGrupoSeleccionado(grupo)
+                                          setMensaje('')
+                                        } else {
+                                          setMensaje(data.message || 'No se pudieron obtener los bomberos del grupo')
+                                        }
+                                      } catch (e) {
+                                        setMensaje('Error de conexión al obtener bomberos del grupo')
+                                      } finally {
+                                        setLoadingAccion(false)
+                                      }
+                                    }}
+                                    disabled={loading || loadingAccion}
+                                  >
+                                    <i className="bi bi-eye"></i>
+                                    <span className="btn-label ms-1">Ver</span>
+                                  </button>
+                                  <button
+                                    className="btn btn-outline-danger btn-detail btn-trash"
+                                    onClick={() => confirmarEliminacion(grupo)}
+                                    disabled={loading || loadingAccion}
+                                    title="Eliminar grupo"
+                                  >
+                                    <i className="bi bi-trash"></i>
+                                  </button>
+                                </div>
+
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    !loading && (
+                      <div className="text-center py-3 text-muted">
+                        {mensaje || 'No hay resultados para la búsqueda.'}
+                      </div>
+                    )
+                  )}
+                </>
+              )}
+            </Pagination>
+          </div>
+
         </div>
 
         <div className="d-flex justify-content-start align-items-center gap-3 mb-3 px-3">
