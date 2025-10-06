@@ -256,7 +256,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
           </Pagination>
         </div>
 
-        <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+        <div className="d-flex justify-content-start align-items-center gap-3 mb-3 px-3">
           <BackToMenuButton onClick={onVolver} />
         </div>
       </div>
