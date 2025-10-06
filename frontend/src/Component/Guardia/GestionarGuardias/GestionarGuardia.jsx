@@ -772,9 +772,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                       <div className="modal-body">
                         <p>¿Desea modificar la guardia seleccionada?</p>
                       </div>
-                      <div className="modal-footer">
+                      <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+                        <button className="btn btn-back btn-medium" onClick={() => setModalConfirmar(false)}>Cancelar</button>
                         <button
-                          className="btn btn-danger"
+                          className="btn btn-accept btn-lg btn-medium"
                           onClick={() => {
                             setEventoSeleccionado(eventoPendiente)
                             const base = (eventoPendiente.extendedProps?.bomberos || []).map(b => ({
@@ -791,7 +792,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                         >
                           Aceptar
                         </button>
-                        <button className="btn btn-secondary" onClick={() => setModalConfirmar(false)}>Cancelar</button>
+
                       </div>
                     </div>
                   </div>
@@ -929,9 +930,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                           </tbody>
                         </table>
                       </div>
-                      <div className="modal-footer">
+                      <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+                        <button className="btn btn-back btn-medium" onClick={() => setModalAbierto(false)}>Volver</button>
                         <button
-                          className="btn btn-danger"
+                          className="btn btn-accept btn-lg btn-medium"
                           disabled={!tieneCambios}
                           onClick={() => {
                             // ... (misma lógica que ya tenías)
@@ -968,7 +970,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                         >
                           Confirmar
                         </button>
-                        <button className="btn btn-secondary" onClick={() => setModalAbierto(false)}>Volver</button>
                       </div>
                     </div>
                   </div>
@@ -987,9 +988,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                       <div className="modal-body">
                         <p>¿Desea guardar los cambios realizados en esta guardia?</p>
                       </div>
-                      <div className="modal-footer">
+                      <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+                        <button className="btn btn-back btn-medium" onClick={() => setModalConfirmarGuardar(false)}>Cancelar</button>
                         <button
-                          className="btn btn-danger"
+                          className="btn btn-accept btn-lg btn-medium"
                           onClick={async () => {
                             // 1) Consolido por DNI antes de recalcular bloques
                             const bomberosNormalizados = mergeByDni(bomberosEditados)
@@ -1078,7 +1080,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                         >
                           Aceptar
                         </button>
-                        <button className="btn btn-secondary" onClick={() => setModalConfirmarGuardar(false)}>Cancelar</button>
                       </div>
                     </div>
                   </div>
