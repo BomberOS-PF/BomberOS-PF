@@ -129,7 +129,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
   }
 
   return (
-    <div className="container-fluid py-5">
+    <div className="container-fluid py-5 consultar-grupo registrar-guardia">
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
           <div className="bg-danger p-3 rounded-circle">
@@ -187,7 +187,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
 
                 {items.length > 0 ? (
                   <div className="table-responsive rounded border">
-                    <table className="table table-hover align-middle mb-0">
+                    <table className="table table-hover align-middle mb-0 rg-table">
                       <thead className="bg-light">
                         <tr>
                           <th className="border-end text-center">Nombre</th>
@@ -198,41 +198,46 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
                       <tbody>
                         {items.map((grupo) => (
                           <tr key={grupo.idGrupo}>
-                            <td className="border-end px-3">{grupo.nombre}</td>
-                            <td className="border-end px-3">{grupo.descripcion}</td>
-                            <td className="text-center">
-                              <button
-                                className="btn btn-outline-secondary btn-detail me-2"
-                                onClick={async () => {
-                                  try {
-                                    setLoadingAccion(true)
-                                    const res = await fetch(API_URLS.grupos.obtenerBomberosDelGrupo(grupo.idGrupo))
-                                    const data = await res.json()
-                                    if (res.ok && data.success) {
-                                      setBomberosDelGrupo(data.data || [])
-                                      setGrupoSeleccionado(grupo)
-                                      setMensaje('')
-                                    } else {
-                                      setMensaje(data.message || 'No se pudieron obtener los bomberos del grupo')
+                            <td className="border-end px-3" data-label="Nombre">{grupo.nombre}</td>
+                            <td className="border-end px-3" data-label="Descripción">{grupo.descripcion}</td>
+                            <td className="text-center" data-label="Acción">
+                              <div className='d-inline-flex align-items-center justify-content-center gap-2 flex-nowrap actions-inline'>
+                                <button
+                                  className="btn btn-outline-secondary btn-detail btn-ver"
+                                  title='Ver'
+                                  onClick={async () => {
+                                    try {
+                                      setLoadingAccion(true)
+                                      const res = await fetch(API_URLS.grupos.obtenerBomberosDelGrupo(grupo.idGrupo))
+                                      const data = await res.json()
+                                      if (res.ok && data.success) {
+                                        setBomberosDelGrupo(data.data || [])
+                                        setGrupoSeleccionado(grupo)
+                                        setMensaje('')
+                                      } else {
+                                        setMensaje(data.message || 'No se pudieron obtener los bomberos del grupo')
+                                      }
+                                    } catch (e) {
+                                      setMensaje('Error de conexión al obtener bomberos del grupo')
+                                    } finally {
+                                      setLoadingAccion(false)
                                     }
-                                  } catch (e) {
-                                    setMensaje('Error de conexión al obtener bomberos del grupo')
-                                  } finally {
-                                    setLoadingAccion(false)
-                                  }
-                                }}
-                                disabled={loading || loadingAccion}
-                              >
-                                <i className="bi bi-eye me-1"></i> Ver
-                              </button>
-                              <button
-                                className="btn btn-outline-danger btn-detail"
-                                onClick={() => confirmarEliminacion(grupo)}
-                                disabled={loading || loadingAccion}
-                                title="Eliminar grupo"
-                              >
-                                <i className="bi bi-trash"></i>
-                              </button>
+                                  }}
+                                  disabled={loading || loadingAccion}
+                                >
+                                  <i className="bi bi-eye"></i>
+                                  <span className="btn-label ms-1">Ver</span>
+                                </button>
+                                <button
+                                  className="btn btn-outline-danger btn-detail btn-trash"
+                                  onClick={() => confirmarEliminacion(grupo)}
+                                  disabled={loading || loadingAccion}
+                                  title="Eliminar grupo"
+                                >
+                                  <i className="bi bi-trash"></i>
+                                </button>
+                              </div>
+
                             </td>
                           </tr>
                         ))}
@@ -251,7 +256,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
           </Pagination>
         </div>
 
-        <div className="d-grid mb-3 px-3">
+        <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
           <BackToMenuButton onClick={onVolver} />
         </div>
       </div>

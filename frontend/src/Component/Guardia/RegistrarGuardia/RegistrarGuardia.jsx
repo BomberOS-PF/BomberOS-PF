@@ -262,12 +262,12 @@ const RegistrarGuardia = ({
 
                           return (
                             <tr key={b.dni} className="border-b">
-                              <td className="border-end px-3"  data-label="Nombre">{b.nombre} {b.apellido}</td>
+                              <td className="border-end px-3" data-label="Nombre">{b.nombre} {b.apellido}</td>
                               <td className="border-end px-3" data-label="DNI">{b.dni}</td>
                               <td className="border-end px-3" data-label="Legajo">{b.legajo || '-'}</td>
                               <td className="border-end px-3" data-label="Teléfono">{b.telefono}</td>
                               <td className="border-end px-3" data-label="Grupo">{b.grupos}</td>
-                              <td className="border-end px-3 text-center"  data-label="Acción">
+                              <td className="border-end px-3 text-center" data-label="Acción">
                                 <div className="tooltip-container">
                                   <button
                                     onClick={() => agregarAlGrupo(b)}
@@ -326,7 +326,7 @@ const RegistrarGuardia = ({
                     ) : (
                       grupo.map((b) => (
                         <tr key={b.dni} className="border-b">
-                          <td className="border-end text-center"  data-label="Nombre">{b.nombre} {b.apellido}</td>
+                          <td className="border-end text-center" data-label="Nombre">{b.nombre} {b.apellido}</td>
                           <td className="border-end text-center" data-label="DNI">{b.dni}</td>
                           <td className="border-end text-center" data-label="Legajo">{b.legajo || '-'}</td>
                           <td className="border-end text-center" data-label="Teléfono">{b.telefono}</td>
@@ -348,18 +348,18 @@ const RegistrarGuardia = ({
           </div>
         </div>
         {/* Botones */}
-            <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
-              <BackToMenuButton onClick={onVolver} />
-              <button
-                type="button"
-                onClick={guardarGrupo}
-                disabled={loading}
-                className="btn btn-accept btn-lg btn-medium"
-              >
-                <Users size={16} className="me-1" />
-                {loading ? 'Espere...' : modoEdicion ? 'Actualizar Grupo' : 'Guardar Grupo'}
-              </button>
-            </div>
+        <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+          <BackToMenuButton onClick={onVolver} />
+          <button
+            type="button"
+            onClick={guardarGrupo}
+            disabled={loading}
+            className="btn btn-accept btn-lg btn-medium"
+          >
+            <Users size={16} className="me-1" />
+            {loading ? 'Espere...' : modoEdicion ? 'Actualizar Grupo' : 'Guardar Grupo'}
+          </button>
+        </div>
       </div>
     </div>
   )

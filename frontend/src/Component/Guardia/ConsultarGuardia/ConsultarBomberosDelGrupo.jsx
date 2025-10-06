@@ -12,7 +12,7 @@ const ConsultarBomberosDelGrupo = ({
   onIrAGestionarGuardias
 }) => {
   return (
-    <div className="container-fluid py-5">
+    <div className="container-fluid py-5 registrar-guardia">
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
           <div className="bg-danger p-3 rounded-circle">
@@ -51,10 +51,10 @@ const ConsultarBomberosDelGrupo = ({
                 <tbody>
                   {bomberos.map((b, i) => (
                     <tr key={i}>
-                      <td className="border-end px-3">{b.nombre} {b.apellido}</td>
-                      <td className="border-end px-3">{b.dni}</td>
-                      <td className="border-end px-3">{b.legajo}</td>
-                      <td className="px-3">{b.telefono}</td>
+                      <td className="border-end px-3" data-label="Nombre">{b.nombre} {b.apellido}</td>
+                      <td className="border-end px-3" data-label="DNI">{b.dni}</td>
+                      <td className="border-end px-3" data-label="Legajo">{b.legajo}</td>
+                      <td className="px-3" data-label="Teléfono">{b.telefono}</td>
                     </tr>
                   ))}
                 </tbody>
