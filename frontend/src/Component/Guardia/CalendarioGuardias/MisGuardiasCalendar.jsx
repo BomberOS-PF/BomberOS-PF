@@ -419,8 +419,8 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
                           </div>
                         )}
                       </div>
-                      <div className='modal-footer'>
-                        <button type='button' className='btn btn-secondary' onClick={closeModal}>Cerrar</button>
+                      <div className='d-flex justify-content-start align-items-start gap-3 mb-3 px-3'>
+                        <button type='button' className='btn btn-back btn-medium' onClick={closeModal}>Cerrar</button>
                       </div>
                     </div>
                   </div>
