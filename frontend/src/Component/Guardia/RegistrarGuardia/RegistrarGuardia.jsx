@@ -135,7 +135,7 @@ const RegistrarGuardia = ({
   }
 
   return (
-    <div className="container-fluid py-5">
+    <div className="container-fluid py-5 registrar-guardia">
       <div className="text-center mb-4">
         <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
           <div className="bg-danger p-3 rounded-circle">
@@ -232,14 +232,14 @@ const RegistrarGuardia = ({
                   )}
 
                   <div className="table-responsive rounded border">
-                    <table className="table table-hover align-middle mb-0">
+                    <table className="table table-hover align-middle mb-0 rg-table">
                       <thead className="bg-light">
                         <tr>
                           <th className="border-end text-center">Nombre completo</th>
                           <th className="border-end text-center">DNI</th>
-                          <th className="border-end text-center">Legajo</th>
-                          <th className="border-end text-center">Teléfono</th>
-                          <th className="border-end text-center">Grupo</th>
+                          <th className="border-end text-center col-legajo">Legajo</th>
+                          <th className="border-end text-center col-telefono">Teléfono</th>
+                          <th className="border-end text-center col-grupo">Grupo</th>
                           <th className="text-center">Seleccionar</th>
                         </tr>
                       </thead>
@@ -262,12 +262,12 @@ const RegistrarGuardia = ({
 
                           return (
                             <tr key={b.dni} className="border-b">
-                              <td className="border-end px-4">{b.nombre} {b.apellido}</td>
-                              <td className="border-end px-3">{b.dni}</td>
-                              <td className="border-end px-3">{b.legajo || '-'}</td>
-                              <td className="border-end px-2">{b.telefono}</td>
-                              <td className="border-end px-2">{b.grupos}</td>
-                              <td className="border-end px-3 text-center">
+                              <td className="border-end px-3"  data-label="Nombre">{b.nombre} {b.apellido}</td>
+                              <td className="border-end px-3" data-label="DNI">{b.dni}</td>
+                              <td className="border-end px-3" data-label="Legajo">{b.legajo || '-'}</td>
+                              <td className="border-end px-3" data-label="Teléfono">{b.telefono}</td>
+                              <td className="border-end px-3" data-label="Grupo">{b.grupos}</td>
+                              <td className="border-end px-3 text-center"  data-label="Acción">
                                 <div className="tooltip-container">
                                   <button
                                     onClick={() => agregarAlGrupo(b)}
@@ -306,14 +306,14 @@ const RegistrarGuardia = ({
               </div>
 
               <div className="table-responsive rounded border">
-                <table className="table table-hover align-middle mb-0">
+                <table className="table table-hover align-middle mb-0 rg-table">
                   <thead className="bg-light">
                     <tr>
                       <th className="border-end text-center">Nombre completo</th>
                       <th className="border-end text-center">DNI</th>
-                      <th className="border-end text-center">Legajo</th>
-                      <th className="border-end text-center">Teléfono</th>
-                      <th className="text-center">Quitar</th>
+                      <th className="border-end text-center col-legajo">Legajo</th>
+                      <th className="border-end text-center col-telefono">Teléfono</th>
+                      <th className="border-end text-center">Quitar</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -326,14 +326,14 @@ const RegistrarGuardia = ({
                     ) : (
                       grupo.map((b) => (
                         <tr key={b.dni} className="border-b">
-                          <td className="border-end text-center">{b.nombre} {b.apellido}</td>
-                          <td className="border-end text-center">{b.dni}</td>
-                          <td className="border-end text-center">{b.legajo || '-'}</td>
-                          <td className="border-end text-center">{b.telefono}</td>
-                          <td className="text-center">
+                          <td className="border-end text-center"  data-label="Nombre">{b.nombre} {b.apellido}</td>
+                          <td className="border-end text-center" data-label="DNI">{b.dni}</td>
+                          <td className="border-end text-center" data-label="Legajo">{b.legajo || '-'}</td>
+                          <td className="border-end text-center" data-label="Teléfono">{b.telefono}</td>
+                          <td className="border-end text-center" data-label="Quitar">
                             <button
                               onClick={() => quitarDelGrupo(b.dni)}
-                              className="btn btn-outline-danger btn-detail"
+                              className="btn btn-outline-danger btn-detail btn-trash"
                             >
                               <i className="bi bi-trash"></i>
                             </button>

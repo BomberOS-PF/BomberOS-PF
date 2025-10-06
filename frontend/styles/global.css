@@ -82,21 +82,13 @@ body {
   border-color: var(--gray-800);
 }
 
-.only-thumb .form-check-label {
-  pointer-events: none
-}
-
-.only-thumb .form-check-input {
-  pointer-events: auto
-}
+.only-thumb .form-check-label { pointer-events: none; }
+.only-thumb .form-check-input { pointer-events: auto; }
 
 .edge-to-edge {
   width: 80vw;
-  /* ocupa el 90% del ancho de la ventana */
   margin: 0 auto;
-  /* centra horizontalmente */
   border-radius: 0.5rem;
-  /* opcional */
 }
 
 /* =============================
@@ -104,17 +96,11 @@ body {
 ============================= */
 .btn {
   font-size: 1rem;
-  /* texto más grande o chico */
   padding: 0.6rem 1.2rem;
-  /* alto y ancho del botón */
   border-radius: 6px;
-  /* bordes */
 }
 
-.btn-short {
-  width: 120px;
-  /* corto */
-}
+.btn-short { width: 120px; }
 
 .btn-medium {
   width: 225px;
@@ -136,22 +122,18 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.btn-accept:hover {
-  background-color: #ce1225;
-}
+.btn-accept:hover { background-color: #ce1225; }
 
 .btn-warning {
   background-color: #ffc107;
   border-color: #ffc107;
   color: #000;
 }
-
 .btn-warning:hover {
   color: #000;
   background-color: #ffca2c;
   border-color: #ffc720;
 }
-
 .btn-warning:active {
   background-color: #ffcd39;
   border-color: #ffc720;
@@ -167,10 +149,7 @@ body {
   border-radius: 6px;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
-
-.btn-back:hover {
-  background-color: #bcbfc5;
-}
+.btn-back:hover { background-color: #bcbfc5; }
 
 .btn-sm-custom {
   font-size: 0.85rem;
@@ -195,19 +174,10 @@ body {
   border-radius: 6px;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
+.btn-added:hover { background-color: #1c910c; }
 
-.btn-added:hover {
-  background-color: #1c910c;
-}
-
-.toggle-btn {
-  border-color: #000000;
-}
-
-.toggle-btn:hover {
-  background-color: #f06873;
-}
-
+.toggle-btn { border-color: #000000; }
+.toggle-btn:hover { background-color: #f06873; }
 .toggle-btn.selected {
   background-color: #f06873;
   color: #fff;
@@ -227,12 +197,7 @@ body {
   border-bottom: 4px solid var(--red-700);
   margin-bottom: 1rem;
 }
-
-.form-header img {
-  height: 40px;
-  margin-right: 1rem;
-}
-
+.form-header img { height: 40px; margin-right: 1rem; }
 .form-header h2 {
   margin: 0;
   font-size: 1.5rem;
@@ -249,45 +214,17 @@ body {
   min-height: 38px;
   box-shadow: none;
 }
-
-.rs__control:hover {
-  border-color: var(--red-600);
-}
-
+.rs__control:hover { border-color: var(--red-600); }
 .rs__control--is-focused {
   border-color: var(--red-600) !important;
   box-shadow: 0 0 0 2px rgba(220, 53, 69, .3) !important;
 }
-
-.rs__single-value {
-  color: var(--black);
-}
-
-.rs__menu {
-  background: var(--white);
-  z-index: 9999;
-}
-
-.rs__option {
-  background: var(--white);
-  color: var(--black);
-  cursor: pointer;
-}
-
-.rs__option--is-focused {
-  background: var(--red-500) !important;
-  color: var(--white) !important;
-}
-
-.rs__option--is-selected {
-  background: var(--red-600) !important;
-  color: var(--white) !important;
-}
-
-.rs__option--is-selected.rs__option--is-focused {
-  background: #c82333 !important;
-  color: var(--white) !important;
-}
+.rs__single-value { color: var(--black); }
+.rs__menu { background: var(--white); z-index: 9999; }
+.rs__option { background: var(--white); color: var(--black); cursor: pointer; }
+.rs__option--is-focused { background: var(--red-500) !important; color: var(--white) !important; }
+.rs__option--is-selected { background: var(--red-600) !important; color: var(--white) !important; }
+.rs__option--is-selected.rs__option--is-focused { background: #c82333 !important; color: var(--white) !important; }
 
 /* =============================
    Tablas (lista de bomberos)
@@ -301,39 +238,23 @@ body {
   border: 1px solid var(--gray-600);
   font-size: .9rem;
 }
-
-.tabla-bomberos thead {
-  background-color: var(--gray-500);
-}
-
+.tabla-bomberos thead { background-color: var(--gray-500); }
 .tabla-bomberos th,
 .tabla-bomberos td {
   padding: 8px 12px;
   border: 1px solid var(--gray-600);
   text-align: left;
 }
-
-.tabla-bomberos tr:hover {
-  background-color: #a1a0a0;
-}
-
+.tabla-bomberos tr:hover { background-color: #a1a0a0; }
 .tabla-bomberos th:last-child,
-.tabla-bomberos td:last-child {
-  border-right: 0 !important;
-}
-
-.tabla-bomberos td:last-child {
-  width: 1%;
-  white-space: nowrap;
-}
+.tabla-bomberos td:last-child { border-right: 0 !important; }
+.tabla-bomberos td:last-child { width: 1%; white-space: nowrap; }
 
 /* =============================
    FullCalendar (bloques/tooltip)
 ============================= */
 .fc-toolbar-chunk .fc-toolbar-title,
-.fc-col-header-cell-cushion {
-  color: var(--black) !important;
-}
+.fc-col-header-cell-cushion { color: var(--black) !important; }
 
 .fc-timegrid-event {
   width: 100% !important;
@@ -344,10 +265,7 @@ body {
   border: 1px solid #b30000 !important;
   transition: background-color .2s ease;
 }
-
-.fc-timegrid-event:hover {
-  background-color: var(--red-700) !important;
-}
+.fc-timegrid-event:hover { background-color: var(--red-700) !important; }
 
 .fc-event-title,
 .fc-event-time,
@@ -359,9 +277,7 @@ body {
   padding: 0 !important;
 }
 
-.time-select {
-  min-width: 40%;
-}
+.time-select { min-width: 40%; }
 
 /* Tooltip dinámico (fullcalendar) */
 .tooltip-dinamico {
@@ -382,23 +298,14 @@ body {
 /* =============================
    Modales
 ============================= */
-.modal-backdrop {
-  background-color: rgba(0, 0, 0, .5);
-}
-
-.modal-backdrop-custom {
-  background: rgba(0, 0, 0, .5);
-}
-
+.modal-backdrop { background-color: rgba(0, 0, 0, .5); }
+.modal-backdrop-custom { background: rgba(0, 0, 0, .5); }
 .modal-content-white {
   background: #fff !important;
   color: #000 !important;
   border-radius: 8px;
 }
-
-.modal-backdrop-custom .modal-dialog {
-  margin-top: 10vh;
-}
+.modal-backdrop-custom .modal-dialog { margin-top: 10vh; }
 
 /* =============================
    Paginación reutilizable
@@ -409,10 +316,7 @@ body {
   line-height: 1.2 !important;
   transition: all .2s ease-in-out;
 }
-
-.custom-page-btn.active {
-  filter: brightness(.9);
-}
+.custom-page-btn.active { filter: brightness(.9); }
 
 /* =============================
    Iconos
@@ -427,16 +331,12 @@ body {
 }
 
 /* =============================
-   Responsive
+   Responsive (ConsultarIncidente existente)
 ============================= */
 @media (max-width: 576px) {
-
   .btn-short,
-  .btn-medium {
-    width: auto;
-  }
+  .btn-medium { width: auto; }
 }
-
 @media (max-width: 576px) {
   .edge-to-edge {
     width: 100%;
@@ -445,34 +345,23 @@ body {
   }
 }
 
-/* md- (≤ 991.98px): tipografía y botones un toque más compactos */
+/* md- (≤ 991.98px) */
 @media (max-width: 991.98px) {
-  .consultar-incidente .table {
-    font-size: .95rem;
-  }
-
+  .consultar-incidente .table { font-size: .95rem; }
   .consultar-incidente .btn-detail {
     font-size: .85rem;
     padding: .35rem .6rem;
   }
 }
 
-/* sm- (≤ 767.98px): cabecera del detalle apilada y botones con wrap */
+/* sm- (≤ 767.98px) */
 @media (max-width: 767.98px) {
-
-  /* La caja de búsqueda ocupa 100% del ancho */
-  .consultar-incidente .search-box {
-    width: 100%;
-  }
-
-  /* Header del detalle apilado */
+  .consultar-incidente .search-box { width: 100%; }
   .consultar-incidente .detalle-header {
     flex-direction: column;
     align-items: flex-start;
     gap: .5rem;
   }
-
-  /* Botonera del detalle con wrap y ancho completo */
   .consultar-incidente .detalle-actions {
     width: 100%;
     display: flex;
@@ -482,36 +371,24 @@ body {
   }
 }
 
-/* xs- (≤ 575.98px): padding compacto y ocultamos columnas largas para evitar desborde */
+/* xs- (≤ 575.98px) */
 @media (max-width: 575.98px) {
-  .consultar-incidente .card .card-body {
-    padding: 1rem;
-  }
-
+  .consultar-incidente .card .card-body { padding: 1rem; }
   .consultar-incidente .table thead th,
   .consultar-incidente .table tbody td {
     padding: .5rem .5rem;
     vertical-align: middle;
   }
-
   .consultar-incidente .btn-detail {
     font-size: .8rem;
     padding: .35rem .5rem;
   }
-
-  .consultar-incidente .badge {
-    white-space: nowrap;
-  }
+  .consultar-incidente .badge { white-space: nowrap; }
 }
 
-/* ===== Tabla responsive tipo cards ===== */
+/* ===== Tabla responsive tipo cards (ConsultarIncidente) ===== */
 @media (max-width: 863px) {
-
-  /* Ocultamos encabezados y “apilamos” filas/celdas */
-  .consultar-incidente .responsive-table thead {
-    display: none;
-  }
-
+  .consultar-incidente .responsive-table thead { display: none; }
   .consultar-incidente .responsive-table,
   .consultar-incidente .responsive-table tbody,
   .consultar-incidente .responsive-table tr,
@@ -519,8 +396,6 @@ body {
     display: block;
     width: 100%;
   }
-
-  /* Cada fila se vuelve una “card” */
   .consultar-incidente .responsive-table tr {
     margin-bottom: .75rem;
     background: #fff;
@@ -529,8 +404,6 @@ body {
     border-radius: .5rem;
     overflow: hidden;
   }
-
-  /* Cada celda muestra su etiqueta (del data-label) */
   .consultar-incidente .responsive-table td {
     border: none;
     border-bottom: 1px solid #f0f0f0;
@@ -540,39 +413,222 @@ body {
     justify-content: space-between;
     gap: .75rem;
   }
-
-  .consultar-incidente .responsive-table td:last-child {
-    border-bottom: none;
-  }
-
+  .consultar-incidente .responsive-table td:last-child { border-bottom: none; }
   .consultar-incidente .responsive-table td::before {
     content: attr(data-label);
     font-weight: 600;
     color: #6b7280;
-    /* gris */
     flex: 0 0 auto;
   }
-
-  /* Ajustes visuales */
-  .consultar-incidente .responsive-table .badge {
-    white-space: nowrap;
-  }
-
-  /* Acciones a la derecha (opcional) */
-  .consultar-incidente .responsive-table td[data-label="Acciones"] {
-    justify-content: flex-end;
-  }
+  .consultar-incidente .responsive-table .badge { white-space: nowrap; }
+  .consultar-incidente .responsive-table td[data-label="Acciones"] { justify-content: flex-end; }
 }
 
-
-/* micro (≤ 400px): aún más compacto si hace falta */
+/* micro (≤ 400px) */
 @media (max-width: 400px) {
-  .consultar-incidente .table {
-    font-size: .9rem;
-  }
-
+  .consultar-incidente .table { font-size: .9rem; }
   .consultar-incidente .badge {
     font-size: .75rem;
     padding: .25rem .4rem;
+  }
+}
+
+/* ============================================================
+   REGISTRAR GUARDIA — Responsive, paginado y tooltips propios
+   (usar wrapper .registrar-guardia y tablas con clase .rg-table)
+============================================================ */
+
+/* Mini botón de borrar (también sirve para otros botones chicos) */
+.registrar-guardia .btn-trash {
+  padding: .28rem .46rem !important;
+  font-size: .82rem !important;
+  line-height: 1 !important;
+  border-radius: .25rem !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 28px;
+}
+.registrar-guardia .btn-trash i { font-size: .95rem !important; }
+
+/* Base de posicionamiento para tooltips */
+.registrar-guardia .rg-table tr { position: relative; overflow: visible; }
+.registrar-guardia .tooltip-container { position: relative; }
+
+/* ===== Desktop > 820px: tooltip ARRIBA, centrado, 1 línea con … ===== */
+@media (min-width: 821px) {
+  .registrar-guardia .rg-tooltip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 8px;
+    right: 8px;
+    transform: none;
+    text-align: center;
+    max-width: calc(100% - 16px);
+    padding: 6px 8px;
+    font-size: .9rem;
+    line-height: 1.25;
+    background: rgba(0,0,0,.9);
+    color: #fff;
+    border-radius: .35rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    z-index: 1000;
+    display: none;
+  }
+  .registrar-guardia .rg-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: rgba(0,0,0,.9) transparent transparent transparent;
+  }
+  .registrar-guardia .tooltip-container:hover .rg-tooltip,
+  .registrar-guardia .tooltip-container:focus-within .rg-tooltip { display: block; }
+}
+
+/* ===== Mobile ≤ 820px: tooltip a la IZQUIERDA del botón, 1 línea con … ===== */
+@media (max-width: 820px) {
+  .registrar-guardia .rg-tooltip {
+    position: absolute;
+    top: 50%;
+    right: calc(100% + 8px);
+    transform: translateY(-50%);
+    left: auto;
+    text-align: left;
+    max-width: min(480px, 90vw);
+    padding: .45rem .55rem;
+    font-size: .85rem;
+    line-height: 1.2;
+    background: rgba(0,0,0,.9);
+    color: #fff;
+    border-radius: .35rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    z-index: 1000;
+    display: none;
+  }
+  .registrar-guardia .rg-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent transparent rgba(0,0,0,.9);
+  }
+  .registrar-guardia .tooltip-container:hover .rg-tooltip,
+  .registrar-guardia .tooltip-container:focus-within .rg-tooltip { display: block; }
+}
+
+/* ===== Mobile ≤ 820px: tabla .rg-table pasa a “cards” ===== */
+@media (max-width: 820px) {
+  .registrar-guardia .table-responsive { overflow: visible !important; }
+  .registrar-guardia .rg-table thead { display: none !important; }
+
+  .registrar-guardia .rg-table,
+  .registrar-guardia .rg-table tbody,
+  .registrar-guardia .rg-table tr,
+  .registrar-guardia .rg-table td {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .registrar-guardia .rg-table tr {
+    background: #fff;
+    color: #000;
+    border: 1px solid #e5e7eb;
+    border-radius: .5rem;
+    overflow: visible;
+    margin-bottom: .75rem;
+  }
+
+  .registrar-guardia .rg-table td {
+    border: none !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+    padding: .75rem .75rem !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+  }
+  .registrar-guardia .rg-table td:last-child { border-bottom: none !important; }
+
+  .registrar-guardia .rg-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #6b7280;
+    flex: 0 0 auto;
+  }
+
+  /* evitar que los botones se estiren a 100% */
+  .registrar-guardia .rg-table td .btn {
+    width: auto !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* ===== Mobile ≤ 820px: paginado compacto y solo flechas ===== */
+@media (max-width: 820px) {
+  .registrar-guardia .pagination {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: .3rem;
+  }
+  .registrar-guardia .pagination .page-item { margin: 0; }
+
+  /* Ocultar texto “Anterior/Siguiente” y mostrar solo flechas */
+  .registrar-guardia .pagination .page-item:first-child .page-link,
+  .registrar-guardia .pagination .page-item:last-child .page-link {
+    font-size: 0;
+    position: relative;
+  }
+  .registrar-guardia .pagination .page-item:first-child .page-link::before {
+    content: "‹";
+    font-size: 1rem;
+  }
+  .registrar-guardia .pagination .page-item:last-child .page-link::before {
+    content: "›";
+    font-size: 1rem;
+  }
+
+  .registrar-guardia .pagination .page-link,
+  .registrar-guardia .custom-page-btn {
+    padding: .3rem .5rem !important;
+    font-size: .85rem !important;
+    line-height: 1.1 !important;
+    border-radius: .28rem !important;
+    min-width: 34px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Resumen opcional del paginado (si existe) */
+  .registrar-guardia .pagination-summary,
+  .registrar-guardia .paginacion-resumen { display: none !important; }
+}
+
+/* ===== Mobile ≤ 820px: botones principales más chicos ===== */
+@media (max-width: 820px) {
+  .registrar-guardia .btn-accept,
+  .registrar-guardia .btn-back,
+  .registrar-guardia .btn.btn-lg,
+  .registrar-guardia .btn-medium {
+    padding: .6rem .85rem !important;
+    font-size: .95rem !important;
+    border-radius: .4rem !important;
+    width: auto !important;
   }
 }
