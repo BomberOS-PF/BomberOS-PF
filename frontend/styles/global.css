@@ -59,10 +59,18 @@ body{
   background-color: var(--red-700);
   border-color: var(--red-700);
 }
+
 /* sin fondo rojo cuando no está checkeado */
 .form-check-input:not(:checked){
   background-color: var(--white);
   border-color: var(--gray-800);
+}
+
+.only-thumb .form-check-label {
+  pointer-events: none
+}
+.only-thumb .form-check-input {
+  pointer-events: auto
 }
 
 .edge-to-edge{
