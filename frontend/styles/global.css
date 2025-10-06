@@ -444,14 +444,3 @@ body {
     margin-right: 0;
   }
 }
-
-/* A partir de max-width: 539px → ocultar topbar y mostrar dentro del hamburguesa */
-@media (max-width: 539px) {
-  .topbar-profile {
-    display: none
-  }
-
-  .offcanvas-profile {
-    display: flex
-  }
-}
