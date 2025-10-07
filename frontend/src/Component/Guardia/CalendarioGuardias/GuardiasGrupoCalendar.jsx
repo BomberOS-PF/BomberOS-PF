@@ -683,7 +683,7 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
               fixedWeekCount={false}
               showNonCurrentDates={true}
               height='auto'
-              contentHeight={650}
+              contentHeight={true}
 
               dateClick={arg => {
                 const f = arg.dateStr?.slice(0, 10)

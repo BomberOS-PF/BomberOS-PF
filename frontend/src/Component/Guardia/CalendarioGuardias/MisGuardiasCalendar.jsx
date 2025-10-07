@@ -310,7 +310,7 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
         <div className='card-body'>
           {mensaje && <div className='alert alert-warning'>{mensaje}</div>}
 
-          <div className='calendar-mini-wrapper position-relative' style={{ minHeight: 520 }}>
+          <div className='calendar-mini-wrapper position-relative'>
             {cargandoGuardias && (
               <div
                 className='position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center'
@@ -334,7 +334,8 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
               firstDay={1}
               fixedWeekCount={false}
               showNonCurrentDates={true}
-              height='100%'
+              height='auto'
+              expandRows={true}
 
               // Click para abrir el modal con horarios
               dateClick={arg => {
@@ -359,6 +360,7 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
                 if (info.el?.dataset) delete info.el.dataset.tipBound
               }}
             />
+
           </div>
 
           {/* Modal — igual estilo que Guardias por Grupo, pero sólo horarios */}
