@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 
 import { API_URLS, apiRequest } from '../../../config/api'
+import * as bootstrap from 'bootstrap'
 
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -271,6 +272,9 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   const [mensaje, setMensaje] = useState('')
   const [mensajesModal, setMensajesModal] = useState([])
 
+  const [indiceAEliminar, setIndiceAEliminar] = useState(null)
+  const [bomberoAEliminar, setBomberoAEliminar] = useState(null)
+
   const [cargandoSemana, setCargandoSemana] = useState(false)
   const [guardando, setGuardando] = useState(false)
 
@@ -288,6 +292,28 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   const [bomberosEditados, setBomberosEditados] = useState([])
   const [bomberosOriginales, setBomberosOriginales] = useState([])
   const [tieneCambios, setTieneCambios] = useState(false)
+
+  const abrirConfirmarEliminarAsignacion = (idx, bombero) => {
+    setIndiceAEliminar(idx)
+    setBomberoAEliminar(bombero)
+    const modalEl = document.getElementById('modalConfirmarEliminarAsignacion')
+    if (!modalEl) return
+    const modal = new bootstrap.Modal(modalEl)
+    modal.show()
+  }
+
+  const confirmarEliminarAsignacion = () => {
+    setBomberosEditados(prev => prev.filter((_, i) => i !== indiceAEliminar))
+    setTieneCambios(true)
+
+    const modal = bootstrap.Modal.getInstance(
+      document.getElementById('modalConfirmarEliminarAsignacion')
+    )
+    modal?.hide()
+
+    setIndiceAEliminar(null)
+    setBomberoAEliminar(null)
+  }
 
   // Detectar cambios (modal)
   useEffect(() => {
@@ -920,7 +946,8 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                 <td className="text-center">
                                   <button
                                     className="btn btn-outline-danger btn-detail"
-                                    onClick={() => setBomberosEditados(prev => prev.filter((_, i) => i !== idx))}
+                                    title='Eliminar asignación'
+                                    onClick={() => abrirConfirmarEliminarAsignacion(idx, b)}
                                   >
                                     <i className="bi bi-trash"></i>
                                   </button>
@@ -936,7 +963,41 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                           className="btn btn-accept btn-lg btn-medium"
                           disabled={!tieneCambios}
                           onClick={() => {
-                            // ... (misma lógica que ya tenías)
+                            // Si no queda ningún bombero -> eliminar bloque y persistir el día
+                            if (bomberosEditados.length === 0) {
+                              const fechaBase = new Date(eventoSeleccionado.start)
+                              const fechaStr = yyyyMmDd(fechaBase)
+
+                              // 1) UI: quitar este evento y re-fusionar
+                              const nextEventos = fusionarEventos(
+                                eventos.filter(ev => ev.id !== eventoSeleccionado.id)
+                              )
+                              setEventos(nextEventos)
+                              setModalAbierto(false)
+
+                              // 2) Construir el payload del DÍA restante (del resto de eventos de esa fecha)
+                              const asignacionesDia = asignacionesDelDiaDesdeEventos(nextEventos, fechaStr)
+
+                              // 3) Persistir con PUT reemplazarDia
+                              setGuardando(true)
+                              apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
+                                method: 'PUT',
+                                body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDia })
+                              })
+                                .then(() => {
+                                  setMensaje('Guardia eliminada y actualizada con exito')
+                                  const api = calendarRef.current?.getApi()
+                                  if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
+                                  setTimeout(() => setMensaje(''), 3000)
+                                })
+                                .catch((e) => {
+                                  console.error(e)
+                                  setMensaje(`Error al guardar: ${e.message}`)
+                                  setTimeout(() => setMensaje(''), 5000)
+                                })
+                                .finally(() => setGuardando(false))
+                              return
+                            }
                             const fechaBase = new Date(eventoSeleccionado.start)
                             if (bomberosEditados.length === 0) {
                               const fechaStr = yyyyMmDd(fechaBase)
@@ -975,6 +1036,43 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                   </div>
                 </div>
               )}
+
+              {/* Modal Confirmación Eliminación de Asignación */}
+              <div
+                className="modal fade modal-backdrop-custom"
+                id="modalConfirmarEliminarAsignacion"
+                tabIndex={-1}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="tituloConfirmarEliminarAsignacion"
+                aria-hidden="true"
+              >
+                <div className="modal-dialog">
+                  <div className="modal-content modal-content-white">
+                    <div className="bg-danger modal-header">
+                      <h5 id="tituloConfirmarEliminarAsignacion" className="modal-title text-white">
+                        Confirmar eliminación
+                      </h5>
+                      <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div className="modal-body">
+                      ¿Eliminar la asignación de <strong>{bomberoAEliminar?.nombre}</strong>?
+                    </div>
+                    <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+                      <button type="button" className="btn btn-back btn-medium" data-bs-dismiss="modal">
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-accept btn-lg btn-medium"
+                        onClick={confirmarEliminarAsignacion}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* Modal Confirmar Guardado */}
               {modalConfirmarGuardar && eventoSeleccionado && (

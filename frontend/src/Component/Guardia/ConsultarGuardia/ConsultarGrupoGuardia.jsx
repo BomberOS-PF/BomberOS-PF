@@ -302,7 +302,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
               </div>
               <div className="modal-footer">
                 <button
-                  className="btn btn-accept btn-lg btn-medium"
+                  className="btn btn-secondary btn-lg btn-medium"
                   onClick={() => setResultadoOperacion({ mostrar: false, exito: false, mensaje: '' })}
                 >
                   Aceptar
