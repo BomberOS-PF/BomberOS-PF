@@ -12,7 +12,7 @@ const ConsultarBomberosDelGrupo = ({
   onIrAGestionarGuardias
 }) => {
   return (
-    <div className="ontainer-fluid py-5 registrar-guardia">
+    <div className="container-fluid py-5 registrar-guardia">
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
           <div className="bg-danger p-3 rounded-circle">
