@@ -201,7 +201,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
                             <tr key={grupo.idGrupo}>
                               <td className="border-end px-3" data-label="Nombre">{grupo.nombre}</td>
                               <td className="border-end px-3" data-label="Descripción">{grupo.descripcion}</td>
-                              <td className="text-center" data-label="Acción">
+                              <td className="text-center" data-label="Acciones">
                                 <div className='d-inline-flex align-items-center justify-content-center gap-2 flex-nowrap actions-inline'>
                                   <button
                                     className="btn btn-outline-secondary btn-detail btn-ver"

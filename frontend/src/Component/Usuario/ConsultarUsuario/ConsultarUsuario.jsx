@@ -171,7 +171,7 @@ const ConsultarUsuario = ({ onVolver }) => {
   }
 
   return (
-    <div className='container-fluid py-5'>
+    <div className='container-fluid py-5 consultar-incidente registrar-guardia consultar-grupo'>
       {/* Header */}
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
@@ -219,7 +219,7 @@ const ConsultarUsuario = ({ onVolver }) => {
                 <Pagination
                   fetchPage={fetchUsuariosPage}
                   initialPage={1}
-                  initialPageSize={PAGE_SIZE_DEFAULT}   // ✅ 10 por página
+                  initialPageSize={PAGE_SIZE_DEFAULT}
                   filters={{ q: busqueda, _tick: reloadTick }}
                   showControls
                   labels={{
@@ -246,7 +246,7 @@ const ConsultarUsuario = ({ onVolver }) => {
 
                       {items.length > 0 ? (
                         <div className='table-responsive rounded border'>
-                          <table className='table table-hover align-middle mb-0'>
+                          <table className='table table-hover align-middle mb-0 rg-table'>
                             <thead className='bg-light'>
                               <tr>
                                 <th className='border-end text-center'>Usuario</th>
@@ -258,9 +258,9 @@ const ConsultarUsuario = ({ onVolver }) => {
                             <tbody>
                               {items.map((usuario) => (
                                 <tr key={usuario.id}>
-                                  <td className='border-end'>{usuario.usuario || usuario.username}</td>
-                                  <td className='border-end'>{usuario.email}</td>
-                                  <td className='border-end'>
+                                  <td className='border-end' data-label="Usuario">{usuario.usuario || usuario.username}</td>
+                                  <td className='border-end' data-label="Email">{usuario.email}</td>
+                                  <td className='border-end' data-label="Rol">
                                     <span
                                       className={`badge ${(usuario.rol || '').toLowerCase() === 'administrador'
                                         ? 'bg-danger'
@@ -272,21 +272,25 @@ const ConsultarUsuario = ({ onVolver }) => {
                                       {usuario.rol}
                                     </span>
                                   </td>
-                                  <td className='text-center'>
-                                    <button
-                                      className='btn btn-outline-secondary btn-detail me-2'
-                                      onClick={() => seleccionarUsuario(usuario)}
-                                      disabled={loading || loadingAccion}
-                                    >
-                                      <i className='bi bi-eye me-1'></i> Ver
-                                    </button>
-                                    <button
-                                      className='btn btn-outline-danger btn-detail'
-                                      onClick={() => eliminarUsuario(usuario)}
-                                      disabled={loading || loadingAccion}
-                                    >
-                                      <i className='bi bi-trash'></i>
-                                    </button>
+                                  <td className='text-center' data-label="Acciones">
+                                    <div className="d-inline-flex align-items-center justify-content-center gap-2 flex-nowrap actions-inline">
+                                      <button
+                                        className='btn btn-outline-secondary btn-detail btn-ver'
+                                        onClick={() => seleccionarUsuario(usuario)}
+                                        disabled={loading || loadingAccion}
+                                      >
+                                        <i className='bi bi-eye'></i>
+                                        <span className="btn-label ms-1">Ver</span>
+                                      </button>
+                                      <button
+                                        className='btn btn-outline-danger btn-detail btn-trash'
+                                        onClick={() => eliminarUsuario(usuario)}
+                                        disabled={loading || loadingAccion}
+                                      >
+                                        <i className='bi bi-trash'></i>
+                                      </button>
+                                    </div>
+
                                   </td>
                                 </tr>
                               ))}
@@ -448,7 +452,7 @@ const ConsultarUsuario = ({ onVolver }) => {
           )}
 
           {!usuarioSeleccionado && onVolver && (
-            <div className='d-grid gap-3'>
+            <div className='d-flex justify-content-start align-items-center gap-3 py-1'>
               <BackToMenuButton onClick={onVolver} />
             </div>
           )}

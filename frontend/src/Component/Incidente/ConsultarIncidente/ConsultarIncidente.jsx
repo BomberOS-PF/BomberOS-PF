@@ -462,7 +462,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
 
   // ------- Vista Listado -------
   return (
-    <div className='container py-5 consultar-incidente'>
+    <div className='container-fluid py-5 consultar-incidente registrar-guardia consultar-grupo'>
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
           <div className='bg-danger p-3 rounded-circle'>
@@ -607,7 +607,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
 
                     {items.length > 0 ? (
                       <div className='table-responsive rounded border'>
-                        <table className='table table-hover align-middle mb-0 responsive-table'>
+                        <table className='table table-hover align-middle mb-0 rg-table'>
                           <thead className='bg-light'>
                             <tr>
                               <th className='border-end text-center'>ID</th>
@@ -635,13 +635,18 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                                   <span className='badge bg-success'>{it.estado || 'Activo'}</span>
                                 </td>
                                 <td className='text-center' data-label='Acciones'>
-                                  <button
-                                    className='btn btn-outline-secondary btn-detail me-2'
-                                    onClick={() => verDetalle(it.idIncidente)}
-                                    disabled={loading || loadingDetalle}
-                                  >
-                                    <i className='bi bi-eye me-1'></i> Ver
-                                  </button>
+                                  <div className='d-inline-flex align-items-center justify-content-center gap-2 flex-nowrap actions-inline'>
+                                    <button
+                                      className='btn btn-outline-secondary btn-detail btn-ver'
+                                      title='Ver'
+                                      onClick={() => verDetalle(it.idIncidente)}
+                                      disabled={loading || loadingDetalle}
+                                    >
+                                      <i className='bi bi-eye'></i>
+                                      <span className="btn-label ms-1">Ver</span>
+                                    </button>
+                                  </div>
+
                                 </td>
                               </tr>
                             ))}
