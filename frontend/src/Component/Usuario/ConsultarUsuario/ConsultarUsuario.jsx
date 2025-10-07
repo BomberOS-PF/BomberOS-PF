@@ -215,93 +215,96 @@ const ConsultarUsuario = ({ onVolver }) => {
                 />
               </div>
 
-              <Pagination
-                fetchPage={fetchUsuariosPage}
-                initialPage={1}
-                initialPageSize={PAGE_SIZE_DEFAULT}   // ✅ 10 por página
-                filters={{ q: busqueda, _tick: reloadTick }}
-                showControls
-                labels={{
-                  prev: '‹ Anterior',
-                  next: 'Siguiente ›',
-                  of: '/',
-                  showing: (shown, total) => `Mostrando ${shown} de ${total} usuarios`
-                }}
-              >
-                {({ items, loading, error }) => (
-                  <>
-                    {error && (
-                      <div className="alert alert-danger d-flex align-items-center">
-                        <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                        {String(error)}
-                      </div>
-                    )}
-
-                    {loading && (
-                      <div className='text-center mb-3'>
-                        <div className='spinner-border text-danger' role='status'></div>
-                      </div>
-                    )}
-
-                    {items.length > 0 ? (
-                      <div className='table-responsive rounded border'>
-                        <table className='table table-hover align-middle mb-0'>
-                          <thead className='bg-light'>
-                            <tr>
-                              <th className='border-end text-center'>Usuario</th>
-                              <th className='border-end text-center'>Email</th>
-                              <th className='border-end text-center'>Rol</th>
-                              <th className='text-center'>Acciones</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {items.map((usuario) => (
-                              <tr key={usuario.id}>
-                                <td className='border-end'>{usuario.usuario || usuario.username}</td>
-                                <td className='border-end'>{usuario.email}</td>
-                                <td className='border-end'>
-                                  <span
-                                    className={`badge ${(usuario.rol || '').toLowerCase() === 'administrador'
-                                      ? 'bg-danger'
-                                      : (usuario.rol || '').toLowerCase() === 'jefe_cuartel'
-                                        ? 'bg-warning'
-                                        : 'bg-info'
-                                      }`}
-                                  >
-                                    {usuario.rol}
-                                  </span>
-                                </td>
-                                <td className='text-center'>
-                                  <button
-                                    className='btn btn-outline-secondary btn-detail me-2'
-                                    onClick={() => seleccionarUsuario(usuario)}
-                                    disabled={loading || loadingAccion}
-                                  >
-                                    <i className='bi bi-eye me-1'></i> Ver
-                                  </button>
-                                  <button
-                                    className='btn btn-outline-danger btn-detail'
-                                    onClick={() => eliminarUsuario(usuario)}
-                                    disabled={loading || loadingAccion}
-                                  >
-                                    <i className='bi bi-trash'></i>
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      !loading && (
-                        <div className='text-center py-3 text-muted'>
-                          No se encontraron usuarios que coincidan con la búsqueda.
+              <div className='rg-pager'>
+                <Pagination
+                  fetchPage={fetchUsuariosPage}
+                  initialPage={1}
+                  initialPageSize={PAGE_SIZE_DEFAULT}   // ✅ 10 por página
+                  filters={{ q: busqueda, _tick: reloadTick }}
+                  showControls
+                  labels={{
+                    prev: '‹ Anterior',
+                    next: 'Siguiente ›',
+                    of: '/',
+                    showing: (shown, total) => `Mostrando ${shown} de ${total} usuarios`
+                  }}
+                >
+                  {({ items, loading, error }) => (
+                    <>
+                      {error && (
+                        <div className="alert alert-danger d-flex align-items-center">
+                          <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                          {String(error)}
                         </div>
-                      )
-                    )}
-                  </>
-                )}
-              </Pagination>
+                      )}
+
+                      {loading && (
+                        <div className='text-center mb-3'>
+                          <div className='spinner-border text-danger' role='status'></div>
+                        </div>
+                      )}
+
+                      {items.length > 0 ? (
+                        <div className='table-responsive rounded border'>
+                          <table className='table table-hover align-middle mb-0'>
+                            <thead className='bg-light'>
+                              <tr>
+                                <th className='border-end text-center'>Usuario</th>
+                                <th className='border-end text-center'>Email</th>
+                                <th className='border-end text-center'>Rol</th>
+                                <th className='text-center'>Acciones</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {items.map((usuario) => (
+                                <tr key={usuario.id}>
+                                  <td className='border-end'>{usuario.usuario || usuario.username}</td>
+                                  <td className='border-end'>{usuario.email}</td>
+                                  <td className='border-end'>
+                                    <span
+                                      className={`badge ${(usuario.rol || '').toLowerCase() === 'administrador'
+                                        ? 'bg-danger'
+                                        : (usuario.rol || '').toLowerCase() === 'jefe_cuartel'
+                                          ? 'bg-warning'
+                                          : 'bg-info'
+                                        }`}
+                                    >
+                                      {usuario.rol}
+                                    </span>
+                                  </td>
+                                  <td className='text-center'>
+                                    <button
+                                      className='btn btn-outline-secondary btn-detail me-2'
+                                      onClick={() => seleccionarUsuario(usuario)}
+                                      disabled={loading || loadingAccion}
+                                    >
+                                      <i className='bi bi-eye me-1'></i> Ver
+                                    </button>
+                                    <button
+                                      className='btn btn-outline-danger btn-detail'
+                                      onClick={() => eliminarUsuario(usuario)}
+                                      disabled={loading || loadingAccion}
+                                    >
+                                      <i className='bi bi-trash'></i>
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        !loading && (
+                          <div className='text-center py-3 text-muted'>
+                            No se encontraron usuarios que coincidan con la búsqueda.
+                          </div>
+                        )
+                      )}
+                    </>
+                  )}
+                </Pagination>
+              </div>
+
             </>
           )}
 
@@ -403,7 +406,7 @@ const ConsultarUsuario = ({ onVolver }) => {
                           required={modoEdicion}
                           style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
                           tabIndex={-1}
-                          onChange={() => {}}
+                          onChange={() => { }}
                         />
                         <Select
                           classNamePrefix="rs"

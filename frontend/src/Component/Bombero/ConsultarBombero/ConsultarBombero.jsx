@@ -62,12 +62,12 @@ const ConsultarBombero = ({ onVolver }) => {
         try {
           const formDataFile = new FormData()
           formDataFile.append('fichaMedica', datosActualizados.fichaMedica)
-          
+
           const uploadResponse = await fetch(`/api/bomberos/${dni}/ficha-medica`, {
             method: 'POST',
             body: formDataFile
           })
-          
+
           if (uploadResponse.ok) {
             // El PDF se guardó en la BD, solo marcar que tiene ficha médica
             datosActualizados.fichaMedica = 1
@@ -193,91 +193,93 @@ const ConsultarBombero = ({ onVolver }) => {
                 />
               </div>
 
-              <Pagination
-                fetchPage={fetchBomberosPage}
-                initialPage={1}
-                initialPageSize={PAGE_SIZE_DEFAULT}   // ✅ 10 ítems por página
-                // incluir reloadTick en filters para que Pagination detecte el cambio y recargue
-                filters={{ dni: dniBusqueda, _tick: reloadTick }}
-                showControls                              // ✅ muestra Prev / Siguiente y “p / total”
-                labels={{
-                  prev: '‹ Anterior',
-                  next: 'Siguiente ›',
-                  of: '/',
-                  showing: (shown, total) => `Mostrando ${shown} de ${total} bomberos`
-                }}
-              >
-                {({ items, loading, error }) => (
-                  <>
-                    {error && (
-                      <div className="alert alert-danger d-flex align-items-center">
-                        <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                        {error}
-                      </div>
-                    )}
-
-                    {loading && (
-                      <div className="text-center mb-3">
-                        <div className="spinner-border text-danger" role="status"></div>
-                      </div>
-                    )}
-
-                    {items.length > 0 ? (
-                      <div className="table-responsive rounded border">
-                        <table className="table table-hover align-middle mb-0">
-                          <thead className="bg-light">
-                            <tr>
-                              <th className="border-end text-center">Nombre completo</th>
-                              <th className="border-end text-center">DNI</th>
-                              <th className="border-end text-center">Teléfono</th>
-                              <th className="border-end text-center">Plan</th>
-                              <th className="text-center">Acciones</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {[...items]
-                              .sort((a, b) => (a.apellido || '').localeCompare(b.apellido || ''))
-                              .map((bombero) => (
-                                <tr key={bombero.dni}>
-                                  <td className="border-end px-3">{bombero.apellido} {bombero.nombre}</td>
-                                  <td className="border-end px-3">{bombero.dni}</td>
-                                  <td className="border-end px-2">{bombero.telefono || 'N/A'}</td>
-                                  <td className="border-end">
-                                    <span className={`badge ${bombero.esDelPlan ? 'bg-success' : 'bg-secondary'}`}>
-                                      {bombero.esDelPlan ? 'Sí' : 'No'}
-                                    </span>
-                                  </td>
-                                  <td className="text-center">
-                                    <button
-                                      className="btn btn-outline-secondary btn-detail me-2"
-                                      onClick={() => seleccionarBombero(bombero)}
-                                      disabled={loading || loadingAccion}
-                                    >
-                                      <i className="bi bi-eye me-1"></i> Ver
-                                    </button>
-                                    <button
-                                      className="btn btn-outline-danger btn-detail"
-                                      onClick={() => eliminarBombero(bombero)}
-                                      disabled={loading || loadingAccion}
-                                    >
-                                      <i className="bi bi-trash"></i>
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      !loading && (
-                        <div className="text-center py-3 text-muted">
-                          No hay resultados para la búsqueda.
+              <div className='rg-pager'>
+                <Pagination
+                  fetchPage={fetchBomberosPage}
+                  initialPage={1}
+                  initialPageSize={PAGE_SIZE_DEFAULT}
+                  filters={{ dni: dniBusqueda, _tick: reloadTick }}
+                  showControls
+                  labels={{
+                    prev: '‹ Anterior',
+                    next: 'Siguiente ›',
+                    of: '/',
+                    showing: (shown, total) => `Mostrando ${shown} de ${total} bomberos`
+                  }}
+                >
+                  {({ items, loading, error }) => (
+                    <>
+                      {error && (
+                        <div className="alert alert-danger d-flex align-items-center">
+                          <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                          {error}
                         </div>
-                      )
-                    )}
-                  </>
-                )}
-              </Pagination>
+                      )}
+
+                      {loading && (
+                        <div className="text-center mb-3">
+                          <div className="spinner-border text-danger" role="status"></div>
+                        </div>
+                      )}
+
+                      {items.length > 0 ? (
+                        <div className="table-responsive rounded border">
+                          <table className="table table-hover align-middle mb-0">
+                            <thead className="bg-light">
+                              <tr>
+                                <th className="border-end text-center">Nombre completo</th>
+                                <th className="border-end text-center">DNI</th>
+                                <th className="border-end text-center">Teléfono</th>
+                                <th className="border-end text-center">Plan</th>
+                                <th className="text-center">Acciones</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {[...items]
+                                .sort((a, b) => (a.apellido || '').localeCompare(b.apellido || ''))
+                                .map((bombero) => (
+                                  <tr key={bombero.dni}>
+                                    <td className="border-end px-3">{bombero.apellido} {bombero.nombre}</td>
+                                    <td className="border-end px-3">{bombero.dni}</td>
+                                    <td className="border-end px-2">{bombero.telefono || 'N/A'}</td>
+                                    <td className="border-end">
+                                      <span className={`badge ${bombero.esDelPlan ? 'bg-success' : 'bg-secondary'}`}>
+                                        {bombero.esDelPlan ? 'Sí' : 'No'}
+                                      </span>
+                                    </td>
+                                    <td className="text-center">
+                                      <button
+                                        className="btn btn-outline-secondary btn-detail me-2"
+                                        onClick={() => seleccionarBombero(bombero)}
+                                        disabled={loading || loadingAccion}
+                                      >
+                                        <i className="bi bi-eye me-1"></i> Ver
+                                      </button>
+                                      <button
+                                        className="btn btn-outline-danger btn-detail"
+                                        onClick={() => eliminarBombero(bombero)}
+                                        disabled={loading || loadingAccion}
+                                      >
+                                        <i className="bi bi-trash"></i>
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        !loading && (
+                          <div className="text-center py-3 text-muted">
+                            No hay resultados para la búsqueda.
+                          </div>
+                        )
+                      )}
+                    </>
+                  )}
+                </Pagination>
+              </div>
+
             </>
           )}
 
@@ -327,7 +329,7 @@ const ConsultarBombero = ({ onVolver }) => {
               </div>
             </div>
           )}
-          
+
           {!bomberoSeleccionado && onVolver && (
             <BackToMenuButton onClick={onVolver} />
           )}
