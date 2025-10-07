@@ -268,7 +268,7 @@ const RegistrarGuardia = ({
                                 <td className="border-end px-3" data-label="Legajo">{b.legajo || '-'}</td>
                                 <td className="border-end px-3" data-label="Teléfono">{b.telefono}</td>
                                 <td className="border-end px-3" data-label="Grupo">{b.grupos}</td>
-                                <td className="border-end px-3 text-center" data-label="Acción">
+                                <td className="border-end px-3 text-center" data-label="Acciones">
                                   <div className="tooltip-container">
                                     <button
                                       onClick={() => agregarAlGrupo(b)}
