@@ -120,7 +120,7 @@ const ConsultarRol = ({ onVolver }) => {
   }
 
   return (
-    <div className='container-fluid py-5'>
+    <div className='container-fluid py-5 consultar-incidente registrar-guardia consultar-grupo'>
       {/* Header principal */}
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
@@ -197,7 +197,7 @@ const ConsultarRol = ({ onVolver }) => {
 
                       {items.length > 0 ? (
                         <div className='table-responsive rounded border'>
-                          <table className='table table-hover align-middle mb-0'>
+                          <table className='table table-hover align-middle mb-0 rg-table'>
                             <thead className='bg-light'>
                               <tr>
                                 <th className='border-end text-center'>Nombre</th>
@@ -208,25 +208,29 @@ const ConsultarRol = ({ onVolver }) => {
                             <tbody>
                               {items.map((rol) => (
                                 <tr key={rol.idRol}>
-                                  <td className='border-end'>{rol.nombreRol}</td>
-                                  <td className='border-end'>
-                                    {rol.descripcion || <em className='text-muted'>Sin descripción</em>}
+                                  <td className='border-end' data-label="Nombre">{rol.nombreRol}</td>
+                                  <td className='border-end' data-label="Descripcion">
+                                    {rol.descripcion}
                                   </td>
-                                  <td className='text-center'>
-                                    <button
-                                      className='btn btn-outline-secondary btn-detail me-2'
-                                      onClick={() => seleccionarRol(rol)}
-                                      disabled={loading || loadingAccion}
-                                    >
-                                      <i className='bi bi-eye me-1'></i> Ver
-                                    </button>
-                                    <button
-                                      className='btn btn-outline-danger btn-detail'
-                                      onClick={() => eliminarRol(rol)}
-                                      disabled={loading || loadingAccion}
-                                    >
-                                      <i className='bi bi-trash'></i>
-                                    </button>
+                                  <td className='text-center' data-label="Acciones">
+                                    <div className="d-inline-flex align-items-center justify-content-center gap-2 flex-nowrap actions-inline">
+                                      <button
+                                        className='btn btn-outline-secondary btn-detail btn-ver'
+                                        onClick={() => seleccionarRol(rol)}
+                                        disabled={loading || loadingAccion}
+                                      >
+                                        <i className='bi bi-eye'></i>
+                                        <span className="btn-label ms-1">Ver</span>
+                                      </button>
+                                      <button
+                                        className='btn btn-outline-danger btn-detail btn-trash'
+                                        onClick={() => eliminarRol(rol)}
+                                        disabled={loading || loadingAccion}
+                                      >
+                                        <i className='bi bi-trash'></i>
+                                      </button>
+                                    </div>
+
                                   </td>
                                 </tr>
                               ))}
@@ -325,7 +329,7 @@ const ConsultarRol = ({ onVolver }) => {
 
           {/* Botón volver menú */}
           {!rolSeleccionado && onVolver && (
-            <div className='d-grid gap-3'>
+            <div className='d-flex justify-content-start align-items-center gap-3 py-1'>
               <BackToMenuButton onClick={onVolver} />
             </div>
           )}

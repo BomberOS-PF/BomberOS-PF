@@ -265,19 +265,19 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
       </div>
 
       {/* Modal Confirmación */}
-      <div className="modal fade" id="modalConfirmacion" tabIndex="-1" aria-hidden="true">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Confirmar eliminación</h5>
+      <div className="modal fade show d-block modal-backdrop-custom" id="modalConfirmacion" tabIndex="-1" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content  modal-content-white">
+            <div className="bg-danger modal-header">
+              <h5 className="modal-title text-white">Confirmar eliminación</h5>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div className="modal-body">
               ¿Estás seguro de que deseas eliminar el grupo <strong>{grupoAEliminar?.nombre}</strong>?
             </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="button" className="btn btn-danger" onClick={eliminarGrupo}>Eliminar</button>
+            <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+              <button type="button" className="btn btn-back btn-medium" data-bs-dismiss="modal">Cancelar</button>
+              <button type="button" className="btn btn-accept btn-lg btn-medium" onClick={eliminarGrupo}>Eliminar</button>
             </div>
           </div>
         </div>
