@@ -265,9 +265,9 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
       </div>
 
       {/* Modal Confirmación */}
-      <div className="modal fade show d-block modal-backdrop-custom" id="modalConfirmacion" tabIndex="-1" aria-hidden="true">
+      <div className="modal fade modal-backdrop-custom" id="modalConfirmacion" tabIndex="-1" aria-hidden="true">
         <div className="modal-dialog">
-          <div className="modal-content  modal-content-white">
+          <div className="modal-content modal-content-white">
             <div className="bg-danger modal-header">
               <h5 className="modal-title text-white">Confirmar eliminación</h5>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
@@ -286,12 +286,12 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
       {/* Modal Resultado */}
       {resultadoOperacion.mostrar && (
         <div
-          className="modal fade show"
+          className="modal fade show modal-backdrop-custom"
           style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
           tabIndex="-1"
         >
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
+          <div className="modal-dialog">
+            <div className="modal-content modal-content-white">
               <div className={`modal-header ${resultadoOperacion.exito ? 'bg-success' : 'bg-danger'}`}>
                 <h5 className="modal-title text-white">
                   {resultadoOperacion.exito ? 'Éxito' : 'Error'}
@@ -302,7 +302,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
               </div>
               <div className="modal-footer">
                 <button
-                  className="btn btn-primary"
+                  className="btn btn-accept btn-lg btn-medium"
                   onClick={() => setResultadoOperacion({ mostrar: false, exito: false, mensaje: '' })}
                 >
                   Aceptar
