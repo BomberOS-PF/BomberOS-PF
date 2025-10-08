@@ -17,7 +17,6 @@
     "@fullcalendar/interaction": "^6.1.19",
     "@fullcalendar/react": "^6.1.19",
     "@fullcalendar/timegrid": "^6.1.19",
-    "@sweetalert2/theme-bootstrap-4": "^5.0.27",
     "bootstrap": "^5.3.6",
     "lucide-react": "^0.525.0",
     "react": "^19.0.0",
@@ -25,7 +24,6 @@
     "react-router-dom": "^7.6.0",
     "react-select": "^5.8.0",
     "react-tsparticles": "^2.12.2",
-    "sweetalert2": "^11.24.1",
     "tsparticles-slim": "^2.12.0"
   },
   "devDependencies": {
