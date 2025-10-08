@@ -1,7 +1,18 @@
-// Config API
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
+const getApiBaseUrl = () => {
+  // si hay variables de entorno usarlas.
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL
+  }
+  
+  if (import.meta.env.PROD) {
+    return 'https://bomberos-pf.onrender.com/api'
+  }
+  
+  return '/api'
+}
 
-// Helper para query strings
+const API_BASE_URL = getApiBaseUrl()
+
 const toQS = (params) => {
   if (!params || Object.keys(params).length === 0) return ''
   const searchParams = new URLSearchParams()
