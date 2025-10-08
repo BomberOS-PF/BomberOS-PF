@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './CargarIncidente.css'
 import { Flame, AlertTriangle, FileText, User, Clock, MapPin, Phone } from 'lucide-react'
-import { API_URLS, apiRequest } from '../../../config/api'
+import { API_URLS, apiRequest, buildApiUrl } from '../../../config/api'
 import { BackToMenuButton } from '../../Common/Button.jsx'
 import Select from 'react-select'
 
@@ -170,7 +170,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
 
       console.log('📱 Enviando notificación WhatsApp para incidente:', incidente.idIncidente)
 
-      const resp = await fetch(`/api/incidentes/${incidente.idIncidente}/notificar`, {
+      const resp = await fetch(buildApiUrl(`/api/incidentes/${incidente.idIncidente}/notificar`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

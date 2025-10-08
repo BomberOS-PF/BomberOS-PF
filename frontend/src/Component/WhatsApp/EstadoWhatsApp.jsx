@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './EstadoWhatsApp.css'
+import { buildApiUrl } from '../../config/api'
 
 const EstadoWhatsApp = () => {
   const [estado, setEstado] = useState(null)
@@ -44,7 +45,7 @@ const EstadoWhatsApp = () => {
 
   const cargarUltimasNotificaciones = async () => {
     try {
-      const response = await fetch('/api/incidentes/resumen-respuestas')
+      const response = await fetch(buildApiUrl('/api/incidentes/resumen-respuestas'))
       const data = await response.json()
       
       if (data.success) {

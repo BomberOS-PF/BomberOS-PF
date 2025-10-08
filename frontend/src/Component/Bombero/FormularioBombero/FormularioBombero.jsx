@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './FormularioBombero.css'
 import { User, Phone, Mail, Shield, CreditCard, PillIcon } from 'lucide-react'
-import { API_URLS, apiRequest } from '../../../config/api'
+import { API_URLS, apiRequest, buildApiUrl } from '../../../config/api'
 import Select from 'react-select'
 
 const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loading = false, ocultarTitulo = false }) => {
@@ -376,7 +376,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
                         className="btn btn-sm btn-outline-primary"
                         onClick={async () => {
                           try {
-                            const response = await fetch(`/api/bomberos/${formData.dni}/ficha-medica`)
+                            const response = await fetch(buildApiUrl(`/api/bomberos/${formData.dni}/ficha-medica`))
                             if (response.ok) {
                               const blob = await response.blob()
                               const url = window.URL.createObjectURL(blob)
