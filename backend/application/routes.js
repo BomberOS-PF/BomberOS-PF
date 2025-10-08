@@ -1,4 +1,8 @@
 import { logger } from '../internal/platform/logger/logger.js'
+import { uploadFichaMedica } from '../config/multer.js'
+import { obtenerTiposTecho, obtenerTipoTechoPorId } from '../handler/tipoTecho/handler.js'
+import { obtenerTiposAbertura, obtenerTipoAberturaPorId } from '../handler/tipoAbertura/handler.js'
+import { obtenerLugaresRescate, obtenerLugarRescatePorId } from '../handler/lugarRescate/handler.js'
 
 export function setupRoutes(app, container) {
   logger.info('🛣️ Configurando rutas...')
@@ -14,6 +18,16 @@ export function setupRoutes(app, container) {
       uptime: process.uptime(),
       version: '2.0.0',
       environment: process.env.NODE_ENV || 'development'
+    })
+  })
+
+  // Health check específico para Railway
+  app.get('/api/health', (req, res) => {
+    res.json({
+      status: 'OK',
+      service: 'BomberOS Backend',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
     })
   })
 
@@ -278,6 +292,26 @@ export function setupRoutes(app, container) {
     }
   })
 
+  // Subir ficha médica (almacena en BD como BLOB)
+  app.post('/api/bomberos/:dni/ficha-medica', uploadFichaMedica.single('fichaMedica'), async (req, res) => {
+    try {
+      await bomberoHandler.uploadFichaMedica(req, res)
+    } catch (error) {
+      logger.error('Error en ruta uploadFichaMedica:', error)
+      res.status(500).json({ error: 'Error interno', message: error.message })
+    }
+  })
+
+  // Descargar ficha médica (desde BD)
+  app.get('/api/bomberos/:dni/ficha-medica', async (req, res) => {
+    try {
+      await bomberoHandler.downloadFichaMedica(req, res)
+    } catch (error) {
+      logger.error('Error en ruta downloadFichaMedica:', error)
+      res.status(500).json({ error: 'Error interno', message: error.message })
+    }
+  })
+
   // USUARIOS
   app.get('/api/usuarios/rol/:rol', async (req, res) => {
     try {
@@ -453,6 +487,16 @@ export function setupRoutes(app, container) {
   // ---------- Catálogos forestales ----------
   app.get('/api/caracteristicas-lugar', (req, res) => forestalCatalogosHandler.listarCaracteristicasLugar(req, res))
   app.get('/api/areas-afectadas', (req, res) => forestalCatalogosHandler.listarAreasAfectadas(req, res))
+
+  // ---------- Catálogos Incendio Estructural ----------
+  app.get('/api/tipos-techo', (req, res) => obtenerTiposTecho(req, res, container.tipoTechoService))
+  app.get('/api/tipos-techo/:id', (req, res) => obtenerTipoTechoPorId(req, res, container.tipoTechoService))
+  app.get('/api/tipos-abertura', (req, res) => obtenerTiposAbertura(req, res, container.tipoAberturaService))
+  app.get('/api/tipos-abertura/:id', (req, res) => obtenerTipoAberturaPorId(req, res, container.tipoAberturaService))
+
+  // ---------- Catálogos Rescate ----------
+  app.get('/api/lugares-rescate', (req, res) => obtenerLugaresRescate(req, res, container.lugarRescateService))
+  app.get('/api/lugares-rescate/:id', (req, res) => obtenerLugarRescatePorId(req, res, container.lugarRescateService))
 
   // ---------- Tipos de incidente ----------
   app.get('/api/tipos-incidente', (req, res) => tipoIncidenteHandler.listarTiposIncidente(req, res))

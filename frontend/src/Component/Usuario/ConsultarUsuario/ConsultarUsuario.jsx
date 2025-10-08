@@ -396,6 +396,15 @@ const ConsultarUsuario = ({ onVolver }) => {
                         <label className='form-label text-dark d-flex align-items-center gap-2'>
                           <Shield className='text-primary' /> Rol
                         </label>
+                        {/* Campo oculto para validación HTML5 */}
+                        <input
+                          type="text"
+                          value={usuarioSeleccionado.idRol || ''}
+                          required={modoEdicion}
+                          style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
+                          tabIndex={-1}
+                          onChange={() => {}}
+                        />
                         <Select
                           classNamePrefix="rs"
                           placeholder="Seleccione un rol"

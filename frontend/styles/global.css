@@ -86,6 +86,11 @@ body{
 
 .btn-medium {
   width: 225px;
+  padding: 0.75rem 1rem;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .btn-accept{

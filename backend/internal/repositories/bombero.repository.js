@@ -82,12 +82,16 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
         b.dni, b.nombre, b.apellido, b.legajo, b.antiguedad, b.idRango, b.correo, b.telefono, 
         b.esDelPlan, b.fichaMedica, b.fichaMedicaArchivo, b.fechaFichaMedica, 
         b.aptoPsicologico, b.domicilio, b.grupoSanguineo, b.idUsuario,
+        r.descripcion AS rangoDescripcion,
         GROUP_CONCAT(g.nombre SEPARATOR ', ') AS grupos
       FROM ${this.tableName} b
+      LEFT JOIN rango r ON r.idRango = b.idRango
       LEFT JOIN bomberosGrupo bg ON bg.dni = b.dni
       LEFT JOIN grupoGuardia g ON g.idGrupo = bg.idGrupo
       ${whereClause}
-      GROUP BY b.dni
+      GROUP BY b.dni, b.nombre, b.apellido, b.legajo, b.antiguedad, b.idRango, b.correo, b.telefono, 
+               b.esDelPlan, b.fichaMedica, b.fichaMedicaArchivo, b.fechaFichaMedica, 
+               b.aptoPsicologico, b.domicilio, b.grupoSanguineo, b.idUsuario, r.descripcion
       ORDER BY b.apellido ASC, b.nombre ASC
       LIMIT ${limitInt} OFFSET ${offsetInt}
     `
@@ -101,11 +105,19 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
       apellido: row.apellido,
       legajo: row.legajo,
       antiguedad: row.antiguedad,
-      rango: row.idRango,
+      idRango: row.idRango,
+      rango: row.rangoDescripcion,
+      correo: row.correo,
       email: row.correo,  
       telefono: row.telefono,
       domicilio: row.domicilio,
       grupoSanguineo: row.grupoSanguineo,
+      esDelPlan: Boolean(row.esDelPlan),
+      fichaMedica: row.fichaMedica,
+      fichaMedicaArchivo: row.fichaMedicaArchivo,
+      fechaFichaMedica: row.fechaFichaMedica,
+      aptoPsicologico: Boolean(row.aptoPsicologico),
+      idUsuario: row.idUsuario,
       grupoGuardia: row.grupos ? row.grupos.split(', ') : [] // Separar los grupos por coma
     }))
 
@@ -134,6 +146,17 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
 
   async create(bombero) {
     const data = bombero.toDatabase()
+    
+    // Validar campos obligatorios
+    if (!data.dni) throw new Error('El DNI es obligatorio')
+    if (!data.nombre) throw new Error('El nombre es obligatorio')
+    if (!data.apellido) throw new Error('El apellido es obligatorio')
+    if (!data.idRango) throw new Error('El rango es obligatorio')
+    if (!data.correo) throw new Error('El correo es obligatorio')
+    if (!data.telefono) throw new Error('El teléfono es obligatorio')
+    if (!data.domicilio) throw new Error('El domicilio es obligatorio')
+    if (!data.grupoSanguineo) throw new Error('El grupo sanguíneo es obligatorio')
+    
     const query = `
       INSERT INTO ${this.tableName} (
         dni, nombre, apellido, legajo, antiguedad, idRango, correo, telefono, 
@@ -143,11 +166,11 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
     `
     
     const params = [
-      data.dni, data.nombre, data.apellido, data.legajo, data.antiguedad,
-      data.idRango, data.correo, data.telefono, data.esDelPlan,
-      data.fichaMedica, data.fichaMedicaArchivo, data.fechaFichaMedica,
-      data.aptoPsicologico, data.domicilio, data.grupoSanguineo,
-      data.idUsuario
+      data.dni, data.nombre, data.apellido, data.legajo || null, data.antiguedad || 0,
+      data.idRango, data.correo, data.telefono, data.esDelPlan || false,
+      data.fichaMedica || null, data.fichaMedicaArchivo || null, data.fechaFichaMedica || null,
+      data.aptoPsicologico || false, data.domicilio, data.grupoSanguineo,
+      data.idUsuario || null
     ]
     
     const connection = getConnection()
@@ -162,26 +185,50 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
         error: error.message,
         code: error.code
       })
-      throw new Error(`Error al crear bombero: ${error.message}`)
+      
+      if (error.code === 'ER_DUP_ENTRY') {
+        throw new Error('Ya existe un bombero con ese DNI')
+      }
+      if (error.message.includes('Out of range value for column \'dni\'')) {
+        throw new Error('El DNI ingresado es demasiado largo. Debe tener como máximo 8 dígitos')
+      }
+      if (error.message.includes('Data too long')) {
+        throw new Error('Uno de los campos supera la longitud máxima permitida')
+      }
+      if (error.message.includes('cannot be null')) {
+        throw new Error('Faltan campos obligatorios')
+      }
+      
+      throw new Error('Error al crear bombero. Verifique que todos los campos estén completos')
     }
   }
 
   async update(id, bombero) {
     const data = bombero.toDatabase()
+    
+    // Validar campos obligatorios
+    if (!data.nombre) throw new Error('El nombre es obligatorio')
+    if (!data.apellido) throw new Error('El apellido es obligatorio')
+    if (!data.idRango) throw new Error('El rango es obligatorio')
+    if (!data.correo) throw new Error('El correo es obligatorio')
+    if (!data.telefono) throw new Error('El teléfono es obligatorio')
+    if (!data.domicilio) throw new Error('El domicilio es obligatorio')
+    if (!data.grupoSanguineo) throw new Error('El grupo sanguíneo es obligatorio')
+    
     const query = `
       UPDATE ${this.tableName} 
       SET nombre = ?, apellido = ?, legajo = ?, antiguedad = ?, idRango = ?, 
           correo = ?, telefono = ?, esDelPlan = ?, fichaMedica = ?, 
-          fichaMedicaArchivo = ?, fechaFichaMedica = ?, aptoPsicologico = ?, 
+          fechaFichaMedica = ?, aptoPsicologico = ?, 
           domicilio = ?, grupoSanguineo = ?, idUsuario = ?
       WHERE dni = ?
     `
     
     const params = [
-      data.nombre, data.apellido, data.legajo, data.antiguedad, data.idRango,
-      data.correo, data.telefono, data.esDelPlan, data.fichaMedica,
-      data.fichaMedicaArchivo, data.fechaFichaMedica, data.aptoPsicologico,
-      data.domicilio, data.grupoSanguineo, data.idUsuario, id
+      data.nombre, data.apellido, data.legajo || null, data.antiguedad || 0, data.idRango,
+      data.correo, data.telefono, data.esDelPlan || false, data.fichaMedica || null,
+      data.fechaFichaMedica || null, data.aptoPsicologico || false,
+      data.domicilio, data.grupoSanguineo, data.idUsuario || null, id
     ]
     
     const connection = getConnection()
@@ -196,7 +243,21 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
         error: error.message,
         code: error.code
       })
-      throw new Error(`Error al actualizar bombero: ${error.message}`)
+      
+      if (error.message.includes('Bind parameters must not contain undefined')) {
+        throw new Error('Faltan campos obligatorios. Complete todos los campos requeridos')
+      }
+      if (error.message.includes('Out of range value')) {
+        throw new Error('Uno de los valores ingresados supera el límite permitido')
+      }
+      if (error.message.includes('Data too long')) {
+        throw new Error('Uno de los campos supera la longitud máxima permitida')
+      }
+      if (error.message.includes('cannot be null')) {
+        throw new Error('Faltan campos obligatorios')
+      }
+      
+      throw new Error('Error al actualizar bombero. Verifique que todos los campos estén completos')
     }
   }
 
@@ -215,6 +276,73 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
         code: error.code
       })
       throw new Error(`Error al eliminar bombero: ${error.message}`)
+    }
+  }
+
+  /**
+   * Actualizar solo la ficha médica de un bombero (almacena PDF en BD como BLOB)
+   */
+  async updateFichaMedica(dni, pdfBuffer, nombreArchivo, fechaFichaMedica) {
+    const query = `
+      UPDATE ${this.tableName} 
+      SET fichaMedica = 1,
+          fichaMedicaPDF = ?,
+          fichaMedicaArchivo = ?,
+          fechaFichaMedica = ?
+      WHERE dni = ?
+    `
+    
+    const connection = getConnection()
+    
+    try {
+      const [result] = await connection.execute(query, [
+        pdfBuffer,
+        nombreArchivo,
+        fechaFichaMedica,
+        dni
+      ])
+      logger.info('Ficha médica actualizada en BD', { dni, nombreArchivo })
+      return result.affectedRows > 0
+    } catch (error) {
+      logger.error('Error al actualizar ficha médica', {
+        dni,
+        nombreArchivo,
+        error: error.message,
+        code: error.code
+      })
+      throw new Error('Error al actualizar la ficha médica')
+    }
+  }
+
+  /**
+   * Obtener la ficha médica de un bombero (PDF desde BD)
+   */
+  async getFichaMedica(dni) {
+    const query = `
+      SELECT fichaMedicaPDF, fechaFichaMedica
+      FROM ${this.tableName}
+      WHERE dni = ? AND fichaMedicaPDF IS NOT NULL
+    `
+    
+    const connection = getConnection()
+    
+    try {
+      const [rows] = await connection.execute(query, [dni])
+      if (rows.length === 0) {
+        return null
+      }
+      
+      return {
+        pdf: rows[0].fichaMedicaPDF,
+        fecha: rows[0].fechaFichaMedica
+      }
+    } catch (error) {
+      logger.error('Error al obtener ficha médica', {
+        dni,
+        error: error.message,
+        code: error.code
+      })
+      throw new Error('Error al obtener la ficha médica')
     }
   }
 

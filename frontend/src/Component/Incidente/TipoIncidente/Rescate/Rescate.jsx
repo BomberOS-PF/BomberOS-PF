@@ -38,10 +38,12 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
 
   const [mostrarOtroLugar, setMostrarOtroLugar] = useState(formData.lugar === 'Otro')
   const [loading, setLoading] = useState(false)
+  const [notificando, setNotificando] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [errors, setErrors] = useState({})
   const [damnificadosErrors, setDamnificadosErrors] = useState([])
+  const [opcionesLugar, setOpcionesLugar] = useState([])
   const toastRef = useRef(null)
 
   // Información del incidente base
@@ -72,20 +74,36 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
     }
   }, [datosPrevios])
 
+  // Cargar catálogos desde el backend
+  useEffect(() => {
+    const cargarCatalogos = async () => {
+      try {
+        const lugaresRescate = await apiRequest('/api/lugares-rescate')
+        setOpcionesLugar(lugaresRescate.data || [])
+      } catch (error) {
+        console.error('Error al cargar catálogos:', error)
+        setErrorMsg('Error al cargar opciones de formulario')
+      }
+    }
+    
+    cargarCatalogos()
+  }, [])
+
   // Mantener en sync el toggle "Otro"
   useEffect(() => {
-    setMostrarOtroLugar((formData.lugar || '') === 'Otro')
-  }, [formData.lugar])
+    const lugarSeleccionado = opcionesLugar.find(opt => String(opt.value) === String(formData.lugar))
+    setMostrarOtroLugar(lugarSeleccionado?.label === 'Otro' || formData.lugar === 99)
+  }, [formData.lugar, opcionesLugar])
 
-  const opcionesLugar = [
-    { value: 'Arroyo', label: 'Arroyo' },
-    { value: 'Lago', label: 'Lago' },
-    { value: 'Bar', label: 'Bar' },
-    { value: 'Montaña', label: 'Montaña' },
-    { value: 'Río', label: 'Río' },
-    { value: 'Restaurant-Comedor', label: 'Restaurant-Comedor' },
-    { value: 'Otro', label: 'Otro' }
-  ]
+  useEffect(() => {
+    if (successMsg || errorMsg) {
+      const timer = setTimeout(() => {
+        setSuccessMsg('')
+        setErrorMsg('')
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [successMsg, errorMsg])
 
   // Handlers
   const handleChange = (e) => {
@@ -149,6 +167,63 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
     return Object.keys(newErrors).length === 0 && damErrors.every((e, i) => damnificadoVacio(formData.damnificados[i]) || Object.keys(e).length === 0)
   }
 
+  const notificarBomberos = async () => {
+    const idIncidente = datosPrevios.idIncidente || datosPrevios.id
+    
+    if (!idIncidente) {
+      alert('❌ No se puede notificar: el incidente aún no ha sido guardado')
+      return
+    }
+
+    const confirmar = window.confirm(
+      `¿Deseas notificar a los bomberos sobre el Incidente #${idIncidente}?\n\n` +
+      `Se enviará una alerta por WhatsApp a todos los bomberos activos.`
+    )
+
+    if (!confirmar) return
+
+    setNotificando(true)
+
+    try {
+      const resp = await fetch(`/api/incidentes/${idIncidente}/notificar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        }
+      })
+
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}))
+        throw new Error(errorData.message || `Error ${resp.status}: ${resp.statusText}`)
+      }
+
+      const resultado = await resp.json()
+
+      if (resultado.success) {
+        const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = resultado.data
+        alert(`🚨 ALERTA ENVIADA POR WHATSAPP ✅
+        
+📊 Resumen:
+• Total bomberos: ${totalBomberos}
+• Notificaciones exitosas: ${notificacionesExitosas}
+• Notificaciones fallidas: ${notificacionesFallidas}
+
+Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
+        
+        setSuccessMsg('✅ Notificación enviada exitosamente a los bomberos')
+      } else {
+        throw new Error(resultado.message || 'Error al enviar notificación')
+      }
+    } catch (error) {
+      console.error('❌ Error al notificar por WhatsApp:', error)
+      alert(`❌ Error al notificar por WhatsApp: ${error.message}`)
+      setErrorMsg(`Error al notificar: ${error.message}`)
+    } finally {
+      setNotificando(false)
+    }
+  }
+
   const handleSubmit = async () => {
     setSuccessMsg('')
     setErrorMsg('')
@@ -160,6 +235,8 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
     }
 
     setLoading(true)
+    
+    const esActualizacion = !!(datosPrevios.idIncidente || datosPrevios.id)
 
     try {
       // Snapshot local
@@ -167,12 +244,11 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
 
       const body = {
         idIncidente: incidenteId,
-        lugar: formData.lugar === 'Otro' ? formData.otroLugar : formData.lugar,
+        lugar: formData.lugar,
+        otroLugar: formData.otroLugar,
         detalle: formData.detalle,
         damnificados: formData.damnificados
       }
-
-      const esActualizacion = !!(datosPrevios.idIncidente || datosPrevios.id)
       const method = esActualizacion ? 'PUT' : 'POST'
       const url = esActualizacion ?
         API_URLS.incidentes.updateRescate :
@@ -249,7 +325,7 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
               <label htmlFor="lugar" className="form-label text-dark d-flex align-items-center gap-2">Tipo de lugar específico del rescate *</label>
               <Select
                 options={opcionesLugar}
-                value={opcionesLugar.find(o => o.value === formData.lugar) || null}
+                value={opcionesLugar.find(o => String(o.value) === String(formData.lugar)) || null}
                 onChange={(opt) =>
                   setFormData(prev => ({ ...prev, lugar: opt ? opt.value : '' }))
                 }
@@ -300,12 +376,30 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
             />
 
             <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
-              <button type="button" className="btn btn-accept btn-medium btn-lg btn-sm-custom" disabled={loading} onClick={() => handleSubmit()}>
+              <button type="button" className="btn btn-accept btn-medium" disabled={loading || notificando} onClick={() => handleSubmit()}>
                 {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
               </button>
 
-              <button type="button" className="btn btn-back btn-medium btn-lg btn-sm-custom" onClick={guardarLocalmente} disabled={loading}>
-                Guardar y continuar después
+              <button 
+                type="button" 
+                className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2" 
+                onClick={notificarBomberos} 
+                disabled={loading || notificando}
+              >
+                {notificando ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    Notificando...
+                  </>
+                ) : (
+                  <>
+                    <i className='bi bi-megaphone'></i> Notificar Bomberos
+                  </>
+                )}
+              </button>
+
+              <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
+                Continuar después
               </button>
             </div>
 

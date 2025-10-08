@@ -42,6 +42,7 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
   ]
 
   const [loading, setLoading] = useState(false)
+  const [notificando, setNotificando] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [errors, setErrors] = useState({})
@@ -64,6 +65,16 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
       setFormData(prev => ({ ...prev, ...datosMapeados }))
     }
   }, [datosPrevios])
+
+  useEffect(() => {
+    if (successMsg || errorMsg) {
+      const timer = setTimeout(() => {
+        setSuccessMsg('')
+        setErrorMsg('')
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [successMsg, errorMsg])
 
   // Campos normales
   const handleChange = (e) => {
@@ -127,6 +138,63 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
     setErrors(newErrors)
     setDamnificadosErrors(damErrors)
     return Object.keys(newErrors).length === 0 && damErrors.every((e, i) => damnificadoVacio(formData.damnificados[i]) || Object.keys(e).length === 0)
+  }
+
+  const notificarBomberos = async () => {
+    const idIncidente = datosPrevios.idIncidente || datosPrevios.id
+    
+    if (!idIncidente) {
+      alert('❌ No se puede notificar: el incidente aún no ha sido guardado')
+      return
+    }
+
+    const confirmar = window.confirm(
+      `¿Deseas notificar a los bomberos sobre el Incidente #${idIncidente}?\n\n` +
+      `Se enviará una alerta por WhatsApp a todos los bomberos activos.`
+    )
+
+    if (!confirmar) return
+
+    setNotificando(true)
+
+    try {
+      const resp = await fetch(`/api/incidentes/${idIncidente}/notificar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        }
+      })
+
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}))
+        throw new Error(errorData.message || `Error ${resp.status}: ${resp.statusText}`)
+      }
+
+      const resultado = await resp.json()
+
+      if (resultado.success) {
+        const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = resultado.data
+        alert(`🚨 ALERTA ENVIADA POR WHATSAPP ✅
+        
+📊 Resumen:
+• Total bomberos: ${totalBomberos}
+• Notificaciones exitosas: ${notificacionesExitosas}
+• Notificaciones fallidas: ${notificacionesFallidas}
+
+Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
+        
+        setSuccessMsg('✅ Notificación enviada exitosamente a los bomberos')
+      } else {
+        throw new Error(resultado.message || 'Error al enviar notificación')
+      }
+    } catch (error) {
+      console.error('❌ Error al notificar por WhatsApp:', error)
+      alert(`❌ Error al notificar por WhatsApp: ${error.message}`)
+      setErrorMsg(`Error al notificar: ${error.message}`)
+    } finally {
+      setNotificando(false)
+    }
   }
 
   const handleFinalizar = async () => {
@@ -288,8 +356,8 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
             <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
               <button
                 type="button"
-                className="btn btn-accept btn-medium btn-lg btn-sm-custom"
-                disabled={loading}
+                className="btn btn-accept btn-medium"
+                disabled={loading || notificando}
                 onClick={() => handleFinalizar()}
               >
                 {loading
@@ -299,13 +367,31 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
                     : 'Finalizar carga'}
               </button>
 
+              <button 
+                type="button" 
+                className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2" 
+                onClick={notificarBomberos} 
+                disabled={loading || notificando}
+              >
+                {notificando ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    Notificando...
+                  </>
+                ) : (
+                  <>
+                    <i className='bi bi-megaphone'></i> Notificar Bomberos
+                  </>
+                )}
+              </button>
+
               <button
               type="button"
-              className="btn btn-back btn-medium btn-lg btn-sm-custom"
+              className="btn btn-back btn-medium"
               onClick={guardarLocalmente}
-              disabled={loading}
+              disabled={loading || notificando}
             >
-              Guardar y continuar después
+              Continuar después
             </button>
             </div>            
           </form>

@@ -126,7 +126,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
     e.preventDefault()
     try {
       const incidenteGuardado = await guardarIncidente()
-      alert('✅ Incidente guardado correctamente')
+      alert('✅ Incidente guardado correctamente.\n\n⚠️ ATENCIÓN: No se ha notificado a los bomberos.\nPodrás notificarlos más tarde desde "Consultar Incidente".')
       setIncidenteCreado(incidenteGuardado)
 
       if (onNotificar) {
@@ -254,6 +254,15 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                   <AlertTriangle className="text-warning" />
                   Tipo de Siniestro
                 </label>
+                {/* Campo oculto para validación HTML5 */}
+                <input
+                  type="text"
+                  value={formData.tipoSiniestro || ''}
+                  required
+                  style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
+                  tabIndex={-1}
+                  onChange={() => {}}
+                />
                 <Select
                   classNamePrefix="rs"
                   placeholder="Seleccione tipo de siniestro"
@@ -310,6 +319,15 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                   <MapPin className="text-purple" />
                   Localización
                 </label>
+                {/* Campo oculto para validación HTML5 */}
+                <input
+                  type="text"
+                  value={formData.localizacion || ''}
+                  required
+                  style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
+                  tabIndex={-1}
+                  onChange={() => {}}
+                />
                 <Select
                   classNamePrefix="rs"
                   placeholder="Seleccione localización"
@@ -407,8 +425,8 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                 <BackToMenuButton onClick={onVolver} />
                 
                 {!incidenteCreado && (
-                  <button type="submit" className="btn btn-accept btn-medium btn-lg btn-sm-custom">
-                    Guardar Incidente (Sin Notificar)
+                  <button type="submit" className="btn btn-accept btn-medium">
+                    Guardar Incidente
                   </button>
                 )}
               </div>

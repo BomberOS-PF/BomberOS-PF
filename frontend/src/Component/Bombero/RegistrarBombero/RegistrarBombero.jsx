@@ -30,7 +30,15 @@ const RegistrarBombero = ({ onVolver }) => {
       }
       if (id === 'email') newData.emailUsuario = value
       if (id === 'emailUsuario') newData.email = value
-      if (id === 'dni' && !prev.legajo && value) newData.legajo = `LEG-${value}`
+      if (id === 'dni' && value) {
+        const legajoEsAutoGenerado = !prev.legajo || prev.legajo.startsWith('LEG-')
+        if (legajoEsAutoGenerado) {
+          newData.legajo = `LEG-${value}`
+        }
+      }
+      if (id === 'dni' && !value && prev.legajo && prev.legajo.startsWith('LEG-')) {
+        newData.legajo = ''
+      }
       return newData
     })
   }
@@ -54,51 +62,72 @@ const RegistrarBombero = ({ onVolver }) => {
     fetchRangos()
   }, [])
 
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(''), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [message])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setMessage('')
 
-    try {
-      const resUsuarios = await apiRequest(API_URLS.usuarios.getAll)
-      if (resUsuarios.success) {
-        const usuarios = resUsuarios.data
-        const emailEnUso = usuarios.find(u => u.email?.trim().toLowerCase() === formData.emailUsuario.trim().toLowerCase())
-        if (emailEnUso) {
-          setMessage('Correo electrónico ya registrado')
-          setMessageType('error')
-          setLoading(false)
-          return
-        }
-        const usernameEnUso = usuarios.find(u => u.usuario?.toLowerCase().trim() === formData.username.toLowerCase().trim())
-        if (usernameEnUso) {
-          setMessage('Nombre de usuario no disponible')
-          setMessageType('error')
-          setLoading(false)
-          return
-        }
-      }
-    } catch (error) {
-      setMessage(`Error al validar usuario: ${error.message}`)
+    // Validar que si se completa algún campo de usuario, se completen todos
+    const camposUsuario = {
+      username: formData.username?.trim(),
+      password: formData.password?.trim(),
+      email: formData.emailUsuario?.trim(),
+      rol: formData.rolUsuario
+    }
+    
+    const camposLlenos = Object.values(camposUsuario).filter(val => val && val !== '').length
+    const totalCampos = Object.keys(camposUsuario).length
+    
+    if (camposLlenos > 0 && camposLlenos < totalCampos) {
+      setMessage('Si completa datos de usuario, debe completar todos los campos: Nombre de usuario, Contraseña, Email y Rol')
       setMessageType('error')
       setLoading(false)
       return
     }
 
-    try {
-      if (!formData.dni || !formData.nombre || !formData.apellido || !formData.email || !formData.telefono || !formData.domicilio || !formData.rango || !formData.grupoSanguineo) {
-        setMessage('Por favor, complete todos los campos obligatorios')
+    // Solo validar duplicados si se están completando los campos de usuario
+    if (camposLlenos === totalCampos) {
+      try {
+        const resUsuarios = await apiRequest(API_URLS.usuarios.getAll)
+        if (resUsuarios.success) {
+          const usuarios = resUsuarios.data
+          const emailEnUso = usuarios.find(u => u.email?.trim().toLowerCase() === formData.emailUsuario.trim().toLowerCase())
+          if (emailEnUso) {
+            setMessage('Correo electrónico ya registrado')
+            setMessageType('error')
+            setLoading(false)
+            return
+          }
+          const usernameEnUso = usuarios.find(u => u.usuario?.toLowerCase().trim() === formData.username.toLowerCase().trim())
+          if (usernameEnUso) {
+            setMessage('Nombre de usuario no disponible')
+            setMessageType('error')
+            setLoading(false)
+            return
+          }
+        }
+      } catch (error) {
+        setMessage(`Error al validar usuario: ${error.message}`)
         setMessageType('error')
         setLoading(false)
         return
       }
+    }
 
+    try {
       const dataToSend = {
         usuario: {
-          username: formData.username,
-          password: formData.password,
-          email: formData.emailUsuario,
-          idRol: parseInt(formData.rolUsuario, 10)
+          username: formData.username?.trim() || null,
+          password: formData.password?.trim() || null,
+          email: formData.emailUsuario?.trim() || null,
+          idRol: formData.rolUsuario ? parseInt(formData.rolUsuario, 10) : null
         },
         bombero: {
           dni: formData.dni,
@@ -128,10 +157,36 @@ const RegistrarBombero = ({ onVolver }) => {
       const result = await response.json()
 
       if (response.ok && result.success) {
-        setMessage('¡Bombero registrado exitosamente!')
-        setMessageType('success')
+        // Si hay archivo de ficha médica, subirlo
+        if (formData.fichaMedica && formData.fichaMedica instanceof File) {
+          try {
+            const formDataFile = new FormData()
+            formDataFile.append('fichaMedica', formData.fichaMedica)
+            
+            const uploadResponse = await fetch(`/api/bomberos/${formData.dni}/ficha-medica`, {
+              method: 'POST',
+              body: formDataFile
+            })
+            
+            if (!uploadResponse.ok) {
+              console.error('Error al subir ficha médica:', await uploadResponse.text())
+              setMessage('⚠️ Bombero registrado pero hubo un error al subir la ficha médica')
+              setMessageType('warning')
+            } else {
+              setMessage('¡Bombero registrado exitosamente!')
+              setMessageType('success')
+            }
+          } catch (uploadError) {
+            console.error('Error al subir archivo:', uploadError)
+            setMessage('⚠️ Bombero registrado pero hubo un error al subir la ficha médica')
+            setMessageType('warning')
+          }
+        } else {
+          setMessage('¡Bombero registrado exitosamente!')
+          setMessageType('success')
+        }
+        
         setFormData({ dni: '', nombre: '', apellido: '', domicilio: '', email: '', telefono: '', legajo: '', antiguedad: '', rango: 'Bombero', esPlan: false, fichaMedica: null, fechaFicha: new Date().toISOString().split('T')[0], aptoPsico: true, grupoSanguineo: '', username: '', password: '', emailUsuario: '', rolUsuario: '' })
-        setTimeout(() => { if (onVolver) onVolver() }, 2000)
       } else {
         const errorMessage = result.message || result.error || 'Error al registrar bombero'
         setMessage(errorMessage)
@@ -226,6 +281,9 @@ const RegistrarBombero = ({ onVolver }) => {
                   onChange={handleChange}
                   required
                   disabled={loading}
+                  maxLength="8"
+                  pattern="[0-9]{7,8}"
+                  title="Ingrese un DNI válido (7-8 dígitos)"
                 />
               </div>
 
@@ -316,6 +374,15 @@ const RegistrarBombero = ({ onVolver }) => {
                   <Shield size={16} className="text-primary" />
                   Rango
                 </label>
+                {/* Campo oculto para validación HTML5 */}
+                <input
+                  type="text"
+                  value={formData.rango || ''}
+                  required
+                  style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
+                  tabIndex={-1}
+                  onChange={() => {}}
+                />
                 <Select
                   classNamePrefix="rs"
                   inputId="rango"
@@ -356,6 +423,15 @@ const RegistrarBombero = ({ onVolver }) => {
                 <label htmlFor="grupoSanguineo" className="form-label text-dark fw-semibold d-flex align-items-center gap-2">
                   <PillIcon className="text-warning" />
                   Grupo Sanguíneo</label>
+                {/* Campo oculto para validación HTML5 */}
+                <input
+                  type="text"
+                  value={formData.grupoSanguineo || ''}
+                  required
+                  style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
+                  tabIndex={-1}
+                  onChange={() => {}}
+                />
                 <Select
                   classNamePrefix="rs"
                   inputId="grupoSanguineo"
@@ -415,7 +491,6 @@ const RegistrarBombero = ({ onVolver }) => {
                   className="form-control"
                   value={formData.username}
                   onChange={handleChange}
-                  required
                   disabled={loading}
                 />
               </div>
@@ -431,7 +506,6 @@ const RegistrarBombero = ({ onVolver }) => {
                   className="form-control"
                   value={formData.password}
                   onChange={handleChange}
-                  required
                   disabled={loading}
                 />
               </div>
@@ -447,7 +521,6 @@ const RegistrarBombero = ({ onVolver }) => {
                   className="form-control"
                   value={formData.emailUsuario}
                   onChange={handleChange}
-                  required
                   disabled={loading}
                 />
               </div>

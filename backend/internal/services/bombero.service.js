@@ -151,6 +151,51 @@ export class BomberoService {
     }
   }
 
+  async actualizarFichaMedica(dni, pdfBuffer, nombreArchivo, fechaFichaMedica) {
+    try {
+      logger.debug('Servicio: Actualizar ficha médica', { dni, nombreArchivo })
+      
+      if (!dni) {
+        throw new Error('DNI es requerido')
+      }
+
+      if (!pdfBuffer || !Buffer.isBuffer(pdfBuffer)) {
+        throw new Error('El archivo PDF es requerido')
+      }
+
+      // Verificar que el bombero existe
+      const bombero = await this.bomberoRepository.findById(dni)
+      if (!bombero) {
+        throw new Error('Bombero no encontrado')
+      }
+
+      return await this.bomberoRepository.updateFichaMedica(
+        dni, 
+        pdfBuffer,
+        nombreArchivo,
+        fechaFichaMedica
+      )
+    } catch (error) {
+      logger.error('Error al actualizar ficha médica', { dni, error: error.message })
+      throw error
+    }
+  }
+
+  async obtenerFichaMedica(dni) {
+    try {
+      logger.debug('Servicio: Obtener ficha médica', { dni })
+      
+      if (!dni) {
+        throw new Error('DNI es requerido')
+      }
+
+      return await this.bomberoRepository.getFichaMedica(dni)
+    } catch (error) {
+      logger.error('Error al obtener ficha médica', { dni, error: error.message })
+      throw error
+    }
+  }
+
   async listarBomberosPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
   return await this.bomberoRepository.findConPaginado({ pagina, limite, busqueda })
 }

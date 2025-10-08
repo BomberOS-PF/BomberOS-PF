@@ -112,6 +112,20 @@ export class MySQLUsuarioRepository {
   async create(usuario) {
     const data = usuario.toDatabase()
     
+    // Validar campos obligatorios antes de intentar insertar
+    if (!data.usuario || data.usuario === null) {
+      throw new Error('El nombre de usuario es obligatorio')
+    }
+    if (!data.password || data.password === null) {
+      throw new Error('La contraseña es obligatoria')
+    }
+    if (!data.email || data.email === null) {
+      throw new Error('El email es obligatorio')
+    }
+    if (!data.idRol || data.idRol === null) {
+      throw new Error('El rol es obligatorio')
+    }
+    
     // Hashear la contraseña antes de guardarla
     let hashedPassword = data.password
     if (data.password && !PasswordUtils.isHashed(data.password)) {
@@ -126,7 +140,10 @@ export class MySQLUsuarioRepository {
     `
     
     const params = [
-      data.usuario, hashedPassword, data.email, data.idRol
+      data.usuario, 
+      hashedPassword, 
+      data.email, 
+      data.idRol
     ]
     
     const connection = getConnection()
@@ -143,10 +160,11 @@ export class MySQLUsuarioRepository {
       })
       
       if (error.code === 'ER_DUP_ENTRY') {
-        throw new Error(`Nombre de usuario no disponible`)
+        throw new Error('Nombre de usuario no disponible')
       }
       
-      throw new Error(`Error al crear usuario: ${error.message}`)
+      // Mensaje genérico para otros errores
+      throw new Error('Error al crear usuario. Verifique que todos los campos estén completos.')
     }
   }
 

@@ -43,6 +43,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
   // estados propios del detalle (separados del listado/paginación)
   const [loadingDetalle, setLoadingDetalle] = useState(false)
   const [errorGlobal, setErrorGlobal] = useState('')
+  const [notificandoBomberos, setNotificandoBomberos] = useState(false)
 
   // Incidente pendiente de completar (informativo)
   const [incidentePendiente, setIncidentePendiente] = useState(null)
@@ -142,6 +143,66 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
     }
   }
 
+  const notificarPorWhatsapp = async () => {
+    if (!detalle?.idIncidente) {
+      alert('❌ No hay incidente seleccionado para notificar')
+      return
+    }
+
+    const confirmar = window.confirm(
+      `¿Deseas notificar a los bomberos sobre el Incidente #${detalle.idIncidente}?\n\n` +
+      `Tipo: ${detalle.tipoDescripcion}\n` +
+      `Lugar: ${detalle.descripcion || 'No especificado'}\n\n` +
+      `Se enviará una alerta por WhatsApp a todos los bomberos activos.`
+    )
+
+    if (!confirmar) return
+
+    setNotificandoBomberos(true)
+
+    try {
+      console.log('📱 Enviando notificación WhatsApp para incidente:', detalle.idIncidente)
+
+      const resp = await fetch(`/api/incidentes/${detalle.idIncidente}/notificar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        }
+      })
+
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}))
+        throw new Error(errorData.message || `Error ${resp.status}: ${resp.statusText}`)
+      }
+
+      const resultado = await resp.json()
+
+      if (resultado.success) {
+        const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = resultado.data
+        alert(`🚨 ALERTA ENVIADA POR WHATSAPP ✅
+        
+📊 Resumen:
+• Total bomberos: ${totalBomberos}
+• Notificaciones exitosas: ${notificacionesExitosas}
+• Notificaciones fallidas: ${notificacionesFallidas}
+
+Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
+        
+        setMensaje('✅ Notificación enviada exitosamente a los bomberos')
+        setTimeout(() => setMensaje(''), 5000)
+      } else {
+        throw new Error(resultado.message || 'Error al enviar notificación')
+      }
+    } catch (error) {
+      console.error('❌ Error al notificar por WhatsApp:', error)
+      alert(`❌ Error al notificar por WhatsApp: ${error.message}`)
+      setErrorGlobal(`Error al notificar: ${error.message}`)
+    } finally {
+      setNotificandoBomberos(false)
+    }
+  }
+
   useEffect(() => {
     const incidenteParaCompletar = localStorage.getItem('incidenteParaCompletar')
     if (incidenteParaCompletar) {
@@ -149,7 +210,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
       verDetalle(incidenteParaCompletar)
       setTimeout(() => {
         setModoEdicionEspecifica(true)
-        setMensaje('💡 Completa los detalles específicos del tipo de incidente')
+        setMensaje('💡 Completa los detalles específicos del tipo de incidente. El formulario está disponible más abajo.')
         setTimeout(() => setMensaje(''), 5000)
       }, 1500)
       localStorage.removeItem('incidenteParaCompletar')
@@ -209,15 +270,33 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
             </h3>
           </div>
 
-          <div>
+          <div className='d-flex gap-2'>
             {!modoEdicion && (
-              <button
-                className='btn btn-warning btn-sm me-2 d-flex align-items-center gap-1'
-                onClick={activarEdicion}
-                disabled={loadingDetalle}
-              >
-                <i className='bi bi-pencil-square'></i> Editar
-              </button>
+              <>
+                <button
+                  className='btn btn-warning btn-sm d-flex align-items-center gap-1'
+                  onClick={notificarPorWhatsapp}
+                  disabled={loadingDetalle || notificandoBomberos}
+                >
+                  {notificandoBomberos ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      Notificando...
+                    </>
+                  ) : (
+                    <>
+                      <i className='bi bi-megaphone'></i> Notificar Bomberos
+                    </>
+                  )}
+                </button>
+                <button
+                  className='btn btn-primary btn-sm d-flex align-items-center gap-1'
+                  onClick={activarEdicion}
+                  disabled={loadingDetalle}
+                >
+                  <i className='bi bi-pencil-square'></i> Editar
+                </button>
+              </>
             )}
             <button
               className='btn btn-outline-secondary btn-sm d-flex align-items-center gap-1'
@@ -408,25 +487,6 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
             <div className={`alert ${mensaje.includes('Error') || mensaje.includes('No se') ? 'alert-danger' :
               mensaje.includes('✅') ? 'alert-success' : 'alert-info'} mb-3`}>
               {mensaje}
-            </div>
-          )}
-
-          {incidentePendiente && (
-            <div className='alert alert-info d-flex align-items-center mb-3'>
-              <div className='me-3'>
-                <i className='fas fa-info-circle fa-2x'></i>
-              </div>
-              <div className='flex-grow-1'>
-                <h5 className='alert-heading mb-1'>🎯 Incidente #{incidentePendiente.idIncidente} listo para completar</h5>
-                <p className='mb-2'>Este incidente fue creado recientemente y está pendiente de completar los detalles específicos del tipo de incidente.</p>
-                <small className='text-muted'>💡 El detalle se ha abierto automáticamente abajo. Puedes editarlo haciendo clic en "Ver detalle".</small>
-              </div>
-              <button
-                type='button'
-                className='btn-close'
-                onClick={() => setIncidentePendiente(null)}
-                aria-label='Cerrar'
-              ></button>
             </div>
           )}
 
