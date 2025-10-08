@@ -5,7 +5,7 @@ import RegistrarGuardia from '../RegistrarGuardia/RegistrarGuardia'
 import '../RegistrarGuardia/RegistrarGuardia.css'
 import '../../../../styles/global.css'
 import ConsultarBomberosDelGrupo from './ConsultarBomberosDelGrupo'
-import * as bootstrap from 'bootstrap'
+import { swalConfirm, swalSuccess, swalError } from '../../Common/swalBootstrap'
 import { User2, UsersIcon } from 'lucide-react'
 import { BackToMenuButton } from '../../Common/Button'
 import Pagination from '../../Common/Pagination'
@@ -19,10 +19,6 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null)
   const [bomberosDelGrupo, setBomberosDelGrupo] = useState([])
 
-  // Estados de modales
-  const [grupoAEliminar, setGrupoAEliminar] = useState(null)
-  const [resultadoOperacion, setResultadoOperacion] = useState({ mostrar: false, exito: false, mensaje: '' })
-
   // Carga/acciones locales (el Pagination maneja su propio loading de lista)
   const [loadingAccion, setLoadingAccion] = useState(false)
 
@@ -31,32 +27,39 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
 
   const handleBusqueda = (e) => setBusqueda(e.target.value)
 
-  const confirmarEliminacion = (grupo) => {
-    setGrupoAEliminar(grupo)
-    const modal = new bootstrap.Modal(document.getElementById('modalConfirmacion'))
-    modal.show()
-  }
-
-  const eliminarGrupo = async () => {
-    if (!grupoAEliminar) return
+  const eliminarGrupo = async (grupo) => {
+    if (!grupo?.idGrupo) return
     setLoadingAccion(true)
     try {
-      const res = await fetch(API_URLS.grupos.delete(grupoAEliminar.idGrupo), { method: 'DELETE' })
-      const result = await res.json()
-      if (res.ok && result.success) {
-        setResultadoOperacion({ mostrar: true, exito: true, mensaje: 'Grupo eliminado correctamente' })
-        setRefreshKey(k => k + 1) // 🔁 fuerza recarga en Pagination
-      } else {
-        setResultadoOperacion({ mostrar: true, exito: false, mensaje: result.message || 'No se pudo eliminar el grupo' })
+      const result = await swalConfirm({
+        title: `¿Eliminar grupo "${grupo.nombre}"?`,
+        html: 'Esta acción no se puede deshacer.',
+        confirmText: 'Eliminar',
+        icon: 'warning',
+        preConfirm: async () => {
+          const res = await fetch(API_URLS.grupos.delete(grupo.idGrupo), { method: 'DELETE' })
+          const data = await res.json().catch(() => ({}))
+          if (!res.ok || !data?.success) {
+            throw new Error(data?.message || 'No se pudo eliminar el grupo')
+          }
+          return true
+        }
+      })
+
+      if (result.isConfirmed) {
+        await swalSuccess('Eliminado', `El grupo "${grupo.nombre}" fue eliminado correctamente`)
+        setMensaje('Grupo eliminado correctamente')
+        setRefreshKey(k => k + 1) // 🔁 recarga Pagination
       }
-    } catch (error) {
-      setResultadoOperacion({ mostrar: true, exito: false, mensaje: 'Error al eliminar grupo' })
+    } catch (err) {
+      const msg = err?.message || 'Error al eliminar grupo'
+      setMensaje(msg)
+      await swalError('Error', msg)
     } finally {
-      const modal = bootstrap.Modal.getInstance(document.getElementById('modalConfirmacion'))
-      modal?.hide()
       setLoadingAccion(false)
     }
   }
+
 
   const volverListado = () => {
     setGrupoSeleccionado(null)
@@ -129,7 +132,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
   }
 
   return (
-    <div className="container-fluid py-5">
+    <div className="container-fluid py-5 consultar-grupo registrar-guardia">
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
           <div className="bg-danger p-3 rounded-circle">
@@ -149,11 +152,11 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
         </div>
 
         <div className="card-body">
-          <div className="mb-3 position-relative">
+          <div className="mb-3 position-relative col-md-4">
             <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
             <input
               type="text"
-              className="form-control border-secondary ps-5 py-3"
+              className="form-control border-secondary ps-5 py-2"
               placeholder="Buscar por nombre del grupo..."
               value={busqueda}
               onChange={handleBusqueda}
@@ -161,149 +164,108 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
           </div>
 
           {/* ✅ Pagination igual que en Incidentes/Bomberos */}
-          <Pagination
-            fetchPage={fetchGruposPage}
-            initialPage={1}
-            initialPageSize={PAGE_SIZE_DEFAULT}
-            // filtros + tick para recargar
-            filters={{ q: busqueda, _tick: refreshKey }}
-            showControls
-            labels={{
-              prev: '‹ Anterior',
-              next: 'Siguiente ›',
-              of: '/',
-              showing: (shown, total) => `Mostrando ${shown} de ${total} grupos`
-            }}
-          >
-            {({ items, loading, error }) => (
-              <>
-                {error && <div className="alert alert-danger mb-3">{String(error)}</div>}
+          <div className='rg-pager'>
+            <Pagination
+              fetchPage={fetchGruposPage}
+              initialPage={1}
+              initialPageSize={PAGE_SIZE_DEFAULT}
+              // filtros + tick para recargar
+              filters={{ q: busqueda, _tick: refreshKey }}
+              showControls
+              labels={{
+                prev: '‹ Anterior',
+                next: 'Siguiente ›',
+                of: '/',
+                showing: (shown, total) => `Mostrando ${shown} de ${total} grupos`
+              }}
+            >
+              {({ items, loading, error }) => (
+                <>
+                  {error && <div className="alert alert-danger mb-3">{String(error)}</div>}
 
-                {loading && (
-                  <div className="text-center mb-3">
-                    <div className="spinner-border text-danger" role="status"></div>
-                  </div>
-                )}
-
-                {items.length > 0 ? (
-                  <div className="table-responsive rounded border">
-                    <table className="table table-hover align-middle mb-0">
-                      <thead className="bg-light">
-                        <tr>
-                          <th className="border-end text-center">Nombre</th>
-                          <th className="border-end text-center">Descripción</th>
-                          <th className="text-center">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {items.map((grupo) => (
-                          <tr key={grupo.idGrupo}>
-                            <td className="border-end px-3">{grupo.nombre}</td>
-                            <td className="border-end px-3">{grupo.descripcion}</td>
-                            <td className="border-end">
-                              <button
-                                className="btn btn-outline-secondary btn-detail me-2"
-                                onClick={async () => {
-                                  try {
-                                    setLoadingAccion(true)
-                                    const res = await fetch(API_URLS.grupos.obtenerBomberosDelGrupo(grupo.idGrupo))
-                                    const data = await res.json()
-                                    if (res.ok && data.success) {
-                                      setBomberosDelGrupo(data.data || [])
-                                      setGrupoSeleccionado(grupo)
-                                      setMensaje('')
-                                    } else {
-                                      setMensaje(data.message || 'No se pudieron obtener los bomberos del grupo')
-                                    }
-                                  } catch (e) {
-                                    setMensaje('Error de conexión al obtener bomberos del grupo')
-                                  } finally {
-                                    setLoadingAccion(false)
-                                  }
-                                }}
-                                disabled={loading || loadingAccion}
-                              >
-                                <i className="bi bi-eye me-1"></i> Ver
-                              </button>
-                              <button
-                                className="btn btn-outline-danger btn-detail"
-                                onClick={() => confirmarEliminacion(grupo)}
-                                disabled={loading || loadingAccion}
-                                title="Eliminar grupo"
-                              >
-                                <i className="bi bi-trash"></i>
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  !loading && (
-                    <div className="text-center py-3 text-muted">
-                      {mensaje || 'No hay resultados para la búsqueda.'}
+                  {loading && (
+                    <div className="text-center mb-3">
+                      <div className="spinner-border text-danger" role="status"></div>
                     </div>
-                  )
-                )}
-              </>
-            )}
-          </Pagination>
+                  )}
+
+                  {items.length > 0 ? (
+                    <div className="table-responsive rounded border">
+                      <table className="table table-hover align-middle mb-0 rg-table">
+                        <thead className="bg-light">
+                          <tr>
+                            <th className="border-end text-center">Nombre</th>
+                            <th className="border-end text-center">Descripción</th>
+                            <th className="text-center">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {items.map((grupo) => (
+                            <tr key={grupo.idGrupo}>
+                              <td className="border-end px-3" data-label="Nombre">{grupo.nombre}</td>
+                              <td className="border-end px-3" data-label="Descripción">{grupo.descripcion}</td>
+                              <td className="text-center" data-label="Acciones">
+                                <div className='d-inline-flex align-items-center justify-content-center gap-2 flex-nowrap actions-inline'>
+                                  <button
+                                    className="btn btn-outline-secondary btn-detail btn-ver"
+                                    title='Ver'
+                                    onClick={async () => {
+                                      try {
+                                        setLoadingAccion(true)
+                                        const res = await fetch(API_URLS.grupos.obtenerBomberosDelGrupo(grupo.idGrupo))
+                                        const data = await res.json()
+                                        if (res.ok && data.success) {
+                                          setBomberosDelGrupo(data.data || [])
+                                          setGrupoSeleccionado(grupo)
+                                          setMensaje('')
+                                        } else {
+                                          setMensaje(data.message || 'No se pudieron obtener los bomberos del grupo')
+                                        }
+                                      } catch (e) {
+                                        setMensaje('Error de conexión al obtener bomberos del grupo')
+                                      } finally {
+                                        setLoadingAccion(false)
+                                      }
+                                    }}
+                                    disabled={loading || loadingAccion}
+                                  >
+                                    <i className="bi bi-eye"></i>
+                                    <span className="btn-label ms-1">Ver</span>
+                                  </button>
+                                  <button
+                                    className="btn btn-outline-danger btn-detail btn-trash"
+                                    onClick={() => eliminarGrupo(grupo)}
+                                    disabled={loading || loadingAccion}
+                                    title="Eliminar grupo"
+                                  >
+                                    <i className="bi bi-trash"></i>
+                                  </button>
+                                </div>
+
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    !loading && (
+                      <div className="text-center py-3 text-muted">
+                        {mensaje || 'No hay resultados para la búsqueda.'}
+                      </div>
+                    )
+                  )}
+                </>
+              )}
+            </Pagination>
+          </div>
+
         </div>
 
-        <div className="d-grid mb-3 px-3">
+        <div className="d-flex justify-content-start align-items-center gap-3 mb-3 px-3">
           <BackToMenuButton onClick={onVolver} />
         </div>
       </div>
-
-      {/* Modal Confirmación */}
-      <div className="modal fade" id="modalConfirmacion" tabIndex="-1" aria-hidden="true">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Confirmar eliminación</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div className="modal-body">
-              ¿Estás seguro de que deseas eliminar el grupo <strong>{grupoAEliminar?.nombre}</strong>?
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="button" className="btn btn-danger" onClick={eliminarGrupo}>Eliminar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Modal Resultado */}
-      {resultadoOperacion.mostrar && (
-        <div
-          className="modal fade show"
-          style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
-          tabIndex="-1"
-        >
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className={`modal-header ${resultadoOperacion.exito ? 'bg-success' : 'bg-danger'}`}>
-                <h5 className="modal-title text-white">
-                  {resultadoOperacion.exito ? 'Éxito' : 'Error'}
-                </h5>
-              </div>
-              <div className="modal-body">
-                <p>{resultadoOperacion.mensaje}</p>
-              </div>
-              <div className="modal-footer">
-                <button
-                  className="btn btn-primary"
-                  onClick={() => setResultadoOperacion({ mostrar: false, exito: false, mensaje: '' })}
-                >
-                  Aceptar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

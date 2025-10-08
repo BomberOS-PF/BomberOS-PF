@@ -1,28 +1,28 @@
 /* =============================
    Paleta BomberOS (variables)
 ============================= */
-:root{
-  --red-700:#d52b1e;
-  --red-600:#dc3545;
-  --red-500:#ff6b6b;
-  --red-800:#b02118;
-  --red-900:#a11c15;
+:root {
+  --red-700: #d52b1e;
+  --red-600: #dc3545;
+  --red-500: #ff6b6b;
+  --red-800: #b02118;
+  --red-900: #a11c15;
 
-  --gray-900:#1d1d1d;
-  --gray-800:#545b62;
-  --gray-700:#6c757d;
-  --gray-600:#6b6b6b;
-  --gray-500:#838383;
-  --gray-300:#dee2e6;
-  --gray-200:#f8f9fa;
-  --black:#000;
-  --white:#fff;
+  --gray-900: #1d1d1d;
+  --gray-800: #545b62;
+  --gray-700: #6c757d;
+  --gray-600: #6b6b6b;
+  --gray-500: #838383;
+  --gray-300: #dee2e6;
+  --gray-200: #f8f9fa;
+  --black: #000;
+  --white: #fff;
 }
 
 /* =============================
    Base
 ============================= */
-body{
+body {
   background-color: var(--white);
   font-family: 'Segoe UI', sans-serif;
   color: var(--black);
@@ -31,57 +31,82 @@ body{
 /* =============================
    Form (inputs, labels)
 ============================= */
-.form-label,.form-check-label{ font-weight:600; color:var(--black); }
-
-.form-control,.form-select{
-  background-color: var(--gray-200);
-  border:1px solid #ccc;
-  color:var(--black);
+.form-label,
+.form-check-label {
+  font-weight: 600;
+  color: var(--black);
 }
-.form-control::placeholder{ color:#888; }
 
-.form-control:focus,.form-select:focus{
+.form-control,
+.form-select {
+  background-color: var(--gray-200);
+  border: 1px solid #ccc;
+  color: var(--black);
+}
+
+.form-control::placeholder {
+  color: #888;
+}
+
+.form-control:focus,
+.form-select:focus {
   background-color: var(--white);
   border-color: var(--red-700);
-  box-shadow:0 0 0 .2rem rgba(213,43,30,.25);
-  color:var(--black);
+  box-shadow: 0 0 0 .2rem rgba(213, 43, 30, .25);
+  color: var(--black);
 }
 
-.form-control:disabled::placeholder,.form-select:disabled::placeholder{ color:#bdc3c7; }
+.form-control:disabled::placeholder,
+.form-select:disabled::placeholder {
+  color: #bdc3c7;
+}
 
 /* Checks */
-.form-check-input{ cursor:pointer; }
-.form-check-input:focus{
-  border-color: var(--red-700);
-  box-shadow:0 0 0 .2rem rgba(213,43,30,.25);
+.form-check-input {
+  cursor: pointer;
 }
-.form-check-input:checked{
+
+.form-check-input:focus {
+  border-color: var(--red-700);
+  box-shadow: 0 0 0 .2rem rgba(213, 43, 30, .25);
+}
+
+.form-check-input:checked {
   background-color: var(--red-700);
   border-color: var(--red-700);
 }
+
 /* sin fondo rojo cuando no está checkeado */
-.form-check-input:not(:checked){
+.form-check-input:not(:checked) {
   background-color: var(--white);
   border-color: var(--gray-800);
 }
 
-.edge-to-edge{
-  width: 80vw;         /* ocupa el 90% del ancho de la ventana */
-  margin: 0 auto;      /* centra horizontalmente */
-  border-radius: 0.5rem; /* opcional */
+.only-thumb .form-check-label {
+  pointer-events: none;
+}
+
+.only-thumb .form-check-input {
+  pointer-events: auto;
+}
+
+.edge-to-edge {
+  width: 80vw;
+  margin: 0 auto;
+  border-radius: 0.5rem;
 }
 
 /* =============================
    Botones
 ============================= */
-.btn{ 
-  font-size: 1rem;      /* texto más grande o chico */
-  padding: 0.6rem 1.2rem; /* alto y ancho del botón */
-  border-radius: 6px;   /* bordes */
+.btn {
+  font-size: 1rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
 }
 
 .btn-short {
-  width: 120px;  /* corto */
+  width: 120px;
 }
 
 .btn-medium {
@@ -93,7 +118,7 @@ body{
   text-overflow: ellipsis;
 }
 
-.btn-accept{
+.btn-accept {
   background-color: #f14b5b;
   border: 1px solid #dc3545;
   color: white;
@@ -104,12 +129,12 @@ body{
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.btn-accept:hover{
+.btn-accept:hover {
   background-color: #ce1225;
 }
 
-.btn-warning{
-  background-color:#ffc107;
+.btn-warning {
+  background-color: #ffc107;
   border-color: #ffc107;
   color: #000;
 }
@@ -125,7 +150,7 @@ body{
   border-color: #ffc720;
 }
 
-.btn-back{
+.btn-back {
   background-color: transparent;
   border: 1px solid #9ca3af;
   color: #374151;
@@ -136,8 +161,8 @@ body{
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.btn-back:hover{
-  background-color:#bcbfc5;
+.btn-back:hover {
+  background-color: #bcbfc5;
 }
 
 .btn-sm-custom {
@@ -164,12 +189,20 @@ body{
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.btn-added:hover{
+.btn-added:hover {
   background-color: #1c910c;
 }
 
+.toggle-btn {
+  border-color: #000000;
+}
+
+.toggle-btn:hover {
+  background-color: #f06873;
+}
+
 .toggle-btn.selected {
-  background-color: #f06873; /* rojo Bootstrap */
+  background-color: #f06873;
   color: #fff;
   border-color: #dc3545;
 }
@@ -177,103 +210,188 @@ body{
 /* =============================
    Header de formularios
 ============================= */
-.form-header{
-  display:flex; align-items:center; justify-content:flex-start;
+.form-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   background-color: var(--gray-900);
-  padding:1rem 1.5rem; border-radius:8px 8px 0 0;
-  border-bottom:4px solid var(--red-700); margin-bottom:1rem;
-}
-.form-header img{ 
-  height:40px; 
-  margin-right:1rem; 
+  padding: 1rem 1.5rem;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 4px solid var(--red-700);
+  margin-bottom: 1rem;
 }
 
-.form-header h2{ margin:0; 
-  font-size:1.5rem; 
-  font-weight:bold; 
-  color:var(--white); 
+.form-header img {
+  height: 40px;
+  margin-right: 1rem;
+}
+
+.form-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--white);
 }
 
 /* =============================
    React-Select (usar classNamePrefix="rs")
 ============================= */
-.rs__control{
+.rs__control {
   background-color: var(--white);
   border: 1px solid var(--black);
-  min-height: 38px; 
+  min-height: 38px;
   box-shadow: none;
 }
-.rs__control:hover{ 
-  border-color: var(--red-600); 
+
+.rs__control:hover {
+  border-color: var(--red-600);
 }
 
-.rs__control--is-focused{
+.rs__control--is-focused {
   border-color: var(--red-600) !important;
-  box-shadow:0 0 0 2px rgba(220,53,69,.3) !important;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, .3) !important;
 }
-.rs__single-value{ color: var(--black); }
-.rs__menu{ background: var(--white); z-index:9999; }
-.rs__option{
-  background: var(--white); color: var(--black); cursor:pointer;
+
+.rs__single-value {
+  color: var(--black);
 }
-.rs__option--is-focused{
-  background: var(--red-500) !important; color: var(--white) !important;
+
+.rs__menu {
+  background: var(--white);
+  z-index: 9999;
 }
-.rs__option--is-selected{
-  background: var(--red-600) !important; color: var(--white) !important;
+
+.rs__option {
+  background: var(--white);
+  color: var(--black);
+  cursor: pointer;
 }
-.rs__option--is-selected.rs__option--is-focused{
-  background:#c82333 !important; color:var(--white) !important;
+
+.rs__option--is-focused {
+  background: var(--red-500) !important;
+  color: var(--white) !important;
+}
+
+.rs__option--is-selected {
+  background: var(--red-600) !important;
+  color: var(--white) !important;
+}
+
+.rs__option--is-selected.rs__option--is-focused {
+  background: #c82333 !important;
+  color: var(--white) !important;
 }
 
 /* =============================
    Tablas (lista de bomberos)
 ============================= */
-.tabla-bomberos{
-  width:100%; border-collapse:collapse; margin-bottom:1rem;
-  color:var(--black); background-color:#b3b1b1; border:1px solid var(--gray-600);
-  font-size:.9rem;
+.tabla-bomberos {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  color: var(--black);
+  background-color: #b3b1b1;
+  border: 1px solid var(--gray-600);
+  font-size: .9rem;
 }
-.tabla-bomberos thead{ background-color: var(--gray-500); }
-.tabla-bomberos th,.tabla-bomberos td{
-  padding:8px 12px; border:1px solid var(--gray-600); text-align:left;
+
+.tabla-bomberos thead {
+  background-color: var(--gray-500);
 }
-.tabla-bomberos tr:hover{ background-color:#a1a0a0; }
-.tabla-bomberos th:last-child,.tabla-bomberos td:last-child{ border-right:0 !important; }
-.tabla-bomberos td:last-child{ width:1%; white-space:nowrap; }
+
+.tabla-bomberos th,
+.tabla-bomberos td {
+  padding: 8px 12px;
+  border: 1px solid var(--gray-600);
+  text-align: left;
+}
+
+.tabla-bomberos tr:hover {
+  background-color: #a1a0a0;
+}
+
+.tabla-bomberos th:last-child,
+.tabla-bomberos td:last-child {
+  border-right: 0 !important;
+}
+
+.tabla-bomberos td:last-child {
+  width: 1%;
+  white-space: nowrap;
+}
 
 /* =============================
    FullCalendar (bloques/tooltip)
 ============================= */
 .fc-toolbar-chunk .fc-toolbar-title,
-.fc-col-header-cell-cushion{ color: var(--black) !important; }
-
-.fc-timegrid-event{
-  width:100% !important; left:0 !important; right:0 !important; transform:none !important;
-  background-color:#f08080 !important; border:1px solid #b30000 !important;
-  transition:background-color .2s ease;
+.fc-col-header-cell-cushion {
+  color: var(--black) !important;
 }
-.fc-timegrid-event:hover{ background-color: var(--red-700) !important; }
 
-.fc-event-title,.fc-event-time,.fc-event-main{
-  color:transparent !important; background:none !important; border:none !important;
-  font-size:0 !important; padding:0 !important;
+.fc-timegrid-event {
+  width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  transform: none !important;
+  background-color: #f08080 !important;
+  border: 1px solid #b30000 !important;
+  transition: background-color .2s ease;
+}
+
+.fc-timegrid-event:hover {
+  background-color: var(--red-700) !important;
+}
+
+.fc-event-title,
+.fc-event-time,
+.fc-event-main {
+  color: transparent !important;
+  background: none !important;
+  border: none !important;
+  font-size: 0 !important;
+  padding: 0 !important;
+}
+
+.time-select {
+  min-width: 40%;
 }
 
 /* Tooltip dinámico (fullcalendar) */
-.tooltip-dinamico{
-  position:fixed; z-index:99999; background:rgba(0,0,0,.9); color:#fff;
-  padding:6px 10px; font-size:.9rem; border-radius:6px; display:none;
-  max-width:250px; white-space:pre-line; pointer-events:none;
+.tooltip-dinamico {
+  position: fixed;
+  display: none;
+  pointer-events: none;
+  white-space: pre-line;
+  background: rgba(0, 0, 0, .90);
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: .85rem;
+  line-height: 1.2;
+  z-index: 99999;
+  max-width: 260px;
 }
 
 /* =============================
    Modales
 ============================= */
-.modal-backdrop{ background-color:rgba(0,0,0,.5); }
-.modal-backdrop-custom{ background:rgba(0,0,0,.5); }
-.modal-content-white{ background:#fff !important; color:#000 !important; border-radius:8px; }
-.modal-backdrop-custom .modal-dialog{ margin-top:10vh; }
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, .5);
+}
+
+.modal-backdrop-custom {
+  background: rgba(0, 0, 0, .5);
+}
+
+.modal-content-white {
+  background: #fff !important;
+  color: #000 !important;
+  border-radius: 8px;
+}
+
+.modal-backdrop-custom .modal-dialog {
+  margin-top: 10vh;
+}
 
 /* =============================
    Paginación reutilizable
@@ -285,8 +403,8 @@ body{
   transition: all .2s ease-in-out;
 }
 
-.custom-page-btn.active { 
-  filter:brightness(.9); 
+.custom-page-btn.active {
+  filter: brightness(.9);
 }
 
 /* =============================
@@ -302,17 +420,563 @@ body{
 }
 
 /* =============================
-   Responsive
+   Responsive (ConsultarIncidente existente)
 ============================= */
-@media (max-width: 576px){
-  .btn-short, .btn-medium { 
-    width: auto; }
+@media (max-width: 576px) {
+
+  .btn-short,
+  .btn-medium {
+    width: auto;
+  }
 }
 
-@media (max-width: 576px){
-  .edge-to-edge{
+@media (max-width: 576px) {
+  .edge-to-edge {
     width: 100%;
     margin-left: 0;
     margin-right: 0;
+  }
+}
+
+/* md- (≤ 991.98px) */
+@media (max-width: 991.98px) {
+  .consultar-incidente .table {
+    font-size: .95rem;
+  }
+
+  .consultar-incidente .btn-detail {
+    font-size: .85rem;
+    padding: .35rem .6rem;
+  }
+}
+
+/* sm- (≤ 767.98px) */
+@media (max-width: 767.98px) {
+  .consultar-incidente .search-box {
+    width: 100%;
+  }
+
+  .consultar-incidente .detalle-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .5rem;
+  }
+
+  .consultar-incidente .detalle-actions {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    justify-content: flex-start;
+  }
+}
+
+/* xs- (≤ 575.98px) */
+@media (max-width: 575.98px) {
+  .consultar-incidente .card .card-body {
+    padding: 1rem;
+  }
+
+  .consultar-incidente .table thead th,
+  .consultar-incidente .table tbody td {
+    padding: .5rem .5rem;
+    vertical-align: middle;
+  }
+
+  .consultar-incidente .btn-detail {
+    font-size: .8rem;
+    padding: .35rem .5rem;
+  }
+
+  .consultar-incidente .badge {
+    white-space: nowrap;
+  }
+}
+
+/* ===== Tabla responsive tipo cards (ConsultarIncidente) ===== */
+@media (max-width: 863px) {
+  .consultar-incidente .responsive-table thead {
+    display: none;
+  }
+
+  .consultar-incidente .responsive-table,
+  .consultar-incidente .responsive-table tbody,
+  .consultar-incidente .responsive-table tr,
+  .consultar-incidente .responsive-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .consultar-incidente .responsive-table tr {
+    margin-bottom: .75rem;
+    background: #fff;
+    color: #000;
+    border: 1px solid #e5e7eb;
+    border-radius: .5rem;
+    overflow: hidden;
+  }
+
+  .consultar-incidente .responsive-table td {
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    padding: .75rem .75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+  }
+
+  .consultar-incidente .responsive-table td:last-child {
+    border-bottom: none;
+  }
+
+  .consultar-incidente .responsive-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #6b7280;
+    flex: 0 0 auto;
+  }
+
+  .consultar-incidente .responsive-table .badge {
+    white-space: nowrap;
+  }
+
+  .consultar-incidente .responsive-table td[data-label="Acciones"] {
+    justify-content: flex-end;
+  }
+}
+
+/* micro (≤ 400px) */
+@media (max-width: 400px) {
+  .consultar-incidente .table {
+    font-size: .9rem;
+  }
+
+  .consultar-incidente .badge {
+    font-size: .75rem;
+    padding: .25rem .4rem;
+  }
+}
+
+/* ============================================================
+   REGISTRAR GUARDIA — Responsive, paginado y tooltips propios
+   (usar wrapper .registrar-guardia y tablas con clase .rg-table)
+============================================================ */
+
+/* Mini botón de borrar (también sirve para otros botones chicos) */
+.registrar-guardia .btn-trash {
+  padding: .28rem .46rem !important;
+  font-size: .82rem !important;
+  line-height: 1 !important;
+  border-radius: .25rem !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 28px;
+}
+
+.registrar-guardia .btn-trash i {
+  font-size: .95rem !important;
+}
+
+/* Base de posicionamiento para tooltips */
+.registrar-guardia .rg-table tr {
+  position: relative;
+  overflow: visible;
+}
+
+.registrar-guardia .tooltip-container {
+  position: relative;
+}
+
+/* ===== Desktop > 820px: tooltip ARRIBA, centrado, 1 línea con … ===== */
+@media (min-width: 821px) {
+  .registrar-guardia .rg-tooltip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 8px;
+    right: 8px;
+    transform: none;
+    text-align: center;
+    max-width: calc(100% - 16px);
+    padding: 6px 8px;
+    font-size: .9rem;
+    line-height: 1.25;
+    background: rgba(0, 0, 0, .9);
+    color: #fff;
+    border-radius: .35rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    z-index: 1000;
+    display: none;
+  }
+
+  .registrar-guardia .rg-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, .9) transparent transparent transparent;
+  }
+
+  .registrar-guardia .tooltip-container:hover .rg-tooltip,
+  .registrar-guardia .tooltip-container:focus-within .rg-tooltip {
+    display: block;
+  }
+}
+
+/* ===== Mobile ≤ 820px: tooltip a la IZQUIERDA del botón, 1 línea con … ===== */
+@media (max-width: 820px) {
+  .registrar-guardia .rg-tooltip {
+    position: absolute;
+    top: 50%;
+    right: calc(100% + 8px);
+    transform: translateY(-50%);
+    left: auto;
+    text-align: left;
+    max-width: min(480px, 90vw);
+    padding: .45rem .55rem;
+    font-size: .85rem;
+    line-height: 1.2;
+    background: rgba(0, 0, 0, .9);
+    color: #fff;
+    border-radius: .35rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    z-index: 1000;
+    display: none;
+  }
+
+  .registrar-guardia .rg-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent transparent rgba(0, 0, 0, .9);
+  }
+
+  .registrar-guardia .tooltip-container:hover .rg-tooltip,
+  .registrar-guardia .tooltip-container:focus-within .rg-tooltip {
+    display: block;
+  }
+}
+
+/* ===== Mobile ≤ 820px: tabla .rg-table pasa a “cards” ===== */
+@media (max-width: 820px) {
+  .registrar-guardia .table-responsive {
+    overflow: visible !important;
+  }
+
+  .registrar-guardia .rg-table thead {
+    display: none !important;
+  }
+
+  .registrar-guardia .rg-table,
+  .registrar-guardia .rg-table tbody,
+  .registrar-guardia .rg-table tr,
+  .registrar-guardia .rg-table td {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .registrar-guardia .rg-table tr {
+    background: #fff;
+    color: #000;
+    border: 1px solid #e5e7eb;
+    border-radius: .5rem;
+    overflow: visible;
+    margin-bottom: .75rem;
+  }
+
+  .registrar-guardia .rg-table td {
+    border: none !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+    padding: .75rem .75rem !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+  }
+
+  .registrar-guardia .rg-table td:last-child {
+    border-bottom: none !important;
+  }
+
+  .registrar-guardia .rg-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #6b7280;
+    flex: 0 0 auto;
+  }
+
+  /* evitar que los botones se estiren a 100% */
+  .registrar-guardia .rg-table td .btn {
+    width: auto !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* ===== Mobile ≤ 820px: botones principales más chicos ===== */
+@media (max-width: 820px) {
+
+  .registrar-guardia .btn-accept,
+  .registrar-guardia .btn-back,
+  .registrar-guardia .btn.btn-lg,
+  .registrar-guardia .btn-medium {
+    padding: .6rem .85rem !important;
+    font-size: .95rem !important;
+    border-radius: .4rem !important;
+    width: auto !important;
+  }
+}
+
+/* ===== ConsultarGrupoGuardia — botón "Ver" icon-only en ≤820px ===== */
+.consultar-grupo .btn-ver i {
+  transition: margin .15s ease;
+}
+
+/* Desktop/tablet grande: ícono + texto */
+@media (min-width: 821px) {
+  .consultar-grupo .btn-ver .btn-label {
+    display: inline;
+  }
+
+  .consultar-grupo .btn-ver i {
+    margin-right: .25rem;
+  }
+}
+
+/* Mobile / tablet chica: solo el ícono */
+@media (max-width: 820px) {
+  .consultar-grupo .btn-ver {
+    padding: .375rem !important;
+    width: 36px;
+    /* chip cuadrado */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .consultar-grupo .btn-ver .btn-label {
+    display: none;
+  }
+
+  .consultar-grupo .btn-ver i {
+    margin: 0;
+  }
+}
+
+/* ===== ConsultarBomberosDelGrupo (≤820px) — compacto ===== */
+@media (max-width: 820px) {
+
+  /* título y avatar más chicos */
+  .cbg .hero-avatar {
+    padding: .45rem !important;
+  }
+
+  .cbg h1.fs-3 {
+    font-size: 1.125rem !important;
+  }
+
+  /* header de la card más bajo y texto más chico */
+  .cbg .card-header {
+    padding: .6rem .9rem !important;
+  }
+
+  .cbg .card-header strong {
+    font-size: .95rem !important;
+  }
+
+  /* tabla como “cards” (ya heredado por .registrar-guardia .rg-table) */
+  .cbg .table-responsive {
+    overflow: visible !important;
+  }
+
+  /* acciones compactas y sin texto (icon-only) */
+  .cbg .cbg-actions .btn {
+    padding: .375rem .5rem !important;
+    font-size: .85rem !important;
+    line-height: 1.1 !important;
+    border-radius: .35rem !important;
+    min-width: 36px;
+  }
+
+  .cbg .cbg-actions .btn .btn-label {
+    display: none !important;
+  }
+
+  .cbg .cbg-actions .btn i {
+    font-size: 1rem;
+    margin: 0 !important;
+  }
+}
+
+/* ===== ConsultarBomberosDelGrupo — botones igual tamaño ===== */
+
+/* Desktop / tablet grande */
+@media (min-width: 821px) {
+
+  /* ajustá este ancho/alto si querés milimétrico */
+  .cbg .cbg-actions .btn {
+    --cbg-btn-w: 110px;
+    /* aprox. ancho del botón Guardias */
+    --cbg-btn-h: 36px;
+
+    width: var(--cbg-btn-w) !important;
+    height: var(--cbg-btn-h) !important;
+    padding: 0 .75rem !important;
+    font-size: .85rem !important;
+    line-height: 1 !important;
+    border-radius: .5rem !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+  }
+
+  .cbg .cbg-actions .btn i {
+    font-size: 1rem !important;
+    margin: 0 !important;
+  }
+}
+
+/* Mobile / tablet chica: icon-only y todos iguales */
+@media (max-width: 820px) {
+  .cbg .cbg-actions .btn {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    border-radius: .5rem !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cbg .cbg-actions .btn .btn-label {
+    display: none !important;
+    /* oculta el texto */
+  }
+
+  .cbg .cbg-actions .btn i {
+    font-size: 1rem !important;
+    margin: 0 !important;
+  }
+}
+
+/* ===== ConsultarBomberosDelGrupo — tres botones mismo tamaño ===== */
+
+/* Desktop / tablet grande: todos como "Guardias" */
+@media (min-width: 821px) {
+  .registrar-guardia .card .card-body .d-flex.align-items-center.justify-content-between.mb-3 .btn {
+    width: 110px !important;
+    /* ajustá si querés más/menos ancho */
+    height: 36px !important;
+    padding: 0 .75rem !important;
+    font-size: .85rem !important;
+    line-height: 1 !important;
+    border-radius: .5rem !important;
+    white-space: normal !important;
+    /* deja que el texto parta en 2 líneas */
+    text-align: center !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+  }
+
+  .registrar-guardia .card .card-body .d-flex.align-items-center.justify-content-between.mb-3 .btn i {
+    font-size: 1rem !important;
+    margin: 0 !important;
+  }
+}
+
+/* Mobile / tablet chica: icon-only, cuadrados iguales */
+@media (max-width: 820px) {
+  .registrar-guardia .card .card-body .d-flex.align-items-center.justify-content-between.mb-3 .btn {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    border-radius: .5rem !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    /* oculta texto sobrante */
+    text-overflow: clip;
+    font-size: 0 !important;
+    /* oculta texto "Editar grupo", "Volver..." */
+  }
+
+  .registrar-guardia .card .card-body .d-flex.align-items-center.justify-content-between.mb-3 .btn i {
+    font-size: 1rem !important;
+    /* reponemos tamaño del ícono */
+  }
+}
+
+
+/* ===== Paginador (btn-group) ≤537px: dos flechas visibles ===== */
+@media (max-width: 537px) {
+  .rg-pager .btn-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;              /* separa las dos flechas */
+    flex-wrap: nowrap;
+  }
+
+  /* Oculta el "1 / 2" del centro */
+  .rg-pager .btn-group > span {
+    display: none !important;
+  }
+
+  /* Botones compactos; ocultamos SOLO el texto con font-size:0 */
+  .rg-pager .btn-group > button {
+    width: 34px;
+    height: 30px;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+
+    font-size: 0 !important;     /* oculta el label pero conserva el color */
+    line-height: 0 !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+  }
+
+  /* Si hubiese hijos (spans/iconos), ocultalos */
+  .rg-pager .btn-group > button > * {
+    display: none !important;
+  }
+
+  /* Flecha izquierda / derecha: heredan el color del botón */
+  .rg-pager .btn-group > button:first-of-type::before,
+  .rg-pager .btn-group > button:last-of-type::before {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; line-height: 1; text-indent: 0;
+    color: inherit;               /* usa el color del tema del botón */
+  }
+  .rg-pager .btn-group > button:first-of-type::before { content: '‹'; }
+  .rg-pager .btn-group > button:last-of-type::before  { content: '›'; }
+
+  /* Asegura que el deshabilitado siga viéndose claro */
+  .rg-pager .btn-group > button:disabled {
+    opacity: 1;                   /* evita que se “apague” */
+    filter: saturate(.85);        /* leve diferencia visual opcional */
+    cursor: default;
   }
 }

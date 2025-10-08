@@ -331,7 +331,6 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
 
   const notificarBomberos = async () => {
     const idIncidente = datosPrevios.idIncidente || datosPrevios.id
-    
     if (!idIncidente) {
       alert('❌ No se puede notificar: el incidente aún no ha sido guardado')
       return
@@ -372,7 +371,6 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
 • Notificaciones fallidas: ${notificacionesFallidas}
 
 Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
-        
         setSuccessMsg('✅ Notificación enviada exitosamente a los bomberos')
       } else {
         throw new Error(resultado.message || 'Error al enviar notificación')
@@ -399,7 +397,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
           <form onSubmit={handleSubmit}>
             {/* Categoría y cantidad*/}
             <div className="row mb-3">
-              <div className="col-md-6 py-4">
+              <div className="col-md-4 py-4">
                 <label className="form-label text-dark d-flex align-items-center gap-2">
                   <UserIcon className="text-danger" />
                   Categoría
@@ -423,7 +421,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                 />
               </div>
 
-              <div className="col-md-6 py-4">
+              <div className="col-md-5 py-4">
                 <label className="text-dark form-label">Cantidad de materiales involucrados</label>
                 <input
                   type="number"
@@ -456,7 +454,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                       onClick={() =>
                         setFormData(prev => ({
                           ...prev,
-                          [key]: !prev[key]   // ← toggle basado en el estado previo
+                          [key]: !prev[key]
                         }))
                       }
                     >
@@ -592,8 +590,13 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
             />
 
             <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
-              <button type="submit" className="btn btn-accept btn-medium" disabled={loading || notificando}>
-                {loading ? 'Cargando...' : 'Finalizar carga'}
+              <button
+                type="button"
+                className="btn btn-back btn-medium"
+                onClick={guardarLocalmente}
+                disabled={loading || notificando}
+              >
+                Continuar después
               </button>
 
               <button 
@@ -616,11 +619,24 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
 
               <button
                 type="button"
-                className="btn btn-back btn-medium"
-                onClick={guardarLocalmente}
+                className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2"
+                onClick={notificarBomberos}
                 disabled={loading || notificando}
               >
-                Continuar después
+                {notificando ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    Notificando...
+                  </>
+                ) : (
+                  <>
+                    <i className='bi bi-megaphone'></i> Notificar Bomberos
+                  </>
+                )}
+              </button>
+
+              <button type="submit" className="btn btn-accept btn-medium" disabled={loading || notificando}>
+                {loading ? 'Cargando...' : 'Finalizar carga'}
               </button>
             </div>
 

@@ -8,7 +8,7 @@ const CalendarioGuardias = ({ dniUsuario }) => {
   const [modo, setModo] = useState('mis') // 'mis' | 'grupos'
 
   const headerRight = (
-    <div className='btn-group ms-auto flex-shrink-0'>
+    <div className='btn-group ms-auto flex-shrink-0 calendar-mode-switch'>
       <button
         className={`btn btn-sm ${modo === 'mis' ? 'btn-light' : 'btn-outline-light'}`}
         onClick={() => setModo('mis')}
@@ -29,7 +29,7 @@ const CalendarioGuardias = ({ dniUsuario }) => {
       {modo === 'mis'
         ? (
           <MisGuardiasCalendar
-            key='mis'                // fuerza unmount/mount limpio
+            key='mis'
             dniUsuario={dniUsuario}
             titulo='Mis Guardias'
             headerRight={headerRight}
@@ -37,7 +37,7 @@ const CalendarioGuardias = ({ dniUsuario }) => {
         )
         : (
           <GuardiasGrupoCalendar
-            key='grupos'            // fuerza unmount/mount limpio
+            key='grupos'
             titulo='Guardias por Grupo'
             headerRight={headerRight}
           />

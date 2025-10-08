@@ -45,21 +45,6 @@
   background-color: #d52b1e !important;
 }
 
-/* ====== Tooltip dinámico ====== */
-.tooltip-dinamico {
-  position: absolute;
-  display: none;
-  pointer-events: none;
-  white-space: pre;
-  background: rgba(0,0,0,.85);
-  color: #fff;
-  padding: 6px 8px;
-  border-radius: 6px;
-  font-size: .85rem;
-  line-height: 1.2;
-  z-index: 9999;
-}
-
 /* ====== Modales: overlay y contenido ====== */
 .modal-backdrop-custom {
   background: rgba(0,0,0,.5);
@@ -81,4 +66,17 @@
 .modal-footer .btn-danger,
 .modal-footer .btn-secondary {
   min-width: 140px;
+}
+
+/* Asegurar jerarquía del modal por encima del backdrop */
+.modal { z-index: 1060 !important; }
+.modal-backdrop { z-index: 1050 !important; }
+
+/* Si usás tu clase custom para backdrop, dale el mismo z-index */
+.modal-backdrop-custom { z-index: 1050 !important; }
+
+/* (Opcional) si algún overlay sigue bloqueando, deshabilitá clicks del backdrop */
+.modal-backdrop,
+.modal-backdrop-custom {
+  pointer-events: none;  /* quita captura de clicks; podés quitarlo si querés cerrar al hacer clic afuera */
 }

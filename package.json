@@ -6,7 +6,7 @@
   "scripts": {
     "start": "concurrently --kill-others --prefix-colors \"blue.bold,green.bold\" --prefix \"[{name}]\" --names \"BACKEND,FRONTEND\" \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev": "concurrently --kill-others --prefix-colors \"blue.bold,green.bold\" --prefix \"[{name}]\" --names \"BACKEND,FRONTEND\" \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "cd backend && npm start",
+    "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "stop": "echo 🛑 Para detener los servicios, presioná Ctrl + C",
     "install:all": "npm run install:backend && npm run install:frontend",
@@ -40,6 +40,7 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "nodemailer": "^7.0.5",
-    "react-select": "^5.10.2"
+    "react-select": "^5.10.2",
+    "sweetalert2": "^11.24.1"
   }
 }

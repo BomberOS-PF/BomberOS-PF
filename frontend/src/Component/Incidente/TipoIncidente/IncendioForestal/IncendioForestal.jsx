@@ -165,7 +165,6 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
 
   const notificarBomberos = async () => {
     const idIncidente = datosPrevios.idIncidente || datosPrevios.id
-    
     if (!idIncidente) {
       alert('❌ No se puede notificar: el incidente aún no ha sido guardado')
       return
@@ -206,7 +205,6 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
 • Notificaciones fallidas: ${notificacionesFallidas}
 
 Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
-        
         setSuccessMsg('✅ Notificación enviada exitosamente a los bomberos')
       } else {
         throw new Error(resultado.message || 'Error al enviar notificación')
@@ -316,7 +314,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
       <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
         <div className="card-body">
           <form>
-            <div className="mb-3">
+            <div className="mb-3 col-md-4">
               <label className="form-label text-dark d-flex align-items-center gap-2" htmlFor="caracteristicaLugar">Características del lugar *</label>
               <Select
                 options={caracteristicasLugarOptions.map(opt => ({
@@ -413,18 +411,14 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
             />
 
             <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
+              <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
+                Continuar después
+              </button>
+
               <button
                 type="button"
-                className="btn btn-accept btn-medium"
-                disabled={loading || notificando}
-                onClick={() => handleSubmit()}
-              >
-                {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
-              </button>
-              <button 
-                type="button" 
-                className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2" 
-                onClick={notificarBomberos} 
+                className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2"
+                onClick={notificarBomberos}
                 disabled={loading || notificando}
               >
                 {notificando ? (
@@ -438,8 +432,13 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                   </>
                 )}
               </button>
-              <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
-                Continuar después
+              <button
+                type="button"
+                className="btn btn-accept btn-medium"
+                disabled={loading || notificando}
+                onClick={() => handleSubmit()}
+              >
+                {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
               </button>
             </div>
 

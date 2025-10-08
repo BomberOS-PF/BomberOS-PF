@@ -15,20 +15,14 @@ import ConsultarRol from '../Rol/ConsultarRol'
 import RegistrarGuardia from '../Guardia/RegistrarGuardia/RegistrarGuardia'
 import ConsultarGrupoGuardia from '../Guardia/ConsultarGuardia/ConsultarGrupoGuardia'
 import GestionarGuardias from '../Guardia/GestionarGuardias/GestionarGuardia'
-import AccidenteTransito from '../Incidente/TipoIncidente/AccidenteTransito/AccidenteTransito'
-import FactorClimatico from '../Incidente/TipoIncidente/FactorClimatico/FactorClimatico'
-import IncendioEstructural from '../Incidente/TipoIncidente/IncendioEstructural/IncendioEstructural'
-import IncendioForestal from '../Incidente/TipoIncidente/IncendioForestal/IncendioForestal'
-import MaterialPeligroso from '../Incidente/TipoIncidente/MaterialPeligroso/MaterialPeligroso'
-import Rescate from '../Incidente/TipoIncidente/Rescate/Rescate'
+
 import ParticipacionIncidente from '../Incidente/ParticipacionIncidente/ParticipacionIncidente'
 import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
 import DashboardRespuestas from '../Respuestas/DashboardRespuestas'
 import EstadoWhatsApp from '../WhatsApp/EstadoWhatsApp'
-import { getRol } from '../../config/session'
 
 import CalendarioGuardias from '../Guardia/CalendarioGuardias/CalendarioGuardias'
-import MisGuardias from '../Guardia/MisGuardias/MisGuardias' // <-- NUEVO
+import MisGuardias from '../Guardia/MisGuardias/MisGuardias'
 
 const Menu = ({ user, setUser }) => {
   const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
@@ -36,6 +30,7 @@ const Menu = ({ user, setUser }) => {
   const [mostrarDropdown, setMostrarDropdown] = useState(false)
   const [acordeonAbierto, setAcordeonAbierto] = useState(null)
   const dropdownRef = useRef(null)
+  const dropdownRef2 = useRef(null)
   const navigate = useNavigate()
 
   const [datosFinalizados, setDatosFinalizados] = useState(null)
@@ -63,7 +58,7 @@ const Menu = ({ user, setUser }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (dropdownRef2.current && !dropdownRef2.current.contains(event.target)) {
         setMostrarDropdown(false)
       }
     }
@@ -344,15 +339,32 @@ const Menu = ({ user, setUser }) => {
             </div>
           </div>
 
+        </div>
+      </nav>
+
+      <div className="offcanvas offcanvas-start bg-dark text-white d-flex flex-column" tabIndex="-1" id="sidebarMenu">
+        <div className="offcanvas-header">
+          <h5 className="offcanvas-title">Menú</h5>
+          <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+        </div>
+
+        <div className="offcanvas-body flex-grow-1">
           {usuario && (
-            <div className="d-flex align-items-center position-relative" ref={dropdownRef}>
-              <span className="text-white me-2">{usuario.nombre} {usuario.apellido}</span>
-              <button
-                className="btn btn-light rounded-circle avatar-boton"
-                onClick={() => setMostrarDropdown(!mostrarDropdown)}
-              >
-                <i className="bi bi-person-fill"></i>
-              </button>
+            <div className="offcanvas-profile d-flex align-items-center justify-content-between mb-3" ref={dropdownRef2}>
+              <div className="d-flex align-items-center gap-2">
+                <button
+                  className="btn btn-light rounded-circle avatar-boton d-flex align-items-center justify-content-center p-0"
+                  onClick={() => setMostrarDropdown(!mostrarDropdown)}
+                >
+                  <i className="bi bi-person-fill"></i>
+                </button>
+                <div className="d-flex flex-column">
+                  <span className="fw-semibold">{usuario.nombre} {usuario.apellido}</span>
+                  <small className="text-secondary">{rol}</small>
+                </div>
+              </div>
+
+              {/* Dropdown anclado dentro del offcanvas */}
               {mostrarDropdown && (
                 <ul className="dropdown-menu show user-dropdown">
                   <li><button className="dropdown-item" disabled>Mi perfil</button></li>
@@ -368,16 +380,7 @@ const Menu = ({ user, setUser }) => {
               )}
             </div>
           )}
-        </div>
-      </nav>
 
-      <div className="offcanvas offcanvas-start bg-dark text-white d-flex flex-column" tabIndex="-1" id="sidebarMenu">
-        <div className="offcanvas-header">
-          <h5 className="offcanvas-title">Menú</h5>
-          <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
-        </div>
-
-        <div className="offcanvas-body flex-grow-1">
           <div className="accordion accordion-flush" id="sidebarAccordion">
             {seccionesVisibles.map(({ id, icono, titulo, botones }) => (
               <div key={id} className="accordion-item bg-dark border-0">
