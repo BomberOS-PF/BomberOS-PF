@@ -6,6 +6,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import '../src/Component/DisenioFormulario/DisenioFormulario.css'
 import './index.css'
 import './Component/DisenioFormulario/DisenioFormulario.css'
+import 'sweetalert2/dist/sweetalert2.min.css'
 import App from './App.jsx'
 
 import Header from './Component/Header/Header.jsx'

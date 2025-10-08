@@ -5,7 +5,7 @@ import RegistrarGuardia from '../RegistrarGuardia/RegistrarGuardia'
 import '../RegistrarGuardia/RegistrarGuardia.css'
 import '../../../../styles/global.css'
 import ConsultarBomberosDelGrupo from './ConsultarBomberosDelGrupo'
-import * as bootstrap from 'bootstrap'
+import { swalConfirm, swalSuccess, swalError } from '../../Common/swalBootstrap'
 import { User2, UsersIcon } from 'lucide-react'
 import { BackToMenuButton } from '../../Common/Button'
 import Pagination from '../../Common/Pagination'
@@ -19,10 +19,6 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null)
   const [bomberosDelGrupo, setBomberosDelGrupo] = useState([])
 
-  // Estados de modales
-  const [grupoAEliminar, setGrupoAEliminar] = useState(null)
-  const [resultadoOperacion, setResultadoOperacion] = useState({ mostrar: false, exito: false, mensaje: '' })
-
   // Carga/acciones locales (el Pagination maneja su propio loading de lista)
   const [loadingAccion, setLoadingAccion] = useState(false)
 
@@ -31,32 +27,39 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
 
   const handleBusqueda = (e) => setBusqueda(e.target.value)
 
-  const confirmarEliminacion = (grupo) => {
-    setGrupoAEliminar(grupo)
-    const modal = new bootstrap.Modal(document.getElementById('modalConfirmacion'))
-    modal.show()
-  }
-
-  const eliminarGrupo = async () => {
-    if (!grupoAEliminar) return
+  const eliminarGrupo = async (grupo) => {
+    if (!grupo?.idGrupo) return
     setLoadingAccion(true)
     try {
-      const res = await fetch(API_URLS.grupos.delete(grupoAEliminar.idGrupo), { method: 'DELETE' })
-      const result = await res.json()
-      if (res.ok && result.success) {
-        setResultadoOperacion({ mostrar: true, exito: true, mensaje: 'Grupo eliminado correctamente' })
-        setRefreshKey(k => k + 1) // 🔁 fuerza recarga en Pagination
-      } else {
-        setResultadoOperacion({ mostrar: true, exito: false, mensaje: result.message || 'No se pudo eliminar el grupo' })
+      const result = await swalConfirm({
+        title: `¿Eliminar grupo "${grupo.nombre}"?`,
+        html: 'Esta acción no se puede deshacer.',
+        confirmText: 'Eliminar',
+        icon: 'warning',
+        preConfirm: async () => {
+          const res = await fetch(API_URLS.grupos.delete(grupo.idGrupo), { method: 'DELETE' })
+          const data = await res.json().catch(() => ({}))
+          if (!res.ok || !data?.success) {
+            throw new Error(data?.message || 'No se pudo eliminar el grupo')
+          }
+          return true
+        }
+      })
+
+      if (result.isConfirmed) {
+        await swalSuccess('Eliminado', `El grupo "${grupo.nombre}" fue eliminado correctamente`)
+        setMensaje('Grupo eliminado correctamente')
+        setRefreshKey(k => k + 1) // 🔁 recarga Pagination
       }
-    } catch (error) {
-      setResultadoOperacion({ mostrar: true, exito: false, mensaje: 'Error al eliminar grupo' })
+    } catch (err) {
+      const msg = err?.message || 'Error al eliminar grupo'
+      setMensaje(msg)
+      await swalError('Error', msg)
     } finally {
-      const modal = bootstrap.Modal.getInstance(document.getElementById('modalConfirmacion'))
-      modal?.hide()
       setLoadingAccion(false)
     }
   }
+
 
   const volverListado = () => {
     setGrupoSeleccionado(null)
@@ -231,7 +234,7 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
                                   </button>
                                   <button
                                     className="btn btn-outline-danger btn-detail btn-trash"
-                                    onClick={() => confirmarEliminacion(grupo)}
+                                    onClick={() => eliminarGrupo(grupo)}
                                     disabled={loading || loadingAccion}
                                     title="Eliminar grupo"
                                   >
@@ -263,55 +266,6 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
           <BackToMenuButton onClick={onVolver} />
         </div>
       </div>
-
-      {/* Modal Confirmación */}
-      <div className="modal fade modal-backdrop-custom" id="modalConfirmacion" tabIndex="-1" aria-hidden="true">
-        <div className="modal-dialog">
-          <div className="modal-content modal-content-white">
-            <div className="bg-danger modal-header">
-              <h5 className="modal-title text-white">Confirmar eliminación</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div className="modal-body">
-              ¿Estás seguro de que deseas eliminar el grupo <strong>{grupoAEliminar?.nombre}</strong>?
-            </div>
-            <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
-              <button type="button" className="btn btn-back btn-medium" data-bs-dismiss="modal">Cancelar</button>
-              <button type="button" className="btn btn-accept btn-lg btn-medium" onClick={eliminarGrupo}>Eliminar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Modal Resultado */}
-      {resultadoOperacion.mostrar && (
-        <div
-          className="modal fade show modal-backdrop-custom"
-          style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
-          tabIndex="-1"
-        >
-          <div className="modal-dialog">
-            <div className="modal-content modal-content-white">
-              <div className={`modal-header ${resultadoOperacion.exito ? 'bg-success' : 'bg-danger'}`}>
-                <h5 className="modal-title text-white">
-                  {resultadoOperacion.exito ? 'Éxito' : 'Error'}
-                </h5>
-              </div>
-              <div className="modal-body">
-                <p>{resultadoOperacion.mensaje}</p>
-              </div>
-              <div className="modal-footer">
-                <button
-                  className="btn btn-success btn-lg btn-medium"
-                  onClick={() => setResultadoOperacion({ mostrar: false, exito: false, mensaje: '' })}
-                >
-                  Aceptar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

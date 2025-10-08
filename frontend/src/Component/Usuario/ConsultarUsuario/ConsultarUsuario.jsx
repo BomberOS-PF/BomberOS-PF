@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { API_URLS, apiRequest } from '../../../config/api'
 import { UsersIcon, Shield } from 'lucide-react'
 import Select from 'react-select'
+import { swalConfirm, swalSuccess, swalError } from '../../Common/swalBootstrap'
 
 import { BackToMenuButton } from '../../Common/Button'
 import Pagination from '../../Common/Pagination'
@@ -137,27 +138,37 @@ const ConsultarUsuario = ({ onVolver }) => {
 
   const eliminarUsuario = async (usuario) => {
     const nombre = usuario.username || usuario.usuario
-    if (!window.confirm(`¿Estás seguro de que querés eliminar el usuario "${nombre}"?`)) return
+    setLoadingAccion(true)
+
     try {
-      setLoadingAccion(true)
-      const response = await apiRequest(API_URLS.usuarios.delete(usuario.id), { method: 'DELETE' })
-      if (response?.success) {
+      const result = await swalConfirm({
+        title: `¿Eliminar usuario "${nombre}"?`,
+        html: 'Esta acción no se puede deshacer.',
+        confirmText: 'Eliminar',
+        icon: 'warning',
+        preConfirm: async () => {
+          const response = await apiRequest(API_URLS.usuarios.delete(usuario.id), { method: 'DELETE' })
+          if (!response?.success) throw new Error(response?.message || 'Error al eliminar usuario')
+          return true
+        }
+      })
+
+      if (result.isConfirmed) {
+        await swalSuccess('Eliminado', `El usuario "${nombre}" fue eliminado correctamente`)
+
         setMensaje('✅ Usuario eliminado correctamente')
 
-        // Si el eliminado estaba en detalle, limpiamos
         if (usuarioSeleccionado?.id === usuario.id) {
           setUsuarioSeleccionado(null)
           setModoEdicion(false)
         }
 
-        // refrescar la grilla
         setReloadTick(t => t + 1)
-      } else {
-        throw new Error(response?.message || 'Error al eliminar usuario')
       }
     } catch (error) {
       console.error('❌ Error al eliminar usuario:', error)
       setMensaje(`Error al eliminar usuario: ${error.message}`)
+      await swalError('Error', error.message || 'No se pudo eliminar el usuario')
     } finally {
       setLoadingAccion(false)
     }

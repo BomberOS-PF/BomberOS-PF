@@ -5,6 +5,8 @@ import { ShieldUser } from 'lucide-react'
 import { BackToMenuButton } from '../Common/Button'
 import '../../../styles/global.css'
 import Pagination from '../Common/Pagination'
+import { swalConfirm, swalSuccess, swalError } from '../Common/swalBootstrap'
+
 
 const PAGE_SIZE_DEFAULT = 10
 
@@ -90,27 +92,49 @@ const ConsultarRol = ({ onVolver }) => {
   }
 
   const eliminarRol = async (rol) => {
-    if (!window.confirm(`¿Estás seguro de eliminar el rol "${rol.nombreRol}"?`)) return
+    const nombre = rol?.nombreRol || ''
+    const id = rol?.idRol
+    if (!id) {
+      setMensaje('Error: no se pudo identificar el rol a eliminar')
+      return
+    }
 
     setLoadingAccion(true)
     try {
-      const response = await apiRequest(API_URLS.roles.delete(rol.idRol), { method: 'DELETE' })
-      if (response?.success) {
+      const result = await swalConfirm({
+        title: `¿Eliminar rol "${nombre}"?`,
+        html: 'Esta acción no se puede deshacer.',
+        confirmText: 'Eliminar',
+        icon: 'warning',
+        preConfirm: async () => {
+          const resp = await apiRequest(API_URLS.roles.delete(id), { method: 'DELETE' })
+          if (!resp?.success) {
+            throw new Error(resp?.message || 'No se pudo eliminar el rol')
+          }
+          return true
+        }
+      })
+
+      if (result.isConfirmed) {
+        await swalSuccess('Eliminado', `El rol "${nombre}" fue eliminado correctamente`)
         setMensaje('✅ Rol eliminado correctamente')
-        if (rolSeleccionado?.idRol === rol.idRol) {
+
+        if (rolSeleccionado?.idRol === id) {
           setRolSeleccionado(null)
           setModoEdicion(false)
         }
-        setReloadTick((t) => t + 1)
-      } else {
-        setMensaje(response?.message || 'No se pudo eliminar el rol')
+
+        setReloadTick(t => t + 1)
       }
-    } catch {
-      setMensaje('Error de conexión al eliminar rol')
+    } catch (err) {
+      const msg = err?.message || 'Error de conexión al eliminar rol'
+      setMensaje(msg)
+      await swalError('Error', msg)
     } finally {
       setLoadingAccion(false)
     }
   }
+
 
   const volverListado = () => {
     setRolSeleccionado(null)

@@ -67,3 +67,16 @@
 .modal-footer .btn-secondary {
   min-width: 140px;
 }
+
+/* Asegurar jerarquía del modal por encima del backdrop */
+.modal { z-index: 1060 !important; }
+.modal-backdrop { z-index: 1050 !important; }
+
+/* Si usás tu clase custom para backdrop, dale el mismo z-index */
+.modal-backdrop-custom { z-index: 1050 !important; }
+
+/* (Opcional) si algún overlay sigue bloqueando, deshabilitá clicks del backdrop */
+.modal-backdrop,
+.modal-backdrop-custom {
+  pointer-events: none;  /* quita captura de clicks; podés quitarlo si querés cerrar al hacer clic afuera */
+}

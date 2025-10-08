@@ -4,6 +4,7 @@ import FormularioBombero from '../FormularioBombero/FormularioBombero'
 import { User2, UsersIcon } from 'lucide-react'
 import { BackToMenuButton } from '../../Common/Button.jsx'
 import Pagination from '../../Common/Pagination'
+import { swalConfirm, swalSuccess, swalError } from '../../Common/swalBootstrap'
 import '../../../../styles/global.css'
 
 const PAGE_SIZE_DEFAULT = 10
@@ -110,36 +111,52 @@ const ConsultarBombero = ({ onVolver }) => {
 
   const eliminarBombero = async (bombero) => {
     const dni = bombero?.dni
+    const nombreCompleto = [bombero?.nombre, bombero?.apellido].filter(Boolean).join(' ')
     if (!dni) {
       setMensaje('Error: No se pudo identificar el DNI del bombero')
-      return
-    }
-    if (!window.confirm(`¿Eliminar al bombero ${bombero.nombre && bombero.apellido ? `${bombero.nombre} ${bombero.apellido}` : ''}?`)) {
       return
     }
 
     setLoadingAccion(true)
     try {
-      const url = API_URLS.bomberos.delete(dni)
-      const res = await fetch(url, { method: 'DELETE' })
-      const result = await res.json().catch(() => ({}))
+      const result = await swalConfirm({
+        title: `¿Eliminar bombero ${nombreCompleto ? `"${nombreCompleto}"` : ''}?`,
+        html: `DNI: <b>${dni}</b><br>Esta acción no se puede deshacer.`,
+        confirmText: 'Eliminar',
+        icon: 'warning',
+        preConfirm: async () => {
+          const url = API_URLS.bomberos.delete(dni)
+          const res = await fetch(url, { method: 'DELETE' })
+          const data = await res.json().catch(() => ({}))
+          if (!res.ok || !data?.success) {
+            throw new Error(data?.message || data?.error || 'No se pudo eliminar el bombero')
+          }
+          return true
+        }
+      })
 
-      if (res.ok && result?.success) {
+      if (result.isConfirmed) {
+        await swalSuccess('Eliminado', `El bombero ${nombreCompleto || dni} fue eliminado correctamente`)
         setMensaje('Bombero eliminado correctamente')
+
+        // Si estaba en detalle, limpiamos
         if (bomberoSeleccionado?.dni === dni) {
           setBomberoSeleccionado(null)
           setModoEdicion(false)
         }
-        setReloadTick(t => t + 1) // recarga listado
-      } else {
-        setMensaje(result?.message || result?.error || 'No se pudo eliminar el bombero')
+
+        // Recargar el listado
+        setReloadTick(t => t + 1)
       }
-    } catch {
-      setMensaje('Error de conexión al eliminar bombero')
+    } catch (err) {
+      const msg = err?.message || 'Error de conexión al eliminar bombero'
+      setMensaje(msg)
+      await swalError('Error', msg)
     } finally {
       setLoadingAccion(false)
     }
   }
+
 
   const volverListado = () => {
     setBomberoSeleccionado(null)
