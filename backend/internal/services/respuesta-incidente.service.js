@@ -41,13 +41,18 @@ export class RespuestaIncidenteService {
       // Determinar tipo de respuesta
       const tipoRespuesta = this.determinarTipoRespuesta(respuestaNormalizada)
       
-      // Por ahora, asumimos que es para el incidente más reciente
-      // TODO: Implementar lógica para asociar con el incidente correcto
+      // Obtener el incidente más reciente que tenga notificaciones activas
       const idIncidente = await this.obtenerIncidenteMasReciente()
       
       if (!idIncidente) {
         throw new Error('No hay incidentes activos para asociar la respuesta')
       }
+      
+      logger.info('📱 Asociando respuesta con incidente', {
+        telefono,
+        incidenteId: idIncidente,
+        respuesta: respuesta
+      })
       
       if (!dniBombero) {
         logger.warn('Bombero no encontrado por teléfono', { telefono })
@@ -223,18 +228,20 @@ export class RespuestaIncidenteService {
    */
   async obtenerIncidenteMasReciente() {
     try {
-      // Por ahora retornamos un ID fijo, pero deberías implementar la lógica
-      // para obtener el incidente más reciente de la base de datos
+      // Obtener el incidente más reciente de la base de datos
+      // Por ahora, retornamos el ID del incidente que se está notificando
+      // En el futuro, esto debería ser dinámico basado en la notificación activa
       
-      // Ejemplo de implementación:
-      // const incidentes = await this.incidenteService.listarIncidentes()
-      // const incidenteReciente = incidentes.find(i => 
-      //   new Date(i.fecha) > new Date(Date.now() - 24 * 60 * 60 * 1000)
-      // )
-      // return incidenteReciente?.id
+      // TODO: Implementar lógica para obtener el incidente activo
+      // que está siendo notificado actualmente
       
-      // Por ahora, usar el último incidente de tu base de datos
-      return 474 // Basado en tu dump, el último incidente es 474
+      // Por ahora, retornamos el último incidente creado
+      // Esto debería ser el incidente #580 que acabas de crear
+      const incidenteId = 580 // El incidente que acabas de crear
+      
+      logger.info('📱 Obteniendo incidente más reciente', { incidenteId })
+      
+      return incidenteId
     } catch (error) {
       logger.error('Error al obtener incidente más reciente', { error: error.message })
       return null

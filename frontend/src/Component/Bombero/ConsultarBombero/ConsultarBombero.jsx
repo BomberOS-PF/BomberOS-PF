@@ -63,12 +63,10 @@ const ConsultarBombero = ({ onVolver }) => {
         try {
           const formDataFile = new FormData()
           formDataFile.append('fichaMedica', datosActualizados.fichaMedica)
-
           const uploadResponse = await fetch(`/api/bomberos/${dni}/ficha-medica`, {
             method: 'POST',
             body: formDataFile
           })
-
           if (uploadResponse.ok) {
             // El PDF se guardó en la BD, solo marcar que tiene ficha médica
             datosActualizados.fichaMedica = 1
