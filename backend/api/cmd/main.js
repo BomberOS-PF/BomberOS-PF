@@ -91,7 +91,7 @@ async function main() {
     const frontendUrl = getFrontendUrl(config)
     
     // Iniciar servidor
-    const server = app.listen(config.server.port, '0.0.0.0', () => {
+    const server = app.listen(config.server.port, () => {
       displayStartupInfo(config, frontendUrl)
     })
 

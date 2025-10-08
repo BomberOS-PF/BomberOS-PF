@@ -7,8 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "start": "vite preview --port 4173 --host 0.0.0.0"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@fullcalendar/bootstrap5": "^6.1.19",
@@ -23,7 +22,6 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.6.0",
-    "react-select": "^5.8.0",
     "react-tsparticles": "^2.12.2",
     "sweetalert2": "^11.24.1",
     "tsparticles-slim": "^2.12.0"

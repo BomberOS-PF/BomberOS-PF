@@ -19,10 +19,6 @@ export default defineConfig({
   },
   preview: {
     port: 4173,
-    host: '0.0.0.0' // Para Render
-  },
-  build: {
-    outDir: 'dist',
-    assetsDir: 'assets'
+    host: 'localhost'
   }
 })

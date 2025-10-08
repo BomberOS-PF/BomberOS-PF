@@ -162,10 +162,12 @@ const RegistrarBombero = ({ onVolver }) => {
           try {
             const formDataFile = new FormData()
             formDataFile.append('fichaMedica', formData.fichaMedica)
+
             const uploadResponse = await fetch(`/api/bomberos/${formData.dni}/ficha-medica`, {
               method: 'POST',
               body: formDataFile
             })
+
             if (!uploadResponse.ok) {
               console.error('Error al subir ficha médica:', await uploadResponse.text())
               setMessage('⚠️ Bombero registrado pero hubo un error al subir la ficha médica')
@@ -183,6 +185,7 @@ const RegistrarBombero = ({ onVolver }) => {
           setMessage('¡Bombero registrado exitosamente!')
           setMessageType('success')
         }
+
         setFormData({ dni: '', nombre: '', apellido: '', domicilio: '', email: '', telefono: '', legajo: '', antiguedad: '', rango: 'Bombero', esPlan: false, fichaMedica: null, fechaFicha: new Date().toISOString().split('T')[0], aptoPsico: true, grupoSanguineo: '', username: '', password: '', emailUsuario: '', rolUsuario: '' })
       } else {
         const errorMessage = result.message || result.error || 'Error al registrar bombero'
