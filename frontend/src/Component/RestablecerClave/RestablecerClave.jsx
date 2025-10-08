@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import '../DisenioFormulario/DisenioFormulario.css'
+import { buildApiUrl } from '../../config/api'
 
 
 const RestablecerClave = ({ onVolver }) => {
@@ -16,7 +17,7 @@ const RestablecerClave = ({ onVolver }) => {
   useEffect(() => {
     const validarToken = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/api/validar-token?token=${token}`)
+        const res = await fetch(buildApiUrl(`/api/validar-token?token=${token}`))
         const data = await res.json()
         if (res.ok && data.success) {
           setTokenValido(true)
@@ -42,7 +43,7 @@ const RestablecerClave = ({ onVolver }) => {
     }
 
     try {
-      const res = await fetch('http://localhost:3000/api/restablecer-clave', {
+      const res = await fetch(buildApiUrl('/api/restablecer-clave'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, nuevaContrasena })

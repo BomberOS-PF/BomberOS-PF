@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Select from 'react-select'
 import DamnificadosForm from '../../../Common/Damnificado.jsx'
-import { API_URLS, apiRequest } from '../../../../config/api'
+import { API_URLS, apiRequest, buildApiUrl } from '../../../../config/api'
 
 const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
   const incidenteId = datosPrevios.idIncidente || datosPrevios.id || 'temp'
@@ -158,7 +158,7 @@ const FactorClimatico = ({ datosPrevios = {}, onFinalizar }) => {
     setNotificando(true)
 
     try {
-      const resp = await fetch(`/api/incidentes/${idIncidente}/notificar`, {
+      const resp = await fetch(buildApiUrl(`/api/incidentes/${idIncidente}/notificar`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
