@@ -6,7 +6,7 @@
   "scripts": {
     "start": "concurrently --kill-others --prefix-colors \"blue.bold,green.bold\" --prefix \"[{name}]\" --names \"BACKEND,FRONTEND\" \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev": "concurrently --kill-others --prefix-colors \"blue.bold,green.bold\" --prefix \"[{name}]\" --names \"BACKEND,FRONTEND\" \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "cd backend && npm start",
+    "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "stop": "echo 🛑 Para detener los servicios, presioná Ctrl + C",
     "install:all": "npm run install:backend && npm run install:frontend",

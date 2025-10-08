@@ -148,7 +148,6 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
 
   const notificarBomberos = async () => {
     const idIncidente = datosPrevios.idIncidente || datosPrevios.id
-
     if (!idIncidente) {
       alert('❌ No se puede notificar: el incidente aún no ha sido guardado')
       return
@@ -189,7 +188,6 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
 • Notificaciones fallidas: ${notificacionesFallidas}
 
 Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
-
         setSuccessMsg('✅ Notificación enviada exitosamente a los bomberos')
       } else {
         throw new Error(resultado.message || 'Error al enviar notificación')
