@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 
 import { API_URLS, apiRequest } from '../../../config/api'
-import * as bootstrap from 'bootstrap'
+import { swalConfirm, swalSuccess, swalError, swalToast } from '../../Common/swalBootstrap'
 
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -272,9 +272,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   const [mensaje, setMensaje] = useState('')
   const [mensajesModal, setMensajesModal] = useState([])
 
-  const [indiceAEliminar, setIndiceAEliminar] = useState(null)
-  const [bomberoAEliminar, setBomberoAEliminar] = useState(null)
-
   const [cargandoSemana, setCargandoSemana] = useState(false)
   const [guardando, setGuardando] = useState(false)
 
@@ -284,35 +281,25 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   const ultimoRangoRef = useRef({ start: null, end: null })
 
   // Estados modal
-  const [modalAbierto, setModalAbierto] = useState(false)
-  const [modalConfirmar, setModalConfirmar] = useState(false)
-  const [modalConfirmarGuardar, setModalConfirmarGuardar] = useState(false)
+  const [modalEdicionAbierto, setModalEdicionAbierto] = useState(false)
   const [eventoPendiente, setEventoPendiente] = useState(null)
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null)
   const [bomberosEditados, setBomberosEditados] = useState([])
   const [bomberosOriginales, setBomberosOriginales] = useState([])
   const [tieneCambios, setTieneCambios] = useState(false)
 
-  const abrirConfirmarEliminarAsignacion = (idx, bombero) => {
-    setIndiceAEliminar(idx)
-    setBomberoAEliminar(bombero)
-    const modalEl = document.getElementById('modalConfirmarEliminarAsignacion')
-    if (!modalEl) return
-    const modal = new bootstrap.Modal(modalEl)
-    modal.show()
-  }
-
-  const confirmarEliminarAsignacion = () => {
-    setBomberosEditados(prev => prev.filter((_, i) => i !== indiceAEliminar))
+  const confirmarEliminarAsignacion = async (idx, b) => {
+    const nombre = b?.nombre || nombrePorDni.get(Number(b?.dni)) || b?.dni
+    const r = await swalConfirm({
+      title: `¿Eliminar asignación de "${nombre}"?`,
+      html: `Desde <b>${b?.desde}</b> hasta <b>${b?.hasta}</b>.`,
+      confirmText: 'Eliminar',
+      icon: 'warning'
+    })
+    if (!r.isConfirmed) return
+    setBomberosEditados(prev => prev.filter((_, i) => i !== idx))
     setTieneCambios(true)
-
-    const modal = bootstrap.Modal.getInstance(
-      document.getElementById('modalConfirmarEliminarAsignacion')
-    )
-    modal?.hide()
-
-    setIndiceAEliminar(null)
-    setBomberoAEliminar(null)
+    swalToast({ title: 'Asignación eliminada', icon: 'success' })
   }
 
   // Detectar cambios (modal)
@@ -773,8 +760,27 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                   info.jsEvent.preventDefault()
                   const tooltip = tooltipsRef.current[info.event.id]
                   if (tooltip) tooltip.style.display = 'none'
-                  setEventoPendiente(info.event)
-                  setModalConfirmar(true)
+
+                  swalConfirm({
+                    title: 'Modificar guardia',
+                    html: '¿Desea modificar la guardia seleccionada?',
+                    confirmText: 'Aceptar',
+                    icon: 'question'
+                  }).then((res) => {
+                    if (!res.isConfirmed) return
+                    const ev = info.event
+                    setEventoSeleccionado(ev)
+                    setModalEdicionAbierto(true)
+                    const base = (ev.extendedProps?.bomberos || []).map(b => ({
+                      ...b,
+                      nombre: b.nombre || nombrePorDni.get(Number(b.dni)) || String(b.dni)
+                    }))
+                    setBomberosEditados(base)
+                    setBomberosOriginales(base)
+                    setMensajesModal([])
+                    setTieneCambios(false)
+                    // abrimos el “modal” de edición → (ver sección 5 para UI)
+                  })
                 }}
                 datesSet={(arg) => {
                   const s = arg.start?.toISOString?.() || ''
@@ -786,66 +792,39 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                 }}
               />
 
-              {/* Modal Confirmar */}
-              {modalConfirmar && eventoPendiente && (
-                <div className="modal fade show d-block modal-backdrop-custom" tabIndex="-1">
-                  <div className="modal-dialog">
-                    <div className="modal-content modal-content-white">
-                      <div className=" bg-danger modal-header">
-                        <h5 className="modal-title text-white">Confirmar acción</h5>
-                        <button type="button" className="btn-close" onClick={() => setModalConfirmar(false)}></button>
-                      </div>
-                      <div className="modal-body">
-                        <p>¿Desea modificar la guardia seleccionada?</p>
-                      </div>
-                      <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
-                        <button className="btn btn-back btn-medium" onClick={() => setModalConfirmar(false)}>Cancelar</button>
-                        <button
-                          className="btn btn-accept btn-lg btn-medium"
-                          onClick={() => {
-                            setEventoSeleccionado(eventoPendiente)
-                            const base = (eventoPendiente.extendedProps?.bomberos || []).map(b => ({
-                              ...b,
-                              nombre: b.nombre || nombrePorDni.get(Number(b.dni)) || String(b.dni)
-                            }))
-                            setBomberosEditados(base)
-                            setBomberosOriginales(base)
-                            setMensajesModal([])
-                            setTieneCambios(false)
-                            setModalConfirmar(false)
-                            setModalAbierto(true)
-                          }}
-                        >
-                          Aceptar
-                        </button>
-
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Modal Edición */}
-              {modalAbierto && eventoSeleccionado && (
-                <div className="modal fade show d-block modal-backdrop-custom" tabIndex="-1">
+              {modalEdicionAbierto && eventoSeleccionado && (
+                <div
+                  className="modal fade show d-block modal-backdrop-custom"
+                  tabIndex={-1}
+                  role="dialog"
+                  aria-modal="true"
+                  style={{ zIndex: 1060 }}
+                >
                   <div className="modal-dialog modal-lg">
                     <div className="modal-content modal-content-white">
                       <div className="bg-danger modal-header">
                         <h5 className="modal-title text-white">Modificar guardia</h5>
-                        <button type="button" className="btn-close" onClick={() => setModalAbierto(false)}></button>
+                        <button
+                          type="button"
+                          className="btn-close"
+                          onClick={() => {
+                            setModalEdicionAbierto(false)
+                            setEventoSeleccionado(null)
+                          }}
+                        />
                       </div>
+
                       <div className="modal-body">
                         {mensajesModal.length > 0 && (
                           <div>
-                            {mensajesModal.map((mensaje, idx) => (
-                              <div key={idx} className="alert alert-warning">
-                                {mensaje}
-                              </div>
+                            {mensajesModal.map((m, idx) => (
+                              <div key={idx} className="alert alert-warning">{m}</div>
                             ))}
                           </div>
                         )}
 
                         <p><strong>Fecha:</strong> {new Date(eventoSeleccionado.start).toLocaleDateString()}</p>
+
                         <table className="table table-bordered">
                           <thead>
                             <tr>
@@ -875,10 +854,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                       menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
                                       menuPosition="fixed"
                                       menuShouldScrollIntoView={false}
-                                      styles={{
-                                        menuPortal: (base) => ({ ...base, zIndex: 99999 }),
-                                        menu: (base) => ({ ...base, zIndex: 99999 })
-                                      }}
+                                      styles={{ menuPortal: base => ({ ...base, zIndex: 99999 }), menu: base => ({ ...base, zIndex: 99999 }) }}
                                     />
                                     <Select
                                       options={minutos}
@@ -894,10 +870,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                       menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
                                       menuPosition="fixed"
                                       menuShouldScrollIntoView={false}
-                                      styles={{
-                                        menuPortal: (base) => ({ ...base, zIndex: 99999 }),
-                                        menu: (base) => ({ ...base, zIndex: 99999 })
-                                      }}
+                                      styles={{ menuPortal: base => ({ ...base, zIndex: 99999 }), menu: base => ({ ...base, zIndex: 99999 }) }}
                                     />
                                   </div>
                                 </td>
@@ -917,10 +890,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                       menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
                                       menuPosition="fixed"
                                       menuShouldScrollIntoView={false}
-                                      styles={{
-                                        menuPortal: (base) => ({ ...base, zIndex: 99999 }),
-                                        menu: (base) => ({ ...base, zIndex: 99999 })
-                                      }}
+                                      styles={{ menuPortal: base => ({ ...base, zIndex: 99999 }), menu: base => ({ ...base, zIndex: 99999 }) }}
                                     />
                                     <Select
                                       options={minutos}
@@ -936,18 +906,15 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                       menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
                                       menuPosition="fixed"
                                       menuShouldScrollIntoView={false}
-                                      styles={{
-                                        menuPortal: (base) => ({ ...base, zIndex: 99999 }),
-                                        menu: (base) => ({ ...base, zIndex: 99999 })
-                                      }}
+                                      styles={{ menuPortal: base => ({ ...base, zIndex: 99999 }), menu: base => ({ ...base, zIndex: 99999 }) }}
                                     />
                                   </div>
                                 </td>
                                 <td className="text-center">
                                   <button
                                     className="btn btn-outline-danger btn-detail"
-                                    title='Eliminar asignación'
-                                    onClick={() => abrirConfirmarEliminarAsignacion(idx, b)}
+                                    title="Eliminar asignación"
+                                    onClick={() => confirmarEliminarAsignacion(idx, b)}
                                   >
                                     <i className="bi bi-trash"></i>
                                   </button>
@@ -957,155 +924,78 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                           </tbody>
                         </table>
                       </div>
+
                       <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
-                        <button className="btn btn-back btn-medium" onClick={() => setModalAbierto(false)}>Volver</button>
+                        <button
+                          className="btn btn-back btn-medium"
+                          onClick={() => {
+                            setModalEdicionAbierto(false)
+                            setEventoSeleccionado(null)
+                          }}
+                        >
+                          Volver
+                        </button>
+
                         <button
                           className="btn btn-accept btn-lg btn-medium"
                           disabled={!tieneCambios}
-                          onClick={() => {
-                            // Si no queda ningún bombero -> eliminar bloque y persistir el día
+                          onClick={async () => {
+                            // si quedó vacío → eliminar evento y persistir día
                             if (bomberosEditados.length === 0) {
                               const fechaBase = new Date(eventoSeleccionado.start)
                               const fechaStr = yyyyMmDd(fechaBase)
 
-                              // 1) UI: quitar este evento y re-fusionar
-                              const nextEventos = fusionarEventos(
-                                eventos.filter(ev => ev.id !== eventoSeleccionado.id)
-                              )
-                              setEventos(nextEventos)
-                              setModalAbierto(false)
-
-                              // 2) Construir el payload del DÍA restante (del resto de eventos de esa fecha)
-                              const asignacionesDia = asignacionesDelDiaDesdeEventos(nextEventos, fechaStr)
-
-                              // 3) Persistir con PUT reemplazarDia
-                              setGuardando(true)
-                              apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
-                                method: 'PUT',
-                                body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDia })
+                              const r = await swalConfirm({
+                                title: 'Guardar cambios',
+                                html: 'Se eliminará la guardia. ¿Desea continuar?',
+                                confirmText: 'Guardar',
+                                icon: 'question'
                               })
-                                .then(() => {
-                                  setMensaje('Guardia eliminada y actualizada con exito')
-                                  const api = calendarRef.current?.getApi()
-                                  if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
-                                  setTimeout(() => setMensaje(''), 3000)
+                              if (!r.isConfirmed) return
+
+                              const nextEventos = fusionarEventos(eventos.filter(ev => ev.id !== eventoSeleccionado.id))
+                              setEventos(nextEventos)
+                              setModalEdicionAbierto(false)
+                              setEventoSeleccionado(null)
+                              setGuardando(true)
+                              try {
+                                await apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
+                                  method: 'PUT',
+                                  body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDelDiaDesdeEventos(nextEventos, fechaStr) })
                                 })
-                                .catch((e) => {
-                                  console.error(e)
-                                  setMensaje(`Error al guardar: ${e.message}`)
-                                  setTimeout(() => setMensaje(''), 5000)
-                                })
-                                .finally(() => setGuardando(false))
+                                setMensaje('Guardia eliminada y actualizada con éxito')
+                                const api = calendarRef.current?.getApi()
+                                if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
+                                swalToast({ title: 'Cambios guardados', icon: 'success' })
+                              } catch (e) {
+                                setMensaje(`Error al guardar: ${e.message}`)
+                                await swalError('Error', e.message)
+                              } finally {
+                                setGuardando(false)
+                              }
                               return
                             }
-                            const fechaBase = new Date(eventoSeleccionado.start)
-                            if (bomberosEditados.length === 0) {
-                              const fechaStr = yyyyMmDd(fechaBase)
-                              const nextEventos = fusionarEventos(
-                                eventos.filter(ev => ev.id !== eventoSeleccionado.id)
-                              )
-                              setEventos(nextEventos)
-                              setModalAbierto(false)
-                              setGuardando(true)
-                              apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
-                                method: 'PUT',
-                                body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDelDiaDesdeEventos(nextEventos, fechaStr) })
-                              })
-                                .then(() => {
-                                  setMensaje('Guardia eliminada y actualizada con exito')
-                                  const api = calendarRef.current?.getApi()
-                                  if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
-                                  setTimeout(() => setMensaje(''), 3000)
-                                })
-                                .catch((e) => {
-                                  console.error(e)
-                                  setMensaje(`Error al guardar: ${e.message}`)
-                                  setTimeout(() => setMensaje(''), 5000)
-                                })
-                                .finally(() => setGuardando(false))
-                              return
-                            }
-                            setMensajesModal([])
-                            setModalConfirmarGuardar(true)
-                          }}
-                        >
-                          Confirmar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
 
-              {/* Modal Confirmación Eliminación de Asignación */}
-              <div
-                className="modal fade modal-backdrop-custom"
-                id="modalConfirmarEliminarAsignacion"
-                tabIndex={-1}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="tituloConfirmarEliminarAsignacion"
-                aria-hidden="true"
-              >
-                <div className="modal-dialog">
-                  <div className="modal-content modal-content-white">
-                    <div className="bg-danger modal-header">
-                      <h5 id="tituloConfirmarEliminarAsignacion" className="modal-title text-white">
-                        Confirmar eliminación
-                      </h5>
-                      <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                    </div>
-                    <div className="modal-body">
-                      ¿Eliminar la asignación de <strong>{bomberoAEliminar?.nombre}</strong>?
-                    </div>
-                    <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
-                      <button type="button" className="btn btn-back btn-medium" data-bs-dismiss="modal">
-                        Cancelar
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-accept btn-lg btn-medium"
-                        onClick={confirmarEliminarAsignacion}
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                            // Confirmar guardado
+                            const r = await swalConfirm({
+                              title: 'Guardar cambios',
+                              html: '¿Desea guardar los cambios realizados en esta guardia?',
+                              confirmText: 'Guardar',
+                              icon: 'question'
+                            })
+                            if (!r.isConfirmed) return
 
-              {/* Modal Confirmar Guardado */}
-              {modalConfirmarGuardar && eventoSeleccionado && (
-                <div className="modal fade show d-block modal-backdrop-custom" tabIndex="-1">
-                  <div className="modal-dialog">
-                    <div className="modal-content modal-content-white">
-                      <div className="bg-danger modal-header">
-                        <h5 className="modal-title text-white">Confirmar guardado</h5>
-                        <button type="button" className="btn-close" onClick={() => setModalConfirmarGuardar(false)}></button>
-                      </div>
-                      <div className="modal-body">
-                        <p>¿Desea guardar los cambios realizados en esta guardia?</p>
-                      </div>
-                      <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
-                        <button className="btn btn-back btn-medium" onClick={() => setModalConfirmarGuardar(false)}>Cancelar</button>
-                        <button
-                          className="btn btn-accept btn-lg btn-medium"
-                          onClick={async () => {
-                            // 1) Consolido por DNI antes de recalcular bloques
+                            // 1) Consolido por DNI
                             const bomberosNormalizados = mergeByDni(bomberosEditados)
 
-                            // 2) Recalculo bloques (por solape en tiempo)
-                            const bomberosOrdenados = [...bomberosNormalizados].sort(
-                              (a, b) => a.desde.localeCompare(b.desde)
-                            )
-
+                            // 2) Recalculo bloques por solape
+                            const bomberosOrdenados = [...bomberosNormalizados].sort((a, b) => a.desde.localeCompare(b.desde))
                             const nuevosBloques = []
                             let bloqueActual = {
                               start: bomberosOrdenados[0].desde,
                               end: bomberosOrdenados[0].hasta,
                               bomberos: [bomberosOrdenados[0]]
                             }
-
                             for (let i = 1; i < bomberosOrdenados.length; i++) {
                               const b = bomberosOrdenados[i]
                               if (b.desde > bloqueActual.end) {
@@ -1118,71 +1008,52 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                             }
                             nuevosBloques.push({ ...bloqueActual, bomberos: mergeByDni(bloqueActual.bomberos) })
 
-                            // 3) Construyo 'merged' completo de la UI
+                            // 3) Construyo eventos y fusiono
                             const fechaBase = new Date(eventoSeleccionado.start)
-                            const sinEvento = eventos.filter((ev) => ev.id !== eventoSeleccionado.id)
-
+                            const sinEvento = eventos.filter(ev => ev.id !== eventoSeleccionado.id)
                             const nuevosEventos = nuevosBloques.map((bloque, idx) => {
                               const [hStart, mStart] = bloque.start.split(':').map(Number)
                               const [hEnd, mEnd] = bloque.end.split(':').map(Number)
                               return {
                                 id: `${eventoSeleccionado.id}-split-${idx}-${Date.now()}`,
                                 title: '',
-                                start: new Date(
-                                  fechaBase.getFullYear(),
-                                  fechaBase.getMonth(),
-                                  fechaBase.getDate(),
-                                  hStart, mStart
-                                ),
-                                end: new Date(
-                                  fechaBase.getFullYear(),
-                                  fechaBase.getMonth(),
-                                  fechaBase.getDate(),
-                                  hEnd, mEnd
-                                ),
-                                backgroundColor: '#f08080',
-                                borderColor: '#b30000',
-                                textColor: 'transparent',
+                                start: new Date(fechaBase.getFullYear(), fechaBase.getMonth(), fechaBase.getDate(), hStart, mStart),
+                                end: new Date(fechaBase.getFullYear(), fechaBase.getMonth(), fechaBase.getDate(), hEnd, mEnd),
                                 allDay: false,
                                 extendedProps: { bomberos: mergeByDni(bloque.bomberos) }
                               }
                             })
-
                             const merged = fusionarEventos([...sinEvento, ...nuevosEventos])
-
-                            // 4) UI
                             setEventos(merged)
 
-                            // 5) Persisto TODO el día consolidado (por DNI)
+                            // 4) Persisto día consolidado
                             const fechaStr = yyyyMmDd(fechaBase)
-                            const asignacionesDia = asignacionesDelDiaDesdeEventos(merged, fechaStr)
-
                             try {
                               await apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
                                 method: 'PUT',
-                                body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDia })
+                                body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDelDiaDesdeEventos(merged, fechaStr) })
                               })
-                              setMensaje('Cambios guardados para ese día con exito')
+                              setMensaje('Cambios guardados para ese día con éxito')
                               const api = calendarRef.current?.getApi()
                               if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
-                              setTimeout(() => setMensaje(''), 3000)
+                              swalToast({ title: 'Cambios guardados', icon: 'success' })
                             } catch (e) {
-                              console.error(e)
                               setMensaje(`Error al guardar: ${e.message}`)
-                              setTimeout(() => setMensaje(''), 5000)
+                              await swalError('Error', e.message)
                             }
-
-                            setModalConfirmarGuardar(false)
-                            setModalAbierto(false)
+                            setModalEdicionAbierto(false)
+                            setEventoSeleccionado(null)
                           }}
                         >
-                          Aceptar
+                          Confirmar
                         </button>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
+
+
             </div>
 
           </div>
