@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { API_URLS } from '../../../config/api'
+import { API_URLS, buildApiUrl } from '../../../config/api'
 import FormularioBombero from '../FormularioBombero/FormularioBombero'
 import { User2, UsersIcon } from 'lucide-react'
 import { BackToMenuButton } from '../../Common/Button.jsx'
@@ -63,7 +63,7 @@ const ConsultarBombero = ({ onVolver }) => {
         try {
           const formDataFile = new FormData()
           formDataFile.append('fichaMedica', datosActualizados.fichaMedica)
-          const uploadResponse = await fetch(`/api/bomberos/${dni}/ficha-medica`, {
+          const uploadResponse = await fetch(buildApiUrl(`/api/bomberos/${dni}/ficha-medica`), {
             method: 'POST',
             body: formDataFile
           })

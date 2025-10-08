@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Select from 'react-select'
-import { API_URLS, apiRequest } from '../../../../config/api'
+import { API_URLS, apiRequest, buildApiUrl } from '../../../../config/api'
 import DamnificadosForm from '../../../Common/Damnificado.jsx'
 
 const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
@@ -185,7 +185,7 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
     setNotificando(true)
 
     try {
-      const resp = await fetch(`/api/incidentes/${idIncidente}/notificar`, {
+      const resp = await fetch(buildApiUrl(`/api/incidentes/${idIncidente}/notificar`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

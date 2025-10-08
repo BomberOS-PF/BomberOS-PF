@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './DashboardRespuestas.css'
+import { buildApiUrl } from '../config/api'
 
 const DashboardRespuestas = () => {
   const [dashboard, setDashboard] = useState(null)
@@ -18,7 +19,7 @@ const DashboardRespuestas = () => {
 
   const cargarDashboard = async () => {
     try {
-      const response = await fetch('/api/dashboard/respuestas')
+      const response = await fetch(buildApiUrl('/api/dashboard/respuestas'))
       const data = await response.json()
       
       if (data.success) {
@@ -38,7 +39,7 @@ const DashboardRespuestas = () => {
   const cargarDetalleIncidente = async (idIncidente) => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/incidentes/${idIncidente}/respuestas`)
+      const response = await fetch(buildApiUrl(`/api/incidentes/${idIncidente}/respuestas`))
       const data = await response.json()
       
       if (data.success) {

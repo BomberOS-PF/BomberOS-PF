@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { API_URLS, apiRequest } from '../../../config/api.js'
+import { API_URLS, apiRequest, buildApiUrl } from '../../../config/api.js'
 import { User, Phone, Mail, Shield, UserPlus, AlertTriangle, Home, CreditCard, TriangleAlert, Bone, PillIcon, FileText } from 'lucide-react'
 import { BackToMenuButton } from '../../Common/Button.jsx'
 import Select from 'react-select'
@@ -162,7 +162,7 @@ const RegistrarBombero = ({ onVolver }) => {
           try {
             const formDataFile = new FormData()
             formDataFile.append('fichaMedica', formData.fichaMedica)
-            const uploadResponse = await fetch(`/api/bomberos/${formData.dni}/ficha-medica`, {
+            const uploadResponse = await fetch(buildApiUrl(`/api/bomberos/${formData.dni}/ficha-medica`), {
               method: 'POST',
               body: formDataFile
             })

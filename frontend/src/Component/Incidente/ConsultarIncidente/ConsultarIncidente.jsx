@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { API_URLS, apiRequest } from '../../../config/api'
+import { API_URLS, apiRequest, buildApiUrl } from '../../../config/api'
 import { FileText, Search } from 'lucide-react'
 import { BackToMenuButton } from '../../Common/Button.jsx'
 import Pagination from '../../Common/Pagination'
@@ -90,7 +90,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
     try {
       setLoadingDetalle(true)
       setErrorGlobal('')
-      const url = `/api/incidentes/${id}/detalle`
+      const url = buildApiUrl(`/api/incidentes/${id}/detalle`)
       const base = await apiRequest(url, { method: 'GET' })
       setDetalle(base)
     } catch (e) {
@@ -118,7 +118,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
     if (!detalle?.idIncidente) return
     try {
       setLoadingDetalle(true)
-      const response = await fetch(`/api/incidentes/${detalle.idIncidente}`, {
+      const response = await fetch(buildApiUrl(`/api/incidentes/${detalle.idIncidente}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datosActualizados)
@@ -163,7 +163,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
     try {
       console.log('📱 Enviando notificación WhatsApp para incidente:', detalle.idIncidente)
 
-      const resp = await fetch(`/api/incidentes/${detalle.idIncidente}/notificar`, {
+      const resp = await fetch(buildApiUrl(`/api/incidentes/${detalle.idIncidente}/notificar`), {        
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

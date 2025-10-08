@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Select from 'react-select'
 import DamnificadosForm from '../../../Common/Damnificado.jsx'
-import { API_URLS, apiRequest } from '../../../../config/api'
+import { API_URLS, apiRequest, buildApiUrl } from '../../../../config/api'
 
 function toMySQLDatetime(date) {
   return date.toISOString().slice(0, 19).replace('T', ' ');
@@ -180,7 +180,7 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
     setNotificando(true)
 
     try {
-      const resp = await fetch(`/api/incidentes/${idIncidente}/notificar`, {
+      const resp = await fetch(buildApiUrl(`/api/incidentes/${idIncidente}/notificar`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
