@@ -38,8 +38,12 @@ export function loadConfig() {
       origin: process.env.CORS_ORIGIN
         ? process.env.CORS_ORIGIN.split(',')
         : function (origin, callback) {
-            // Si no hay origin (Postman) o es localhost en cualquier puerto -> permitir
-            if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin)) {
+            // En producción (Railway), permitir todos los orígenes
+            if (process.env.NODE_ENV === 'production') {
+              callback(null, true)
+            }
+            // En desarrollo, solo localhost
+            else if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin)) {
               callback(null, true)
             } else {
               callback(new Error('No permitido por CORS'))

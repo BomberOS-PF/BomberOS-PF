@@ -188,7 +188,6 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
 • Notificaciones fallidas: ${notificacionesFallidas}
 
 Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
-
         setMensaje('✅ Notificación enviada exitosamente a los bomberos')
         setTimeout(() => setMensaje(''), 5000)
       } else {

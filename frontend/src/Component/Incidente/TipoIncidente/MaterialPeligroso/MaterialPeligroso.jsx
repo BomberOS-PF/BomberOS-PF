@@ -331,7 +331,6 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
 
   const notificarBomberos = async () => {
     const idIncidente = datosPrevios.idIncidente || datosPrevios.id
-
     if (!idIncidente) {
       alert('❌ No se puede notificar: el incidente aún no ha sido guardado')
       return
@@ -372,7 +371,6 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
 • Notificaciones fallidas: ${notificacionesFallidas}
 
 Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
-
         setSuccessMsg('✅ Notificación enviada exitosamente a los bomberos')
       } else {
         throw new Error(resultado.message || 'Error al enviar notificación')
@@ -599,6 +597,24 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                 disabled={loading || notificando}
               >
                 Continuar después
+              </button>
+
+              <button 
+                type="button" 
+                className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2" 
+                onClick={notificarBomberos} 
+                disabled={loading || notificando}
+              >
+                {notificando ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    Notificando...
+                  </>
+                ) : (
+                  <>
+                    <i className='bi bi-megaphone'></i> Notificar Bomberos
+                  </>
+                )}
               </button>
 
               <button
