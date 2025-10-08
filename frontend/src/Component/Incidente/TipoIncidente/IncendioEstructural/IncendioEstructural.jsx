@@ -87,7 +87,6 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
           apiRequest('/api/tipos-techo'),
           apiRequest('/api/tipos-abertura')
         ])
-        
         setOpcionesTipoTecho(tiposTecho.data || [])
         setOpcionesTipoAbertura(tiposAbertura.data || [])
       } catch (error) {
@@ -95,7 +94,6 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
         setErrorMsg('Error al cargar opciones de formulario')
       }
     }
-    
     cargarCatalogos()
   }, [])
 
@@ -201,7 +199,6 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
 
   const notificarBomberos = async () => {
     const idIncidente = datosPrevios.idIncidente || datosPrevios.id
-    
     if (!idIncidente) {
       alert('❌ No se puede notificar: el incidente aún no ha sido guardado')
       return
@@ -242,7 +239,6 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
 • Notificaciones fallidas: ${notificacionesFallidas}
 
 Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
-        
         setSuccessMsg('✅ Notificación enviada exitosamente a los bomberos')
       } else {
         throw new Error(resultado.message || 'Error al enviar notificación')
@@ -429,13 +425,14 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
             />
 
             <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
-              <button type="button" className="btn btn-accept btn-medium" disabled={loading || notificando} onClick={() => handleFinalizar()}>
-                {loading ? 'Enviando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
+              <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
+                Continuar después
               </button>
-              <button 
-                type="button" 
-                className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2" 
-                onClick={notificarBomberos} 
+
+              <button
+                type="button"
+                className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2"
+                onClick={notificarBomberos}
                 disabled={loading || notificando}
               >
                 {notificando ? (
@@ -449,8 +446,8 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                   </>
                 )}
               </button>
-              <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
-                Continuar después
+              <button type="button" className="btn btn-accept btn-medium" disabled={loading || notificando} onClick={() => handleFinalizar()}>
+                {loading ? 'Enviando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
               </button>
             </div>
 

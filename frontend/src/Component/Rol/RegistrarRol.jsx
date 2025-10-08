@@ -111,7 +111,7 @@ const RegistrarRol = ({ onVolver, rol }) => {
           )}
           <form onSubmit={handleSubmit}>
             <div className="row mb-3">
-              <div className="col-md-6 py-4">
+              <div className="col-md-4 py-4">
                 <label htmlFor="nombreRol" className="form-label text-dark d-flex align-items-center gap-2">
                   <User className="text-danger" />
                   Nombre del Rol <span className="text-danger">*</span>
@@ -124,19 +124,20 @@ const RegistrarRol = ({ onVolver, rol }) => {
                   value={formData.nombreRol}
                   onChange={handleChange}
                   disabled={loading}
-                  placeholder="Ej: Bombero, Administrador, Instructor..."
+                  placeholder="Ingrese nombre del rol..."
                 />
               </div>
 
-              <div className="col-md-10 py-4">
+              <div className="col-md-7 py-4">
                 <label htmlFor="descripcion" className="text-dark form-label d-flex align-items-center gap-2">
                   <CreditCard className="text-warning" />
                   Descripción <span className="badge bg-secondary text-white text-uppercase">opcional</span>
                 </label>
-                <textarea
+                <input
                   className="form-control"
                   id="descripcion"
                   rows="3"
+                  required
                   value={formData.descripcion}
                   onChange={handleChange}
                   disabled={loading}

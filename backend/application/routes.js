@@ -21,16 +21,6 @@ export function setupRoutes(app, container) {
     })
   })
 
-  // Health check específico para Railway
-  app.get('/api/health', (req, res) => {
-    res.json({
-      status: 'OK',
-      service: 'BomberOS Backend',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime()
-    })
-  })
-
   app.get('/', (req, res) => res.redirect('/health'))
 
   // Handlers desde el contenedor (nombres normalizados)

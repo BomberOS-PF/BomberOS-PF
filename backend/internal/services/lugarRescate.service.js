@@ -7,5 +7,3 @@ export class LugarRescateService {
     return await this.lugarRescateRepository.getAll()
   }
 }
-
-

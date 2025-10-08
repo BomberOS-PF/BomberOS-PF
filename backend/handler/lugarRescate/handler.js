@@ -41,5 +41,3 @@ export async function obtenerLugarRescatePorId(req, res, lugarRescateService) {
     })
   }
 }
-
-

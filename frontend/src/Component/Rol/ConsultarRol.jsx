@@ -120,7 +120,7 @@ const ConsultarRol = ({ onVolver }) => {
   }
 
   return (
-    <div className='container-fluid py-5'>
+    <div className='container-fluid py-5 consultar-incidente registrar-guardia consultar-grupo'>
       {/* Header principal */}
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
@@ -145,7 +145,7 @@ const ConsultarRol = ({ onVolver }) => {
           {/* Mensajes */}
           {mensaje && (
             <div className={`alert ${mensaje.includes('Error') ? 'alert-danger' :
-                mensaje.includes('✅') ? 'alert-success' : 'alert-info'
+              mensaje.includes('✅') ? 'alert-success' : 'alert-info'
               }`}>
               {mensaje}
             </div>
@@ -154,11 +154,11 @@ const ConsultarRol = ({ onVolver }) => {
           {/* Listado con paginación */}
           {!rolSeleccionado && !modoEdicion && (
             <>
-              <div className='mb-3 position-relative'>
+              <div className='mb-3 position-relative col-md-4'>
                 <i className='bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary'></i>
                 <input
                   type='text'
-                  className='form-control border-secondary ps-5 py-3'
+                  className='form-control border-secondary ps-5 py-2'
                   placeholder='Buscar por nombre del rol...'
                   value={busqueda}
                   onChange={handleBusqueda}
@@ -166,82 +166,89 @@ const ConsultarRol = ({ onVolver }) => {
                 />
               </div>
 
-              <Pagination
-                fetchPage={fetchRolesPage}
-                initialPage={1}
-                initialPageSize={PAGE_SIZE_DEFAULT}   // ✅ 10 por página
-                filters={{ q: busqueda, _tick: reloadTick }}
-                showControls
-                labels={{
-                  prev: '‹ Anterior',
-                  next: 'Siguiente ›',
-                  of: '/',
-                  showing: (shown, total) => `Mostrando ${shown} de ${total} roles`
-                }}
-              >
-                {({ items, loading, error }) => (
-                  <>
-                    {error && (
-                      <div className='alert alert-danger d-flex align-items-center'>
-                        <i className='bi bi-exclamation-triangle-fill me-2'></i>
-                        {String(error)}
-                      </div>
-                    )}
-
-                    {loading && (
-                      <div className='text-center mb-3'>
-                        <div className='spinner-border text-danger' role='status'></div>
-                      </div>
-                    )}
-
-                    {items.length > 0 ? (
-                      <div className='table-responsive rounded border'>
-                        <table className='table table-hover align-middle mb-0'>
-                          <thead className='bg-light'>
-                            <tr>
-                              <th className='border-end text-center'>Nombre</th>
-                              <th className='border-end text-center'>Descripción</th>
-                              <th className='text-center'>Acciones</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {items.map((rol) => (
-                              <tr key={rol.idRol}>
-                                <td className='border-end'>{rol.nombreRol}</td>
-                                <td className='border-end'>
-                                  {rol.descripcion || <em className='text-muted'>Sin descripción</em>}
-                                </td>
-                                <td className='text-center'>
-                                  <button
-                                    className='btn btn-outline-secondary btn-detail me-2'
-                                    onClick={() => seleccionarRol(rol)}
-                                    disabled={loading || loadingAccion}
-                                  >
-                                    <i className='bi bi-eye me-1'></i> Ver
-                                  </button>
-                                  <button
-                                    className='btn btn-outline-danger btn-detail'
-                                    onClick={() => eliminarRol(rol)}
-                                    disabled={loading || loadingAccion}
-                                  >
-                                    <i className='bi bi-trash'></i>
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      !loading && (
-                        <div className='text-center py-3 text-muted'>
-                          No hay roles para mostrar.
+              <div className='rg-pager'>
+                <Pagination
+                  fetchPage={fetchRolesPage}
+                  initialPage={1}
+                  initialPageSize={PAGE_SIZE_DEFAULT}   // ✅ 10 por página
+                  filters={{ q: busqueda, _tick: reloadTick }}
+                  showControls
+                  labels={{
+                    prev: '‹ Anterior',
+                    next: 'Siguiente ›',
+                    of: '/',
+                    showing: (shown, total) => `Mostrando ${shown} de ${total} roles`
+                  }}
+                >
+                  {({ items, loading, error }) => (
+                    <>
+                      {error && (
+                        <div className='alert alert-danger d-flex align-items-center'>
+                          <i className='bi bi-exclamation-triangle-fill me-2'></i>
+                          {String(error)}
                         </div>
-                      )
-                    )}
-                  </>
-                )}
-              </Pagination>
+                      )}
+
+                      {loading && (
+                        <div className='text-center mb-3'>
+                          <div className='spinner-border text-danger' role='status'></div>
+                        </div>
+                      )}
+
+                      {items.length > 0 ? (
+                        <div className='table-responsive rounded border'>
+                          <table className='table table-hover align-middle mb-0 rg-table'>
+                            <thead className='bg-light'>
+                              <tr>
+                                <th className='border-end text-center'>Nombre</th>
+                                <th className='border-end text-center'>Descripción</th>
+                                <th className='text-center'>Acciones</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {items.map((rol) => (
+                                <tr key={rol.idRol}>
+                                  <td className='border-end' data-label="Nombre">{rol.nombreRol}</td>
+                                  <td className='border-end' data-label="Descripcion">
+                                    {rol.descripcion}
+                                  </td>
+                                  <td className='text-center' data-label="Acciones">
+                                    <div className="d-inline-flex align-items-center justify-content-center gap-2 flex-nowrap actions-inline">
+                                      <button
+                                        className='btn btn-outline-secondary btn-detail btn-ver'
+                                        onClick={() => seleccionarRol(rol)}
+                                        disabled={loading || loadingAccion}
+                                      >
+                                        <i className='bi bi-eye'></i>
+                                        <span className="btn-label ms-1">Ver</span>
+                                      </button>
+                                      <button
+                                        className='btn btn-outline-danger btn-detail btn-trash'
+                                        onClick={() => eliminarRol(rol)}
+                                        disabled={loading || loadingAccion}
+                                      >
+                                        <i className='bi bi-trash'></i>
+                                      </button>
+                                    </div>
+
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        !loading && (
+                          <div className='text-center py-3 text-muted'>
+                            No hay roles para mostrar.
+                          </div>
+                        )
+                      )}
+                    </>
+                  )}
+                </Pagination>
+              </div>
+
             </>
           )}
 
@@ -322,7 +329,7 @@ const ConsultarRol = ({ onVolver }) => {
 
           {/* Botón volver menú */}
           {!rolSeleccionado && onVolver && (
-            <div className='d-grid gap-3'>
+            <div className='d-flex justify-content-start align-items-center gap-3 py-1'>
               <BackToMenuButton onClick={onVolver} />
             </div>
           )}

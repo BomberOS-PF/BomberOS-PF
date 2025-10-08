@@ -15,19 +15,14 @@ import ConsultarRol from '../Rol/ConsultarRol'
 import RegistrarGuardia from '../Guardia/RegistrarGuardia/RegistrarGuardia'
 import ConsultarGrupoGuardia from '../Guardia/ConsultarGuardia/ConsultarGrupoGuardia'
 import GestionarGuardias from '../Guardia/GestionarGuardias/GestionarGuardia'
-// import BurbujaFormulario from '../BurbujaFormulario/BurbujaFormulario' // Eliminado - simplificando flujo
-import AccidenteTransito from '../Incidente/TipoIncidente/AccidenteTransito/AccidenteTransito'
-import FactorClimatico from '../Incidente/TipoIncidente/FactorClimatico/FactorClimatico'
-import IncendioEstructural from '../Incidente/TipoIncidente/IncendioEstructural/IncendioEstructural'
-import IncendioForestal from '../Incidente/TipoIncidente/IncendioForestal/IncendioForestal'
-import MaterialPeligroso from '../Incidente/TipoIncidente/MaterialPeligroso/MaterialPeligroso'
-import Rescate from '../Incidente/TipoIncidente/Rescate/Rescate'
+
 import ParticipacionIncidente from '../Incidente/ParticipacionIncidente/ParticipacionIncidente'
 import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
 import DashboardRespuestas from '../Respuestas/DashboardRespuestas'
 import EstadoWhatsApp from '../WhatsApp/EstadoWhatsApp'
 
 import CalendarioGuardias from '../Guardia/CalendarioGuardias/CalendarioGuardias'
+import MisGuardias from '../Guardia/MisGuardias/MisGuardias'
 
 const Menu = ({ user, setUser }) => {
   const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
@@ -35,21 +30,20 @@ const Menu = ({ user, setUser }) => {
   const [mostrarDropdown, setMostrarDropdown] = useState(false)
   const [acordeonAbierto, setAcordeonAbierto] = useState(null)
   const dropdownRef = useRef(null)
+  const dropdownRef2 = useRef(null)
   const navigate = useNavigate()
-  // const [burbujas, setBurbujas] = useState([]) // Eliminado - simplificando flujo
-  // const [burbujaExpandida, setBurbujaExpandida] = useState(null) // Eliminado - simplificando flujo
 
-  // Flujo post-notificación
   const [datosFinalizados, setDatosFinalizados] = useState(null)
 
-  // Guardias
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null)
   const [grupoAGestionar, setGrupoAGestionar] = useState(null)
-  
+
   // Usuario actual y rol
   const usuarioActual = user || JSON.parse(localStorage.getItem('usuario')) || {}
   const nombreUsuario = usuarioActual.usuario || 'Usuario'
   const rol = usuarioActual.rol || 'desconocido'
+  const isBombero = rol === 'bombero'
+  const [target, setTarget] = useState('consultar-incidente')
 
   useEffect(() => {
     const datosUsuario = localStorage.getItem('usuario')
@@ -64,7 +58,7 @@ const Menu = ({ user, setUser }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (dropdownRef2.current && !dropdownRef2.current.contains(event.target)) {
         setMostrarDropdown(false)
       }
     }
@@ -115,22 +109,19 @@ const Menu = ({ user, setUser }) => {
     }
   }, [])
 
-  // Función simplificada para notificaciones (sin burbujas)
   const manejarNotificacion = (tipo, datosPrevios) => {
-    // Simplemente mostrar mensaje de éxito - el componente CargarIncidente manejará la redirección
     console.log('Notificación enviada:', tipo, datosPrevios)
   }
 
-  // Funciones de burbujas eliminadas - flujo simplificado
-
-  // renderFormularioExpandido eliminado - flujo simplificado
-
-  // Permisos (placeholder)
   const permisos = {
     administrador: ['*'],
-    bombero: ['cargar-incidente', 'consultar-bombero', 'participacion-incidente', 'dashboard-respuestas', 'estado-whatsapp']
+    bombero: [
+      'cargarIncidente',
+      'consultarIncidente',
+      'mis-guardias'      // vista personal
+    ]
   }
-  const puedeVer = (clave) => permisos[rol]?.includes('*') || permisos[rol]?.includes(clave)
+  const puedeVer = clave => permisos[rol]?.includes('*') || permisos[rol]?.includes(clave)
 
   const toggleAcordeon = (id) => {
     const target = document.getElementById(id)
@@ -224,23 +215,102 @@ const Menu = ({ user, setUser }) => {
         )
       case 'vehiculo-involucrado':
         return <VehiculoInvolucrado onVolver={() => setOpcionSeleccionada(null)} />
-      case 'consultarIncidente': // << NUEVO
+      case 'consultarIncidente':
         return <ConsultarIncidente onVolverMenu={() => setOpcionSeleccionada('')} />
       case 'dashboard-respuestas':
         return <DashboardRespuestas onVolver={() => setOpcionSeleccionada(null)} />
       case 'estado-whatsapp':
         return <EstadoWhatsApp onVolver={() => setOpcionSeleccionada(null)} />
+      case 'mis-guardias':
+        return <MisGuardias />
+
+      case 'cal-guardias': // NUEVO
+        return (
+          <CalendarioGuardias
+            dniUsuario={usuario?.dni ?? usuarioActual?.dni}
+            titulo="Calendario de Guardias"
+          />
+        )
+
       default:
-      // Contenido por defecto (pantalla de inicio): tu calendario mensual de guardias
-     return (
-      <CalendarioGuardias
-        dniUsuario={usuario?.dni ?? usuarioActual?.dni}
-          titulo="Tus Guardias"
-     />
-     )
+        // Si es bombero -> que por defecto vea el Calendario
+        // Si no, tu calendario mensual global como antes
+        return isBombero
+          ? (
+            <CalendarioGuardias
+              dniUsuario={usuario?.dni ?? usuarioActual?.dni}
+              titulo="Calendario de Guardias"
+            />
+          )
+          : (
+            <CalendarioGuardias
+              dniUsuario={usuario?.dni ?? usuarioActual?.dni}
+              titulo="Tus Guardias"
+            />
+          )
 
     }
   }
+
+  // ===== Construcción dinámica de secciones según rol =====
+
+
+  const secciones = [
+    {
+      id: 'collapseIncidente',
+      icono: 'bi-fire',
+      titulo: 'Incidentes',
+      botones: [
+        { texto: 'Cargar Incidente', accion: 'cargarIncidente' },
+        { texto: 'Consultar Incidentes', accion: 'consultarIncidente' }
+      ]
+    },
+    {
+      id: 'collapseBomberos',
+      icono: 'bi-person-badge',
+      titulo: 'Bomberos',
+      botones: [
+        { texto: 'Registrar Bombero', accion: 'registrarBombero' },
+        { texto: 'Consultar Bomberos', accion: 'consultarBombero' }
+      ]
+    },
+    {
+      id: 'collapseUsuarios',
+      icono: 'bi-person-circle',
+      titulo: 'Usuarios y Roles',
+      botones: [
+        { texto: 'Registrar Usuario', accion: 'registrarUsuario' },
+        { texto: 'Consultar Usuarios', accion: 'consultarUsuario' },
+        { texto: 'Registrar Rol', accion: 'registrarRol' },
+        { texto: 'Consultar Roles', accion: 'consultarRol' }
+      ]
+    },
+    {
+      id: 'collapseGuardias',
+      icono: 'bi-clock-history',
+      titulo: 'Guardias',
+      botones: isBombero
+        ? [{ texto: 'Mis guardias', accion: 'mis-guardias' }] // ← SIN “Calendario”
+        : [
+          { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
+          { texto: 'Consultar Grupos', accion: 'consultarGuardia' }
+        ]
+    },
+    {
+      id: 'collapseWhatsApp',
+      icono: 'bi-whatsapp',
+      titulo: 'WhatsApp & Respuestas',
+      botones: [
+        { texto: 'Dashboard Respuestas', accion: 'dashboard-respuestas' },
+        { texto: 'Estado WhatsApp', accion: 'estado-whatsapp' }
+      ]
+    }
+  ]
+
+  // Filtrar secciones sin botones visibles para este rol
+  const seccionesVisibles = secciones
+    .map(sec => ({ ...sec, botones: sec.botones.filter(b => puedeVer(b.accion)) }))
+    .filter(sec => sec.botones.length > 0)
 
   return (
     <div>
@@ -269,15 +339,32 @@ const Menu = ({ user, setUser }) => {
             </div>
           </div>
 
+        </div>
+      </nav>
+
+      <div className="offcanvas offcanvas-start bg-dark text-white d-flex flex-column" tabIndex="-1" id="sidebarMenu">
+        <div className="offcanvas-header">
+          <h5 className="offcanvas-title">Menú</h5>
+          <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+        </div>
+
+        <div className="offcanvas-body flex-grow-1">
           {usuario && (
-            <div className="d-flex align-items-center position-relative" ref={dropdownRef}>
-              <span className="text-white me-2">{usuario.nombre} {usuario.apellido}</span>
-              <button
-                className="btn btn-light rounded-circle avatar-boton"
-                onClick={() => setMostrarDropdown(!mostrarDropdown)}
-              >
-                <i className="bi bi-person-fill"></i>
-              </button>
+            <div className="offcanvas-profile d-flex align-items-center justify-content-between mb-3" ref={dropdownRef2}>
+              <div className="d-flex align-items-center gap-2">
+                <button
+                  className="btn btn-light rounded-circle avatar-boton d-flex align-items-center justify-content-center p-0"
+                  onClick={() => setMostrarDropdown(!mostrarDropdown)}
+                >
+                  <i className="bi bi-person-fill"></i>
+                </button>
+                <div className="d-flex flex-column">
+                  <span className="fw-semibold">{usuario.nombre} {usuario.apellido}</span>
+                  <small className="text-secondary">{rol}</small>
+                </div>
+              </div>
+
+              {/* Dropdown anclado dentro del offcanvas */}
               {mostrarDropdown && (
                 <ul className="dropdown-menu show user-dropdown">
                   <li><button className="dropdown-item" disabled>Mi perfil</button></li>
@@ -293,60 +380,9 @@ const Menu = ({ user, setUser }) => {
               )}
             </div>
           )}
-        </div>
-      </nav>
 
-      <div className="offcanvas offcanvas-start bg-dark text-white d-flex flex-column" tabIndex="-1" id="sidebarMenu">
-        <div className="offcanvas-header">
-          <h5 className="offcanvas-title">Menú</h5>
-          <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
-        </div>
-
-        <div className="offcanvas-body flex-grow-1">
           <div className="accordion accordion-flush" id="sidebarAccordion">
-            {[{
-              id: 'collapseIncidente',
-              icono: 'bi-fire',
-              titulo: 'Incidentes',
-              botones: [{ texto: 'Cargar Incidente', accion: 'cargarIncidente' },
-              { texto: 'Consultar Incidentes', accion: 'consultarIncidente' }
-              ]
-            },
-            {
-              id: 'collapseBomberos',
-              icono: 'bi-person-badge',
-              titulo: 'Bomberos',
-              botones: [
-                { texto: 'Registrar Bombero', accion: 'registrarBombero' },
-                { texto: 'Consultar Bomberos', accion: 'consultarBombero' }
-              ]
-            }, {
-              id: 'collapseUsuarios',
-              icono: 'bi-person-circle',
-              titulo: 'Usuarios y Roles',
-              botones: [
-                { texto: 'Registrar Usuario', accion: 'registrarUsuario' },
-                { texto: 'Consultar Usuarios', accion: 'consultarUsuario' },
-                { texto: 'Registrar Rol', accion: 'registrarRol' },
-                { texto: 'Consultar Roles', accion: 'consultarRol' }
-              ]
-            }, {
-              id: 'collapseGuardias',
-              icono: 'bi-clock-history',
-              titulo: 'Guardias',
-              botones: [
-                { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
-                { texto: 'Consultar Grupos', accion: 'consultarGuardia' }
-              ]
-            }, {
-              id: 'collapseWhatsApp',
-              icono: 'bi-whatsapp',
-              titulo: 'WhatsApp & Respuestas',
-              botones: [
-                { texto: 'Dashboard Respuestas', accion: 'dashboard-respuestas' },
-                { texto: 'Estado WhatsApp', accion: 'estado-whatsapp' }
-              ]
-            }].map(({ id, icono, titulo, botones }) => (
+            {seccionesVisibles.map(({ id, icono, titulo, botones }) => (
               <div key={id} className="accordion-item bg-dark border-0">
                 <h2 className="accordion-header">
                   <button
@@ -360,18 +396,16 @@ const Menu = ({ user, setUser }) => {
                 <div id={id} className="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
                   <div className="accordion-body p-0">
                     {botones.map(b => (
-                      puedeVer(b.accion) && (
-                        <button
-                          key={b.accion}
-                          className="menu-btn"
-                          onClick={() => {
-                            setOpcionSeleccionada(b.accion)
-                            cerrarOffcanvas()
-                          }}
-                        >
-                          {b.texto}
-                        </button>
-                      )
+                      <button
+                        key={b.accion}
+                        className="menu-btn"
+                        onClick={() => {
+                          setOpcionSeleccionada(b.accion)
+                          cerrarOffcanvas()
+                        }}
+                      >
+                        {b.texto}
+                      </button>
                     ))}
                   </div>
                 </div>

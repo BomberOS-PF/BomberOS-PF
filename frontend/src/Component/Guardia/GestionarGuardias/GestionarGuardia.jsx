@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 
 import { API_URLS, apiRequest } from '../../../config/api'
+import * as bootstrap from 'bootstrap'
 
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -271,6 +272,9 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   const [mensaje, setMensaje] = useState('')
   const [mensajesModal, setMensajesModal] = useState([])
 
+  const [indiceAEliminar, setIndiceAEliminar] = useState(null)
+  const [bomberoAEliminar, setBomberoAEliminar] = useState(null)
+
   const [cargandoSemana, setCargandoSemana] = useState(false)
   const [guardando, setGuardando] = useState(false)
 
@@ -288,6 +292,28 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
   const [bomberosEditados, setBomberosEditados] = useState([])
   const [bomberosOriginales, setBomberosOriginales] = useState([])
   const [tieneCambios, setTieneCambios] = useState(false)
+
+  const abrirConfirmarEliminarAsignacion = (idx, bombero) => {
+    setIndiceAEliminar(idx)
+    setBomberoAEliminar(bombero)
+    const modalEl = document.getElementById('modalConfirmarEliminarAsignacion')
+    if (!modalEl) return
+    const modal = new bootstrap.Modal(modalEl)
+    modal.show()
+  }
+
+  const confirmarEliminarAsignacion = () => {
+    setBomberosEditados(prev => prev.filter((_, i) => i !== indiceAEliminar))
+    setTieneCambios(true)
+
+    const modal = bootstrap.Modal.getInstance(
+      document.getElementById('modalConfirmarEliminarAsignacion')
+    )
+    modal?.hide()
+
+    setIndiceAEliminar(null)
+    setBomberoAEliminar(null)
+  }
 
   // Detectar cambios (modal)
   useEffect(() => {
@@ -598,72 +624,83 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
 
                 <label className="mt-2">Desde:</label>
                 <div className="d-flex gap-3">
-                  <Select
-                    options={horas}
-                    value={
-                      horaDesde
-                        ? { label: horaDesde.split(':')[0], value: horaDesde.split(':')[0] }
-                        : null
-                    }
-                    onChange={(selected) => {
-                      const nuevo = selected?.value || ''
-                      setHoraDesde(`${nuevo}:${horaDesde.split(':')[1] || '00'}`)
-                    }}
-                    classNamePrefix="rs"
-                    placeholder="HH"
-                    isClearable
-                  />
-                  <Select
-                    options={minutos}
-                    value={
-                      horaDesde
-                        ? { label: horaDesde.split(':')[1], value: horaDesde.split(':')[1] }
-                        : null
-                    }
-                    onChange={(selected) => {
-                      const nuevosMin = selected?.value || ''
-                      setHoraDesde(`${horaDesde.split(':')[0] || '00'}:${nuevosMin}`)
-                    }}
-                    classNamePrefix="rs"
-                    placeholder="MM"
-                    isClearable
-                    isSearchable
-                  />
+                  <div className="flex-grow-1 time-select">
+                    <Select
+                      options={horas}
+                      value={
+                        horaDesde
+                          ? { label: horaDesde.split(':')[0], value: horaDesde.split(':')[0] }
+                          : null
+                      }
+                      onChange={(selected) => {
+                        const nuevo = selected?.value || ''
+                        setHoraDesde(`${nuevo}:${horaDesde.split(':')[1] || '00'}`)
+                      }}
+                      classNamePrefix="rs"
+                      placeholder="HH"
+                      isClearable
+                    />
+                  </div>
+
+                  <div className="flex-grow-1 time-select">
+                    <Select
+                      options={minutos}
+                      value={
+                        horaDesde
+                          ? { label: horaDesde.split(':')[1], value: horaDesde.split(':')[1] }
+                          : null
+                      }
+                      onChange={(selected) => {
+                        const nuevosMin = selected?.value || ''
+                        setHoraDesde(`${horaDesde.split(':')[0] || '00'}:${nuevosMin}`)
+                      }}
+                      classNamePrefix="rs"
+                      placeholder="MM"
+                      isClearable
+                      isSearchable
+                    />
+                  </div>
                 </div>
 
                 <label className="mt-2">Hasta:</label>
                 <div className="d-flex gap-3">
-                  <Select
-                    options={horas}
-                    value={
-                      horaHasta
-                        ? { label: horaHasta.split(':')[0], value: horaHasta.split(':')[0] }
-                        : null
-                    }
-                    onChange={(selected) => {
-                      const nueva = selected?.value || ''
-                      setHoraHasta(`${nueva}:${horaHasta.split(':')[1] || '00'}`)
-                    }}
-                    classNamePrefix="rs"
-                    placeholder="HH"
-                    isClearable
-                  />
-                  <Select
-                    options={minutos}
-                    value={
-                      horaHasta
-                        ? { label: horaHasta.split(':')[1], value: horaHasta.split(':')[1] }
-                        : null
-                    }
-                    onChange={(selected) => {
-                      const nuevosMin = selected?.value || ''
-                      setHoraHasta(`${horaHasta.split(':')[0] || '00'}:${nuevosMin}`)
-                    }}
-                    classNamePrefix="rs"
-                    placeholder="MM"
-                    isClearable
-                    isSearchable
-                  />
+                  <div className="flex-grow-1 time-select">
+                    <Select
+                      options={horas}
+                      value={
+                        horaHasta
+                          ? { label: horaHasta.split(':')[0], value: horaHasta.split(':')[0] }
+                          : null
+                      }
+                      onChange={(selected) => {
+                        const nueva = selected?.value || ''
+                        setHoraHasta(`${nueva}:${horaHasta.split(':')[1] || '00'}`)
+                      }}
+                      classNamePrefix="rs"
+                      placeholder="HH"
+                      isClearable
+                    />
+                  </div>
+
+                  <div className="flex-grow-1 time-select">
+                    <Select
+                      options={minutos}
+                      value={
+                        horaHasta
+                          ? { label: horaHasta.split(':')[1], value: horaHasta.split(':')[1] }
+                          : null
+                      }
+                      onChange={(selected) => {
+                        const nuevosMin = selected?.value || ''
+                        setHoraHasta(`${horaHasta.split(':')[0] || '00'}:${nuevosMin}`)
+                      }}
+                      classNamePrefix="rs"
+                      placeholder="MM"
+                      isClearable
+                      isSearchable
+                    />
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -686,7 +723,8 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                 eventClassNames={() => ['fc-guardia']}
                 eventContent={() => ({ domNodes: [] })}
                 eventDidMount={(info) => {
-                  // === Tooltip (solo manejo de DOM, el estilo está en CSS) ===
+                  info.el.removeAttribute('title');
+                  info.el.querySelectorAll('[title]').forEach(el => el.removeAttribute('title'));
                   const tooltip = document.createElement('div')
                   tooltip.className = 'tooltip-dinamico'
                   document.body.appendChild(tooltip)
@@ -699,24 +737,38 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                     .map((b) => `${b.nombre || nombrePorDni.get(Number(b.dni)) || b.dni} (${b.desde}-${b.hasta})`)
                     .join('\n')
 
-                  info.el.addEventListener('mouseenter', (e) => {
-                    tooltip.style.display = 'block'
-                    tooltip.style.left = `${e.pageX + 10}px`
-                    tooltip.style.top = `${e.pageY - 20}px`
-                  })
-                  info.el.addEventListener('mousemove', (e) => {
-                    tooltip.style.left = `${e.pageX + 10}px`
-                    tooltip.style.top = `${e.pageY - 20}px`
-                  })
-                  info.el.addEventListener('mouseleave', () => {
-                    tooltip.style.display = 'none'
-                  })
+                  const place = (e) => {
+                    const margin = 10;
+                    const x = Math.min(e.clientX + margin, window.innerWidth - tooltip.offsetWidth - margin);
+                    const y = Math.min(e.clientY + margin, window.innerHeight - tooltip.offsetHeight - margin);
+                    tooltip.style.left = `${x}px`;
+                    tooltip.style.top = `${y}px`;
+                  };
+
+                  const onEnter = (e) => { tooltip.style.display = 'block'; place(e); };
+                  const onMove = (e) => place(e);
+                  const onLeave = () => { tooltip.style.display = 'none'; };
+
+                  info.el.addEventListener('mouseenter', onEnter);
+                  info.el.addEventListener('mousemove', onMove);
+                  info.el.addEventListener('mouseleave', onLeave);
+
+                  info.el._ttHandlers = { onEnter, onMove, onLeave };
                 }}
+
                 eventWillUnmount={(info) => {
+                  const h = info.el._ttHandlers;
+                  if (h) {
+                    info.el.removeEventListener('mouseenter', h.onEnter);
+                    info.el.removeEventListener('mousemove', h.onMove);
+                    info.el.removeEventListener('mouseleave', h.onLeave);
+                    delete info.el._ttHandlers;
+                  }
                   const tooltip = tooltipsRef.current[info.event.id]
                   if (tooltip && tooltip.parentNode) tooltip.parentNode.removeChild(tooltip)
                   delete tooltipsRef.current[info.event.id]
                 }}
+
                 eventClick={(info) => {
                   info.jsEvent.preventDefault()
                   const tooltip = tooltipsRef.current[info.event.id]
@@ -746,9 +798,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                       <div className="modal-body">
                         <p>¿Desea modificar la guardia seleccionada?</p>
                       </div>
-                      <div className="modal-footer">
+                      <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+                        <button className="btn btn-back btn-medium" onClick={() => setModalConfirmar(false)}>Cancelar</button>
                         <button
-                          className="btn btn-danger"
+                          className="btn btn-accept btn-lg btn-medium"
                           onClick={() => {
                             setEventoSeleccionado(eventoPendiente)
                             const base = (eventoPendiente.extendedProps?.bomberos || []).map(b => ({
@@ -765,7 +818,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                         >
                           Aceptar
                         </button>
-                        <button className="btn btn-secondary" onClick={() => setModalConfirmar(false)}>Cancelar</button>
+
                       </div>
                     </div>
                   </div>
@@ -819,6 +872,13 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                       }}
                                       classNamePrefix="rs"
                                       placeholder="HH"
+                                      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                                      menuPosition="fixed"
+                                      menuShouldScrollIntoView={false}
+                                      styles={{
+                                        menuPortal: (base) => ({ ...base, zIndex: 99999 }),
+                                        menu: (base) => ({ ...base, zIndex: 99999 })
+                                      }}
                                     />
                                     <Select
                                       options={minutos}
@@ -831,6 +891,13 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                       }}
                                       classNamePrefix="rs"
                                       placeholder="MM"
+                                      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                                      menuPosition="fixed"
+                                      menuShouldScrollIntoView={false}
+                                      styles={{
+                                        menuPortal: (base) => ({ ...base, zIndex: 99999 }),
+                                        menu: (base) => ({ ...base, zIndex: 99999 })
+                                      }}
                                     />
                                   </div>
                                 </td>
@@ -847,6 +914,13 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                       }}
                                       classNamePrefix="rs"
                                       placeholder="HH"
+                                      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                                      menuPosition="fixed"
+                                      menuShouldScrollIntoView={false}
+                                      styles={{
+                                        menuPortal: (base) => ({ ...base, zIndex: 99999 }),
+                                        menu: (base) => ({ ...base, zIndex: 99999 })
+                                      }}
                                     />
                                     <Select
                                       options={minutos}
@@ -859,13 +933,21 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                                       }}
                                       classNamePrefix="rs"
                                       placeholder="MM"
+                                      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                                      menuPosition="fixed"
+                                      menuShouldScrollIntoView={false}
+                                      styles={{
+                                        menuPortal: (base) => ({ ...base, zIndex: 99999 }),
+                                        menu: (base) => ({ ...base, zIndex: 99999 })
+                                      }}
                                     />
                                   </div>
                                 </td>
                                 <td className="text-center">
                                   <button
                                     className="btn btn-outline-danger btn-detail"
-                                    onClick={() => setBomberosEditados(prev => prev.filter((_, i) => i !== idx))}
+                                    title='Eliminar asignación'
+                                    onClick={() => abrirConfirmarEliminarAsignacion(idx, b)}
                                   >
                                     <i className="bi bi-trash"></i>
                                   </button>
@@ -875,12 +957,47 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                           </tbody>
                         </table>
                       </div>
-                      <div className="modal-footer">
+                      <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+                        <button className="btn btn-back btn-medium" onClick={() => setModalAbierto(false)}>Volver</button>
                         <button
-                          className="btn btn-danger"
+                          className="btn btn-accept btn-lg btn-medium"
                           disabled={!tieneCambios}
                           onClick={() => {
-                            // ... (misma lógica que ya tenías)
+                            // Si no queda ningún bombero -> eliminar bloque y persistir el día
+                            if (bomberosEditados.length === 0) {
+                              const fechaBase = new Date(eventoSeleccionado.start)
+                              const fechaStr = yyyyMmDd(fechaBase)
+
+                              // 1) UI: quitar este evento y re-fusionar
+                              const nextEventos = fusionarEventos(
+                                eventos.filter(ev => ev.id !== eventoSeleccionado.id)
+                              )
+                              setEventos(nextEventos)
+                              setModalAbierto(false)
+
+                              // 2) Construir el payload del DÍA restante (del resto de eventos de esa fecha)
+                              const asignacionesDia = asignacionesDelDiaDesdeEventos(nextEventos, fechaStr)
+
+                              // 3) Persistir con PUT reemplazarDia
+                              setGuardando(true)
+                              apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
+                                method: 'PUT',
+                                body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDia })
+                              })
+                                .then(() => {
+                                  setMensaje('Guardia eliminada y actualizada con exito')
+                                  const api = calendarRef.current?.getApi()
+                                  if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
+                                  setTimeout(() => setMensaje(''), 3000)
+                                })
+                                .catch((e) => {
+                                  console.error(e)
+                                  setMensaje(`Error al guardar: ${e.message}`)
+                                  setTimeout(() => setMensaje(''), 5000)
+                                })
+                                .finally(() => setGuardando(false))
+                              return
+                            }
                             const fechaBase = new Date(eventoSeleccionado.start)
                             if (bomberosEditados.length === 0) {
                               const fechaStr = yyyyMmDd(fechaBase)
@@ -914,37 +1031,153 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
                         >
                           Confirmar
                         </button>
-                        <button className="btn btn-secondary" onClick={() => setModalAbierto(false)}>Volver</button>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
 
+              {/* Modal Confirmación Eliminación de Asignación */}
+              <div
+                className="modal fade modal-backdrop-custom"
+                id="modalConfirmarEliminarAsignacion"
+                tabIndex={-1}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="tituloConfirmarEliminarAsignacion"
+                aria-hidden="true"
+              >
+                <div className="modal-dialog">
+                  <div className="modal-content modal-content-white">
+                    <div className="bg-danger modal-header">
+                      <h5 id="tituloConfirmarEliminarAsignacion" className="modal-title text-white">
+                        Confirmar eliminación
+                      </h5>
+                      <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div className="modal-body">
+                      ¿Eliminar la asignación de <strong>{bomberoAEliminar?.nombre}</strong>?
+                    </div>
+                    <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+                      <button type="button" className="btn btn-back btn-medium" data-bs-dismiss="modal">
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-accept btn-lg btn-medium"
+                        onClick={confirmarEliminarAsignacion}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Modal Confirmar Guardado */}
               {modalConfirmarGuardar && eventoSeleccionado && (
                 <div className="modal fade show d-block modal-backdrop-custom" tabIndex="-1">
                   <div className="modal-dialog">
                     <div className="modal-content modal-content-white">
-                      <div className="modal-header">
-                        <h5 className="modal-title text-black">Confirmar guardado</h5>
+                      <div className="bg-danger modal-header">
+                        <h5 className="modal-title text-white">Confirmar guardado</h5>
                         <button type="button" className="btn-close" onClick={() => setModalConfirmarGuardar(false)}></button>
                       </div>
                       <div className="modal-body">
                         <p>¿Desea guardar los cambios realizados en esta guardia?</p>
                       </div>
-                      <div className="modal-footer">
+                      <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+                        <button className="btn btn-back btn-medium" onClick={() => setModalConfirmarGuardar(false)}>Cancelar</button>
                         <button
-                          className="btn btn-danger"
+                          className="btn btn-accept btn-lg btn-medium"
                           onClick={async () => {
-                            // ... (misma lógica de guardar del modal)
-                            // se mantiene igual; solo se movieron estilos al CSS
-                            // (tu implementación original sigue acá)
+                            // 1) Consolido por DNI antes de recalcular bloques
+                            const bomberosNormalizados = mergeByDni(bomberosEditados)
+
+                            // 2) Recalculo bloques (por solape en tiempo)
+                            const bomberosOrdenados = [...bomberosNormalizados].sort(
+                              (a, b) => a.desde.localeCompare(b.desde)
+                            )
+
+                            const nuevosBloques = []
+                            let bloqueActual = {
+                              start: bomberosOrdenados[0].desde,
+                              end: bomberosOrdenados[0].hasta,
+                              bomberos: [bomberosOrdenados[0]]
+                            }
+
+                            for (let i = 1; i < bomberosOrdenados.length; i++) {
+                              const b = bomberosOrdenados[i]
+                              if (b.desde > bloqueActual.end) {
+                                nuevosBloques.push({ ...bloqueActual, bomberos: mergeByDni(bloqueActual.bomberos) })
+                                bloqueActual = { start: b.desde, end: b.hasta, bomberos: [b] }
+                              } else {
+                                if (b.hasta > bloqueActual.end) bloqueActual.end = b.hasta
+                                bloqueActual.bomberos.push(b)
+                              }
+                            }
+                            nuevosBloques.push({ ...bloqueActual, bomberos: mergeByDni(bloqueActual.bomberos) })
+
+                            // 3) Construyo 'merged' completo de la UI
+                            const fechaBase = new Date(eventoSeleccionado.start)
+                            const sinEvento = eventos.filter((ev) => ev.id !== eventoSeleccionado.id)
+
+                            const nuevosEventos = nuevosBloques.map((bloque, idx) => {
+                              const [hStart, mStart] = bloque.start.split(':').map(Number)
+                              const [hEnd, mEnd] = bloque.end.split(':').map(Number)
+                              return {
+                                id: `${eventoSeleccionado.id}-split-${idx}-${Date.now()}`,
+                                title: '',
+                                start: new Date(
+                                  fechaBase.getFullYear(),
+                                  fechaBase.getMonth(),
+                                  fechaBase.getDate(),
+                                  hStart, mStart
+                                ),
+                                end: new Date(
+                                  fechaBase.getFullYear(),
+                                  fechaBase.getMonth(),
+                                  fechaBase.getDate(),
+                                  hEnd, mEnd
+                                ),
+                                backgroundColor: '#f08080',
+                                borderColor: '#b30000',
+                                textColor: 'transparent',
+                                allDay: false,
+                                extendedProps: { bomberos: mergeByDni(bloque.bomberos) }
+                              }
+                            })
+
+                            const merged = fusionarEventos([...sinEvento, ...nuevosEventos])
+
+                            // 4) UI
+                            setEventos(merged)
+
+                            // 5) Persisto TODO el día consolidado (por DNI)
+                            const fechaStr = yyyyMmDd(fechaBase)
+                            const asignacionesDia = asignacionesDelDiaDesdeEventos(merged, fechaStr)
+
+                            try {
+                              await apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
+                                method: 'PUT',
+                                body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDia })
+                              })
+                              setMensaje('Cambios guardados para ese día con exito')
+                              const api = calendarRef.current?.getApi()
+                              if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
+                              setTimeout(() => setMensaje(''), 3000)
+                            } catch (e) {
+                              console.error(e)
+                              setMensaje(`Error al guardar: ${e.message}`)
+                              setTimeout(() => setMensaje(''), 5000)
+                            }
+
+                            setModalConfirmarGuardar(false)
+                            setModalAbierto(false)
                           }}
                         >
                           Aceptar
                         </button>
-                        <button className="btn btn-secondary" onClick={() => setModalConfirmarGuardar(false)}>Cancelar</button>
                       </div>
                     </div>
                   </div>
@@ -955,11 +1188,11 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver }) =>
           </div>
         </div>
         <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
-            <BackToMenuButton onClick={onVolver} />
-            <button className="btn btn-accept btn-lg btn-medium" onClick={asignarGuardia} disabled={guardando}>
-              {guardando ? 'Guardando…' : 'Guardar'}
-            </button>
-          </div>
+          <BackToMenuButton onClick={onVolver} />
+          <button className="btn btn-accept btn-lg btn-medium" onClick={asignarGuardia} disabled={guardando}>
+            {guardando ? 'Guardando…' : 'Guardar'}
+          </button>
+        </div>
       </div>
     </div>
   )

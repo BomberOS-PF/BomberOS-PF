@@ -12,5 +12,3 @@ export class MySQLLugarRescateRepository {
     return rows
   }
 }
-
-

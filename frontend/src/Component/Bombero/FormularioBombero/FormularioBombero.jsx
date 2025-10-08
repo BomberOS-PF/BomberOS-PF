@@ -318,7 +318,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
                 required={!soloLectura}
                 style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
                 tabIndex={-1}
-                onChange={() => {}}
+                onChange={() => { }}
               />
               <Select
                 classNamePrefix="rs"
@@ -454,7 +454,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
                 required={!soloLectura}
                 style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
                 tabIndex={-1}
-                onChange={() => {}}
+                onChange={() => { }}
               />
               <Select
                 classNamePrefix="rs"
@@ -474,7 +474,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
           {/* Switches */}
           <div className="row mb-3">
             <div className="col-md-6">
-              <div className="form-check form-switch">
+              <div className="form-check form-switch only-thumb">
                 <input
                   className="form-check-input"
                   type="checkbox"
@@ -483,14 +483,14 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
                   onChange={handleChange}
                   disabled={soloLectura || loading}
                 />
-                <label className={labelClasses} htmlFor="aptoPsicologico">
+                <label id="lbl-aptoPsico" className="form-label text-dark d-flex align-items-center gap-2">
                   Apto psicológico
                 </label>
               </div>
             </div>
 
             <div className="col-md-6">
-              <div className="form-check form-switch">
+              <div className="form-check form-switch only-thumb">
                 <input
                   className="form-check-input"
                   type="checkbox"
@@ -499,7 +499,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
                   onChange={handleChange}
                   disabled={soloLectura || loading}
                 />
-                <label className={labelClasses} htmlFor="esDelPlan">
+                <label id="lbl-esPlan" className="form-label text-dark d-flex align-items-center gap-2">
                   Es del plan (guardias pagas)
                 </label>
               </div>
