@@ -8,7 +8,7 @@ export function loadConfig() {
     
     server: {
       port: parseInt(process.env.PORT) || 3000,
-      host: process.env.HOST || 'localhost'
+      host: process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost')
     },
     
     frontend: {
@@ -49,7 +49,8 @@ export function loadConfig() {
               callback(new Error('No permitido por CORS'))
             }
           },
-      credentials: true
+      credentials: true,
+      optionsSuccessStatus: 200
   },
 
     
