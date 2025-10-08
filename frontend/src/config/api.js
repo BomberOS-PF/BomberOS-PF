@@ -7,7 +7,6 @@ const getApiBaseUrl = () => {
   if (import.meta.env.PROD) {
     return 'https://bomberos-pf.onrender.com/api'
   }
-  
   return '/api'
 }
 

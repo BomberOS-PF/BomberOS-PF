@@ -321,6 +321,15 @@ export function setupRoutes(app, container) {
     }
   })
 
+  app.get('/api/usuarios/bomberos/libres', async (req, res) => {
+    try {
+      await usuarioHandler.getUsuariosBomberoLibres(req, res)
+    } catch (error) {
+      logger.error('Error en ruta getUsuariosBomberoLibres:', error)
+      res.status(500).json({ error: 'Error interno' })
+    }
+  })
+
   app.get('/api/usuarios', async (req, res) => {
     try {
       await usuarioHandler.getAllUsuarios(req, res)
@@ -362,15 +371,6 @@ export function setupRoutes(app, container) {
       await usuarioHandler.deleteUsuario(req, res)
     } catch (error) {
       logger.error('Error en ruta deleteUsuario:', error)
-      res.status(500).json({ error: 'Error interno' })
-    }
-  })
-
-  app.get('/api/usuarios/bomberos/libres', async (req, res) => {
-    try {
-      await usuarioHandler.getUsuariosBomberoLibres(req, res)
-    } catch (error) {
-      logger.error('Error en ruta getUsuariosBomberoLibres:', error)
       res.status(500).json({ error: 'Error interno' })
     }
   })
