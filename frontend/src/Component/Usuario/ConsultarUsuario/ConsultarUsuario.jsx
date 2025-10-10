@@ -330,7 +330,7 @@ const ConsultarUsuario = ({ onVolver }) => {
                 <h3 className='text-dark mb-0 flex-grow-1 text-truncate pe-2'>
                   {modoEdicion
                     ? `✏️ Editando: ${usuarioSeleccionado.usuario || usuarioSeleccionado.username}`
-                    : `👤 Detalles: ${usuarioSeleccionado.usuario || usuarioSeleccionado.username}`}
+                    : `Detalles: ${usuarioSeleccionado.usuario || usuarioSeleccionado.username}`}
                 </h3>
 
                 <div className="detalle-actions d-flex align-items-center gap-2 flex-shrink-0">

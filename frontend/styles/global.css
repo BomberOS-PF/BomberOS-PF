@@ -96,6 +96,27 @@ body {
   border-radius: 0.5rem;
 }
 
+/* Hace que los switches se vean y alineen como un input */
+.only-thumb {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  height: 38px;
+  /* mismo alto que .form-control */
+  padding: .375rem .75rem;
+}
+
+.only-thumb .form-check-input {
+  margin: 0;
+}
+
+.only-thumb .form-check-label {
+  margin: 0;
+  font-weight: 600;
+  color: var(--black);
+}
+
 /* =============================
    Botones
 ============================= */
@@ -932,17 +953,18 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: .35rem;              /* separa las dos flechas */
+    gap: .35rem;
+    /* separa las dos flechas */
     flex-wrap: nowrap;
   }
 
   /* Oculta el "1 / 2" del centro */
-  .rg-pager .btn-group > span {
+  .rg-pager .btn-group>span {
     display: none !important;
   }
 
   /* Botones compactos; ocultamos SOLO el texto con font-size:0 */
-  .rg-pager .btn-group > button {
+  .rg-pager .btn-group>button {
     width: 34px;
     height: 30px;
     padding: 0 !important;
@@ -951,44 +973,68 @@ body {
     justify-content: center;
     position: relative;
 
-    font-size: 0 !important;     /* oculta el label pero conserva el color */
+    font-size: 0 !important;
+    /* oculta el label pero conserva el color */
     line-height: 0 !important;
     overflow: hidden !important;
     white-space: nowrap !important;
   }
 
   /* Si hubiese hijos (spans/iconos), ocultalos */
-  .rg-pager .btn-group > button > * {
+  .rg-pager .btn-group>button>* {
     display: none !important;
   }
 
   /* Flecha izquierda / derecha: heredan el color del botón */
-  .rg-pager .btn-group > button:first-of-type::before,
-  .rg-pager .btn-group > button:last-of-type::before {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1rem; line-height: 1; text-indent: 0;
-    color: inherit;               /* usa el color del tema del botón */
+  .rg-pager .btn-group>button:first-of-type::before,
+  .rg-pager .btn-group>button:last-of-type::before {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    line-height: 1;
+    text-indent: 0;
+    color: inherit;
+    /* usa el color del tema del botón */
   }
-  .rg-pager .btn-group > button:first-of-type::before { content: '‹'; }
-  .rg-pager .btn-group > button:last-of-type::before  { content: '›'; }
+
+  .rg-pager .btn-group>button:first-of-type::before {
+    content: '‹';
+  }
+
+  .rg-pager .btn-group>button:last-of-type::before {
+    content: '›';
+  }
 
   /* Asegura que el deshabilitado siga viéndose claro */
-  .rg-pager .btn-group > button:disabled {
-    opacity: 1;                   /* evita que se “apague” */
-    filter: saturate(.85);        /* leve diferencia visual opcional */
+  .rg-pager .btn-group>button:disabled {
+    opacity: 1;
+    /* evita que se “apague” */
+    filter: saturate(.85);
+    /* leve diferencia visual opcional */
     cursor: default;
   }
 }
 
 /* Mantiene el header estable y permite truncar el título */
-.detalle-header { gap: .5rem }
-.detalle-header > h3 { min-width: 0 }      /* habilita truncado en flex */
-.detalle-actions { flex-wrap: nowrap }
+.detalle-header {
+  gap: .5rem
+}
+
+.detalle-header>h3 {
+  min-width: 0
+}
+
+/* habilita truncado en flex */
+.detalle-actions {
+  flex-wrap: nowrap
+}
 
 /* En móviles: permití 2 líneas como máximo (si preferís truncado a 1 línea, borrá esto) */
 @media (max-width: 576px) {
-  .detalle-header > h3 {
+  .detalle-header>h3 {
     /* estándar */
     line-clamp: 2;
 
@@ -1000,11 +1046,16 @@ body {
     overflow: hidden;
     word-break: break-word;
   }
+
+  .detalle-header h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0;
+  }
 }
 
 /* En desktop: una sola línea con “…” */
 @media (min-width: 577px) {
-  .detalle-header > h3 {
+  .detalle-header>h3 {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

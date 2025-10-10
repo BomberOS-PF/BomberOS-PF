@@ -281,7 +281,7 @@ const ConsultarRol = ({ onVolver }) => {
             <div className='mt-4'>
               <div className='detalle-header d-flex align-items-center justify-content-between mb-3'>
                 <h3 className='text-dark mb-0 flex-grow-1 text-truncate pe-2'>
-                  {modoEdicion ? `✏️ Editando: ${rolSeleccionado.nombreRol}` : `👁️ Detalles: ${rolSeleccionado.nombreRol}`}
+                  {modoEdicion ? `✏️ Editando: ${rolSeleccionado.nombreRol}` : `Detalles: ${rolSeleccionado.nombreRol}`}
                 </h3>
 
                 <div className="detalle-actions d-flex align-items-center gap-2 flex-shrink-0">
