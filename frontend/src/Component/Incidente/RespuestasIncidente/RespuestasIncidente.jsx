@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './RespuestasIncidente.css'
-import { buildApiUrl } from '../config/api'
+import { buildApiUrl } from '../../../config/api'
 
 const RespuestasIncidente = ({ idIncidente, onVolver }) => {
   const [respuestas, setRespuestas] = useState(null)

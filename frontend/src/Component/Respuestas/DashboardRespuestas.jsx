@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './DashboardRespuestas.css'
-import { buildApiUrl } from '../config/api'
+import { buildApiUrl } from '../../config/api'
 
 const DashboardRespuestas = () => {
   const [dashboard, setDashboard] = useState(null)

@@ -49,40 +49,52 @@ export class WhatsAppService {
       // Intentar enviar con botones interactivos primero
       let result
       try {
-        // Opción 1: Usar Content Template con botones (si está configurado)
-        if (this.config.contentSid) {
-          result = await this.client.messages.create({
-            from: this.config.whatsappNumber,
-            to: `whatsapp:${telefono}`,
-            contentSid: this.config.contentSid,
-            contentVariables: JSON.stringify({
-              '1': bombero.nombre || 'Bombero',
-              '2': incidente.tipo,
-              '3': new Date(incidente.fecha).toLocaleString('es-AR'),
-              '4': incidente.ubicacion,
-              '5': incidente.id
+        const sendMessage = async () => {
+          if (this.config.contentSid) {
+            return await this.client.messages.create({
+              from: this.config.whatsappNumber,
+              to: `whatsapp:${telefono}`,
+              contentSid: this.config.contentSid,
+              contentVariables: JSON.stringify({
+                '1': bombero.nombre || 'Bombero',
+                '2': incidente.tipo,
+                '3': new Date(incidente.fecha).toLocaleString('es-AR'),
+                '4': incidente.ubicacion,
+                '5': incidente.id
+              })
             })
-          })
-          
-          logger.info('📱 Mensaje enviado con template y botones', {
-            contentSid: this.config.contentSid
-          })
-        } else {
-          throw new Error('ContentSid no configurado')
+          } else {
+            throw new Error('ContentSid no configurado')
+          }
         }
+
+        result = await Promise.race([
+          sendMessage(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout: Twilio tardó demasiado en responder')), 10000)
+          )
+        ])
+        
+        logger.info('📱 Mensaje enviado con template y botones', {
+          contentSid: this.config.contentSid
+        })
       } catch (templateError) {
         logger.warn('📱 Template con botones no disponible, usando mensaje simple', {
           error: templateError.message
         })
         
-        // Opción 2: Mensaje simple con instrucciones claras
         const mensaje = this.construirMensajeIncidenteConBotones(bombero, incidente)
         
-        result = await this.client.messages.create({
-          from: this.config.whatsappNumber,
-          to: `whatsapp:${telefono}`,
-          body: mensaje
-        })
+        result = await Promise.race([
+          this.client.messages.create({
+            from: this.config.whatsappNumber,
+            to: `whatsapp:${telefono}`,
+            body: mensaje
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout: Twilio tardó demasiado en responder')), 10000)
+          )
+        ])
       }
 
       logger.info('📱 WhatsApp enviado exitosamente', {
