@@ -4,6 +4,7 @@ import { Flame, AlertTriangle, FileText, User, Clock, MapPin, Phone } from 'luci
 import { API_URLS, apiRequest, buildApiUrl } from '../../../config/api'
 import { BackToMenuButton } from '../../Common/Button.jsx'
 import Select from 'react-select'
+import { swalConfirm, swalError } from '../../Common/swalBootstrap'
 
 const CargarIncidente = ({ onVolver, onNotificar }) => {
   const now = new Date()
@@ -128,7 +129,14 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
     e.preventDefault()
     try {
       const incidenteGuardado = await guardarIncidente()
-      alert('✅ Incidente guardado correctamente.\n\n⚠️ ATENCIÓN: No se ha notificado a los bomberos.\nPodrás notificarlos más tarde desde "Consultar Incidente".')
+
+      await swalConfirm({
+        title: 'Incidente guardado',
+        html: '✅ El incidente se guardó correctamente. ⚠️!!ATENCIÓN!! Aún no se notificó a los bomberos. Podrás hacerlo más tarde desde Consultar Incidente.',
+        icon: 'success',
+        confirmText: 'Entendido',
+        showCancel: false
+      })
       setIncidenteCreado(incidenteGuardado)
 
       if (onNotificar) {
@@ -146,7 +154,7 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
         onNotificar(formData.tipoSiniestro, datosParaFormulario)
       }
     } catch (error) {
-      alert(`Error: ${error.message}`)
+      await swalError('Error al guardar', error.message)
     }
   }
 
@@ -165,7 +173,6 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
         console.log('💾 Guardando incidente automáticamente antes de notificar...')
         incidente = await guardarIncidente()
         setIncidenteCreado(incidente)
-        console.log('✅ Incidente guardado:', incidente)
       }
 
       console.log('📱 Enviando notificación WhatsApp para incidente:', incidente.idIncidente)
