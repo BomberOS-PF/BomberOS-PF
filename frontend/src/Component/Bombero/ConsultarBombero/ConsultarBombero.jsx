@@ -164,7 +164,7 @@ const ConsultarBombero = ({ onVolver }) => {
   }
 
   return (
-    <div className='container-fluid py-5'>
+    <div className='container-fluid py-5 consultar-incidente registrar-guardia consultar-grupo'>
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
           <div className="bg-danger p-3 rounded-circle">
@@ -177,7 +177,7 @@ const ConsultarBombero = ({ onVolver }) => {
         </span>
       </div>
 
-      <div className="card edge-to-edge shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+      <div className="card edge-to-edge shadow-sm border-0 bg-white">
         <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
           <User2 />
           <strong>Listado de Bomberos</strong>
@@ -239,7 +239,7 @@ const ConsultarBombero = ({ onVolver }) => {
 
                       {items.length > 0 ? (
                         <div className="table-responsive rounded border">
-                          <table className="table table-hover align-middle mb-0">
+                          <table className="table table-hover align-middle mb-0 rg-table">
                             <thead className="bg-light">
                               <tr>
                                 <th className="border-end text-center">Nombre completo</th>
@@ -254,29 +254,32 @@ const ConsultarBombero = ({ onVolver }) => {
                                 .sort((a, b) => (a.apellido || '').localeCompare(b.apellido || ''))
                                 .map((bombero) => (
                                   <tr key={bombero.dni}>
-                                    <td className="border-end px-3">{bombero.apellido} {bombero.nombre}</td>
-                                    <td className="border-end px-3">{bombero.dni}</td>
-                                    <td className="border-end px-2">{bombero.telefono || 'N/A'}</td>
-                                    <td className="border-end">
+                                    <td className="border-end" data-label="Nombre">{bombero.apellido} {bombero.nombre}</td>
+                                    <td className="border-end" data-label="DNI">{bombero.dni}</td>
+                                    <td className="border-end" data-label="Telefono">{bombero.telefono || 'N/A'}</td>
+                                    <td className="border-end" data-label="Plan">
                                       <span className={`badge ${bombero.esDelPlan ? 'bg-success' : 'bg-secondary'}`}>
                                         {bombero.esDelPlan ? 'Sí' : 'No'}
                                       </span>
                                     </td>
-                                    <td className="text-center">
-                                      <button
-                                        className="btn btn-outline-secondary btn-detail me-2"
-                                        onClick={() => seleccionarBombero(bombero)}
-                                        disabled={loading || loadingAccion}
-                                      >
-                                        <i className="bi bi-eye me-1"></i> Ver
-                                      </button>
-                                      <button
-                                        className="btn btn-outline-danger btn-detail"
-                                        onClick={() => eliminarBombero(bombero)}
-                                        disabled={loading || loadingAccion}
-                                      >
-                                        <i className="bi bi-trash"></i>
-                                      </button>
+                                    <td className="text-center" data-label="Acciones">
+                                      <div className="d-inline-flex align-items-center justify-content-center gap-2 flex-nowrap actions-inline">
+                                        <button
+                                          className="btn btn-outline-secondary btn-detail btn-ver"
+                                          onClick={() => seleccionarBombero(bombero)}
+                                          disabled={loading || loadingAccion}
+                                        >
+                                          <i className="bi bi-eye"></i>
+                                          <span className="btn-label ms-1">Ver</span>
+                                        </button>
+                                        <button
+                                          className="btn btn-outline-danger btn-detail btn-trash"
+                                          onClick={() => eliminarBombero(bombero)}
+                                          disabled={loading || loadingAccion}
+                                        >
+                                          <i className="bi bi-trash"></i>
+                                        </button>
+                                      </div>
                                     </td>
                                   </tr>
                                 ))}
@@ -301,36 +304,34 @@ const ConsultarBombero = ({ onVolver }) => {
           {/* Detalle / Edición */}
           {bomberoSeleccionado && (
             <div className="mt-4">
-              <div className="d-flex align-items-center justify-content-between mb-3">
-                <div className="d-flex align-items-center gap-2">
-                  <i className="text-secondary fs-5"></i>
-                  <h3 className="text-dark mb-0">
-                    {modoEdicion
-                      ? `✏️ Editando: ${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}`
-                      : `👤 Detalles: ${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}`}
-                  </h3>
-                </div>
-
-                <div>
+              <div className="detalle-header d-flex align-items-center justify-content-between mb-3">
+                <h3 className="text-dark mb-0 flex-grow-1 text-truncate pe-2">
+                  {modoEdicion
+                    ? `✏️ Editando: ${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}`
+                    : `👤 Detalles: ${bomberoSeleccionado.nombre} ${bomberoSeleccionado.apellido}`}
+                </h3>
+                
+                <div className="detalle-actions d-flex align-items-center gap-2 flex-shrink-0">
                   {!modoEdicion && (
                     <button
                       className="btn btn-warning btn-sm me-2 d-flex align-items-center gap-1"
                       onClick={activarEdicion}
+                      disabled={loadingAccion}
                     >
                       <i className="bi bi-pencil-square"></i>
-                      Editar
+                      <span className="d-none d-sm-inline">Editar</span>
                     </button>
                   )}
                   <button
                     className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
                     onClick={volverListado}
+                    disabled={loadingAccion}
                   >
-                    <i className="bi bi-arrow-left"></i> Volver al listado
+                    <i className="bi bi-arrow-left"></i>
+                    <span className="d-none d-sm-inline">Volver al listado</span>
                   </button>
                 </div>
               </div>
-
-              <hr className="border-4 border-danger mb-4" />
 
               <div className="text-black border-2 shadow-lg">
                 <FormularioBombero

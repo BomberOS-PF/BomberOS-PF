@@ -980,3 +980,38 @@ body {
     cursor: default;
   }
 }
+
+/* Mantiene el header estable y permite truncar el título */
+.detalle-header { gap: .5rem }
+.detalle-header > h3 { min-width: 0 }      /* habilita truncado en flex */
+.detalle-actions { flex-wrap: nowrap }
+
+/* En móviles: permití 2 líneas como máximo (si preferís truncado a 1 línea, borrá esto) */
+@media (max-width: 576px) {
+  .detalle-header > h3 {
+    /* estándar */
+    line-clamp: 2;
+
+    /* fallback WebKit */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
+    word-break: break-word;
+  }
+}
+
+/* En desktop: una sola línea con “…” */
+@media (min-width: 577px) {
+  .detalle-header > h3 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Botones del header: que no cambien de tamaño con el texto */
+.detalle-actions .btn {
+  white-space: nowrap;
+}
