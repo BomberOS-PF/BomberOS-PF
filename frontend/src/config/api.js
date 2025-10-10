@@ -12,6 +12,15 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl()
 
+export const buildApiUrl = (path) => {
+  if (path.startsWith('/api/')) {
+    return path
+  }
+  
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path
+  return `${API_BASE_URL}/${cleanPath}`
+}
+
 const toQS = (params) => {
   if (!params || Object.keys(params).length === 0) return ''
   const searchParams = new URLSearchParams()

@@ -148,8 +148,19 @@ export const construirIncidenteHandler = (incidenteService) => {
           })
         }
       } catch (error) {
-        logger.error('❌ Error al notificar bomberos', { incidenteId: req.params.id, error: error.message })
-        next(error)
+        logger.error('❌ Error al notificar bomberos', { 
+          incidenteId: req.params.id, 
+          error: error.message,
+          stack: error.stack 
+        })
+        
+        if (!res.headersSent) {
+          res.status(500).json({
+            success: false,
+            message: 'Error interno al procesar la notificación',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno del servidor'
+          })
+        }
       }
     },
 
