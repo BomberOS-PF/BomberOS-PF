@@ -162,21 +162,65 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
 
     try {
       console.log('📱 Enviando notificación WhatsApp para incidente:', detalle.idIncidente)
+      const url = buildApiUrl(`/api/incidentes/${detalle.idIncidente}/notificar`)
+      console.log('📱 URL construida:', url)
 
-      const resp = await fetch(buildApiUrl(`/api/incidentes/${detalle.idIncidente}/notificar`), {        
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 segundos timeout
+
+      const resp = await fetch(url, {        
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-        }
+        },
+        signal: controller.signal
+      })
+      
+      clearTimeout(timeoutId)
+      
+      console.log('📱 Respuesta recibida:', {
+        status: resp.status,
+        statusText: resp.statusText,
+        ok: resp.ok,
+        url: resp.url,
+        headers: Object.fromEntries(resp.headers.entries())
       })
 
       if (!resp.ok) {
-        const errorData = await resp.json().catch(() => ({}))
+        let errorData = {}
+        try {
+          const text = await resp.text()
+          if (text) {
+            errorData = JSON.parse(text)
+          }
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError)
+          errorData = { message: `Error ${resp.status}: ${resp.statusText}` }
+        }
         throw new Error(errorData.message || `Error ${resp.status}: ${resp.statusText}`)
       }
 
-      const resultado = await resp.json()
+      let resultado = {}
+      try {
+        const text = await resp.text()
+        console.log('📱 Contenido de la respuesta:', {
+          text: text,
+          length: text.length,
+          isEmpty: text.length === 0,
+          firstChars: text.substring(0, 100)
+        })
+        
+        if (text) {
+          resultado = JSON.parse(text)
+        } else {
+          throw new Error('Respuesta vacía del servidor')
+        }
+      } catch (parseError) {
+        console.error('Error parsing success response:', parseError)
+        console.error('📱 Texto que causó el error:', text)
+        throw new Error('Error al procesar la respuesta del servidor')
+      }
 
       if (resultado.success) {
         const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = resultado.data
@@ -195,8 +239,18 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
       }
     } catch (error) {
       console.error('❌ Error al notificar por WhatsApp:', error)
-      alert(`❌ Error al notificar por WhatsApp: ${error.message}`)
-      setErrorGlobal(`Error al notificar: ${error.message}`)
+      
+      let errorMessage = error.message
+      if (error.name === 'AbortError') {
+        errorMessage = 'La notificación tardó demasiado tiempo. Por favor intenta nuevamente.'
+      } else if (error.message.includes('Failed to fetch')) {
+        errorMessage = 'Error de conexión con el servidor. Verifica tu conexión a internet.'
+      } else if (error.message.includes('Unexpected end of JSON input')) {
+        errorMessage = 'El servidor devolvió una respuesta inválida. Por favor intenta nuevamente.'
+      }
+      
+      alert(`❌ Error al notificar por WhatsApp: ${errorMessage}`)
+      setErrorGlobal(`Error al notificar: ${errorMessage}`)
     } finally {
       setNotificandoBomberos(false)
     }
