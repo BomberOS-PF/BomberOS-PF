@@ -333,7 +333,7 @@ const ConsultarBombero = ({ onVolver }) => {
                 </div>
               </div>
 
-              <div className="text-black border-2 shadow-lg">
+              <div className="card bg-light border-0 shadow-sm py-4">
                 <FormularioBombero
                   modo={modoEdicion ? 'edicion' : 'consulta'}
                   datosIniciales={bomberoSeleccionado}
