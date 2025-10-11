@@ -156,7 +156,7 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
   const notificarBomberos = async () => {
   const idIncidente = datosPrevios.idIncidente || datosPrevios.id
   if (!idIncidente) {
-    await swalError('No se puede notificar', 'El incidente aún no ha sido guardado.')
+    alert('❌ No se puede notificar: el incidente aún no ha sido guardado')
     return
   }
 
