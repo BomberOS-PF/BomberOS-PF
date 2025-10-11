@@ -285,102 +285,103 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
   }
 
   return (
-    <div className="container-fluid py-5">
-      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
-        <div className="card-body">
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3 col-md-5">
-              <label htmlFor="idCausaAccidente" className="form-label text-dark d-flex align-items-center gap-2">Causa del accidente *</label>
-              <Select
-                options={causasAccidente.map(c => ({
-                  value: c.idCausaAccidente,
-                  label: c.descripcion
-                }))}
-                value={
-                  causasAccidente
-                    .map(c => ({ value: c.idCausaAccidente, label: c.descripcion }))
-                    .find(opt => opt.value === formData.idCausaAccidente) || null
-                }
-                onChange={(opcion) =>
-                  setFormData(prev => ({ ...prev, idCausaAccidente: opcion ? opcion.value : '' }))
-                }
-                classNamePrefix="rs"
-                placeholder="Seleccionar causa del accidente"
-                isClearable
-              />
-              {errors.idCausaAccidente && <div className="invalid-feedback" id="error-idCausaAccidente">{errors.idCausaAccidente}</div>}
-            </div>
-
-            <hr className="border-1 border-black mb-2" />
-
-            <VehiculosFormList
-              value={formData.vehiculos}
-              onChange={(nuevoArr) => setFormData(prev => ({ ...prev, vehiculos: nuevoArr }))}
-              title="Vehículos involucrados"
-            />
-            {errors.vehiculos && (
-              <div className="alert alert-danger" role="alert">
-                {errors.vehiculos}
-              </div>
-            )}
-
-            <hr className="border-1 border-black mb-2" />
-
-            <div className="mb-3">
-              <label className="form-label text-dark d-flex align-items-center gap-2">Detalle de lo sucedido *</label>
-              <textarea className={`form-control${errors.detalle ? ' is-invalid' : ''}`} rows="3" id="detalle" value={formData.detalle || ''} onChange={handleChange} aria-describedby="error-detalle"></textarea>
-              {errors.detalle && <div className="invalid-feedback" id="error-detalle">{errors.detalle}</div>}
-            </div>
-
-            <hr className="border-1 border-black mb-2" />
-
-            <DamnificadosForm
-              value={formData.damnificados}
-              onChange={(nuevoArray) => setFormData(prev => ({ ...prev, damnificados: nuevoArray }))}
-              title="Personas damnificadas"
-            />
-
-            <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
-              <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
-                Continuar después
-              </button>
-
-
-              <button
-                type="button"
-                className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2"
-                onClick={notificarBomberos}
-                disabled={loading || notificando}
-              >
-                {notificando ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    Notificando...
-                  </>
-                ) : (
-                  <>
-                    <i className='bi bi-megaphone'></i> Notificar Bomberos
-                  </>
-                )}
-              </button>
-
-              <button type="button" className="btn btn-accept btn-medium" disabled={loading || notificando} onClick={() => handleSubmit()}>
-                {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
-              </button>
-            </div>
-
-          </form>
+    <div>
+      <form onSubmit={handleSubmit} className="at-form">
+        <div className="mb-3 col-md-5 at-causa">
+          <label htmlFor="idCausaAccidente" className="form-label text-dark d-flex align-items-center gap-2">Causa del accidente *</label>
+          <Select
+            options={causasAccidente.map(c => ({
+              value: c.idCausaAccidente,
+              label: c.descripcion
+            }))}
+            value={
+              causasAccidente
+                .map(c => ({ value: c.idCausaAccidente, label: c.descripcion }))
+                .find(opt => opt.value === formData.idCausaAccidente) || null
+            }
+            onChange={(opcion) =>
+              setFormData(prev => ({ ...prev, idCausaAccidente: opcion ? opcion.value : '' }))
+            }
+            classNamePrefix="rs"
+            placeholder="Seleccionar causa del accidente"
+            isClearable
+          />
+          {errors.idCausaAccidente && <div className="invalid-feedback" id="error-idCausaAccidente">{errors.idCausaAccidente}</div>}
         </div>
 
+        <hr className="border-1 border-black mb-2" />
+
+        <div className="at-vehiculos">
+          <VehiculosFormList
+            value={formData.vehiculos}
+            onChange={(nuevoArr) => setFormData(prev => ({ ...prev, vehiculos: nuevoArr }))}
+            title="Vehículos involucrados"
+          />
+          {errors.vehiculos && (
+            <div className="alert alert-danger" role="alert">
+              {errors.vehiculos}
+            </div>
+          )}
+        </div>
+
+        <hr className="border-1 border-black mb-2" />
+
+        <div className="mb-3 at-detalle">
+          <label className="form-label text-dark d-flex align-items-center gap-2">Detalle de lo sucedido *</label>
+          <textarea className={`form-control${errors.detalle ? ' is-invalid' : ''}`} rows="3" id="detalle" value={formData.detalle || ''} onChange={handleChange} aria-describedby="error-detalle"></textarea>
+          {errors.detalle && <div className="invalid-feedback" id="error-detalle">{errors.detalle}</div>}
+        </div>
+
+        <hr className="border-1 border-black mb-2" />
+
+        <div className="at-damnificados">
+          <DamnificadosForm
+            value={formData.damnificados}
+            onChange={(nuevoArray) => setFormData(prev => ({ ...prev, damnificados: nuevoArray }))}
+            title="Personas damnificadas"
+          />
+        </div>
+
+        <div className="d-flex justify-content-center align-items-center gap-3 mb-3 at-actions">
+        </div>
+
+        <div className='d-flex justify-content-center align-items-center gap-3 mb-3 at-actions'>
+          <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
+            Continuar después
+          </button>
 
 
-        {errorMsg && (
-          <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">{errorMsg}</div>
-        )}
-        {successMsg && (
-          <div ref={toastRef} tabIndex={-1} className="alert alert-success mt-3" role="alert">{successMsg}</div>
-        )}
-      </div>
+          <button
+            type="button"
+            className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2"
+            onClick={notificarBomberos}
+            disabled={loading || notificando}
+          >
+            {notificando ? (
+              <>
+                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Notificando...
+              </>
+            ) : (
+              <>
+                <i className='bi bi-megaphone'></i> Notificar Bomberos
+              </>
+            )}
+          </button>
+
+          <button type="button" className="btn btn-accept btn-medium" disabled={loading || notificando} onClick={() => handleSubmit()}>
+            {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
+          </button>
+        </div>
+
+      </form>
+
+      {errorMsg && (
+        <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">{errorMsg}</div>
+      )}
+      {successMsg && (
+        <div ref={toastRef} tabIndex={-1} className="alert alert-success mt-3" role="alert">{successMsg}</div>
+      )}
     </div>
   )
 }

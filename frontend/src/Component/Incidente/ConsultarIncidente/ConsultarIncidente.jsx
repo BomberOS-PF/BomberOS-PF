@@ -318,7 +318,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
             <h3 className='text-dark mb-0'>
               {modoEdicion
                 ? `✏️ Editando: Incidente #${detalle?.idIncidente}`
-                : `📋 Detalles: Incidente #${detalle?.idIncidente} - ${detalle?.tipoDescripcion}`
+                : `Detalles: Incidente #${detalle?.idIncidente} - ${detalle?.tipoDescripcion}`
               }
             </h3>
           </div>
@@ -360,8 +360,6 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
             </button>
           </div>
         </div>
-
-        <hr className='border-4 border-danger mb-4' />
 
         <div className='card bg-light border-0 shadow-sm py-4' style={{ borderRadius: '12px' }}>
           <div className='card-body'>
@@ -471,7 +469,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                       <div className='bg-danger p-2 icon-circle me-3'>
                         <i className='bi bi-gear text-white fs-5'></i>
                       </div>
-                      <h5 className='text-danger mb-0 fw-bold'>Detalles Específicos del Tipo de Incidente</h5>
+                      <h5 className='text-danger mb-0 fw-bold'>Detalles específicos del tipo de incidente</h5>
                     </div>
 
                     {!modoEdicion && (
@@ -481,12 +479,13 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                         disabled={loadingDetalle}
                       >
                         <i className='bi bi-x-circle'></i>
-                        Cerrar
+                        <span className="d-none d-sm-inline">Volver al listado</span>
+                        
                       </button>
                     )}
                   </div>
 
-                  <div className='bg-light rounded p-4 border'>
+                  <div className='inc-especifico p-0'>
                     {renderFormularioEspecificoInline()}
                   </div>
                 </div>

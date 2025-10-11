@@ -160,7 +160,10 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
 
   const notificarPorWhatsapp = async () => {
     if (!datosEsencialesCompletos()) {
-      alert('❌ Debe completar al menos el tipo de siniestro, localización y lugar del incidente')
+      await swalError(
+        'Faltan datos',
+        'Debes completar al menos el tipo de siniestro, la localización y el lugar del incidente.'
+      )
       return
     }
 
@@ -170,12 +173,10 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
     try {
       let incidente = incidenteCreado
       if (!incidente) {
-        console.log('💾 Guardando incidente automáticamente antes de notificar...')
+        // Guardamos automáticamente si aún no existe
         incidente = await guardarIncidente()
         setIncidenteCreado(incidente)
       }
-
-      console.log('📱 Enviando notificación WhatsApp para incidente:', incidente.idIncidente)
 
       const resp = await fetch(buildApiUrl(`/api/incidentes/${incidente.idIncidente}/notificar`), {
         method: 'POST',
@@ -194,39 +195,68 @@ const CargarIncidente = ({ onVolver, onNotificar }) => {
 
       if (resultado.success) {
         const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = resultado.data
-        alert(`🚨 ALERTA ENVIADA POR WHATSAPP ✅
-        
-📊 Resumen:
-• Total bomberos: ${totalBomberos}
-• Notificaciones exitosas: ${notificacionesExitosas}
-• Notificaciones fallidas: ${notificacionesFallidas}
 
-Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
+        await swalConfirm({
+          title: 'Alerta enviada por WhatsApp',
+          icon: 'success',
+          confirmText: 'Entendido',
+          showCancel: false,
+          // HTML con un diseño más claro (solo presentación, sin cambiar funcionalidad)
+          html: `
+          <div style="text-align:left">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+              <div style="background:#198754;width:28px;height:28px;border-radius:50%;
+                          display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">✓</div>
+              <div><b>Notificación enviada</b> a la dotación</div>
+            </div>
+
+            <div style="background:#f8f9fa;border:1px solid #e9ecef;border-radius:8px;padding:12px;margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span>Total de bomberos</span>
+                <span><b>${totalBomberos}</b></span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span>Notificaciones exitosas</span>
+                <span style="color:#198754;"><b>${notificacionesExitosas}</b></span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span>Notificaciones fallidas</span>
+                <span style="color:#dc3545;"><b>${notificacionesFallidas}</b></span>
+              </div>
+            </div>
+
+            <small style="display:block;color:#6c757d;">
+              Los bomberos pueden responder <b>"SI"</b> o <b>"NO"</b> por WhatsApp para confirmar su asistencia.
+            </small>
+          </div>
+        `
+        })
+
+        if (onNotificar) {
+          const datosParaFormulario = {
+            ...incidente,
+            tipoSiniestro: formData.tipoSiniestro,
+            fechaHora: formData.fechaHora,
+            localizacion: formData.localizacion,
+            lugar: formData.lugar,
+            nombreDenunciante: formData.nombreDenunciante,
+            apellidoDenunciante: formData.apellidoDenunciante,
+            telefonoDenunciante: formData.telefonoDenunciante,
+            dniDenunciante: formData.dniDenunciante
+          }
+          onNotificar(formData.tipoSiniestro, datosParaFormulario)
+        }
       } else {
         throw new Error(resultado.message || 'Error al enviar notificación')
       }
-
-      if (onNotificar) {
-        const datosParaFormulario = {
-          ...incidente,
-          tipoSiniestro: formData.tipoSiniestro,
-          fechaHora: formData.fechaHora,
-          localizacion: formData.localizacion,
-          lugar: formData.lugar,
-          nombreDenunciante: formData.nombreDenunciante,
-          apellidoDenunciante: formData.apellidoDenunciante,
-          telefonoDenunciante: formData.telefonoDenunciante,
-          dniDenunciante: formData.dniDenunciante
-        }
-        onNotificar(formData.tipoSiniestro, datosParaFormulario)
-      }
     } catch (error) {
       console.error('❌ Error al notificar por WhatsApp:', error)
-      alert(`❌ Error al notificar por WhatsApp: ${error.message}`)
+      await swalError('Error al notificar por WhatsApp', error.message)
     } finally {
       setNotificandoBomberos(false)
     }
   }
+
 
   return (
     <div className='container'>
