@@ -396,21 +396,20 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
                         type="button"
                         className="btn btn-sm btn-outline-danger"
                         onClick={async () => {
-                          const r = await swalConfirm({
-                            title: 'Eliminar ficha médica',
-                            html: '¿Seguro que deseas eliminar la ficha médica actual? Podrás subir una nueva.',
-                            confirmText: 'Eliminar',
-                            icon: 'warning'
-                          })
-                          if (!r.isConfirmed) return
-
-                          setFormData(prev => ({
-                            ...prev,
-                            fichaMedica: null,
-                            fichaMedicaArchivo: null
-                          }))
-
-                          swalToast({ title: 'Ficha médica eliminada', icon: 'success' })
+                          try {
+                            const response = await fetch(buildApiUrl(`/api/bomberos/${formData.dni}/ficha-medica`))
+                            if (response.ok) {
+                              const blob = await response.blob()
+                              const url = window.URL.createObjectURL(blob)
+                              window.open(url, '_blank')
+                              setTimeout(() => window.URL.revokeObjectURL(url), 100)
+                            } else {
+                              alert('Error al descargar la ficha médica')
+                            }
+                          } catch (error) {
+                            console.error('Error:', error)
+                            alert('Error al descargar la ficha médica')
+                          }
                         }}
                         title="Eliminar archivo"
                       >
