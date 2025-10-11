@@ -641,24 +641,6 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
             )}
           </button>
 
-          <button
-            type="button"
-            className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2"
-            onClick={notificarBomberos}
-            disabled={loading || notificando}
-          >
-            {notificando ? (
-              <>
-                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                Notificando...
-              </>
-            ) : (
-              <>
-                <i className='bi bi-megaphone'></i> Notificar Bomberos
-              </>
-            )}
-          </button>
-
           <button type="submit" className="btn btn-accept btn-medium" disabled={loading || notificando}>
             {loading ? 'Cargando...' : 'Finalizar carga'}
           </button>

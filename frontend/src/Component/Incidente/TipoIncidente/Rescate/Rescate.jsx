@@ -394,8 +394,8 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
         </div>
 
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3 at-actions'>
-          <button type="button" className="btn btn-accept btn-medium" disabled={loading || notificando} onClick={() => handleSubmit()}>
-            {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
+          <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
+            Continuar después
           </button>
 
           <button
@@ -416,8 +416,8 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
             )}
           </button>
 
-          <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
-            Continuar después
+          <button type="button" className="btn btn-accept btn-medium" disabled={loading || notificando} onClick={() => handleSubmit()}>
+            {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
           </button>
         </div>
 
