@@ -38,24 +38,49 @@ export const construirIncidenteHandler = (incidenteService) => {
         const desde = req.query.desde ?? ''
         const hasta = req.query.hasta ?? ''
 
+        logger.info('📋 Listar incidentes con filtros', { 
+          pagina, limite, busqueda, tipo, desde, hasta 
+        })
+
         const { data, total } = await incidenteService.listarConFiltros({
           pagina, limite, busqueda, tipo, desde, hasta
         })
 
-        // ⬇⬇⬇ AQUI: incluir descripcion y localizacion
+        if (!Array.isArray(data)) {
+          logger.warn('⚠️ listarConFiltros no devolvió un array', { data })
+          return res.status(200).json({
+            success: true,
+            data: [],
+            total: 0
+          })
+        }
+
+        const incidentes = data.map(row => ({
+          idIncidente: row.idIncidente,
+          fecha: row.fecha,
+          tipoDescripcion: row.tipoDescripcion || 'Sin tipo',
+          descripcion: row.descripcion || 'Sin descripción',
+          localizacion: row.localizacion || 'Sin localización',
+          estado: row.estado || 'Activo',
+          idTipoIncidente: row.idTipoIncidente,
+          idLocalizacion: row.idLocalizacion
+        }))
+
+        logger.info('✅ Incidentes listados correctamente', { 
+          count: incidentes.length, 
+          total 
+        })
+
         res.status(200).json({
-          data: data.map(row => ({
-            idIncidente: row.idIncidente,
-            fecha: row.fecha,
-            tipoDescripcion: row.tipoDescripcion,
-            descripcion: row.descripcion,        // 👈 ahora viaja
-            localizacion: row.localizacion,      // 👈 ahora viaja
-            // si más adelante agregás estado/denunciante/dniUsuario, los pones acá
-          })),
-          total
+          success: true,
+          data: incidentes,
+          total: total || 0
         })
       } catch (error) {
-        logger.error('❌ Error al listar incidentes', { error: error.message })
+        logger.error('❌ Error al listar incidentes', { 
+          error: error.message,
+          stack: error.stack 
+        })
         next(error)
       }
     },
@@ -120,7 +145,8 @@ export const construirIncidenteHandler = (incidenteService) => {
         logger.info('📱 Solicitud de notificación de bomberos recibida', { 
           incidenteId: id,
           method: req.method,
-          path: req.path 
+          path: req.path,
+          headers: req.headers
         })
 
         if (!id || isNaN(parseInt(id))) {
@@ -138,54 +164,51 @@ export const construirIncidenteHandler = (incidenteService) => {
           })
         }
 
+        logger.info('🚀 Ejecutando notificación de incidente', { id })
         const resultado = await incidenteService.notificarBomberosIncidente(id)
 
-        logger.info('📊 Resultado de notificación', { 
+        logger.info('📊 Resultado de notificación completo', { 
           incidenteId: id,
-          success: resultado.success,
-          total: resultado.total,
-          exitosos: resultado.exitosos,
-          fallidos: resultado.fallidos,
-          message: resultado.message
+          resultado: {
+            success: resultado.success,
+            total: resultado.total,
+            exitosos: resultado.exitosos,
+            fallidos: resultado.fallidos,
+            message: resultado.message
+          }
         })
+
+        const responseData = {
+          incidenteId: id,
+          totalBomberos: resultado.total || 0,
+          notificacionesExitosas: resultado.exitosos || 0,
+          notificacionesFallidas: resultado.fallidos || 0,
+          detalles: resultado.resultados || []
+        }
 
         if (resultado.success) {
           logger.info('✅ Notificación completada exitosamente', { 
             incidenteId: id, 
-            exitosos: resultado.exitosos, 
-            total: resultado.total 
+            responseData 
           })
           
           return res.status(200).json({
             success: true,
             message: resultado.message || 'Notificaciones enviadas correctamente',
-            data: {
-              incidenteId: id,
-              totalBomberos: resultado.total || 0,
-              notificacionesExitosas: resultado.exitosos || 0,
-              notificacionesFallidas: resultado.fallidos || 0,
-              detalles: resultado.resultados || []
-            }
+            data: responseData
           })
         } 
         
         logger.warn('⚠️ Notificación con fallas o incompleta', { 
           incidenteId: id, 
           message: resultado.message,
-          total: resultado.total,
-          fallidos: resultado.fallidos
+          responseData
         })
         
         return res.status(200).json({
           success: false,
           message: resultado.message || 'No se pudieron enviar las notificaciones',
-          data: {
-            incidenteId: id,
-            totalBomberos: resultado.total || 0,
-            notificacionesExitosas: resultado.exitosos || 0,
-            notificacionesFallidas: resultado.fallidos || 0,
-            detalles: resultado.resultados || []
-          }
+          data: responseData
         })
       } catch (error) {
         logger.error('❌ Error crítico en handler de notificación', { 
@@ -196,7 +219,7 @@ export const construirIncidenteHandler = (incidenteService) => {
         })
         
         if (!res.headersSent) {
-          return res.status(500).json({
+          return res.status(200).json({
             success: false,
             message: 'Error interno al procesar la notificación. Por favor, intenta nuevamente.',
             data: {
@@ -284,10 +307,5 @@ export const construirIncidenteHandler = (incidenteService) => {
     next(error)
   }
 },
-
-
-
-
   }
 }
-

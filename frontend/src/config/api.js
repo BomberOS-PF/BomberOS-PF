@@ -1,5 +1,4 @@
 const getApiBaseUrl = () => {
-  // si hay variables de entorno usarlas.
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL
   }
@@ -7,18 +6,37 @@ const getApiBaseUrl = () => {
   if (import.meta.env.PROD) {
     return 'https://bomberos-pf.onrender.com/api'
   }
+  
   return '/api'
 }
 
 const API_BASE_URL = getApiBaseUrl()
 
+/**
+ * @param {string} path - Ruta del endpoint (ej: '/incidentes' o 'incidentes' o '/api/incidentes')
+ * @returns {string} URL completa para fetch
+ */
 export const buildApiUrl = (path) => {
-  if (path.startsWith('/api/')) {
+  if (path.startsWith('http://') || path.startsWith('https://')) {
     return path
   }
   
-  const cleanPath = path.startsWith('/') ? path.slice(1) : path
-  return `${API_BASE_URL}/${cleanPath}`
+  let cleanPath = path
+  if (cleanPath.startsWith('/api/')) {
+    cleanPath = cleanPath.substring(5)
+  } else if (cleanPath.startsWith('api/')) {
+    cleanPath = cleanPath.substring(4)
+  }
+  
+  if (cleanPath.startsWith('/')) {
+    cleanPath = cleanPath.substring(1)
+  }
+  
+  if (import.meta.env.PROD) {
+    return `${API_BASE_URL}/${cleanPath}`
+  }
+  
+  return `/api/${cleanPath}`
 }
 
 const toQS = (params) => {
@@ -160,45 +178,80 @@ export const DEFAULT_HEADERS = {
   'Content-Type': 'application/json',
   'Accept': 'application/json'
 }
-
-// Helper fetch robusto
 export const apiRequest = async (url, options = {}) => {
   const config = {
     headers: DEFAULT_HEADERS,
     ...options
   }
 
+  if (!import.meta.env.PROD) {
+    console.log('🌐 API Request:', { url, method: config.method || 'GET' })
+  }
+
   try {
     const response = await fetch(url, config)
 
-    // 204 No Content
+    if (!import.meta.env.PROD) {
+      console.log(`📊 API Response: ${response.status} ${response.statusText}`)
+    }
+
     if (response.status === 204) {
       return { success: true, data: null }
     }
 
-    // Intentar texto y luego parsear JSON si corresponde
     const raw = await response.text()
+    
+    if (!raw || raw.trim().length === 0) {
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: El servidor no devolvió contenido`)
+      }
+      console.warn('⚠️ Respuesta vacía del servidor')
+      return { success: true, data: null }
+    }
+
     let data = null
     try {
-      data = raw ? JSON.parse(raw) : null
-    } catch {
-      // si no es JSON, dejamos data como null y seguimos
+      data = JSON.parse(raw)
+    } catch (parseError) {
+      console.error('❌ Error al parsear JSON:', {
+        error: parseError.message,
+        raw: raw.substring(0, 200),
+        url,
+        status: response.status
+      })
+      
+      if (!response.ok) {
+        throw new Error(
+          `Error ${response.status}: El servidor devolvió una respuesta no válida. ` +
+          `Contenido: ${raw.substring(0, 100)}`
+        )
+      }
+      
+      return { success: true, data: raw }
     }
 
     if (!response.ok) {
-      const error = new Error(
-        (data && (data.error || data.message)) || `Error en la solicitud (${response.status})`
-      )
+      const errorMessage = 
+        (data && (data.error || data.message)) || 
+        `Error en la solicitud (${response.status})`
+      
+      const error = new Error(errorMessage)
       error.status = response.status
-      error.response = data || raw
+      error.response = data
       throw error
     }
 
-    // Devolver lo que haya: objeto JSON o texto
-    return data ?? { success: true, data: raw }
+    return data
   } catch (error) {
-    console.error('❌ API Error:', error)
+    if (!import.meta.env.PROD) {
+      console.error('❌ API Error completo:', {
+        message: error.message,
+        url,
+        method: config.method || 'GET',
+        status: error.status
+      })
+    }
+    
     throw error
   }
 }
-
