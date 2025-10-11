@@ -186,11 +186,31 @@ export class IncidenteService extends IncidenteServiceInterface {
 
   // ================== LISTADOS / CONSULTAS ==================
   // ✅ nuevo: soporta filtros + paginado para el frontend
-  // application/services/incidente.service.js
   async listarConFiltros(filtros) {
-    const data = await this.incidenteRepository.buscarConFiltros(filtros)
-    const total = await this.incidenteRepository.contarConFiltros(filtros)
-    return { data, total }
+    try {
+      logger.debug('🔍 Buscando incidentes con filtros', { filtros })
+      
+      const data = await this.incidenteRepository.buscarConFiltros(filtros)
+      const total = await this.incidenteRepository.contarConFiltros(filtros)
+      
+      if (!Array.isArray(data)) {
+        logger.warn('⚠️ buscarConFiltros no devolvió un array', { data })
+        return { data: [], total: 0 }
+      }
+      
+      logger.debug('✅ Incidentes encontrados', { count: data.length, total })
+      
+      return { 
+        data: data || [], 
+        total: total || 0 
+      }
+    } catch (error) {
+      logger.error('❌ Error en listarConFiltros', { 
+        error: error.message,
+        filtros 
+      })
+      return { data: [], total: 0 }
+    }
   }
 
 
@@ -488,4 +508,3 @@ export class IncidenteService extends IncidenteServiceInterface {
     }
   }
 }
-
