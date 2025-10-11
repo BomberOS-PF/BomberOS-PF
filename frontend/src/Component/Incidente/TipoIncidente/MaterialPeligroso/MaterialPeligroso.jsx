@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import Select from 'react-select'
 import { API_URLS, apiRequest, buildApiUrl } from '../../../../config/api'
 import DamnificadosForm from '../../../Common/Damnificado.jsx'
+import { swalConfirm, swalError, swalToast } from '../../../Common/swalBootstrap'
+
 
 const safeRead = (key, fallback) => {
   try {
@@ -336,15 +338,16 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
       return
     }
 
-    const confirmar = window.confirm(
-      `¿Deseas notificar a los bomberos sobre el Incidente #${idIncidente}?\n\n` +
-      `Se enviará una alerta por WhatsApp a todos los bomberos activos.`
-    )
-
-    if (!confirmar) return
+    const pedir = await swalConfirm({
+      title: `Notificar bomberos`,
+      html: `¿Deseás notificar a la dotación sobre el <b>Incidente #${idIncidente}</b>?<br/>Se enviará una alerta por WhatsApp.`,
+      icon: 'question',
+      confirmText: 'Sí, notificar',
+      cancelText: 'Cancelar'
+    })
+    if (!pedir.isConfirmed) return
 
     setNotificando(true)
-
     try {
       const resp = await fetch(buildApiUrl(`/api/incidentes/${idIncidente}/notificar`), {
         method: 'POST',
@@ -353,31 +356,43 @@ const MaterialPeligroso = ({ datosPrevios = {}, onFinalizar }) => {
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
         }
       })
-
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}))
         throw new Error(errorData.message || `Error ${resp.status}: ${resp.statusText}`)
       }
 
       const resultado = await resp.json()
-
       if (resultado.success) {
         const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = resultado.data
-        alert(`🚨 ALERTA ENVIADA POR WHATSAPP ✅
-        
-📊 Resumen:
-• Total bomberos: ${totalBomberos}
-• Notificaciones exitosas: ${notificacionesExitosas}
-• Notificaciones fallidas: ${notificacionesFallidas}
-
-Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
+        await swalConfirm({
+          title: 'Alerta enviada',
+          icon: 'success',
+          confirmText: 'Entendido',
+          showCancel: false,
+          html: `
+          <div style="text-align:left">
+            <div style="background:#f8f9fa;border:1px solid #e9ecef;border-radius:8px;padding:12px;margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span>Total de bomberos</span><b>${totalBomberos}</b>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span>Exitosas</span><b style="color:#198754;">${notificacionesExitosas}</b>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span>Fallidas</span><b style="color:#dc3545;">${notificacionesFallidas}</b>
+              </div>
+            </div>
+            <small style="color:#6c757d;">Pueden responder <b>"SI"</b> o <b>"NO"</b> por WhatsApp para confirmar asistencia.</small>
+          </div>
+        `
+        })
         setSuccessMsg('✅ Notificación enviada exitosamente a los bomberos')
       } else {
         throw new Error(resultado.message || 'Error al enviar notificación')
       }
     } catch (error) {
       console.error('❌ Error al notificar por WhatsApp:', error)
-      alert(`❌ Error al notificar por WhatsApp: ${error.message}`)
+      await swalError('Error al notificar por WhatsApp', error.message)
       setErrorMsg(`Error al notificar: ${error.message}`)
     } finally {
       setNotificando(false)
@@ -391,268 +406,257 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
   }
 
   return (
-    <div className="container-fluid py-5">
-      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
-        <div className="card-body">
-          <form onSubmit={handleSubmit}>
-            {/* Categoría y cantidad*/}
-            <div className="row mb-3">
-              <div className="col-md-4 py-4">
-                <label className="form-label text-dark d-flex align-items-center gap-2">
-                  <UserIcon className="text-danger" />
-                  Categoría
-                </label>
-                <Select
-                  options={categorias.map(cat => ({
-                    value: String(cat.idCategoria),
-                    label: cat.descripcion
-                  }))}
-                  value={
-                    categorias
-                      .map(cat => ({ value: String(cat.idCategoria), label: cat.descripcion }))
-                      .find(opt => opt.value === String(formData.categoria)) || null
-                  }
-                  onChange={(opt) =>
-                    setFormData(prev => ({ ...prev, categoria: opt ? opt.value : '' }))
-                  }
-                  classNamePrefix="rs"
-                  placeholder="Seleccione categoría"
-                  isClearable
-                />
-              </div>
-
-              <div className="col-md-5 py-4">
-                <label className="text-dark form-label">Cantidad de materiales involucrados</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  id="cantidadMateriales"
-                  value={formData.cantidadMateriales || ''}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-
-            <hr className="border-1 border-black mb-2" />
-
-            {/* Tipos de materiales involucrados */}
-            <h5 className="fw-bold text-dark mb-3 my-3">
-              Tipos de materiales involucrados
-            </h5>
-            <div className="d-flex flex-wrap gap-3">
-              <div>
-                {tiposMaterial.map((tipo, index) => {
-                  const key = `material${tipo.idTipoMatInvolucrado}`
-                  const icons = ['🔥', '⚗️', '💥', '☢️', '🛢️', '🧪']
-                  const selected = !!formData[key]
-
-                  return (
-                    <button
-                      key={tipo.idTipoMatInvolucrado}
-                      type="button"
-                      className={`btn btn-lg toggle-btn me-2 mb-2 ${selected ? 'selected' : ''}`}
-                      onClick={() =>
-                        setFormData(prev => ({
-                          ...prev,
-                          [key]: !prev[key]
-                        }))
-                      }
-                    >
-                      <span className="me-2">{icons[index % icons.length]}</span>
-                      {tipo.nombre}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-
-            <hr className="border-1 border-black mb-2" />
-
-            {/* Acciones sobre el material */}
-            <h5 className="fw-bold text-dark mb-3 my-3">
-              Acciones sobre el material
-            </h5>
-            <div className="d-flex flex-wrap gap-3">
-              <div>
-                {accionesMaterial.map((accion, index) => {
-                  const icons = ['🔥', '💨', '💧', '⚖️', '🚛']
-                  const selected = formData[`accion${accion.idAccionMaterial}`]
-                  return (
-                    <button
-                      key={accion.idAccionMaterial}
-                      type="button"
-                      className={`btn bnt-lg toggle-btn me-2 mb-2 ${selected ? 'selected' : ''}`}
-                      onClick={() => setFormData(prev => ({
-                        ...prev,
-                        [`accion${accion.idAccionMaterial}`]: !selected
-                      }))}
-                    >
-                      <span className="me-2">{icons[index % icons.length]}</span>
-                      {accion.nombre}
-                    </button>
-                  )
-                })}
-              </div>
-
-              <div className="col-md-8">
-                <label className="form-label text-dark d-flex align-items-center gap-2">Otra acción sobre el material</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="otraAccionMaterial"
-                  value={formData.otraAccionMaterial || ''}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-
-            <hr className="border-1 border-black mb-2" />
-
-            {/* Acciones sobre las personas */}
-            <h5 className="fw-bold text-dark mb-3 my-3">
-              Acciones sobre las personas
-            </h5>
-            <div className="d-flex flex-wrap gap-3">
-              <div>
-                {accionesPersona.map((accion, index) => {
-                  const icons = ['🚨', '🧼', '🏠']
-                  const selected = formData[`personaAccion${accion.idAccionPersona}`]
-                  return (
-                    <button
-                      key={accion.idAccionPersona}
-                      type="button"
-                      className={`btn bnt-lg toggle-btn me-2 mb-2 ${selected ? 'selected' : ''}`}
-                      onClick={() => setFormData(prev => ({
-                        ...prev,
-                        [`personaAccion${accion.idAccionPersona}`]: !selected
-                      }))}
-                    >
-                      <span className="me-2">{icons[index % icons.length]}</span>
-                      {accion.nombre}
-                    </button>
-                  )
-                })}
-              </div>
-
-              <div className="col-md-8">
-                <label className="form-label text-dark d-flex align-items-center gap-2">Otra acción sobre las personas</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="otraAccionPersona"
-                  value={formData.otraAccionPersona || ''}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-
-            {/* Detalles */}
-            <div className="mb-3">
-              <label className="text-black form-label">Detalle sobre otras acciones sobre personas</label>
-              <textarea
-                className="form-control"
-                rows="2"
-                id="detalleAccionesPersona"
-                value={formData.detalleAccionesPersona || ''}
-                onChange={handleChange}
-              ></textarea>
-            </div>
-
-            <div className="mb-3">
-              <label className="text-black form-label">Cantidad de superficie evacuada</label>
-              <input
-                type="text"
-                className="form-control"
-                id="superficieEvacuada"
-                value={formData.superficieEvacuada || ''}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="text-black form-label">Detalle de lo sucedido</label>
-              <textarea
-                className="form-control"
-                rows="3"
-                id="detalle"
-                value={formData.detalle || ''}
-                onChange={handleChange}
-              ></textarea>
-            </div>
-
-            <hr className="border-1 border-black mb-2" />
-
-            <DamnificadosForm
-              value={formData.damnificados}
-              onChange={(nuevoArray) => setFormData(prev => ({ ...prev, damnificados: nuevoArray }))}
-              title="Personas damnificadas"
+    <div className="inc-especifico">
+      <form onSubmit={handleSubmit} className="at-form">
+        {/* Categoría y cantidad*/}
+        <div className="row mb-3">
+          <div className="col-md-4 py-4">
+            <label className="form-label text-dark d-flex align-items-center gap-2">
+              <UserIcon className="text-danger" />
+              Categoría
+            </label>
+            <Select
+              options={categorias.map(cat => ({
+                value: String(cat.idCategoria),
+                label: cat.descripcion
+              }))}
+              value={
+                categorias
+                  .map(cat => ({ value: String(cat.idCategoria), label: cat.descripcion }))
+                  .find(opt => opt.value === String(formData.categoria)) || null
+              }
+              onChange={(opt) =>
+                setFormData(prev => ({ ...prev, categoria: opt ? opt.value : '' }))
+              }
+              classNamePrefix="rs"
+              placeholder="Seleccione categoría"
+              isClearable
             />
+          </div>
 
-            <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
-              <button
-                type="button"
-                className="btn btn-back btn-medium"
-                onClick={guardarLocalmente}
-                disabled={loading || notificando}
-              >
-                Continuar después
-              </button>
-
-              <button 
-                type="button" 
-                className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2" 
-                onClick={notificarBomberos} 
-                disabled={loading || notificando}
-              >
-                {notificando ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    Notificando...
-                  </>
-                ) : (
-                  <>
-                    <i className='bi bi-megaphone'></i> Notificar Bomberos
-                  </>
-                )}
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2"
-                onClick={notificarBomberos}
-                disabled={loading || notificando}
-              >
-                {notificando ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    Notificando...
-                  </>
-                ) : (
-                  <>
-                    <i className='bi bi-megaphone'></i> Notificar Bomberos
-                  </>
-                )}
-              </button>
-
-              <button type="submit" className="btn btn-accept btn-medium" disabled={loading || notificando}>
-                {loading ? 'Cargando...' : 'Finalizar carga'}
-              </button>
-            </div>
-
-          </form>
-          {errorMsg && (
-            <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">
-              {errorMsg}
-            </div>
-          )}
-          {successMsg && (
-            <div ref={toastRef} tabIndex={-1} className="alert alert-success mt-3" role="alert">
-              {successMsg}
-            </div>
-          )}
+          <div className="col-md-5 py-4">
+            <label className="text-dark form-label">Cantidad de materiales involucrados</label>
+            <input
+              type="number"
+              className="form-control"
+              id="cantidadMateriales"
+              value={formData.cantidadMateriales || ''}
+              onChange={handleChange}
+            />
+          </div>
         </div>
-      </div>
+
+        <hr className="border-1 border-black mb-2" />
+
+        {/* Tipos de materiales involucrados */}
+        <h5 className="fw-bold text-dark mb-3 my-3">
+          Tipos de materiales involucrados
+        </h5>
+        <div className="d-flex flex-wrap gap-3">
+          <div>
+            {tiposMaterial.map((tipo, index) => {
+              const key = `material${tipo.idTipoMatInvolucrado}`
+              const icons = ['🔥', '⚗️', '💥', '☢️', '🛢️', '🧪']
+              const selected = !!formData[key]
+
+              return (
+                <button
+                  key={tipo.idTipoMatInvolucrado}
+                  type="button"
+                  className={`btn btn-lg toggle-btn me-2 mb-2 ${selected ? 'selected' : ''}`}
+                  onClick={() =>
+                    setFormData(prev => ({
+                      ...prev,
+                      [key]: !prev[key]
+                    }))
+                  }
+                >
+                  <span className="me-2">{icons[index % icons.length]}</span>
+                  {tipo.nombre}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+
+        <hr className="border-1 border-black mb-2" />
+
+        {/* Acciones sobre el material */}
+        <h5 className="fw-bold text-dark mb-3 my-3">
+          Acciones sobre el material
+        </h5>
+        <div className="d-flex flex-wrap gap-3">
+          <div>
+            {accionesMaterial.map((accion, index) => {
+              const icons = ['🔥', '💨', '💧', '⚖️', '🚛']
+              const selected = formData[`accion${accion.idAccionMaterial}`]
+              return (
+                <button
+                  key={accion.idAccionMaterial}
+                  type="button"
+                  className={`btn bnt-lg toggle-btn me-2 mb-2 ${selected ? 'selected' : ''}`}
+                  onClick={() => setFormData(prev => ({
+                    ...prev,
+                    [`accion${accion.idAccionMaterial}`]: !selected
+                  }))}
+                >
+                  <span className="me-2">{icons[index % icons.length]}</span>
+                  {accion.nombre}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="col-md-8">
+            <label className="form-label text-dark d-flex align-items-center gap-2">Otra acción sobre el material</label>
+            <input
+              type="text"
+              className="form-control"
+              id="otraAccionMaterial"
+              value={formData.otraAccionMaterial || ''}
+              onChange={handleChange}
+            />
+          </div>
+        </div>
+
+        <hr className="border-1 border-black mb-2" />
+
+        {/* Acciones sobre las personas */}
+        <h5 className="fw-bold text-dark mb-3 my-3">
+          Acciones sobre las personas
+        </h5>
+        <div className="d-flex flex-wrap gap-3">
+          <div>
+            {accionesPersona.map((accion, index) => {
+              const icons = ['🚨', '🧼', '🏠']
+              const selected = formData[`personaAccion${accion.idAccionPersona}`]
+              return (
+                <button
+                  key={accion.idAccionPersona}
+                  type="button"
+                  className={`btn bnt-lg toggle-btn me-2 mb-2 ${selected ? 'selected' : ''}`}
+                  onClick={() => setFormData(prev => ({
+                    ...prev,
+                    [`personaAccion${accion.idAccionPersona}`]: !selected
+                  }))}
+                >
+                  <span className="me-2">{icons[index % icons.length]}</span>
+                  {accion.nombre}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="col-md-8">
+            <label className="form-label text-dark d-flex align-items-center gap-2">Otra acción sobre las personas</label>
+            <input
+              type="text"
+              className="form-control"
+              id="otraAccionPersona"
+              value={formData.otraAccionPersona || ''}
+              onChange={handleChange}
+            />
+          </div>
+        </div>
+
+        {/* Detalles */}
+        <div className="mb-3">
+          <label className="text-black form-label">Detalle sobre otras acciones sobre personas</label>
+          <textarea
+            className="form-control"
+            rows="2"
+            id="detalleAccionesPersona"
+            value={formData.detalleAccionesPersona || ''}
+            onChange={handleChange}
+          ></textarea>
+        </div>
+
+        <div className="mb-3">
+          <label className="text-black form-label">Cantidad de superficie evacuada</label>
+          <input
+            type="text"
+            className="form-control"
+            id="superficieEvacuada"
+            value={formData.superficieEvacuada || ''}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="mb-3 at-detalle">
+          <label className="form-label text-dark d-flex align-items-center gap-2" htmlFor="detalle">Detalle de lo sucedido *</label>
+          <textarea className={`form-control${errors.detalle ? ' is-invalid' : ''}`} id="detalle" rows="3" value={formData.detalle || ''} onChange={handleChange} aria-describedby="error-detalle"></textarea>
+          {errors.detalle && <div className="invalid-feedback" id="error-detalle">{errors.detalle}</div>}
+        </div>
+
+        <hr className="border-1 border-black mb-2" />
+
+        <div className="at-damnificados">
+          <DamnificadosForm
+            value={formData.damnificados}
+            onChange={(nuevoArray) => setFormData(prev => ({ ...prev, damnificados: nuevoArray }))}
+            title="Personas damnificadas"
+            onBeforeRemove={async (d) => {
+              const nombre = [d?.nombre, d?.apellido].filter(Boolean).join(' ') || 'esta persona'
+              const r = await swalConfirm({
+                title: 'Eliminar damnificado',
+                html: `¿Confirmás eliminar a <b>${nombre}</b>?`,
+                icon: 'warning',
+                confirmText: 'Eliminar',
+                cancelText: 'Cancelar'
+              })
+              return r.isConfirmed
+            }}
+          />
+        </div>
+
+        <div className="d-flex justify-content-center align-items-center gap-3 mb-3 at-actions">
+        </div>
+
+        <div className='d-flex justify-content-center align-items-center gap-3 mb-3 at-actions'>
+          <button
+            type="button"
+            className="btn btn-back btn-medium"
+            onClick={guardarLocalmente}
+            disabled={loading || notificando}
+          >
+            Continuar después
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2"
+            onClick={notificarBomberos}
+            disabled={loading || notificando}
+          >
+            {notificando ? (
+              <>
+                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Notificando...
+              </>
+            ) : (
+              <>
+                <i className='bi bi-megaphone'></i> Notificar Bomberos
+              </>
+            )}
+          </button>
+
+          <button type="submit" className="btn btn-accept btn-medium" disabled={loading || notificando}>
+            {loading ? 'Cargando...' : 'Finalizar carga'}
+          </button>
+        </div>
+
+      </form>
+      {errorMsg && (
+        <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">
+          {errorMsg}
+        </div>
+      )}
+      {successMsg && (
+        <div ref={toastRef} tabIndex={-1} className="alert alert-success mt-3" role="alert">
+          {successMsg}
+        </div>
+      )}
     </div>
   )
 }

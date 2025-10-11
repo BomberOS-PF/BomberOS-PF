@@ -228,6 +228,18 @@ body {
   border-color: #dc3545;
 }
 
+/* .btn-icon {
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.btn-icon.btn-sm { width: 28px; height: 28px }
+.btn-icon.btn-lg { width: 40px; height: 40px } */
+
+
 /* =============================
    Header de formularios
 ============================= */
@@ -1065,4 +1077,333 @@ body {
 /* Botones del header: que no cambien de tamaño con el texto */
 .detalle-actions .btn {
   white-space: nowrap;
+}
+
+/* ConsultarIncidente: bloque de Detalles Específicos responsive */
+.consultar-incidente .inc-especifico .rs__control {
+  width: 100%;
+}
+
+@media (max-width: 576px) {
+
+  /* Apilar cualquier columna del formulario específico en 1 col */
+  .consultar-incidente .inc-especifico .row>[class*="col-"] {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Botones a ancho completo y separados */
+  .consultar-incidente .inc-especifico .btn {
+    width: 100% !important;
+    justify-content: center;
+  }
+
+  .consultar-incidente .inc-especifico .btn+.btn {
+    margin-top: .5rem;
+  }
+
+  /* Padding más chico del contenedor en mobile */
+  .consultar-incidente .inc-especifico {
+    padding-left: 0 !important; 
+    padding-right: 0 !important;
+  }
+}
+
+/* =============================================
+===== Accidente de Tránsito — Layout + Responsive
+=============================================== */
+
+/* Contenedor del form (centrado en desktop, fluido en mobile) */
+.at-form {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+/* En el contenedor específico, que la primera “col-md-5” no achique en mobile */
+.inc-especifico .at-form .col-md-5 {
+  max-width: 100% !important;
+  width: 100% !important;
+  flex: 0 0 100% !important;
+}
+
+/* Controles */
+.at-form .rs__control {
+  width: 100%;
+  min-width: 0;
+}
+
+.at-form .form-control,
+.at-form textarea {
+  min-width: 0;
+}
+
+.at-form .invalid-feedback {
+  display: block;
+}
+
+/* (Opcional) Grid de 2 columnas en pantallas grandes */
+.at-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+  /* mobile: 1 col */
+}
+
+@media (min-width: 768px) {
+
+  /* tablet */
+  .at-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1200px) {
+
+  /* desktop ancho */
+  .at-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+/* Tarjeta visual para secciones (si la usas) */
+.at-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* Botonera adaptable */
+.at-actions {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.at-actions .btn {
+  white-space: nowrap;
+}
+
+/* ===== Mobile (≤576px) ===== */
+@media (max-width: 576px) {
+
+  /* El wrapper no debe tener padding que achique al form */
+  .inc-especifico {
+    padding: 0 !important;
+  }
+
+  /* Sub-rows de Bootstrap a 1 columna */
+  .at-form .row>[class*="col-"],
+  .at-form :where(.row)>[class*="col-"] {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Botonera: una columna, ancho completo */
+  .at-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .at-actions .btn {
+    width: 100% !important;
+    justify-content: center;
+  }
+
+  /* Evitar cualquier overflow horizontal */
+  .at-form,
+  .inc-especifico {
+    overflow-x: hidden;
+  }
+}
+
+/* ===== Accidente de Tránsito — ajustes mobile (≤576px) ===== */
+@media (max-width: 576px) {
+
+  /* Contenedor y secciones a 1 columna */
+  .at-form {
+    max-width: 100%;
+    padding: 0 16px;
+    /* respiración lateral en mobile */
+    overflow-x: hidden;
+  }
+
+  .at-form .row>[class*="col-"],
+  .at-form :where(.row)>[class*="col-"],
+  .inc-especifico .at-form .col-md-5 {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Causa del accidente: ancho completo y feedback visible */
+  .at-causa .rs__control {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .at-causa .invalid-feedback {
+    display: block;
+  }
+
+  /* Vehículos / Damnificados: separar bloques y evitar overflow */
+  .at-vehiculos,
+  .at-damnificados,
+  .at-detalle {
+    margin-bottom: 14px;
+  }
+
+  .at-vehiculos,
+  .at-damnificados {
+    overflow-x: hidden;
+  }
+
+  /* Textarea detalle más cómodo en mobile */
+  .at-detalle textarea.form-control {
+    min-height: 110px;
+  }
+
+  /* Botonera: 1 columna, ancho completo */
+  .at-actions {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 1fr !important;
+  }
+
+  .at-actions .btn {
+    width: 100% !important;
+    justify-content: center;
+  }
+
+  /* Selects (react-select) del form específico a 100% */
+  .at-form .rs__control {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .at-form .rs__menu {
+    max-width: calc(100vw - 24px);
+    overflow: hidden;
+  }
+
+  /* HR más corto para que no “aplasten” */
+  .at-form hr {
+    margin: .75rem 0;
+  }
+}
+
+/* ===== Accidente de Tránsito — fix mobile (≤576px, alta especificidad) ===== */
+@media (max-width: 576px) {
+
+  /* Contenedor */
+  form.at-form {
+    max-width: 100% !important;
+    padding-inline: 0 !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Causa del accidente (ancho completo) */
+  form.at-form .at-causa {
+    width: 100% !important;
+    display: block !important;
+  }
+
+  form.at-form .at-causa .rs__control {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  form.at-form .at-causa .invalid-feedback {
+    display: block !important;
+  }
+
+  /* Bloques y textarea */
+  form.at-form .at-vehiculos,
+  form.at-form .at-damnificados,
+  form.at-form .at-detalle {
+    margin-bottom: 14px !important;
+    overflow-x: hidden !important;
+  }
+
+  form.at-form .at-detalle textarea.form-control {
+    min-height: 110px !important;
+  }
+
+  /* Botonera a 1 columna y full-width */
+  form.at-form .at-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  form.at-form .at-actions .btn,
+  form.at-form .at-actions .btn-medium {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* React-Select menú dentro del viewport */
+  form.at-form .rs__menu {
+    max-width: calc(100vw - 24px) !important;
+    overflow: hidden !important;
+  }
+
+  /* HR más corto */
+  form.at-form hr {
+    margin: .75rem 0 !important;
+  }
+}
+
+/* Contenedor del trash: no se estira y empuja a la derecha */
+.actions-inline{
+  display:flex !important;
+  justify-content:flex-end !important;
+  width:auto !important;
+  background:transparent !important;
+  border:0 !important;
+}
+
+/* Botón chico (siempre) */
+.action-trash{
+  width:32px !important;
+  height:28px !important;
+  padding:.28rem .46rem !important;
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  line-height:1 !important;
+  border-radius:.25rem !important;
+}
+.action-trash i{ font-size:.95rem !important; }
+
+/* En móvil: que la "col" del trash NO se haga 100% y quede pegada a la derecha */
+@media (max-width:576px){
+  .row > .actions-inline{           /* aplica en ambos formularios */
+    flex:0 0 auto !important;       /* evita 100% */
+    max-width:none !important;
+  }
+  .actions-inline{ align-self:flex-end !important; }
+}
+
+/* Botón de cerrar del bloque "Detalles específicos" */
+.header-close {
+  /* pisa variables de Bootstrap */
+  --bs-btn-padding-x: 0 !important;
+  --bs-btn-padding-y: 0 !important;
+
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  line-height: 1 !important;
+
+  /* si el contenedor es flex, que NO se estire jamás */
+  flex: 0 0 28px !important;
+}
+
+.header-close i {
+  font-size: 14px !important;
+  line-height: 1;
 }

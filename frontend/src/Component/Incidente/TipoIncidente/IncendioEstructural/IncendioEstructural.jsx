@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Select from 'react-select'
 import DamnificadosForm from '../../../Common/Damnificado.jsx'
+import { swalConfirm, swalError, swalToast } from '../../../Common/swalBootstrap'
 import { API_URLS, apiRequest, buildApiUrl } from '../../../../config/api'
 
 const safeRead = (key, fallback) => {
@@ -204,15 +205,16 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
       return
     }
 
-    const confirmar = window.confirm(
-      `¿Deseas notificar a los bomberos sobre el Incidente #${idIncidente}?\n\n` +
-      `Se enviará una alerta por WhatsApp a todos los bomberos activos.`
-    )
-
-    if (!confirmar) return
+    const pedir = await swalConfirm({
+      title: `Notificar bomberos`,
+      html: `¿Deseás notificar a la dotación sobre el <b>Incidente #${idIncidente}</b>?<br/>Se enviará una alerta por WhatsApp.`,
+      icon: 'question',
+      confirmText: 'Sí, notificar',
+      cancelText: 'Cancelar'
+    })
+    if (!pedir.isConfirmed) return
 
     setNotificando(true)
-
     try {
       const resp = await fetch(buildApiUrl(`/api/incidentes/${idIncidente}/notificar`), {
         method: 'POST',
@@ -221,31 +223,43 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
         }
       })
-
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}))
         throw new Error(errorData.message || `Error ${resp.status}: ${resp.statusText}`)
       }
 
       const resultado = await resp.json()
-
       if (resultado.success) {
         const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = resultado.data
-        alert(`🚨 ALERTA ENVIADA POR WHATSAPP ✅
-        
-📊 Resumen:
-• Total bomberos: ${totalBomberos}
-• Notificaciones exitosas: ${notificacionesExitosas}
-• Notificaciones fallidas: ${notificacionesFallidas}
-
-Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
+        await swalConfirm({
+          title: 'Alerta enviada',
+          icon: 'success',
+          confirmText: 'Entendido',
+          showCancel: false,
+          html: `
+          <div style="text-align:left">
+            <div style="background:#f8f9fa;border:1px solid #e9ecef;border-radius:8px;padding:12px;margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span>Total de bomberos</span><b>${totalBomberos}</b>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span>Exitosas</span><b style="color:#198754;">${notificacionesExitosas}</b>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span>Fallidas</span><b style="color:#dc3545;">${notificacionesFallidas}</b>
+              </div>
+            </div>
+            <small style="color:#6c757d;">Pueden responder <b>"SI"</b> o <b>"NO"</b> por WhatsApp para confirmar asistencia.</small>
+          </div>
+        `
+        })
         setSuccessMsg('✅ Notificación enviada exitosamente a los bomberos')
       } else {
         throw new Error(resultado.message || 'Error al enviar notificación')
       }
     } catch (error) {
       console.error('❌ Error al notificar por WhatsApp:', error)
-      alert(`❌ Error al notificar por WhatsApp: ${error.message}`)
+      await swalError('Error al notificar por WhatsApp', error.message)
       setErrorMsg(`Error al notificar: ${error.message}`)
     } finally {
       setNotificando(false)
@@ -353,116 +367,138 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
   }
 
   return (
-    <div className="container-fluid py-5">
-      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
-        <div className="card-body">
-          <form>
-            <div className="mb-3">
-              <label htmlFor="nombreLugar" className="form-label text-dark d-flex align-items-center gap-2">Nombre del comercio/casa de familia</label>
-              <input type="text" className="form-control" id="nombreLugar" value={formData.nombreLugar || ''} onChange={handleChange} />
-            </div>
-
-            <div className="row mb-3">
-              <div className="col">
-                <label htmlFor="pisos" className="form-label text-dark d-flex align-items-center gap-2">Cantidad de pisos afectados</label>
-                <input type="number" min="0" className={`form-control${errors.pisos ? ' is-invalid' : ''}`} id="pisos" value={formData.pisos || ''} onChange={handleChange} aria-describedby="error-pisos" placeholder="Ej: 2" />
-                {errors.pisos && <div className="invalid-feedback" id="error-pisos">{errors.pisos}</div>}
-              </div>
-              <div className="col">
-                <label htmlFor="ambientes" className="form-label text-dark d-flex align-items-center gap-2">Cantidad de ambientes afectados</label>
-                <input type="number" min="0" className={`form-control${errors.ambientes ? ' is-invalid' : ''}`} id="ambientes" value={formData.ambientes || ''} onChange={handleChange} aria-describedby="error-ambientes" placeholder="Ej: 5" />
-                {errors.ambientes && <div className="invalid-feedback" id="error-ambientes">{errors.ambientes}</div>}
-              </div>
-            </div>
-
-            <div className="row mb-3">
-              <div className="col">
-                <label htmlFor="tipoTecho" className="form-label text-dark d-flex align-items-center gap-2">Tipo de techo *</label>
-                <Select
-                  options={opcionesTipoTecho}
-                  value={opcionesTipoTecho.find(opt => String(opt.value) === String(formData.tipoTecho)) || null}
-                  onChange={(opcion) =>
-                    setFormData(prev => ({ ...prev, tipoTecho: opcion ? opcion.value : '' }))
-                  }
-                  classNamePrefix="rs"
-                  placeholder="Seleccione tipo de techo"
-                  isClearable
-                />
-                {errors.tipoTecho && <div className="invalid-feedback" id="error-tipoTecho">{errors.tipoTecho}</div>}
-              </div>
-              <div className="col">
-                <label htmlFor="tipoAbertura" className="form-label text-dark d-flex align-items-center gap-2">Tipo de abertura *</label>
-                <Select
-                  options={opcionesTipoAbertura}
-                  value={opcionesTipoAbertura.find(o => String(o.value) === String(formData.tipoAbertura)) || null}
-                  onChange={(opt) =>
-                    setFormData(prev => ({ ...prev, tipoAbertura: opt ? opt.value : '' }))
-                  }
-                  classNamePrefix="rs"
-                  placeholder="Seleccione tipo abertura"
-                  isClearable
-                />
-                {errors.tipoAbertura && <div className="invalid-feedback" id="error-tipoAbertura">{errors.tipoAbertura}</div>}
-              </div>
-              <div className="col">
-                <label htmlFor="superficie" className="form-label text-dark d-flex align-items-center gap-2">Superficie afectada (m²)</label>
-                <input type="number" min="0" step="0.01" className={`form-control${errors.superficie ? ' is-invalid' : ''}`} id="superficie" value={formData.superficie || ''} onChange={handleChange} aria-describedby="error-superficie" placeholder="Ej: 150.5" />
-                {errors.superficie && <div className="invalid-feedback" id="error-superficie">{errors.superficie}</div>}
-                <div className="form-text text-muted small">Área en metros cuadrados (no puede ser negativa)</div>
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <label htmlFor="descripcion" className="form-label text-dark d-flex align-items-center gap-2">Detalle de lo sucedido *</label>
-              <textarea className={`form-control${errors.descripcion ? ' is-invalid' : ''}`} rows="3" id="descripcion" value={formData.descripcion || ''} onChange={handleChange} aria-describedby="error-descripcion"></textarea>
-              {errors.descripcion && <div className="invalid-feedback" id="error-descripcion">{errors.descripcion}</div>}
-            </div>
-
-            <DamnificadosForm
-              value={formData.damnificados}
-              onChange={(nuevoArray) => setFormData(prev => ({ ...prev, damnificados: nuevoArray }))}
-              title="Personas damnificadas"
-            />
-
-            <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
-              <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
-                Continuar después
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2"
-                onClick={notificarBomberos}
-                disabled={loading || notificando}
-              >
-                {notificando ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    Notificando...
-                  </>
-                ) : (
-                  <>
-                    <i className='bi bi-megaphone'></i> Notificar Bomberos
-                  </>
-                )}
-              </button>
-              <button type="button" className="btn btn-accept btn-medium" disabled={loading || notificando} onClick={() => handleFinalizar()}>
-                {loading ? 'Enviando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
-              </button>
-            </div>
-
-          </form>
+    <div className="inc-especifico">
+      <form className="at-form">
+        <div className='row mb-3'>
+          <div className="col-12">
+            <label htmlFor="nombreLugar" className="form-label text-dark d-flex align-items-center gap-2">Nombre del comercio/casa de familia</label>
+            <input type="text" className="form-control" id="nombreLugar" value={formData.nombreLugar || ''} onChange={handleChange} />
+          </div>
         </div>
 
 
+        <div className="row mb-3">
+          <div className="col-12 col-sm-6">
+            <label htmlFor="pisos" className="form-label text-dark d-flex align-items-center gap-2">Cantidad de pisos afectados</label>
+            <input type="number" min="0" className={`form-control${errors.pisos ? ' is-invalid' : ''}`} id="pisos" value={formData.pisos || ''} onChange={handleChange} aria-describedby="error-pisos" placeholder="Ej: 2" />
+            {errors.pisos && <div className="invalid-feedback" id="error-pisos">{errors.pisos}</div>}
+          </div>
 
-        {errorMsg && (
-          <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">{errorMsg}</div>
-        )}
-        {successMsg && (
-          <div ref={toastRef} tabIndex={-1} className="alert alert-success mt-3" role="alert">{successMsg}</div>
-        )}
-      </div>
+          <div className="col-12 col-sm-6">
+            <label htmlFor="ambientes" className="form-label text-dark d-flex align-items-center gap-2">Cantidad de ambientes afectados</label>
+            <input type="number" min="0" className={`form-control${errors.ambientes ? ' is-invalid' : ''}`} id="ambientes" value={formData.ambientes || ''} onChange={handleChange} aria-describedby="error-ambientes" placeholder="Ej: 5" />
+            {errors.ambientes && <div className="invalid-feedback" id="error-ambientes">{errors.ambientes}</div>}
+          </div>
+        </div>
+
+        <div className="row mb-3">
+          <div className="col-12 col-sm-6">
+            <label htmlFor="tipoTecho" className="form-label text-dark d-flex align-items-center gap-2">Tipo de techo *</label>
+            <Select
+              options={opcionesTipoTecho}
+              value={opcionesTipoTecho.find(opt => String(opt.value) === String(formData.tipoTecho)) || null}
+              onChange={(opcion) =>
+                setFormData(prev => ({ ...prev, tipoTecho: opcion ? opcion.value : '' }))
+              }
+              classNamePrefix="rs"
+              placeholder="Seleccione tipo de techo"
+              isClearable
+            />
+            {errors.tipoTecho && <div className="invalid-feedback" id="error-tipoTecho">{errors.tipoTecho}</div>}
+          </div>
+
+          <div className="col-12 col-sm-6">
+            <label htmlFor="tipoAbertura" className="form-label text-dark d-flex align-items-center gap-2">Tipo de abertura *</label>
+            <Select
+              options={opcionesTipoAbertura}
+              value={opcionesTipoAbertura.find(o => String(o.value) === String(formData.tipoAbertura)) || null}
+              onChange={(opt) =>
+                setFormData(prev => ({ ...prev, tipoAbertura: opt ? opt.value : '' }))
+              }
+              classNamePrefix="rs"
+              placeholder="Seleccione tipo abertura"
+              isClearable
+            />
+            {errors.tipoAbertura && <div className="invalid-feedback" id="error-tipoAbertura">{errors.tipoAbertura}</div>}
+          </div>
+        </div>
+
+        <div className='row mb-3'>
+          <div className="col-12">
+            <label htmlFor="superficie" className="form-label text-dark d-flex align-items-center gap-2">Superficie afectada (m²)</label>
+            <input type="number" min="0" step="0.01" className={`form-control${errors.superficie ? ' is-invalid' : ''}`} id="superficie" value={formData.superficie || ''} onChange={handleChange} aria-describedby="error-superficie" placeholder="Ej: 150.5" />
+            {errors.superficie && <div className="invalid-feedback" id="error-superficie">{errors.superficie}</div>}
+            <div className="form-text text-muted small">Área en metros cuadrados (no puede ser negativa)</div>
+          </div>
+        </div>
+
+        <hr className='border-1 border-black mb-2' />
+
+        <div className="mb-3 at-detalle">
+          <label htmlFor="descripcion" className="form-label text-dark d-flex align-items-center gap-2">Detalle de lo sucedido *</label>
+          <textarea className={`form-control${errors.descripcion ? ' is-invalid' : ''}`} rows="3" id="descripcion" value={formData.descripcion || ''} onChange={handleChange} aria-describedby="error-descripcion"></textarea>
+          {errors.descripcion && <div className="invalid-feedback" id="error-descripcion">{errors.descripcion}</div>}
+        </div>
+
+        <hr className="border-1 border-black mb-2" />
+
+        <div className="at-damnificados">
+          <DamnificadosForm
+            value={formData.damnificados}
+            onChange={(nuevoArray) => setFormData(prev => ({ ...prev, damnificados: nuevoArray }))}
+            title="Personas damnificadas"
+            onBeforeRemove={async (d) => {
+              const nombre = [d?.nombre, d?.apellido].filter(Boolean).join(' ') || 'esta persona'
+              const r = await swalConfirm({
+                title: 'Eliminar damnificado',
+                html: `¿Confirmás eliminar a <b>${nombre}</b>?`,
+                icon: 'warning',
+                confirmText: 'Eliminar',
+                cancelText: 'Cancelar'
+              })
+              return r.isConfirmed
+            }}
+          />
+        </div>
+
+        <div className="d-flex justify-content-center align-items-center gap-3 mb-3 at-actions">
+        </div>
+
+        <div className='d-flex justify-content-center align-items-center gap-3 mb-3 at-actions'>
+          <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
+            Continuar después
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2"
+            onClick={notificarBomberos}
+            disabled={loading || notificando}
+          >
+            {notificando ? (
+              <>
+                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Notificando...
+              </>
+            ) : (
+              <>
+                <i className='bi bi-megaphone'></i> Notificar Bomberos
+              </>
+            )}
+          </button>
+          <button type="button" className="btn btn-accept btn-medium" disabled={loading || notificando} onClick={() => handleFinalizar()}>
+            {loading ? 'Enviando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
+          </button>
+        </div>
+
+      </form>
+
+      {errorMsg && (
+        <div ref={toastRef} tabIndex={-1} className="alert alert-danger mt-3" role="alert">{errorMsg}</div>
+      )}
+      {successMsg && (
+        <div ref={toastRef} tabIndex={-1} className="alert alert-success mt-3" role="alert">{successMsg}</div>
+      )}
     </div>
   )
 }

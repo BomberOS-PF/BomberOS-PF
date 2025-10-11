@@ -168,7 +168,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 segundos timeout
 
-      const resp = await fetch(url, {        
+      const resp = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -176,9 +176,9 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
         },
         signal: controller.signal
       })
-      
+
       clearTimeout(timeoutId)
-      
+
       console.log('📱 Respuesta recibida:', {
         status: resp.status,
         statusText: resp.statusText,
@@ -210,7 +210,7 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
           isEmpty: text.length === 0,
           firstChars: text.substring(0, 100)
         })
-        
+
         if (text) {
           resultado = JSON.parse(text)
         } else {
@@ -239,7 +239,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
       }
     } catch (error) {
       console.error('❌ Error al notificar por WhatsApp:', error)
-      
+
       let errorMessage = error.message
       if (error.name === 'AbortError') {
         errorMessage = 'La notificación tardó demasiado tiempo. Por favor intenta nuevamente.'
@@ -248,7 +248,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
       } else if (error.message.includes('Unexpected end of JSON input')) {
         errorMessage = 'El servidor devolvió una respuesta inválida. Por favor intenta nuevamente.'
       }
-      
+
       alert(`❌ Error al notificar por WhatsApp: ${errorMessage}`)
       setErrorGlobal(`Error al notificar: ${errorMessage}`)
     } finally {
@@ -318,7 +318,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
             <h3 className='text-dark mb-0'>
               {modoEdicion
                 ? `✏️ Editando: Incidente #${detalle?.idIncidente}`
-                : `📋 Detalles: Incidente #${detalle?.idIncidente} - ${detalle?.tipoDescripcion}`
+                : `Detalles: Incidente #${detalle?.idIncidente} - ${detalle?.tipoDescripcion}`
               }
             </h3>
           </div>
@@ -356,12 +356,11 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
               onClick={volverAlListado}
               disabled={loadingDetalle}
             >
-              <i className='bi bi-arrow-left'></i> Volver al listado
+              <i className='bi bi-arrow-left'></i>
+              <span className="d-none d-sm-inline">Volver al listado</span>
             </button>
           </div>
         </div>
-
-        <hr className='border-4 border-danger mb-4' />
 
         <div className='card bg-light border-0 shadow-sm py-4' style={{ borderRadius: '12px' }}>
           <div className='card-body'>
@@ -471,22 +470,23 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                       <div className='bg-danger p-2 icon-circle me-3'>
                         <i className='bi bi-gear text-white fs-5'></i>
                       </div>
-                      <h5 className='text-danger mb-0 fw-bold'>Detalles Específicos del Tipo de Incidente</h5>
+                      <h5 className='text-danger mb-0 fw-bold'>Detalles específicos del tipo de incidente</h5>
                     </div>
 
                     {!modoEdicion && (
                       <button
-                        className='btn btn-outline-secondary btn-sm d-flex align-items-center gap-1'
+                        className='btn btn-outline-secondary header-close'
                         onClick={() => setModoEdicionEspecifica(false)}
                         disabled={loadingDetalle}
+                        aria-label='Cerrar edición'
+                        title='Cerrar edición'
                       >
-                        <i className='bi bi-x-circle'></i>
-                        Cerrar
+                        <i className='bi bi-x'></i>
                       </button>
                     )}
                   </div>
 
-                  <div className='bg-light rounded p-4 border'>
+                  <div className='inc-especifico p-0'>
                     {renderFormularioEspecificoInline()}
                   </div>
                 </div>
