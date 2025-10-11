@@ -41,7 +41,6 @@ const RecuperarClave = ({ onVolver }) => {
     })
   }
 
-  // advertir si cierran con datos sin enviar
   useEffect(() => {
     const handler = (e) => {
       if (!email.trim() || loading) return
@@ -70,19 +69,15 @@ const RecuperarClave = ({ onVolver }) => {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        // Enviamos ambos campos para cubrir cualquier contrato del backend
         body: JSON.stringify({ email: correo, correo })
       })
 
-      // Intentar parsear respuesta (JSON, texto o 204)
       let data = null
       let rawText = ''
       if (resp.status !== 204) {
         rawText = await resp.text()
         if (rawText) {
-          try {
-            data = JSON.parse(rawText)
-          } catch { }
+          try { data = JSON.parse(rawText) } catch { }
         }
       }
 
@@ -125,45 +120,93 @@ const RecuperarClave = ({ onVolver }) => {
   }
 
   return (
-    <div>
+    <div className='login-page d-flex justify-content-center align-items-center min-vh-100 position-relative'>
       <ParticlesBackground className='particles-fixed' variant='auth' />
 
-      <div className='container-fluid d-flex justify-content-center align-items-center min-vh-100 login-bg'>
-        <div className='formulario-consistente text-center'>
-          <img src='/img/logo-bomberos.png' alt='Logo BomberOS' className='logo-bomberos mb-3' />
-          <h2 className='text-black mb-4'>Recuperar Contraseña</h2>
+      {/* capas (quedan ocultas por CSS en esta vista) */}
+      <div className='login-bg-radial-1' />
+      <div className='login-bg-radial-2' />
+      <div className='login-bg-pattern' />
 
-          <form onSubmit={handleSubmit} noValidate className='at-form'>
-            <div className='mb-3 text-start'>
-              <label htmlFor='email' className='form-label'>Correo electrónico</label>
-              <input
-                type='email'
-                className='form-control'
-                id='email'
-                placeholder='Ingrese su correo'
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                autoComplete='email'
-              />
-              <div className='form-text'>Te enviaremos un enlace para restablecer tu contraseña</div>
+      <div>
+        <div>
+          <div className='login-card shadow-2xl'>
+            <div className='login-card-topglow' />
+
+            {/* logo con glow */}
+            <div className='text-center mb-4'>
+              <div className='logo-wrap'>
+                <div className='logo-glow' />
+                <img
+                  src='/img/logo-bomberos.png'
+                  alt='Logo BomberOS'
+                  className='logo-bomberos animate-float'
+                  loading='eager'
+                />
+              </div>
             </div>
 
-            <button type='submit' className='btn btn-danger w-100' disabled={loading || !email.trim()}>
-              {loading ? 'Enviando...' : 'Enviar'}
-            </button>
+            {/* títulos */}
+            <div className='text-center mb-4'>
+              <h2 className='login-title'>Recuperar contraseña</h2>
+              <p className='login-subtitle'>Te enviaremos un enlace para restablecerla</p>
+            </div>
 
-            <div className='mt-3 text-center'>
-              <button type='button' className='btn btn-secondary' onClick={handleVolver} disabled={loading}>
-                Volver
+            {/* formulario con input-icon-left e input estilizado */}
+            <form onSubmit={handleSubmit} className='login-form' noValidate>
+              <div className='mb-3 text-start'>
+                <label htmlFor='email' className='form-label text-white-90'>Correo electrónico</label>
+                <div className='input-icon-left'>
+                  <input
+                    type='email'
+                    className='form-control login-input ps-5'
+                    id='email'
+                    placeholder='Ingrese su correo'
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
+                    autoComplete='email'
+                  />
+                  <i className='bi bi-envelope input-icon' aria-hidden='true' />
+                </div>
+              </div>
+
+              <button type='submit' className='btn login-btn w-100' disabled={loading || !email.trim()}>
+                {loading ? (
+                  <span className='d-inline-flex align-items-center gap-2'>
+                    <span className='spinner-border spinner-border-sm' role='status' aria-hidden='true' />
+                    Enviando...
+                  </span>
+                ) : (
+                  'Enviar enlace'
+                )}
+              </button>
+            </form>
+
+            {/* acciones secundarias */}
+            <div className='mt-4 d-flex justify-content-between align-items-center'>
+              <span className='text-white-90 small'>¿Recordaste tu contraseña?</span>
+              <button
+                type='button'
+                className='btn btn-link recuperar-link p-0'
+                onClick={handleVolver}
+                disabled={loading}
+              >
+                Volver al inicio
               </button>
             </div>
-          </form>
+
+            <div className='login-divider mt-4'>
+              <span>BomberOS</span>
+            </div>
+          </div>
+
+          {/* resplandor inferior */}
+          <div className='login-bottom-glow' />
         </div>
       </div>
     </div>
-
   )
 }
 

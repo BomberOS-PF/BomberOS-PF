@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import 'sweetalert2/dist/sweetalert2.min.css'
+import '../Login/Login.css'
 import '../DisenioFormulario/DisenioFormulario.css'
 import { buildApiUrl } from '../../config/api'
 import ParticlesBackground from '../ParticlesBackground/ParticlesBackground'
@@ -136,59 +137,103 @@ const RestablecerClave = ({ onVolver }) => {
   }
 
   return (
-    <div>
+    <div className='login-page d-flex justify-content-center align-items-center min-vh-100 position-relative'>
       <ParticlesBackground className='particles-fixed' variant='auth' />
 
-      <div className='container-fluid d-flex justify-content-center align-items-center min-vh-100 login-bg'>
-        <div className='formulario-consistente text-center'>
-          <img src='/img/logo-bomberos.png' alt='Logo BomberOS' className='logo-bomberos mb-3' />
-          <h2 className='text-black mb-4'>Restablecer Contraseña</h2>
+      {/* capas decorativas (quedan ocultas por CSS en esta vista) */}
+      <div className='login-bg-radial-1' />
+      <div className='login-bg-radial-2' />
+      <div className='login-bg-pattern' />
 
-          {!tokenValido ? (
-            <div className='alert alert-danger' role='alert'>
-              El enlace no es válido o expiró
+      <div>
+        <div>
+          <div className='login-card shadow-2xl'>
+            <div className='login-card-topglow' />
+
+            {/* logo con glow */}
+            <div className='text-center mb-4'>
+              <div className='logo-wrap'>
+                <div className='logo-glow' />
+                <img
+                  src='/img/logo-bomberos.png'
+                  alt='Logo BomberOS'
+                  className='logo-bomberos animate-float'
+                  loading='eager'
+                />
+              </div>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className='at-form'>
-              <div className='mb-3 text-start'>
-                <label htmlFor='nuevaContrasena' className='form-label text-black'>Nueva contraseña</label>
-                <input
-                  type='password'
-                  className='form-control'
-                  id='nuevaContrasena'
-                  value={nuevaContrasena}
-                  required
-                  onChange={(e) => setNuevaContrasena(e.target.value)}
-                  autoComplete='new-password'
-                />
-                <small className='form-text text-muted'>
-                  Mínimo 8 caracteres
-                </small>
-              </div>
 
-              <div className='mb-3 text-start'>
-                <label htmlFor='confirmacion' className='form-label text-black'>Confirmar contraseña</label>
-                <input
-                  type='password'
-                  className='form-control'
-                  id='confirmacion'
-                  value={confirmacion}
-                  required
-                  onChange={(e) => setConfirmacion(e.target.value)}
-                  autoComplete='new-password'
-                />
-              </div>
+            {/* títulos */}
+            <div className='text-center mb-4'>
+              <h2 className='login-title'>Restablecer contraseña</h2>
+              <p className='login-subtitle'>Ingresá tu nueva contraseña</p>
+            </div>
 
-              <button type='submit' className='btn btn-danger w-100 mt-2'>Restablecer</button>
-              <button type='button' className='btn btn-secondary w-100 mt-2' onClick={volverConConfirmacion}>
-                Volver
-              </button>
-            </form>
-          )}
+            {!tokenValido ? (
+              <div className='alert alert-danger mb-0' role='alert'>
+                El enlace no es válido o expiró
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className='login-form' noValidate>
+                <div className='mb-3 text-start'>
+                  <label htmlFor='nuevaContrasena' className='form-label text-white-90'>Nueva contraseña</label>
+                  <div className='input-icon-left'>
+                    <input
+                      type='password'
+                      className='form-control login-input ps-5'
+                      id='nuevaContrasena'
+                      value={nuevaContrasena}
+                      required
+                      onChange={(e) => setNuevaContrasena(e.target.value)}
+                      autoComplete='new-password'
+                    />
+                    <i className='bi bi-lock input-icon' aria-hidden='true' />
+                  </div>
+                  <small className='text-white-90' style={{ opacity: .6 }}>Mínimo 8 caracteres</small>
+                </div>
+
+                <div className='mb-3 text-start'>
+                  <label htmlFor='confirmacion' className='form-label text-white-90'>Confirmar contraseña</label>
+                  <div className='input-icon-left'>
+                    <input
+                      type='password'
+                      className='form-control login-input ps-5'
+                      id='confirmacion'
+                      value={confirmacion}
+                      required
+                      onChange={(e) => setConfirmacion(e.target.value)}
+                      autoComplete='new-password'
+                    />
+                    <i className='bi bi-shield-lock input-icon' aria-hidden='true' />
+                  </div>
+                </div>
+
+                <button type='submit' className='btn login-btn w-100'>
+                  Restablecer
+                </button>
+
+                <div className='mt-4 d-flex justify-content-end'>
+                  <button
+                    type='button'
+                    className='btn btn-link recuperar-link p-0'
+                    onClick={volverConConfirmacion}
+                  >
+                    Volver al inicio
+                  </button>
+                </div>
+              </form>
+            )}
+
+            <div className='login-divider mt-4'>
+              <span>BomberOS</span>
+            </div>
+          </div>
+
+          {/* resplandor inferior */}
+          <div className='login-bottom-glow' />
         </div>
       </div>
     </div>
-
   )
 }
 
