@@ -252,10 +252,65 @@ export class IncidenteService extends IncidenteServiceInterface {
       logger.info('📱 Iniciando notificación de bomberos para incidente', { incidenteId })
 
       const incidente = await this.incidenteRepository.obtenerPorId(incidenteId)
-      if (!incidente) throw new Error(`Incidente con ID ${incidenteId} no encontrado`)
+      if (!incidente) {
+        const errorMsg = `Incidente con ID ${incidenteId} no encontrado`
+        logger.error('❌ ' + errorMsg)
+        return { 
+          success: false, 
+          message: errorMsg, 
+          total: 0, 
+          exitosos: 0, 
+          fallidos: 0,
+          resultados: [] 
+        }
+      }
 
-      if (!this.bomberoService) throw new Error('BomberoService no disponible para notificaciones')
-      if (!this.whatsappService) logger.warn('WhatsAppService no disponible, notificación simulada')
+      if (!this.bomberoService) {
+        const errorMsg = 'BomberoService no disponible para notificaciones'
+        logger.error('❌ ' + errorMsg)
+        return { 
+          success: false, 
+          message: errorMsg, 
+          total: 0, 
+          exitosos: 0, 
+          fallidos: 0,
+          resultados: [] 
+        }
+      }
+
+      if (!this.whatsappService) {
+        const errorMsg = 'Servicio de WhatsApp no está configurado. Contacta al administrador del sistema.'
+        logger.error('❌ WhatsAppService no disponible')
+        return { 
+          success: false, 
+          message: errorMsg, 
+          total: 0, 
+          exitosos: 0, 
+          fallidos: 0,
+          resultados: [] 
+        }
+      }
+
+      // Verificar si WhatsApp está habilitado
+      if (!this.whatsappService.isEnabled()) {
+        const errorMsg = 'El servicio de WhatsApp no está habilitado. Verifica las credenciales de Twilio en las variables de entorno.'
+        logger.warn('⚠️ WhatsApp deshabilitado', {
+          config: {
+            enabled: this.whatsappService.config?.enabled,
+            hasAccountSid: !!this.whatsappService.config?.accountSid,
+            hasAuthToken: !!this.whatsappService.config?.authToken,
+            whatsappNumber: this.whatsappService.config?.whatsappNumber
+          }
+        })
+        return { 
+          success: false, 
+          message: errorMsg, 
+          total: 0, 
+          exitosos: 0, 
+          fallidos: 0,
+          resultados: [] 
+        }
+      }
 
       const bomberos = await this.bomberoService.listarBomberos()
       const bomberosActivos = bomberos.filter(b => {
@@ -265,8 +320,16 @@ export class IncidenteService extends IncidenteServiceInterface {
       })
 
       if (bomberosActivos.length === 0) {
-        logger.warn('📱 No hay bomberos activos con teléfono para notificar')
-        return { success: false, message: 'No hay bomberos activos con teléfono válido', total: 0, exitosos: 0, fallidos: 0 }
+        const errorMsg = 'No hay bomberos activos con teléfono válido para notificar'
+        logger.warn('⚠️ ' + errorMsg)
+        return { 
+          success: false, 
+          message: errorMsg, 
+          total: 0, 
+          exitosos: 0, 
+          fallidos: 0,
+          resultados: [] 
+        }
       }
 
       // Obtener ubicación real de la base de datos
@@ -301,14 +364,38 @@ export class IncidenteService extends IncidenteServiceInterface {
         incidenteParaMensaje
       })
 
+      // Enviar notificaciones
       const resultado = await this.whatsappService.notificarBomberosIncidente(bomberosActivos, incidenteParaMensaje)
 
-      logger.info('📱 Notificación de bomberos completada', { incidenteId, ...resultado })
+      logger.info('✅ Notificación de bomberos completada', { 
+        incidenteId, 
+        total: resultado.total,
+        exitosos: resultado.exitosos,
+        fallidos: resultado.fallidos
+      })
 
-      return { success: true, message: `Notificación enviada a ${resultado.exitosos} de ${resultado.total} bomberos`, ...resultado }
+      return { 
+        success: true, 
+        message: `Notificación enviada a ${resultado.exitosos} de ${resultado.total} bomberos`, 
+        total: resultado.total,
+        exitosos: resultado.exitosos,
+        fallidos: resultado.fallidos,
+        resultados: resultado.resultados || []
+      }
     } catch (error) {
-      logger.error('📱 Error al notificar bomberos', { incidenteId, error: error.message })
-      return { success: false, message: error.message, total: 0, exitosos: 0, fallidos: 0 }
+      logger.error('❌ Error crítico al notificar bomberos', { 
+        incidenteId, 
+        error: error.message,
+        stack: error.stack 
+      })
+      return { 
+        success: false, 
+        message: `Error al procesar notificación: ${error.message}`, 
+        total: 0, 
+        exitosos: 0, 
+        fallidos: 0,
+        resultados: [] 
+      }
     }
   }
 
