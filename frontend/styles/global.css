@@ -1,5 +1,5 @@
 /* =============================
-   Paleta BomberOS (variables)
+  Paleta BomberOS (variables)
 ============================= */
 :root {
   --red-700: #d52b1e;
@@ -20,7 +20,7 @@
 }
 
 /* =============================
-   Base
+  Base
 ============================= */
 body {
   background-color: var(--white);
@@ -29,7 +29,7 @@ body {
 }
 
 /* =============================
-   Form (inputs, labels)
+  Form (inputs, labels)
 ============================= */
 .form-label,
 .form-check-label {
@@ -118,7 +118,7 @@ body {
 }
 
 /* =============================
-   Botones
+  Botones
 ============================= */
 .btn {
   font-size: 1rem;
@@ -241,7 +241,7 @@ body {
 
 
 /* =============================
-   Header de formularios
+  Header de formularios
 ============================= */
 .form-header {
   display: flex;
@@ -267,7 +267,7 @@ body {
 }
 
 /* =============================
-   React-Select (usar classNamePrefix="rs")
+  React-Select (usar classNamePrefix="rs")
 ============================= */
 .rs__control {
   background-color: var(--white);
@@ -316,7 +316,7 @@ body {
 }
 
 /* =============================
-   Tablas (lista de bomberos)
+  Tablas (lista de bomberos)
 ============================= */
 .tabla-bomberos {
   width: 100%;
@@ -354,7 +354,7 @@ body {
 }
 
 /* =============================
-   FullCalendar (bloques/tooltip)
+  FullCalendar (bloques/tooltip)
 ============================= */
 .fc-toolbar-chunk .fc-toolbar-title,
 .fc-col-header-cell-cushion {
@@ -406,7 +406,7 @@ body {
 }
 
 /* =============================
-   Modales
+  Modales
 ============================= */
 .modal-backdrop {
   background-color: rgba(0, 0, 0, .5);
@@ -427,7 +427,7 @@ body {
 }
 
 /* =============================
-   Paginación reutilizable
+  Paginación reutilizable
 ============================= */
 .custom-page-btn {
   padding: 0.375rem 0.75rem !important;
@@ -441,7 +441,7 @@ body {
 }
 
 /* =============================
-   Iconos
+  Iconos
 ============================= */
 .icon-circle {
   width: 40px;
@@ -453,7 +453,7 @@ body {
 }
 
 /* =============================
-   Responsive (ConsultarIncidente existente)
+  Responsive (ConsultarIncidente existente)
 ============================= */
 @media (max-width: 576px) {
 
@@ -592,8 +592,8 @@ body {
 }
 
 /* ============================================================
-   REGISTRAR GUARDIA — Responsive, paginado y tooltips propios
-   (usar wrapper .registrar-guardia y tablas con clase .rg-table)
+  REGISTRAR GUARDIA — Responsive, paginado y tooltips propios
+  (usar wrapper .registrar-guardia y tablas con clase .rg-table)
 ============================================================ */
 
 /* Mini botón de borrar (también sirve para otros botones chicos) */
