@@ -186,7 +186,7 @@ const RecuperarClave = ({ onVolver }) => {
 
             {/* acciones secundarias */}
             <div className='mt-4 d-flex justify-content-between align-items-center'>
-              <span className='text-white-90 small'>¿Recordaste tu contraseña?</span>
+              <span></span>
               <button
                 type='button'
                 className='btn btn-link recuperar-link p-0'

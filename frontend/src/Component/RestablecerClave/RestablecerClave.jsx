@@ -189,7 +189,7 @@ const RestablecerClave = ({ onVolver }) => {
                     />
                     <i className='bi bi-lock input-icon' aria-hidden='true' />
                   </div>
-                  <small className='text-white-90' style={{ opacity: .6 }}>Mínimo 8 caracteres</small>
+                  <small className='text-white' style={{ opacity: .6 }}>Mínimo 8 caracteres</small>
                 </div>
 
                 <div className='mb-3 text-start'>
