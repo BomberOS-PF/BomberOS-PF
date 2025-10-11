@@ -228,6 +228,18 @@ body {
   border-color: #dc3545;
 }
 
+/* .btn-icon {
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.btn-icon.btn-sm { width: 28px; height: 28px }
+.btn-icon.btn-lg { width: 40px; height: 40px } */
+
+
 /* =============================
    Header de formularios
 ============================= */
@@ -1338,4 +1350,60 @@ body {
   form.at-form hr {
     margin: .75rem 0 !important;
   }
+}
+
+/* Contenedor del trash: no se estira y empuja a la derecha */
+.actions-inline{
+  display:flex !important;
+  justify-content:flex-end !important;
+  width:auto !important;
+  background:transparent !important;
+  border:0 !important;
+}
+
+/* Botón chico (siempre) */
+.action-trash{
+  width:32px !important;
+  height:28px !important;
+  padding:.28rem .46rem !important;
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  line-height:1 !important;
+  border-radius:.25rem !important;
+}
+.action-trash i{ font-size:.95rem !important; }
+
+/* En móvil: que la "col" del trash NO se haga 100% y quede pegada a la derecha */
+@media (max-width:576px){
+  .row > .actions-inline{           /* aplica en ambos formularios */
+    flex:0 0 auto !important;       /* evita 100% */
+    max-width:none !important;
+  }
+  .actions-inline{ align-self:flex-end !important; }
+}
+
+/* Botón de cerrar del bloque "Detalles específicos" */
+.header-close {
+  /* pisa variables de Bootstrap */
+  --bs-btn-padding-x: 0 !important;
+  --bs-btn-padding-y: 0 !important;
+
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  line-height: 1 !important;
+
+  /* si el contenedor es flex, que NO se estire jamás */
+  flex: 0 0 28px !important;
+}
+
+.header-close i {
+  font-size: 14px !important;
+  line-height: 1;
 }

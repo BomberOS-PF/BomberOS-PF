@@ -145,15 +145,19 @@ const DamnificadosForm = ({ value = [], onChange, className = '', title = 'Perso
                             <label className="form-label text-dark d-flex align-items-center gap-2">¿Falleció?</label>
                         </div>
 
-                        <div className='d-inline-flex align-items-center justify-content-center gap-2 flex-nowrap actions-inline'>
-                            <button
-                                type="button"
-                                className="btn btn-outline-danger btn-detail btn-trash"
-                                onClick={() => eliminar(index)}
-                            >
-                                <i className="bi bi-trash"></i>
-                            </button>
+
+                        <div className="d-inline-flex align-items-center justify-content-center gap-2 flex-nowrap actions-inline">
+                            <div className='col-auto ms-auto d-flex actions-inline'>
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-danger btn-detail btn-trash action-trash"
+                                    onClick={() => eliminar(index)}
+                                >
+                                    <i className="bi bi-trash"></i>
+                                </button>
+                            </div>
                         </div>
+
 
                     </div>
                 )
