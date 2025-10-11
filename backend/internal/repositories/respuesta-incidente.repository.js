@@ -7,6 +7,7 @@ export class MySQLRespuestaIncidenteRepository {
     this.participacionTable = 'formParticipacion'
     this.bomberoTable = 'bombero'
     this.incidenteTable = 'incidente'
+    this.notificacionWhatsAppTable = 'notificacionWhatsApp'
   }
 
   /**
@@ -247,6 +248,187 @@ export class MySQLRespuestaIncidenteRepository {
     } catch (error) {
       logger.error('❌ Error al obtener resumen de incidentes', {
         error: error.message
+      })
+      throw error
+    }
+  }
+
+  async obtenerIncidenteMasReciente() {
+    const connection = await getConnection()
+    
+    try {
+      const query = `
+        SELECT idIncidente
+        FROM ${this.incidenteTable}
+        WHERE fecha >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+        ORDER BY fecha DESC
+        LIMIT 1
+      `
+      
+      const [rows] = await connection.execute(query)
+      
+      if (rows.length === 0) {
+        logger.warn('⚠️ No se encontraron incidentes en las últimas 24 horas')
+        return null
+      }
+      
+      const idIncidente = rows[0].idIncidente
+      
+      logger.info('📋 Incidente más reciente obtenido', {
+        idIncidente,
+        metodo: 'obtenerIncidenteMasReciente'
+      })
+      
+      return idIncidente
+    } catch (error) {
+      logger.error('❌ Error al obtener incidente más reciente', {
+        error: error.message
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Guardar notificación WhatsApp enviada a un bombero
+   */
+  async guardarNotificacionWhatsApp(data) {
+    const connection = await getConnection()
+    
+    try {
+      const query = `
+        INSERT INTO ${this.notificacionWhatsAppTable} 
+        (idIncidente, dniBombero, telefono, messageSid, fechaEnvio, estadoEnvio, errorMensaje)
+        VALUES (?, ?, ?, ?, NOW(), ?, ?)
+      `
+      
+      const [result] = await connection.execute(query, [
+        data.idIncidente,
+        data.dniBombero || null,
+        data.telefono,
+        data.messageSid || null,
+        data.estadoEnvio || 'enviado',
+        data.errorMensaje || null
+      ])
+      
+      logger.info('📤 Notificación WhatsApp registrada', {
+        idNotificacionWhatsApp: result.insertId,
+        incidente: data.idIncidente,
+        telefono: data.telefono,
+        estado: data.estadoEnvio
+      })
+      
+      return result.insertId
+    } catch (error) {
+      logger.error('❌ Error al guardar notificación WhatsApp', {
+        error: error.message,
+        data
+      })
+      throw error
+    }
+  }
+
+  async obtenerIncidentePorTelefono(telefono) {
+    const connection = await getConnection()
+    
+    try {
+      // Normalizar teléfono: extraer solo números
+      const telefonoNormalizado = telefono.replace(/\D/g, '')
+      const ultimosDigitos = telefonoNormalizado.slice(-10) // Últimos 10 dígitos
+      
+      logger.info('🔍 Buscando incidente por teléfono', {
+        telefonoOriginal: telefono,
+        telefonoNormalizado,
+        ultimosDigitos
+      })
+      
+      // Buscar con LIKE para coincidir con diferentes formatos
+      // Usamos los últimos 7 dígitos para mayor flexibilidad
+      const query = `
+        SELECT idIncidente, telefono, fechaEnvio
+        FROM ${this.notificacionWhatsAppTable}
+        WHERE REPLACE(REPLACE(REPLACE(telefono, '+', ''), '-', ''), ' ', '') LIKE ?
+          AND estadoEnvio = 'enviado'
+          AND fechaEnvio >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+        ORDER BY fechaEnvio DESC
+        LIMIT 1
+      `
+      
+      // Buscar por los últimos 7 dígitos (más flexible que 8)
+      const searchPattern = `%${ultimosDigitos.slice(-7)}%`
+      
+      logger.info('🔍 Pattern de búsqueda', {
+        searchPattern,
+        ultimosDigitos
+      })
+      
+      const [rows] = await connection.execute(query, [searchPattern])
+      
+      if (rows.length === 0) {
+        logger.warn('⚠️ No se encontró notificación reciente para el teléfono', {
+          telefono,
+          telefonoNormalizado,
+          ultimosDigitos,
+          searchPattern,
+          ventanaTiempo: '24 horas'
+        })
+        return null
+      }
+      
+      const idIncidente = rows[0].idIncidente
+      
+      logger.info('📋 Incidente encontrado por teléfono', {
+        telefonoOriginal: telefono,
+        telefonoEnBD: rows[0].telefono,
+        idIncidente,
+        fechaEnvio: rows[0].fechaEnvio,
+        metodo: 'obtenerIncidentePorTelefono'
+      })
+      
+      return idIncidente
+    } catch (error) {
+      logger.error('❌ Error al obtener incidente por teléfono', {
+        error: error.message,
+        telefono
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Obtener estadísticas de notificaciones de un incidente
+   */
+  async obtenerEstadisticasNotificaciones(idIncidente) {
+    const connection = await getConnection()
+    
+    try {
+      const query = `
+        SELECT 
+          COUNT(*) as total_notificaciones,
+          SUM(CASE WHEN estadoEnvio = 'enviado' THEN 1 ELSE 0 END) as enviadas,
+          SUM(CASE WHEN estadoEnvio = 'fallido' THEN 1 ELSE 0 END) as fallidas,
+          SUM(CASE WHEN estadoEnvio = 'pendiente' THEN 1 ELSE 0 END) as pendientes,
+          MIN(fechaEnvio) as primera_notificacion,
+          MAX(fechaEnvio) as ultima_notificacion
+        FROM ${this.notificacionWhatsAppTable}
+        WHERE idIncidente = ?
+      `
+      
+      const [rows] = await connection.execute(query, [idIncidente])
+      const stats = rows[0]
+      
+      return {
+        idIncidente: parseInt(idIncidente),
+        totalNotificaciones: parseInt(stats.total_notificaciones),
+        enviadas: parseInt(stats.enviadas),
+        fallidas: parseInt(stats.fallidas),
+        pendientes: parseInt(stats.pendientes),
+        primeraNotificacion: stats.primera_notificacion,
+        ultimaNotificacion: stats.ultima_notificacion
+      }
+    } catch (error) {
+      logger.error('❌ Error al obtener estadísticas de notificaciones', {
+        error: error.message,
+        idIncidente
       })
       throw error
     }

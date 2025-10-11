@@ -184,46 +184,53 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
         statusText: resp.statusText,
         ok: resp.ok,
         url: resp.url,
-        headers: Object.fromEntries(resp.headers.entries())
+        contentType: resp.headers.get('content-type')
       })
 
-      if (!resp.ok) {
-        let errorData = {}
-        try {
-          const text = await resp.text()
-          if (text) {
-            errorData = JSON.parse(text)
-          }
-        } catch (parseError) {
-          console.error('Error parsing error response:', parseError)
-          errorData = { message: `Error ${resp.status}: ${resp.statusText}` }
-        }
-        throw new Error(errorData.message || `Error ${resp.status}: ${resp.statusText}`)
-      }
-
-      let resultado = {}
+      let resultado = null
+      let responseText = ''
+      
       try {
-        const text = await resp.text()
+        responseText = await resp.text()
         console.log('📱 Contenido de la respuesta:', {
-          text: text,
-          length: text.length,
-          isEmpty: text.length === 0,
-          firstChars: text.substring(0, 100)
+          length: responseText.length,
+          isEmpty: responseText.length === 0,
+          firstChars: responseText.substring(0, 200)
         })
 
-        if (text) {
-          resultado = JSON.parse(text)
-        } else {
-          throw new Error('Respuesta vacía del servidor')
+        if (!responseText || responseText.trim().length === 0) {
+          throw new Error('El servidor devolvió una respuesta vacía')
         }
+
+        resultado = JSON.parse(responseText)
       } catch (parseError) {
-        console.error('Error parsing success response:', parseError)
-        console.error('📱 Texto que causó el error:', text)
-        throw new Error('Error al procesar la respuesta del servidor')
+        console.error('❌ Error al parsear respuesta:', {
+          error: parseError.message,
+          responseText: responseText.substring(0, 500),
+          status: resp.status
+        })
+        
+        throw new Error(
+          'El servidor devolvió una respuesta inválida. ' +
+          'Esto puede deberse a que el servicio de WhatsApp no está configurado correctamente. ' +
+          'Contacta al administrador del sistema.'
+        )
+      }
+
+      console.log('📱 Resultado parseado:', resultado)
+
+      if (!resultado || typeof resultado !== 'object') {
+        throw new Error('Respuesta del servidor con formato inválido')
       }
 
       if (resultado.success) {
-        const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = resultado.data
+        const data = resultado.data || {}
+        const totalBomberos = data.totalBomberos || 0
+        const notificacionesExitosas = data.notificacionesExitosas || 0
+        const notificacionesFallidas = data.notificacionesFallidas || 0
+
+        console.log('✅ Notificaciones enviadas:', { totalBomberos, notificacionesExitosas, notificacionesFallidas })
+
         alert(`🚨 ALERTA ENVIADA POR WHATSAPP ✅
         
 📊 Resumen:
@@ -232,24 +239,35 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
 • Notificaciones fallidas: ${notificacionesFallidas}
 
 Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
+        
         setMensaje('✅ Notificación enviada exitosamente a los bomberos')
         setTimeout(() => setMensaje(''), 5000)
       } else {
-        throw new Error(resultado.message || 'Error al enviar notificación')
+        const errorMessage = resultado.message || 'No se pudo enviar la notificación'
+        console.warn('⚠️ Notificación fallida:', errorMessage)
+        
+        throw new Error(errorMessage)
       }
     } catch (error) {
-      console.error('❌ Error al notificar por WhatsApp:', error)
+      console.error('❌ Error al notificar por WhatsApp:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      })
 
-      let errorMessage = error.message
+      let errorMessage = error.message || 'Error desconocido'
+
       if (error.name === 'AbortError') {
-        errorMessage = 'La notificación tardó demasiado tiempo. Por favor intenta nuevamente.'
-      } else if (error.message.includes('Failed to fetch')) {
-        errorMessage = 'Error de conexión con el servidor. Verifica tu conexión a internet.'
-      } else if (error.message.includes('Unexpected end of JSON input')) {
-        errorMessage = 'El servidor devolvió una respuesta inválida. Por favor intenta nuevamente.'
+        errorMessage = 'La notificación tardó demasiado tiempo (más de 30 segundos). Por favor intenta nuevamente.'
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        errorMessage = 'Error de conexión con el servidor. Verifica tu conexión a internet y que el servidor esté en línea.'
+      } else if (error.message.includes('respuesta vacía') || error.message.includes('respuesta inválida')) {
+        errorMessage = error.message
+      } else if (error.message.includes('WhatsApp no está')) {
+        errorMessage = error.message
       }
 
-      alert(`❌ Error al notificar por WhatsApp: ${errorMessage}`)
+      alert(`❌ Error al notificar por WhatsApp:\n\n${errorMessage}`)
       setErrorGlobal(`Error al notificar: ${errorMessage}`)
     } finally {
       setNotificandoBomberos(false)
