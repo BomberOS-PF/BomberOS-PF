@@ -3,6 +3,7 @@ import './FormularioBombero.css'
 import { User, Phone, Mail, Shield, CreditCard, PillIcon } from 'lucide-react'
 import { API_URLS, apiRequest, buildApiUrl } from '../../../config/api'
 import Select from 'react-select'
+import { swalConfirm, swalToast } from '../../Common/swalBootstrap'
 
 const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loading = false, ocultarTitulo = false }) => {
   const [rangosDisponibles, setRangosDisponibles] = useState([])
@@ -105,275 +106,295 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
   }
 
   const soloLectura = modo === 'consulta'
-
   const esConsulta = modo === 'consulta'
-  // Tema light mejorado con mejor presentación
-  const cardClasses = "card bg-white text-dark border-0 shadow-sm p-4"
   const labelClasses = "form-label text-dark d-flex align-items-center gap-2 fw-semibold"
   const inputClasses = esConsulta
     ? "form-control border-secondary bg-light"
     : "form-control border-secondary focus-ring focus-ring-primary"
 
   return (
-    <div className="container">
-      <div className={cardClasses}>
-        {!ocultarTitulo && (
-          <h4 className="mb-4 text-danger">
-            {modo === 'alta' ? 'Alta de Bombero' : modo === 'edicion' ? 'Editar Bombero' : 'Consulta de Bombero'}
-          </h4>
+    <div className="card-body">
+      {!ocultarTitulo && (
+        <h4 className="mb-4 text-danger">
+          {modo === 'alta' ? 'Alta de Bombero' : modo === 'edicion' ? 'Editar Bombero' : 'Consulta de Bombero'}
+        </h4>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        {modo === 'edicion' && formData.idUsuario && (
+          <input type="hidden" id="idUsuario" value={formData.idUsuario} onChange={handleChange} />
         )}
 
-        <form onSubmit={handleSubmit}>
-          {modo === 'edicion' && formData.idUsuario && (
-            <input type="hidden" id="idUsuario" value={formData.idUsuario} onChange={handleChange} />
-          )}
-
-          {/* Información Personal */}
-          {esConsulta && (
-            <div className="mb-4">
-              <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
-                <div className="bg-danger icon-circle me-2">
-                  <i className="bi bi-person-circle text-white fs-6"></i>
-                </div>
-                <h5 className="text-danger mb-0 fw-bold">
-                  Información Personal
-                </h5>
+        {/* Información Personal */}
+        {esConsulta && (
+          <div className="mb-4">
+            <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
+              <div className="bg-danger icon-circle me-2">
+                <i className="bi bi-person-circle text-white fs-6"></i>
               </div>
-            </div>
-          )}
-
-          {/* Nombre, Apellido, DNI */}
-          <div className="row mb-3">
-            <div className="col-md-4">
-              <label htmlFor="nombre" className={labelClasses}>
-                <User className="text-primary" />
-                Nombre
-              </label>
-              <input
-                type="text"
-                className={inputClasses}
-                id="nombre"
-                value={formData.nombre || ''}
-                required={!soloLectura}
-                onChange={handleChange}
-                disabled={soloLectura || loading}
-              />
-            </div>
-
-            <div className="col-md-4">
-              <label htmlFor="apellido" className={labelClasses}>
-                <User className="text-primary" />
-                Apellido
-              </label>
-              <input
-                type="text"
-                className={inputClasses}
-                id="apellido"
-                value={formData.apellido || ''}
-                required={!soloLectura}
-                onChange={handleChange}
-                disabled={soloLectura || loading}
-              />
-            </div>
-
-            <div className="col-md-4">
-              <label htmlFor="dni" className={labelClasses}>
-                <CreditCard className="text-primary" />
-                DNI
-              </label>
-              <input
-                type="text"
-                className={inputClasses}
-                id="dni"
-                value={formData.dni || ''}
-                required={!soloLectura}
-                onChange={handleChange}
-                disabled={soloLectura || loading || modo === 'edicion'}
-                pattern="[0-9]{7,8}"
-                title="Ingrese un dni válido (7-8 dígitos)"
-              />
+              <h5 className="text-danger mb-0 fw-bold">
+                Información Personal
+              </h5>
             </div>
           </div>
+        )}
 
-          {/* Información de Contacto */}
-          {esConsulta && (
-            <div className="mb-4 mt-5">
-              <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
-                <div className="bg-danger icon-circle me-2">
-                  <i className="bi bi-telephone text-white fs-5"></i>
-                </div>
-                <h5 className="text-danger mb-0 fw-bold">
-                  Información de Contacto
-                </h5>
-              </div>
-            </div>
-          )}
-
-          {/* Contacto */}
-          <div className="row mb-3">
-            <div className="col-md-4">
-              <label htmlFor="domicilio" className={labelClasses}>
-                Domicilio
-              </label>
-              <input
-                type="text"
-                className={inputClasses}
-                id="domicilio"
-                value={formData.domicilio || ''}
-                onChange={handleChange}
-                disabled={soloLectura || loading}
-                required={!soloLectura}
-              />
-            </div>
-
-            <div className="col-md-4">
-              <label htmlFor="telefono" className={labelClasses}>
-                <Phone size={16} className="text-primary" />
-                Teléfono
-              </label>
-              <input
-                type="tel"
-                className={inputClasses}
-                id="telefono"
-                value={formData.telefono || ''}
-                onChange={handleChange}
-                disabled={soloLectura || loading}
-                required={!soloLectura}
-                pattern="[0-9+\-\s\(\)]{8,15}"
-                title="Ingrese un teléfono válido (8-15 dígitos)"
-              />
-            </div>
-
-            <div className="col-md-4">
-              <label htmlFor="correo" className={labelClasses}>
-                <Mail className="text-primary" />
-                Correo electrónico
-              </label>
-              <input
-                type="email"
-                className={inputClasses}
-                id="correo"
-                value={formData.correo || ''}
-                onChange={handleChange}
-                disabled={soloLectura || loading}
-                required={!soloLectura}
-              />
-            </div>
+        {/* Nombre, Apellido, DNI */}
+        <div className="row mb-3">
+          <div className="col-md-4">
+            <label htmlFor="nombre" className={labelClasses}>
+              <User className="text-primary" />
+              Nombre
+            </label>
+            <input
+              type="text"
+              className={inputClasses}
+              id="nombre"
+              value={formData.nombre || ''}
+              required={!soloLectura}
+              onChange={handleChange}
+              disabled={soloLectura || loading}
+            />
           </div>
 
-          {/* Información Profesional */}
-          {esConsulta && (
-            <div className="mb-4 mt-5">
-              <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
-                <div className="bg-danger icon-circle me-2">
-                  <i className="bi bi-shield-check text-white fs-5"></i>
-                </div>
-                <h5 className="text-danger mb-0 fw-bold">
-                  Información Profesional
-                </h5>
-              </div>
-            </div>
-          )}
-
-          <div className="row mb-3">
-            <div className="col-md-4">
-              <label htmlFor="legajo" className={labelClasses}>
-                Legajo <span className="badge bg-secondary text-white text-uppercase ms-2">opcional</span>
-              </label>
-              <input
-                type="text"
-                className={inputClasses}
-                id="legajo"
-                value={formData.legajo || ''}
-                onChange={handleChange}
-                disabled={soloLectura || loading}
-              />
-            </div>
-
-            <div className="col-md-4">
-              <label htmlFor="antiguedad" className={labelClasses}>
-                Antigüedad (años)
-              </label>
-              <input
-                type="number"
-                className={inputClasses}
-                id="antiguedad"
-                value={formData.antiguedad || 0}
-                onChange={handleChange}
-                disabled={soloLectura || loading}
-                min="0"
-                max="50"
-              />
-            </div>
-
-            <div className="col-md-4">
-              <label htmlFor="rango" className={labelClasses}>
-                <Shield className="text-primary" />
-                Rango
-              </label>
-              {/* Campo oculto para validación HTML5 */}
-              <input
-                type="text"
-                value={formData.rango || ''}
-                required={!soloLectura}
-                style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
-                tabIndex={-1}
-                onChange={() => { }}
-              />
-              <Select
-                classNamePrefix="rs"
-                inputId="rango"
-                placeholder="Seleccione un rango"
-                isClearable
-                isDisabled={soloLectura || loading}
-                options={rangosDisponibles.map(r => ({ value: String(r.idRango), label: r.descripcion }))}
-                value={
-                  formData.rango
-                    ? {
-                      value: String(formData.rango),
-                      label: rangosDisponibles.find(x => String(x.idRango) === String(formData.rango))?.descripcion || ''
-                    }
-                    : null
-                }
-                onChange={(opt) =>
-                  setFormData(prev => ({ ...prev, rango: opt ? opt.value : '' }))
-                }
-              />
-            </div>
+          <div className="col-md-4">
+            <label htmlFor="apellido" className={labelClasses}>
+              <User className="text-primary" />
+              Apellido
+            </label>
+            <input
+              type="text"
+              className={inputClasses}
+              id="apellido"
+              value={formData.apellido || ''}
+              required={!soloLectura}
+              onChange={handleChange}
+              disabled={soloLectura || loading}
+            />
           </div>
 
-          {/* Información Médica */}
-          {esConsulta && (
-            <div className="mb-4 mt-5">
-              <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
-                <div className="bg-danger icon-circle me-2">
-                  <i className="bi bi-heart-pulse text-white fs-5"></i>
-                </div>
-                <h5 className="text-danger mb-0 fw-bold">
-                  Información Médica
-                </h5>
+          <div className="col-md-4">
+            <label htmlFor="dni" className={labelClasses}>
+              <CreditCard className="text-primary" />
+              DNI
+            </label>
+            <input
+              type="text"
+              className={inputClasses}
+              id="dni"
+              value={formData.dni || ''}
+              required={!soloLectura}
+              onChange={handleChange}
+              disabled={soloLectura || loading || modo === 'edicion'}
+              pattern="[0-9]{7,8}"
+              title="Ingrese un dni válido (7-8 dígitos)"
+            />
+          </div>
+        </div>
+
+        {/* Información de Contacto */}
+        {esConsulta && (
+          <div className="mb-4 mt-5">
+            <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
+              <div className="bg-danger icon-circle me-2">
+                <i className="bi bi-telephone text-white fs-5"></i>
               </div>
+              <h5 className="text-danger mb-0 fw-bold">
+                Información de Contacto
+              </h5>
             </div>
-          )}
+          </div>
+        )}
 
-          <div className="row mb-3">
-            <div className="col-md-4">
-              <label htmlFor="fichaMedica" className={labelClasses}>
-                Ficha médica (PDF)
-              </label>
+        {/* Contacto */}
+        <div className="row mb-3">
+          <div className="col-md-4">
+            <label htmlFor="domicilio" className={labelClasses}>
+              Domicilio
+            </label>
+            <input
+              type="text"
+              className={inputClasses}
+              id="domicilio"
+              value={formData.domicilio || ''}
+              onChange={handleChange}
+              disabled={soloLectura || loading}
+              required={!soloLectura}
+            />
+          </div>
 
-              {formData.fichaMedica && !(formData.fichaMedica instanceof File) ? (
-                <div>
-                  <div className="d-flex align-items-center gap-2" style={{ minWidth: 0 }}>
-                    <div className="flex-grow-1 border rounded p-2 bg-light" style={{ minWidth: 0, overflow: 'hidden' }}>
-                      <small className="text-muted" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
-                        📄 {formData.fichaMedicaArchivo || 'Ficha médica disponible'}
-                      </small>
-                    </div>
-                    <div className="d-flex gap-2" style={{ flexShrink: 0 }}>
+          <div className="col-md-4">
+            <label htmlFor="telefono" className={labelClasses}>
+              <Phone size={16} className="text-primary" />
+              Teléfono
+            </label>
+            <input
+              type="tel"
+              className={inputClasses}
+              id="telefono"
+              value={formData.telefono || ''}
+              onChange={handleChange}
+              disabled={soloLectura || loading}
+              required={!soloLectura}
+              pattern="[0-9+\-\s\(\)]{8,15}"
+              title="Ingrese un teléfono válido (8-15 dígitos)"
+            />
+          </div>
+
+          <div className="col-md-4">
+            <label htmlFor="correo" className={labelClasses}>
+              <Mail className="text-primary" />
+              Correo electrónico
+            </label>
+            <input
+              type="email"
+              className={inputClasses}
+              id="correo"
+              value={formData.correo || ''}
+              onChange={handleChange}
+              disabled={soloLectura || loading}
+              required={!soloLectura}
+            />
+          </div>
+        </div>
+
+        {/* Información Profesional */}
+        {esConsulta && (
+          <div className="mb-4 mt-5">
+            <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
+              <div className="bg-danger icon-circle me-2">
+                <i className="bi bi-shield-check text-white fs-5"></i>
+              </div>
+              <h5 className="text-danger mb-0 fw-bold">
+                Información Profesional
+              </h5>
+            </div>
+          </div>
+        )}
+
+        <div className="row mb-3">
+          <div className="col-md-4">
+            <label htmlFor="legajo" className={labelClasses}>
+              Legajo <span className="badge bg-secondary text-white text-uppercase ms-2">opcional</span>
+            </label>
+            <input
+              type="text"
+              className={inputClasses}
+              id="legajo"
+              value={formData.legajo || ''}
+              onChange={handleChange}
+              disabled={soloLectura || loading}
+            />
+          </div>
+
+          <div className="col-md-4">
+            <label htmlFor="antiguedad" className={labelClasses}>
+              Antigüedad (años)
+            </label>
+            <input
+              type="number"
+              className={inputClasses}
+              id="antiguedad"
+              value={formData.antiguedad || 0}
+              onChange={handleChange}
+              disabled={soloLectura || loading}
+              min="0"
+              max="50"
+            />
+          </div>
+
+          <div className="col-md-4">
+            <label htmlFor="rango" className={labelClasses}>
+              <Shield className="text-primary" />
+              Rango
+            </label>
+            {/* Campo oculto para validación HTML5 */}
+            <input
+              type="text"
+              value={formData.rango || ''}
+              required={!soloLectura}
+              style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
+              tabIndex={-1}
+              onChange={() => { }}
+            />
+            <Select
+              classNamePrefix="rs"
+              inputId="rango"
+              placeholder="Seleccione un rango"
+              isClearable
+              isDisabled={soloLectura || loading}
+              options={rangosDisponibles.map(r => ({ value: String(r.idRango), label: r.descripcion }))}
+              value={
+                formData.rango
+                  ? {
+                    value: String(formData.rango),
+                    label: rangosDisponibles.find(x => String(x.idRango) === String(formData.rango))?.descripcion || ''
+                  }
+                  : null
+              }
+              onChange={(opt) =>
+                setFormData(prev => ({ ...prev, rango: opt ? opt.value : '' }))
+              }
+            />
+          </div>
+        </div>
+
+        {/* Información Médica */}
+        {esConsulta && (
+          <div className="mb-4 mt-5">
+            <div className="d-flex align-items-center mb-3 pb-2 border-bottom border-danger border-2">
+              <div className="bg-danger icon-circle me-2">
+                <i className="bi bi-heart-pulse text-white fs-5"></i>
+              </div>
+              <h5 className="text-danger mb-0 fw-bold">
+                Información Médica
+              </h5>
+            </div>
+          </div>
+        )}
+
+        <div className="row mb-3">
+          <div className="col-md-4">
+            <label htmlFor="fichaMedica" className={labelClasses}>
+              Ficha médica (PDF)
+            </label>
+
+            {formData.fichaMedica && !(formData.fichaMedica instanceof File) ? (
+              <div>
+                <div className="d-flex align-items-center gap-2" style={{ minWidth: 0 }}>
+                  <div className="flex-grow-1 border rounded p-2 bg-light" style={{ minWidth: 0, overflow: 'hidden' }}>
+                    <small className="text-muted" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                      📄 {formData.fichaMedicaArchivo || 'Ficha médica disponible'}
+                    </small>
+                  </div>
+                  <div className="d-flex gap-2" style={{ flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-primary"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(buildApiUrl(`/api/bomberos/${formData.dni}/ficha-medica`))
+                          if (response.ok) {
+                            const blob = await response.blob()
+                            const url = window.URL.createObjectURL(blob)
+                            window.open(url, '_blank')
+                            setTimeout(() => window.URL.revokeObjectURL(url), 100)
+                          } else {
+                            alert('Error al descargar la ficha médica')
+                          }
+                        } catch (error) {
+                          console.error('Error:', error)
+                          alert('Error al descargar la ficha médica')
+                        }
+                      }}
+                      title="Ver/Descargar PDF"
+                    >
+                      <i className="bi bi-download"></i>
+                    </button>
+                    {!soloLectura && (
                       <button
                         type="button"
-                        className="btn btn-sm btn-outline-primary"
+                        className="btn btn-sm btn-outline-danger"
                         onClick={async () => {
                           try {
                             const response = await fetch(buildApiUrl(`/api/bomberos/${formData.dni}/ficha-medica`))
@@ -390,132 +411,113 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
                             alert('Error al descargar la ficha médica')
                           }
                         }}
-                        title="Ver/Descargar PDF"
+                        title="Eliminar archivo"
                       >
-                        <i className="bi bi-download"></i>
+                        <i className="bi bi-trash"></i>
                       </button>
-                      {!soloLectura && (
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline-danger"
-                          onClick={() => {
-                            const confirmar = window.confirm('¿Eliminar la ficha médica actual? Podrás subir una nueva.')
-                            if (confirmar) {
-                              setFormData(prev => ({
-                                ...prev,
-                                fichaMedica: null,
-                                fichaMedicaArchivo: null
-                              }))
-                            }
-                          }}
-                          title="Eliminar archivo"
-                        >
-                          <i className="bi bi-trash"></i>
-                        </button>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
-              ) : (
-                <input
-                  type="file"
-                  className="form-control"
-                  id="fichaMedica"
-                  onChange={handleChange}
-                  accept="application/pdf"
-                  disabled={soloLectura || loading}
-                />
-              )}
-            </div>
-
-            <div className="col-md-4">
-              <label htmlFor="fechaFichaMedica" className={labelClasses}>
-                Fecha de carga
-              </label>
+              </div>
+            ) : (
               <input
-                type="date"
+                type="file"
                 className="form-control"
-                id="fechaFichaMedica"
-                value={formData.fechaFichaMedica ? formData.fechaFichaMedica.split('T')[0] : ''}
+                id="fichaMedica"
+                onChange={handleChange}
+                accept="application/pdf"
+                disabled={soloLectura || loading}
+              />
+            )}
+          </div>
+
+          <div className="col-md-4">
+            <label htmlFor="fechaFichaMedica" className={labelClasses}>
+              Fecha de carga
+            </label>
+            <input
+              type="date"
+              className="form-control"
+              id="fechaFichaMedica"
+              value={formData.fechaFichaMedica ? formData.fechaFichaMedica.split('T')[0] : ''}
+              onChange={handleChange}
+              disabled={soloLectura || loading}
+            />
+          </div>
+
+          <div className="col-md-4">
+            <label htmlFor="grupoSanguineo" className={labelClasses}>
+              <PillIcon className="text-warning" />
+              Grupo Sanguíneo
+            </label>
+            {/* Campo oculto para validación HTML5 */}
+            <input
+              type="text"
+              value={formData.grupoSanguineo || ''}
+              required={!soloLectura}
+              style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
+              tabIndex={-1}
+              onChange={() => { }}
+            />
+            <Select
+              classNamePrefix="rs"
+              inputId="grupoSanguineo"
+              placeholder="Seleccione"
+              isClearable
+              isDisabled={soloLectura || loading}
+              options={["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(gs => ({ value: gs, label: gs }))}
+              value={formData.grupoSanguineo ? { value: formData.grupoSanguineo, label: formData.grupoSanguineo } : null}
+              onChange={(opt) =>
+                setFormData(prev => ({ ...prev, grupoSanguineo: opt ? opt.value : '' }))
+              }
+            />
+          </div>
+        </div>
+
+        {/* Switches */}
+        <div className="row mb-3">
+          <div className="col-md-6">
+            <div className="form-check form-switch only-thumb">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="aptoPsicologico"
+                checked={formData.aptoPsicologico || false}
                 onChange={handleChange}
                 disabled={soloLectura || loading}
               />
-            </div>
-
-            <div className="col-md-4">
-              <label htmlFor="grupoSanguineo" className={labelClasses}>
-                <PillIcon className="text-warning" />
-                Grupo Sanguíneo
+              <label id="lbl-aptoPsico" className="form-label text-dark d-flex align-items-center gap-2">
+                Apto psicológico
               </label>
-              {/* Campo oculto para validación HTML5 */}
+            </div>
+          </div>
+
+          <div className="col-md-6">
+            <div className="form-check form-switch only-thumb">
               <input
-                type="text"
-                value={formData.grupoSanguineo || ''}
-                required={!soloLectura}
-                style={{ position: 'absolute', opacity: 0, height: 0, pointerEvents: 'none' }}
-                tabIndex={-1}
-                onChange={() => { }}
+                className="form-check-input"
+                type="checkbox"
+                id="esDelPlan"
+                checked={formData.esDelPlan || false}
+                onChange={handleChange}
+                disabled={soloLectura || loading}
               />
-              <Select
-                classNamePrefix="rs"
-                inputId="grupoSanguineo"
-                placeholder="Seleccione"
-                isClearable
-                isDisabled={soloLectura || loading}
-                options={["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(gs => ({ value: gs, label: gs }))}
-                value={formData.grupoSanguineo ? { value: formData.grupoSanguineo, label: formData.grupoSanguineo } : null}
-                onChange={(opt) =>
-                  setFormData(prev => ({ ...prev, grupoSanguineo: opt ? opt.value : '' }))
-                }
-              />
+              <label id="lbl-esPlan" className="form-label text-dark d-flex align-items-center gap-2">
+                Es del plan (guardias pagas)
+              </label>
             </div>
           </div>
+        </div>
 
-          {/* Switches */}
-          <div className="row mb-3">
-            <div className="col-md-6">
-              <div className="form-check form-switch only-thumb">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="aptoPsicologico"
-                  checked={formData.aptoPsicologico || false}
-                  onChange={handleChange}
-                  disabled={soloLectura || loading}
-                />
-                <label id="lbl-aptoPsico" className="form-label text-dark d-flex align-items-center gap-2">
-                  Apto psicológico
-                </label>
-              </div>
-            </div>
-
-            <div className="col-md-6">
-              <div className="form-check form-switch only-thumb">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="esDelPlan"
-                  checked={formData.esDelPlan || false}
-                  onChange={handleChange}
-                  disabled={soloLectura || loading}
-                />
-                <label id="lbl-esPlan" className="form-label text-dark d-flex align-items-center gap-2">
-                  Es del plan (guardias pagas)
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Botones */}
-          <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
-            {!soloLectura && (
-              <button type="submit" className="btn btn-accept btn-lg btn-medium" disabled={loading}>
-                {loading ? 'Procesando...' : modo === 'alta' ? 'Registrar Bombero' : 'Guardar Cambios'}
-              </button>
-            )}
-          </div>
-        </form>
-      </div>
+        {/* Botones */}
+        <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+          {!soloLectura && (
+            <button type="submit" className="btn btn-accept btn-lg btn-medium" disabled={loading}>
+              {loading ? 'Procesando...' : modo === 'alta' ? 'Registrar Bombero' : 'Guardar Cambios'}
+            </button>
+          )}
+        </div>
+      </form>
     </div>
   )
 }

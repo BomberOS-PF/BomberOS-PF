@@ -279,19 +279,20 @@ const ConsultarRol = ({ onVolver }) => {
           {/* Detalles / Edición */}
           {rolSeleccionado && (
             <div className='mt-4'>
-              <div className='d-flex align-items-center justify-content-between mb-3 gap-5'>
-                <h3 className='text-dark mb-0'>
-                  {modoEdicion ? `✏️ Editando: ${rolSeleccionado.nombreRol}` : `👁️ Detalles: ${rolSeleccionado.nombreRol}`}
+              <div className='detalle-header d-flex align-items-center justify-content-between mb-3'>
+                <h3 className='text-dark mb-0 flex-grow-1 text-truncate pe-2'>
+                  {modoEdicion ? `✏️ Editando: ${rolSeleccionado.nombreRol}` : `Detalles: ${rolSeleccionado.nombreRol}`}
                 </h3>
 
-                <div>
+                <div className="detalle-actions d-flex align-items-center gap-2 flex-shrink-0">
                   {!modoEdicion && (
                     <button
                       className='btn btn-warning btn-sm me-2 d-flex align-items-center gap-1'
                       onClick={activarEdicion}
                       disabled={loadingAccion}
                     >
-                      <i className='bi bi-pencil-square'></i> Editar
+                      <i className='bi bi-pencil-square'></i>
+                      <span className="d-none d-sm-inline">Editar</span>
                     </button>
                   )}
                   <button
@@ -299,7 +300,8 @@ const ConsultarRol = ({ onVolver }) => {
                     onClick={volverListado}
                     disabled={loadingAccion}
                   >
-                    <i className='bi bi-arrow-left'></i> Volver al listado
+                    <i className='bi bi-arrow-left'></i>
+                    <span className="d-none d-sm-inline">Volver al listado</span>
                   </button>
                 </div>
               </div>
