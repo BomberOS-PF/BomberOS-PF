@@ -262,7 +262,7 @@ const ConsultarBombero = ({ onVolver }) => {
                                         {bombero.esDelPlan ? 'Sí' : 'No'}
                                       </span>
                                     </td>
-                                    <td className="text-center" data-label="Acciones">
+                                    <td data-label="Acciones">
                                       <div className="d-inline-flex align-items-center justify-content-center gap-2 flex-nowrap actions-inline">
                                         <button
                                           className="btn btn-outline-secondary btn-detail btn-ver"
