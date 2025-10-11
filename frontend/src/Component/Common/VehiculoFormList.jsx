@@ -112,10 +112,11 @@ const VehiculosFormList = ({
               onChange={e => handleChange(index, 'poliza', e.target.value)}
             />
           </div>
-          <div className="d-flex justify-content-end py-3">
+          
+          <div className="d-inline-flex align-items-center justify-content-center gap-2 flex-nowrap actions-inline">
             <button
               type="button"
-              className="btn btn-outline-danger btn-detail"
+              className="btn btn-outline-danger btn-detail btn-trash"
               onClick={() => eliminar(index)}
             >
               <i className="bi bi-trash"></i>
