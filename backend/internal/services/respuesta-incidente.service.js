@@ -41,8 +41,8 @@ export class RespuestaIncidenteService {
       // Determinar tipo de respuesta
       const tipoRespuesta = this.determinarTipoRespuesta(respuestaNormalizada)
       
-      // Obtener el incidente más reciente que tenga notificaciones activas
-      const idIncidente = await this.obtenerIncidenteMasReciente()
+      // Obtener el incidente más reciente (últimas 24 horas)
+      const idIncidente = await this.respuestaRepository.obtenerIncidenteMasReciente()
       
       if (!idIncidente) {
         throw new Error('No hay incidentes activos para asociar la respuesta')
@@ -225,25 +225,29 @@ export class RespuestaIncidenteService {
 
   /**
    * Obtener el incidente más reciente (últimas 24 horas)
+   * Consulta la base de datos para obtener el incidente activo más reciente
    */
   async obtenerIncidenteMasReciente() {
     try {
-      // Obtener el incidente más reciente de la base de datos
-      // Por ahora, retornamos el ID del incidente que se está notificando
-      // En el futuro, esto debería ser dinámico basado en la notificación activa
+      // Delegar al repository para obtener el incidente más reciente
+      const incidenteId = await this.respuestaRepository.obtenerIncidenteMasReciente()
       
-      // TODO: Implementar lógica para obtener el incidente activo
-      // que está siendo notificado actualmente
+      if (!incidenteId) {
+        logger.warn('⚠️ No se encontró un incidente reciente en las últimas 24 horas')
+        return null
+      }
       
-      // Por ahora, retornamos el último incidente creado
-      // Esto debería ser el incidente #580 que acabas de crear
-      const incidenteId = 580 // El incidente que acabas de crear
-      
-      logger.info('📱 Obteniendo incidente más reciente', { incidenteId })
+      logger.info('📱 Incidente más reciente obtenido', { 
+        incidenteId,
+        metodo: 'obtenerIncidenteMasReciente' 
+      })
       
       return incidenteId
     } catch (error) {
-      logger.error('Error al obtener incidente más reciente', { error: error.message })
+      logger.error('❌ Error al obtener incidente más reciente', { 
+        error: error.message,
+        stack: error.stack 
+      })
       return null
     }
   }
@@ -299,7 +303,7 @@ export class RespuestaIncidenteService {
 
 Hola ${nombre},
 
-Tu confirmación de asistencia ha sido registrada exitosamente para el incidente #${idIncidente}.
+Tu confirmación de asistencia ha sido registrada exitosamente.
 
 Gracias por tu compromiso con el servicio.
 
@@ -309,7 +313,7 @@ _Cuerpo de Bomberos - Sistema BomberOS_`,
 
 Hola ${nombre},
 
-Tu declinación de asistencia ha sido registrada para el incidente #${idIncidente}.
+Tu declinación de asistencia ha sido registrada.
 
 Gracias por informar tu disponibilidad.
 

@@ -117,48 +117,96 @@ export const construirIncidenteHandler = (incidenteService) => {
     notificarBomberos: async (req, res, next) => {
       try {
         const { id } = req.params
-        logger.info('📱 Notificación de bomberos', { incidenteId: id })
+        logger.info('📱 Solicitud de notificación de bomberos recibida', { 
+          incidenteId: id,
+          method: req.method,
+          path: req.path 
+        })
 
-        const resultado = await incidenteService.notificarBomberosIncidente(id)
-
-        if (resultado.success) {
-          logger.info('✅ Notificación enviada', { incidenteId: id, exitosos: resultado.exitosos, total: resultado.total })
-          res.status(200).json({
-            success: true,
-            message: resultado.message,
-            data: {
-              incidenteId: id,
-              totalBomberos: resultado.total,
-              notificacionesExitosas: resultado.exitosos,
-              notificacionesFallidas: resultado.fallidos,
-              detalles: resultado.resultados
-            }
-          })
-        } else {
-          logger.warn('⚠️ Notificación con fallas', { incidenteId: id, message: resultado.message })
-          res.status(400).json({
+        if (!id || isNaN(parseInt(id))) {
+          logger.warn('⚠️ ID de incidente inválido', { id })
+          return res.status(400).json({
             success: false,
-            message: resultado.message,
+            message: 'ID de incidente inválido',
             data: {
               incidenteId: id,
-              totalBomberos: resultado.total,
-              notificacionesExitosas: resultado.exitosos,
-              notificacionesFallidas: resultado.fallidos
+              totalBomberos: 0,
+              notificacionesExitosas: 0,
+              notificacionesFallidas: 0,
+              detalles: []
             }
           })
         }
+
+        const resultado = await incidenteService.notificarBomberosIncidente(id)
+
+        logger.info('📊 Resultado de notificación', { 
+          incidenteId: id,
+          success: resultado.success,
+          total: resultado.total,
+          exitosos: resultado.exitosos,
+          fallidos: resultado.fallidos,
+          message: resultado.message
+        })
+
+        if (resultado.success) {
+          logger.info('✅ Notificación completada exitosamente', { 
+            incidenteId: id, 
+            exitosos: resultado.exitosos, 
+            total: resultado.total 
+          })
+          
+          return res.status(200).json({
+            success: true,
+            message: resultado.message || 'Notificaciones enviadas correctamente',
+            data: {
+              incidenteId: id,
+              totalBomberos: resultado.total || 0,
+              notificacionesExitosas: resultado.exitosos || 0,
+              notificacionesFallidas: resultado.fallidos || 0,
+              detalles: resultado.resultados || []
+            }
+          })
+        } 
+        
+        logger.warn('⚠️ Notificación con fallas o incompleta', { 
+          incidenteId: id, 
+          message: resultado.message,
+          total: resultado.total,
+          fallidos: resultado.fallidos
+        })
+        
+        return res.status(200).json({
+          success: false,
+          message: resultado.message || 'No se pudieron enviar las notificaciones',
+          data: {
+            incidenteId: id,
+            totalBomberos: resultado.total || 0,
+            notificacionesExitosas: resultado.exitosos || 0,
+            notificacionesFallidas: resultado.fallidos || 0,
+            detalles: resultado.resultados || []
+          }
+        })
       } catch (error) {
-        logger.error('❌ Error al notificar bomberos', { 
-          incidenteId: req.params.id, 
+        logger.error('❌ Error crítico en handler de notificación', { 
+          incidenteId: req.params?.id, 
           error: error.message,
-          stack: error.stack 
+          stack: error.stack,
+          name: error.name
         })
         
         if (!res.headersSent) {
-          res.status(500).json({
+          return res.status(500).json({
             success: false,
-            message: 'Error interno al procesar la notificación',
-            error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno del servidor'
+            message: 'Error interno al procesar la notificación. Por favor, intenta nuevamente.',
+            data: {
+              incidenteId: req.params?.id,
+              totalBomberos: 0,
+              notificacionesExitosas: 0,
+              notificacionesFallidas: 0,
+              detalles: []
+            },
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
           })
         }
       }
@@ -242,3 +290,4 @@ export const construirIncidenteHandler = (incidenteService) => {
 
   }
 }
+

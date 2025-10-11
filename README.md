@@ -19,6 +19,7 @@ El proyecto implementa **Clean Architecture** con separación clara de responsab
 - **Clean Architecture** + **Hexagonal Architecture**
 - **Value Objects** para validación de dominio
 - **Repository Pattern** para acceso a datos
+- **Twilio WhatsApp API** para notificaciones en tiempo real
 
 ### Frontend
 - **React 19** + **Vite**
