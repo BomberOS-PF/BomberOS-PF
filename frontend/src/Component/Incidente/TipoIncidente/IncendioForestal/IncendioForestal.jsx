@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Select from 'react-select'
 import DamnificadosForm from '../../../Common/Damnificado.jsx'
+import { swalConfirm, swalError, swalToast } from '../../../Common/swalBootstrap'
 import { API_URLS, apiRequest, buildApiUrl } from '../../../../config/api'
 
 function toMySQLDatetime(date) {
@@ -170,15 +171,16 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
       return
     }
 
-    const confirmar = window.confirm(
-      `¿Deseas notificar a los bomberos sobre el Incidente #${idIncidente}?\n\n` +
-      `Se enviará una alerta por WhatsApp a todos los bomberos activos.`
-    )
-
-    if (!confirmar) return
+    const pedir = await swalConfirm({
+      title: `Notificar bomberos`,
+      html: `¿Deseás notificar a la dotación sobre el <b>Incidente #${idIncidente}</b>?<br/>Se enviará una alerta por WhatsApp.`,
+      icon: 'question',
+      confirmText: 'Sí, notificar',
+      cancelText: 'Cancelar'
+    })
+    if (!pedir.isConfirmed) return
 
     setNotificando(true)
-
     try {
       const resp = await fetch(buildApiUrl(`/api/incidentes/${idIncidente}/notificar`), {
         method: 'POST',
@@ -187,31 +189,43 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
         }
       })
-
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}))
         throw new Error(errorData.message || `Error ${resp.status}: ${resp.statusText}`)
       }
 
       const resultado = await resp.json()
-
       if (resultado.success) {
         const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = resultado.data
-        alert(`🚨 ALERTA ENVIADA POR WHATSAPP ✅
-        
-📊 Resumen:
-• Total bomberos: ${totalBomberos}
-• Notificaciones exitosas: ${notificacionesExitosas}
-• Notificaciones fallidas: ${notificacionesFallidas}
-
-Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
+        await swalConfirm({
+          title: 'Alerta enviada',
+          icon: 'success',
+          confirmText: 'Entendido',
+          showCancel: false,
+          html: `
+          <div style="text-align:left">
+            <div style="background:#f8f9fa;border:1px solid #e9ecef;border-radius:8px;padding:12px;margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span>Total de bomberos</span><b>${totalBomberos}</b>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span>Exitosas</span><b style="color:#198754;">${notificacionesExitosas}</b>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span>Fallidas</span><b style="color:#dc3545;">${notificacionesFallidas}</b>
+              </div>
+            </div>
+            <small style="color:#6c757d;">Pueden responder <b>"SI"</b> o <b>"NO"</b> por WhatsApp para confirmar asistencia.</small>
+          </div>
+        `
+        })
         setSuccessMsg('✅ Notificación enviada exitosamente a los bomberos')
       } else {
         throw new Error(resultado.message || 'Error al enviar notificación')
       }
     } catch (error) {
       console.error('❌ Error al notificar por WhatsApp:', error)
-      alert(`❌ Error al notificar por WhatsApp: ${error.message}`)
+      await swalError('Error al notificar por WhatsApp', error.message)
       setErrorMsg(`Error al notificar: ${error.message}`)
     } finally {
       setNotificando(false)
@@ -310,148 +324,166 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
   }
 
   return (
-    <div className="container-fluid py-5">
-      <div className="card shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
-        <div className="card-body">
-          <form>
-            <div className="mb-3 col-md-4">
-              <label className="form-label text-dark d-flex align-items-center gap-2" htmlFor="caracteristicaLugar">Características del lugar *</label>
-              <Select
-                options={caracteristicasLugarOptions.map(opt => ({
-                  value: String(opt.idCaractLugar),
-                  label: opt.descripcion
-                }))}
-                value={
-                  caracteristicasLugarOptions
-                    .map(opt => ({ value: String(opt.idCaractLugar), label: opt.descripcion }))
-                    .find(o => o.value === String(formData.caracteristicaLugar)) || null
-                }
-                onChange={(opt) =>
-                  setFormData(prev => ({
-                    ...prev,
-                    caracteristicaLugar: opt ? opt.value : ''
-                  }))
-                }
-                classNamePrefix="rs"
-                placeholder="Seleccione característica del lugar"
-                isClearable
-              />
-              {errors.caracteristicaLugar && <div className="invalid-feedback" id="error-caracteristicaLugar">{errors.caracteristicaLugar}</div>}
-            </div>
-
-            <div className="row mb-3">
-              <div className="col">
-                <label className="form-label text-dark d-flex align-items-center gap-2" htmlFor="unidadAfectada">Área afectada *</label>
-                <Select
-                  options={areaAfectadaOptions.map(opt => ({
-                    value: String(opt.idAreaAfectada),
-                    label: opt.descripcion
-                  }))}
-                  value={
-                    areaAfectadaOptions
-                      .map(opt => ({ value: String(opt.idAreaAfectada), label: opt.descripcion }))
-                      .find(o => o.value === String(formData.unidadAfectada)) || null
-                  }
-                  onChange={(opt) =>
-                    setFormData(prev => ({
-                      ...prev,
-                      unidadAfectada: opt ? opt.value : ''
-                    }))
-                  }
-                  classNamePrefix="rs"
-                  placeholder="Seleccione unidad afectada"
-                  isClearable
-                />
-                {errors.unidadAfectada && <div className="invalid-feedback" id="error-unidadAfectada">{errors.unidadAfectada}</div>}
-              </div>
-              <div className="col">
-                <label className="form-label text-dark d-flex align-items-center gap-2" htmlFor="cantidadAfectada">Cantidad (hectáreas) *</label>
-                <input type="number" min="0" step="0.01" className={`form-control${errors.cantidadAfectada ? ' is-invalid' : ''}`} id="cantidadAfectada" value={formData.cantidadAfectada || ''} onChange={handleChange} aria-describedby="error-cantidadAfectada" placeholder="Ej: 15.5" />
-                {errors.cantidadAfectada && <div className="invalid-feedback" id="error-cantidadAfectada">{errors.cantidadAfectada}</div>}
-                <div className="form-text text-muted small">Superficie afectada (no puede ser negativa)</div>
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label text-dark d-flex align-items-center gap-2">Causa probable</label>
-              <Select
-                options={causasProbablesOptions.map(opt => ({
-                  value: String(opt.idCausaProbable),
-                  label: opt.descripcion
-                }))}
-                value={
-                  causasProbablesOptions
-                    .map(opt => ({ value: String(opt.idCausaProbable), label: opt.descripcion }))
-                    .find(o => o.value === String(formData.causaProbable)) || null
-                }
-                onChange={(opt) =>
-                  setFormData(prev => ({
-                    ...prev,
-                    causaProbable: opt ? opt.value : ''
-                  }))
-                }
-                classNamePrefix="rs"
-                placeholder="Seleccione causa probable"
-                isClearable
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label text-dark d-flex align-items-center gap-2" htmlFor="detalle">Detalle de lo sucedido *</label>
-              <textarea className={`form-control${errors.detalle ? ' is-invalid' : ''}`} id="detalle" rows="3" value={formData.detalle || ''} onChange={handleChange} aria-describedby="error-detalle"></textarea>
-              {errors.detalle && <div className="invalid-feedback" id="error-detalle">{errors.detalle}</div>}
-            </div>
-
-            <hr className="border-1 border-black mb-2" />
-
-            <DamnificadosForm
-              value={formData.damnificados}
-              onChange={(nuevoArray) => setFormData(prev => ({ ...prev, damnificados: nuevoArray }))}
-              title="Personas damnificadas"
+    <div className='inc-especifico'>
+      <form onSubmit={handleSubmit} className="at-form">
+        <div className='row'>
+          <div className="mb-3 col-md-5">
+            <label className="form-label text-dark d-flex align-items-center gap-2" htmlFor="caracteristicaLugar">Características del lugar *</label>
+            <Select
+              options={caracteristicasLugarOptions.map(opt => ({
+                value: String(opt.idCaractLugar),
+                label: opt.descripcion
+              }))}
+              value={
+                caracteristicasLugarOptions
+                  .map(opt => ({ value: String(opt.idCaractLugar), label: opt.descripcion }))
+                  .find(o => o.value === String(formData.caracteristicaLugar)) || null
+              }
+              onChange={(opt) =>
+                setFormData(prev => ({
+                  ...prev,
+                  caracteristicaLugar: opt ? opt.value : ''
+                }))
+              }
+              classNamePrefix="rs"
+              placeholder="Seleccione característica del lugar"
+              isClearable
             />
-
-            <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
-              <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
-                Continuar después
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2"
-                onClick={notificarBomberos}
-                disabled={loading || notificando}
-              >
-                {notificando ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    Notificando...
-                  </>
-                ) : (
-                  <>
-                    <i className='bi bi-megaphone'></i> Notificar Bomberos
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                className="btn btn-accept btn-medium"
-                disabled={loading || notificando}
-                onClick={() => handleSubmit()}
-              >
-                {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
-              </button>
+            {errors.caracteristicaLugar && <div className="invalid-feedback" id="error-caracteristicaLugar">{errors.caracteristicaLugar}</div>}
+          </div>
+          <div className="row mb-3">
+            <div className="col-12 col-sm-6">
+              <label className="form-label text-dark d-flex align-items-center gap-2" htmlFor="unidadAfectada">Área afectada *</label>
+              <Select
+                options={areaAfectadaOptions.map(opt => ({
+                  value: String(opt.idAreaAfectada),
+                  label: opt.descripcion
+                }))}
+                value={
+                  areaAfectadaOptions
+                    .map(opt => ({ value: String(opt.idAreaAfectada), label: opt.descripcion }))
+                    .find(o => o.value === String(formData.unidadAfectada)) || null
+                }
+                onChange={(opt) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    unidadAfectada: opt ? opt.value : ''
+                  }))
+                }
+                classNamePrefix="rs"
+                placeholder="Seleccione unidad afectada"
+                isClearable
+              />
+              {errors.unidadAfectada && <div className="invalid-feedback" id="error-unidadAfectada">{errors.unidadAfectada}</div>}
             </div>
-
-          </form>
+            <div className="col-12 col-sm-6">
+              <label className="form-label text-dark d-flex align-items-center gap-2" htmlFor="cantidadAfectada">Cantidad (hectáreas) *</label>
+              <input type="number" min="0" step="0.01" className={`form-control${errors.cantidadAfectada ? ' is-invalid' : ''}`} id="cantidadAfectada" value={formData.cantidadAfectada || ''} onChange={handleChange} aria-describedby="error-cantidadAfectada" placeholder="Ej: 15.5" />
+              {errors.cantidadAfectada && <div className="invalid-feedback" id="error-cantidadAfectada">{errors.cantidadAfectada}</div>}
+              <div className="form-text text-muted small">Superficie afectada (no puede ser negativa)</div>
+            </div>
+          </div>
         </div>
 
-        {errorMsg && (
-          <div ref={toastRef} tabIndex={-1} className="alert alert-danger" role="alert">{errorMsg}</div>
-        )}
-        {successMsg && (
-          <div ref={toastRef} tabIndex={-1} className="alert alert-success" role="alert">{successMsg}</div>
-        )}
-      </div>
+        <div className='row'>
+          <div className="mb-3 col-12">
+            <label className="form-label text-dark d-flex align-items-center gap-2">Causa probable</label>
+            <Select
+              options={causasProbablesOptions.map(opt => ({
+                value: String(opt.idCausaProbable),
+                label: opt.descripcion
+              }))}
+              value={
+                causasProbablesOptions
+                  .map(opt => ({ value: String(opt.idCausaProbable), label: opt.descripcion }))
+                  .find(o => o.value === String(formData.causaProbable)) || null
+              }
+              onChange={(opt) =>
+                setFormData(prev => ({
+                  ...prev,
+                  causaProbable: opt ? opt.value : ''
+                }))
+              }
+              classNamePrefix="rs"
+              placeholder="Seleccione causa probable"
+              isClearable
+            />
+          </div>
+        </div>
+
+        <hr className='border-1 border-black mb-2' />
+
+        <div className="mb-3 at-detalle">
+          <label className="form-label text-dark d-flex align-items-center gap-2" htmlFor="detalle">Detalle de lo sucedido *</label>
+          <textarea className={`form-control${errors.detalle ? ' is-invalid' : ''}`} id="detalle" rows="3" value={formData.detalle || ''} onChange={handleChange} aria-describedby="error-detalle"></textarea>
+          {errors.detalle && <div className="invalid-feedback" id="error-detalle">{errors.detalle}</div>}
+        </div>
+
+        <hr className="border-1 border-black mb-2" />
+
+        <div className="at-damnificados">
+          <DamnificadosForm
+            value={formData.damnificados}
+            onChange={(nuevoArray) => setFormData(prev => ({ ...prev, damnificados: nuevoArray }))}
+            title="Personas damnificadas"
+            onBeforeRemove={async (d) => {
+              const nombre = [d?.nombre, d?.apellido].filter(Boolean).join(' ') || 'esta persona'
+              const r = await swalConfirm({
+                title: 'Eliminar damnificado',
+                html: `¿Confirmás eliminar a <b>${nombre}</b>?`,
+                icon: 'warning',
+                confirmText: 'Eliminar',
+                cancelText: 'Cancelar'
+              })
+              return r.isConfirmed
+            }}
+          />
+        </div>
+
+        <div className="d-flex justify-content-center align-items-center gap-3 mb-3 at-actions">
+        </div>
+        
+        <div className='d-flex justify-content-center align-items-center gap-3 mb-3 at-actions'>
+          <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
+            Continuar después
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-warning btn-medium d-flex align-items-center justify-content-center gap-2"
+            onClick={notificarBomberos}
+            disabled={loading || notificando}
+          >
+            {notificando ? (
+              <>
+                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Notificando...
+              </>
+            ) : (
+              <>
+                <i className='bi bi-megaphone'></i> Notificar Bomberos
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-accept btn-medium"
+            disabled={loading || notificando}
+            onClick={() => handleSubmit()}
+          >
+            {loading ? 'Cargando...' : (datosPrevios.idIncidente || datosPrevios.id ? 'Finalizar carga' : 'Finalizar carga')}
+          </button>
+        </div>
+
+      </form>
+
+      {errorMsg && (
+        <div ref={toastRef} tabIndex={-1} className="alert alert-danger" role="alert">{errorMsg}</div>
+      )}
+      {successMsg && (
+        <div ref={toastRef} tabIndex={-1} className="alert alert-success" role="alert">{successMsg}</div>
+      )}
     </div>
   )
 }
