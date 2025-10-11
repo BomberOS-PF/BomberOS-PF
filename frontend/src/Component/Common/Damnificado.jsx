@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import { swalConfirm } from './swalBootstrap'
 
 const validarTelefono = (telefono) => {
     if (!telefono) return true
@@ -23,7 +24,7 @@ const damnificadoVacio = (d = {}) => {
  * - className?: string
  * - title?: string
  */
-const DamnificadosForm = ({ value = [], onChange, className = '', title = 'Personas damnificadas' }) => {
+const DamnificadosForm = ({ value = [], onChange, className = '', title = 'Personas damnificadas', onBeforeRemove }) => {
     const handleChange = useCallback((index, field, val) => {
         const copia = Array.isArray(value) ? [...value] : []
         copia[index] = { ...copia[index], [field]: val }
@@ -37,11 +38,27 @@ const DamnificadosForm = ({ value = [], onChange, className = '', title = 'Perso
         ])
     }, [value, onChange])
 
-    const eliminar = useCallback((index) => {
-        if (!window.confirm('¿Eliminar este damnificado del formulario?')) return
+    const eliminar = useCallback(async (index) => {
+        // Si el padre provee confirmación, úsala:
+        if (onBeforeRemove) {
+            const ok = await onBeforeRemove(value[index])
+            if (!ok) return
+        } else {
+            // Confirmación por defecto con SweetAlert
+            const d = value[index] || {}
+            const nombre = [d?.nombre, d?.apellido].filter(Boolean).join(' ') || 'este damnificado'
+            const r = await swalConfirm({
+                title: 'Eliminar damnificado',
+                html: `¿Confirmás eliminar a <b>${nombre}</b>?`,
+                icon: 'warning',
+                confirmText: 'Eliminar',
+                cancelText: 'Cancelar'
+            })
+            if (!r.isConfirmed) return
+        }
         const copia = (Array.isArray(value) ? value : []).filter((_, i) => i !== index)
         onChange?.(copia)
-    }, [value, onChange])
+    }, [value, onChange, onBeforeRemove])
 
     // Validación ligera por item (solo para feedback visual rápido)
     const getErroresItem = (d) => {

@@ -1,5 +1,5 @@
-// src/Component/Common/VehiculosFormList.jsx
 import React, { useCallback } from 'react'
+import { swalConfirm } from './swalBootstrap'
 
 /**
  * Props:
@@ -14,7 +14,7 @@ const VehiculosFormList = ({
   onChange,
   className = '',
   title = 'Vehículos involucrados',
-  getEmptyItem = () => ({ patente: '', modelo: '', marca: '', anio: '', aseguradora: '', poliza: '' })
+  getEmptyItem = () => ({ patente: '', modelo: '', marca: '', anio: '', aseguradora: '', poliza: '' }), onBeforeRemove
 }) => {
   const handleChange = useCallback((index, field, val) => {
     const arr = Array.isArray(value) ? [...value] : []
@@ -24,14 +24,30 @@ const VehiculosFormList = ({
   }, [value, onChange, getEmptyItem])
 
   const agregar = useCallback(() => {
-    onChange?.([ ...(Array.isArray(value) ? value : []), getEmptyItem() ])
+    onChange?.([...(Array.isArray(value) ? value : []), getEmptyItem()])
   }, [value, onChange, getEmptyItem])
 
-  const eliminar = useCallback((index) => {
-    if (!window.confirm('¿Eliminar este vehículo del formulario?')) return
+  const eliminar = useCallback(async (index) => {
+    // Si el padre provee confirmación, úsala:
+    if (onBeforeRemove) {
+      const ok = await onBeforeRemove(value[index])
+      if (!ok) return
+    } else {
+      // Confirmación por defecto con SweetAlert
+      const v = value[index] || {}
+      const placa = v?.patente || v?.dominio || 'este vehículo'
+      const r = await swalConfirm({
+        title: 'Eliminar vehículo',
+        html: `¿Confirmás eliminar <b>${placa}</b> de la lista?`,
+        icon: 'warning',
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar'
+      })
+      if (!r.isConfirmed) return
+    }
     const arr = (Array.isArray(value) ? value : []).filter((_, i) => i !== index)
     onChange?.(arr)
-  }, [value, onChange])
+  }, [value, onChange, onBeforeRemove])
 
   return (
     <section className={className}>
@@ -106,7 +122,7 @@ const VehiculosFormList = ({
             </button>
           </div>
         </div>
-        
+
       ))}
 
       <div className="d-flex justify-content-end align-items-center gap-3 mb-3">

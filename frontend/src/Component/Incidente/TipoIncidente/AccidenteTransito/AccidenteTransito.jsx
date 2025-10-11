@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import Select from 'react-select'
 import DamnificadosForm from '../../../Common/Damnificado.jsx'
 import VehiculosFormList from '../../../Common/VehiculoFormList.jsx'
+import { swalConfirm, swalError, swalToast } from '../../../Common/swalBootstrap'
 import { API_URLS, apiRequest, buildApiUrl } from '../../../../config/api'
 
 const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
@@ -90,9 +91,15 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
     }))
   }
 
-  const guardarLocalmente = () => {
+  const guardarLocalmente = async () => {
     localStorage.setItem(storageKey, JSON.stringify(formData))
-    alert('Datos guardados localmente. Podés continuar después.')
+    await swalConfirm({
+      title: 'Guardado local',
+      html: 'Los datos se guardaron en este equipo. Podés continuar después.',
+      icon: 'success',
+      confirmText: 'Entendido',
+      showCancel: false
+    })
   }
 
   // Funciones de validación
@@ -147,59 +154,73 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
   }
 
   const notificarBomberos = async () => {
-    const idIncidente = datosPrevios.idIncidente || datosPrevios.id
-    if (!idIncidente) {
-      alert('❌ No se puede notificar: el incidente aún no ha sido guardado')
-      return
-    }
-
-    const confirmar = window.confirm(
-      `¿Deseas notificar a los bomberos sobre el Incidente #${idIncidente}?\n\n` +
-      `Se enviará una alerta por WhatsApp a todos los bomberos activos.`
-    )
-
-    if (!confirmar) return
-
-    setNotificando(true)
-
-    try {
-      const resp = await fetch(buildApiUrl(`/api/incidentes/${idIncidente}/notificar`), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-        }
-      })
-
-      if (!resp.ok) {
-        const errorData = await resp.json().catch(() => ({}))
-        throw new Error(errorData.message || `Error ${resp.status}: ${resp.statusText}`)
-      }
-
-      const resultado = await resp.json()
-
-      if (resultado.success) {
-        const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = resultado.data
-        alert(`🚨 ALERTA ENVIADA POR WHATSAPP ✅
-        
-📊 Resumen:
-• Total bomberos: ${totalBomberos}
-• Notificaciones exitosas: ${notificacionesExitosas}
-• Notificaciones fallidas: ${notificacionesFallidas}
-
-Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asistencia.`)
-        setSuccessMsg('✅ Notificación enviada exitosamente a los bomberos')
-      } else {
-        throw new Error(resultado.message || 'Error al enviar notificación')
-      }
-    } catch (error) {
-      console.error('❌ Error al notificar por WhatsApp:', error)
-      alert(`❌ Error al notificar por WhatsApp: ${error.message}`)
-      setErrorMsg(`Error al notificar: ${error.message}`)
-    } finally {
-      setNotificando(false)
-    }
+  const idIncidente = datosPrevios.idIncidente || datosPrevios.id
+  if (!idIncidente) {
+    await swalError('No se puede notificar', 'El incidente aún no ha sido guardado.')
+    return
   }
+
+  const pedir = await swalConfirm({
+    title: `Notificar bomberos`,
+    html: `¿Deseás notificar a la dotación sobre el <b>Incidente #${idIncidente}</b>?<br/>Se enviará una alerta por WhatsApp.`,
+    icon: 'question',
+    confirmText: 'Sí, notificar',
+    cancelText: 'Cancelar'
+  })
+  if (!pedir.isConfirmed) return
+
+  setNotificando(true)
+  try {
+    const resp = await fetch(buildApiUrl(`/api/incidentes/${idIncidente}/notificar`), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+      }
+    })
+    if (!resp.ok) {
+      const errorData = await resp.json().catch(() => ({}))
+      throw new Error(errorData.message || `Error ${resp.status}: ${resp.statusText}`)
+    }
+
+    const resultado = await resp.json()
+    if (resultado.success) {
+      const { totalBomberos, notificacionesExitosas, notificacionesFallidas } = resultado.data
+      await swalConfirm({
+        title: 'Alerta enviada',
+        icon: 'success',
+        confirmText: 'Entendido',
+        showCancel: false,
+        html: `
+          <div style="text-align:left">
+            <div style="background:#f8f9fa;border:1px solid #e9ecef;border-radius:8px;padding:12px;margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span>Total de bomberos</span><b>${totalBomberos}</b>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span>Exitosas</span><b style="color:#198754;">${notificacionesExitosas}</b>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span>Fallidas</span><b style="color:#dc3545;">${notificacionesFallidas}</b>
+              </div>
+            </div>
+            <small style="color:#6c757d;">Pueden responder <b>"SI"</b> o <b>"NO"</b> por WhatsApp para confirmar asistencia.</small>
+          </div>
+        `
+      })
+      setSuccessMsg('✅ Notificación enviada exitosamente a los bomberos')
+    } else {
+      throw new Error(resultado.message || 'Error al enviar notificación')
+    }
+  } catch (error) {
+    console.error('❌ Error al notificar por WhatsApp:', error)
+    await swalError('Error al notificar por WhatsApp', error.message)
+    setErrorMsg(`Error al notificar: ${error.message}`)
+  } finally {
+    setNotificando(false)
+  }
+}
+
 
   const handleSubmit = async () => {
     setSuccessMsg('')
@@ -316,6 +337,17 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
             value={formData.vehiculos}
             onChange={(nuevoArr) => setFormData(prev => ({ ...prev, vehiculos: nuevoArr }))}
             title="Vehículos involucrados"
+            onBeforeRemove={async (vehiculo) => {
+              const placa = vehiculo?.patente || vehiculo?.dominio || 'este vehículo'
+              const r = await swalConfirm({
+                title: 'Eliminar vehículo',
+                html: `¿Confirmás eliminar <b>${placa}</b> de la lista?`,
+                icon: 'warning',
+                confirmText: 'Eliminar',
+                cancelText: 'Cancelar'
+              })
+              return r.isConfirmed
+            }}
           />
           {errors.vehiculos && (
             <div className="alert alert-danger" role="alert">
@@ -339,6 +371,17 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
             value={formData.damnificados}
             onChange={(nuevoArray) => setFormData(prev => ({ ...prev, damnificados: nuevoArray }))}
             title="Personas damnificadas"
+            onBeforeRemove={async (d) => {
+              const nombre = [d?.nombre, d?.apellido].filter(Boolean).join(' ') || 'esta persona'
+              const r = await swalConfirm({
+                title: 'Eliminar damnificado',
+                html: `¿Confirmás eliminar a <b>${nombre}</b>?`,
+                icon: 'warning',
+                confirmText: 'Eliminar',
+                cancelText: 'Cancelar'
+              })
+              return r.isConfirmed
+            }}
           />
         </div>
 
