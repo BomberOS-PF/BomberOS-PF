@@ -6,22 +6,35 @@ import GuardiasGrupoCalendar from './GuardiasGrupoCalendar'
 
 const CalendarioGuardias = ({ dniUsuario }) => {
   const [modo, setModo] = useState('mis') // 'mis' | 'grupos'
+  const [expandido, setExpandido] = useState(false)
 
   const headerRight = (
-    <div className='btn-group ms-auto flex-shrink-0 calendar-mode-switch'>
+    <div className='d-flex align-items-center gap-2 ms-auto flex-shrink-0'>
+      <div className='btn-group ms-auto flex-shrink-0 calendar-mode-switch'>
+        <button
+          className={`btn btn-sm ${modo === 'mis' ? 'btn-light' : 'btn-outline-light'}`}
+          onClick={() => setModo('mis')}
+        >
+          Mis guardias
+        </button>
+        <button
+          className={`btn btn-sm ${modo === 'grupos' ? 'btn-light' : 'btn-outline-light'}`}
+          onClick={() => setModo('grupos')}
+        >
+          Guardias por grupo
+        </button>
+      </div>
+      {/* ⬇️ Botón Max/Min */}
       <button
-        className={`btn btn-sm ${modo === 'mis' ? 'btn-light' : 'btn-outline-light'}`}
-        onClick={() => setModo('mis')}
+        className='btn btn-sm btn-light toggle-cal-btn'
+        onClick={() => setExpandido(v => !v)}
+        aria-expanded={expandido}
+        aria-label={expandido ? 'Minimizar calendario' : 'Maximizar calendario'}
       >
-        Mis guardias
-      </button>
-      <button
-        className={`btn btn-sm ${modo === 'grupos' ? 'btn-light' : 'btn-outline-light'}`}
-        onClick={() => setModo('grupos')}
-      >
-        Guardias por grupo
+        <i className={`bi ${expandido ? 'bi-chevron-up' : 'bi-chevron-down'}`} />
       </button>
     </div>
+
   )
 
   return (
@@ -33,6 +46,7 @@ const CalendarioGuardias = ({ dniUsuario }) => {
             dniUsuario={dniUsuario}
             titulo='Mis Guardias'
             headerRight={headerRight}
+            collapsed={!expandido}
           />
         )
         : (
@@ -40,6 +54,7 @@ const CalendarioGuardias = ({ dniUsuario }) => {
             key='grupos'
             titulo='Guardias por Grupo'
             headerRight={headerRight}
+            collapsed={!expandido}
           />
         )
       }
