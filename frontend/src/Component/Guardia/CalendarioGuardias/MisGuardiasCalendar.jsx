@@ -39,7 +39,7 @@ const formatearTooltip = (rangos = []) =>
     return `Desde ${d} hasta ${h}`
   })].join('\n')
 
-const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight = null }) => {
+const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight = null, collapsed = false }) => {
   // estado
   const [mensaje, setMensaje] = useState('')
   const [resumenPorFecha, setResumenPorFecha] = useState(new Map())
@@ -280,7 +280,7 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
   if (!dni) {
     return (
       <div className='container-fluid' ref={rootRef}>
-        <div className='card border-0 shadow-sm cal-mini-card'>
+        <div className={`card border-0 shadow-sm cal-mini-card cal-collapsible ${collapsed ? 'is-collapsed' : ''}`}>
           <div className='card-header bg-danger text-white d-flex align-items-center justify-content-between flex-wrap'>
             <div className='d-flex align-items-center gap-2'>
               <i className='bi bi-calendar3'></i>
@@ -288,7 +288,7 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
             </div>
             {headerRight}
           </div>
-          <div className='card-body'>
+          <div className='card-body cal-body'>
             <div className='alert alert-warning mb-0'>No se pudo determinar el usuario logueado</div>
           </div>
         </div>
@@ -298,7 +298,7 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
 
   return (
     <div className='container-fluid' ref={rootRef}>
-      <div className='card border-0 shadow-sm cal-mini-card'>
+      <div className={`card border-0 shadow-sm cal-mini-card cal-collapsible ${collapsed ? 'is-collapsed' : ''}`}>
         <div className='card-header bg-danger text-white d-flex align-items-center justify-content-between flex-wrap'>
           <div className='d-flex align-items-center gap-2'>
             <i className='bi bi-calendar3'></i>
@@ -307,7 +307,7 @@ const MisGuardiasCalendar = ({ dniUsuario, titulo = 'Mis Guardias', headerRight 
           {headerRight}
         </div>
 
-        <div className='card-body'>
+        <div className='card-body cal-body'>
           {mensaje && <div className='alert alert-warning'>{mensaje}</div>}
 
           <div className='calendar-mini-wrapper position-relative'>
