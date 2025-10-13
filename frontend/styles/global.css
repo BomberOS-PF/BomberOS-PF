@@ -1407,3 +1407,47 @@ body {
   font-size: 14px !important;
   line-height: 1;
 }
+
+/* === Inputs SIEMPRE blancos, excepto en la página de login === */
+:root{
+  --input-bg: #fff;
+  --input-fg: #000;
+  --input-border: #ced4da;
+}
+
+/* Campos nativos fuera del login */
+body:not(:has(.login-page)) :where(input.form-control, textarea.form-control, select.form-select){
+  background-color: var(--input-bg) !important;
+  color: var(--input-fg) !important;
+  border-color: var(--input-border) !important;
+}
+
+body:not(:has(.login-page)) :where(input.form-control, textarea.form-control, select.form-select):focus{
+  background-color: var(--input-bg) !important;
+  color: var(--input-fg) !important;
+  border-color: var(--red-700) !important;
+  box-shadow: 0 0 0 .2rem rgba(213,43,30,.25) !important;
+}
+
+/* Placeholder y estados fuera del login */
+body:not(:has(.login-page)) .form-control::placeholder{ color:#6c757d !important; opacity:1 }
+body:not(:has(.login-page)) .form-control:disabled,
+body:not(:has(.login-page)) .form-control[readonly],
+body:not(:has(.login-page)) .form-select:disabled{
+  background-color:#f2f2f2 !important; color:#6c757d !important;
+}
+
+/* Autofill fuera del login */
+body:not(:has(.login-page)) input.form-control:-webkit-autofill,
+body:not(:has(.login-page)) input.form-control:-webkit-autofill:hover,
+body:not(:has(.login-page)) input.form-control:-webkit-autofill:focus{
+  -webkit-text-fill-color: var(--input-fg) !important;
+  box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
+  transition: background-color 9999s ease-in-out 0s !important;
+}
+
+/* React-Select blanco fuera del login (si usás classNamePrefix="rs") */
+body:not(:has(.login-page)) .rs__control{
+  background:#fff !important; color:#000 !important; border-color: var(--input-border) !important;
+}
+body:not(:has(.login-page)) .rs__menu{ background:#fff !important; color:#000 !important }
