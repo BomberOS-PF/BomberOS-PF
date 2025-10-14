@@ -85,7 +85,7 @@ const colorForGroup = id => {
   return { legendBg, legendBorder, softBg }
 }
 
-const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = null }) => {
+const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = null, collapsed = false }) => {
   const [grupos, setGrupos] = useState([])
   const [cargandoGrupos, setCargandoGrupos] = useState(false)
   const [errorGrupos, setErrorGrupos] = useState('')
@@ -643,7 +643,7 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
   // ===== Render =====
   return (
     <div className='container-fluid' ref={rootRef}>
-      <div className='card border-0 shadow-sm cal-mini-card'>
+      <div className={`card border-0 shadow-sm cal-mini-card cal-collapsible ${collapsed ? 'is-collapsed' : ''}`}>
         <div className='card-header bg-danger text-white d-flex align-items-center justify-content-between flex-wrap'>
           <div className='d-flex align-items-center gap-2'>
             <i className='bi bi-people-fill'></i>
@@ -653,7 +653,7 @@ const GuardiasGrupoCalendar = ({ titulo = 'Guardias por Grupo', headerRight = nu
           {headerRight}
         </div>
 
-        <div className='card-body'>
+        <div className='card-body cal-body'>
           {errorMsg && <div className='alert alert-danger py-2'>{errorMsg}</div>}
 
           <div className='calendar-mini-wrapper position-relative' style={{ minHeight: 520 }}>

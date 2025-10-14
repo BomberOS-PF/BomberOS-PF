@@ -222,3 +222,44 @@
     }
   }
 }
+
+/* ===== Collapsible (mostrar solo encabezado) ===== */
+.cal-collapsible { overflow: visible }
+.cal-collapsible .card-header { cursor: default }
+
+/* Altura normal del body (auto) con transición suave */
+.cal-collapsible .cal-body {
+  overflow: hidden;
+  transition: height .25s ease, padding .25s ease, opacity .2s ease;
+}
+
+/* Cuando está colapsado: solo header visible */
+.cal-collapsible.is-collapsed .cal-body {
+  height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  opacity: 0;
+}
+
+/* Para que la transición calcule la altura automáticamente */
+.cal-collapsible:not(.is-collapsed) .cal-body {
+  height: auto;
+}
+
+/* Ocultar leyendas/footers cuando está colapsado */
+.cal-collapsible.is-collapsed .cal-body > *:not(.keep-visible) {
+  /* ya se ocultan por height:0 y overflow:hidden */
+}
+
+/* Botón de max/min más compacto */
+.toggle-cal-btn { line-height: 1; padding: .25rem .5rem }
+
+/* ===== Z-index para quedar por encima del menú hamburguesa ===== */
+/* Bootstrap: offcanvas=1045, backdrop=1040 → subimos el calendario */
+.cal-mini-card { z-index: 1060 }
+
+/* Si en tu app el offcanvas quedó por encima, “bajalo” un poco */
+.offcanvas { z-index: 1045 !important }
+.offcanvas-backdrop { z-index: 1040 !important }
+.cal-mini-card { z-index: 1030 !important; }
+body.offcanvas-open .tooltip-dinamico { z-index: 1031 !important; }
