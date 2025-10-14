@@ -924,7 +924,25 @@ _Cuerpo de Bomberos - Sistema BomberOS_`
         }
       } else {
         logger.error('📱 Error al procesar respuesta', { error: resultado.error })
-        mensajeRespuesta = `⚠️ *Error al procesar respuesta*
+        
+        if (resultado.error && resultado.error.includes('no registrado')) {
+          mensajeRespuesta = `⚠️ *Número no registrado*
+
+Tu número de teléfono no está registrado en el sistema.
+
+Por favor contacta al administrador para registrar tu número antes de poder confirmar asistencias.
+
+_Cuerpo de Bomberos - Sistema BomberOS_`
+        } else if (resultado.error && resultado.error.includes('No hay incidentes activos')) {
+          mensajeRespuesta = `⚠️ *Sin incidentes activos*
+
+No hay incidentes activos en las últimas 24 horas para asociar tu respuesta.
+
+Si acabas de recibir una alerta, por favor intenta nuevamente en unos momentos.
+
+_Cuerpo de Bomberos - Sistema BomberOS_`
+        } else {
+          mensajeRespuesta = `⚠️ *Error al procesar respuesta*
 
 Lo siento, hubo un problema al procesar tu mensaje. Por favor intenta nuevamente.
 
@@ -933,6 +951,7 @@ Para responder a las alertas puedes enviar:
 ❌ *NO, NO PUEDO, OCUPADO* - Para declinar
 
 _Cuerpo de Bomberos - Sistema BomberOS_`
+        }
       }
       
       // Devolver TwiML con el mensaje de respuesta

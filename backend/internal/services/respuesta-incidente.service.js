@@ -12,9 +12,12 @@ export class RespuestaIncidenteService {
    */
   async procesarRespuestaWebhook(webhookData, ipOrigen = null) {
     try {
+      logger.info('🔍 [WEBHOOK] Iniciando procesamiento de respuesta WhatsApp', { webhookData })
+      
       const { From, Body, MessageSid } = webhookData
       
       if (!From || !Body) {
+        logger.error('❌ [WEBHOOK] Datos incompletos', { From, Body })
         throw new Error('Datos de webhook incompletos')
       }
 
@@ -23,40 +26,80 @@ export class RespuestaIncidenteService {
       const respuesta = Body.trim()
       const respuestaNormalizada = respuesta.toUpperCase()
       
+      logger.info('📱 [WEBHOOK] Datos extraídos', { telefono, respuesta, respuestaNormalizada })
+      
       // Buscar bombero por teléfono
       let nombreBombero = null
       let dniBombero = null
+      
+      logger.info('🔍 [WEBHOOK] Buscando bombero por teléfono...', { 
+        telefono,
+        hasBomberoService: !!this.bomberoService 
+      })
+      
       if (this.bomberoService) {
         try {
           const bombero = await this.buscarBomberoPorTelefono(telefono)
+          logger.info('🔍 [WEBHOOK] Resultado búsqueda bombero', { 
+            encontrado: !!bombero,
+            bombero: bombero ? { nombre: bombero.nombre, apellido: bombero.apellido, dni: bombero.dni } : null
+          })
+          
           if (bombero) {
             nombreBombero = bombero.nombreCompleto || `${bombero.nombre || ''} ${bombero.apellido || ''}`.trim()
             dniBombero = bombero.dni
+            logger.info('✅ [WEBHOOK] Bombero identificado', { nombreBombero, dniBombero })
+          } else {
+            logger.warn('⚠️ [WEBHOOK] Bombero NO encontrado por teléfono', { telefono })
           }
         } catch (error) {
-          logger.warn('No se pudo buscar bombero por teléfono', { telefono, error: error.message })
+          logger.error('❌ [WEBHOOK] Error al buscar bombero', { 
+            telefono, 
+            error: error.message,
+            stack: error.stack 
+          })
         }
+      } else {
+        logger.warn('⚠️ [WEBHOOK] BomberoService no disponible')
       }
       
       // Determinar tipo de respuesta
       const tipoRespuesta = this.determinarTipoRespuesta(respuestaNormalizada)
+      logger.info('📝 [WEBHOOK] Tipo de respuesta determinado', { tipoRespuesta, respuestaOriginal: respuesta })
       
       // Obtener el incidente más reciente (últimas 24 horas)
+      logger.info('🔍 [WEBHOOK] Buscando incidente más reciente...')
       const idIncidente = await this.respuestaRepository.obtenerIncidenteMasReciente()
       
+      logger.info('🔍 [WEBHOOK] Resultado búsqueda incidente', { 
+        idIncidente, 
+        encontrado: !!idIncidente 
+      })
+      
       if (!idIncidente) {
+        logger.error('❌ [WEBHOOK] No hay incidentes activos', { mensaje: 'Sin incidentes en últimas 24 horas' })
         throw new Error('No hay incidentes activos para asociar la respuesta')
       }
       
-      logger.info('📱 Asociando respuesta con incidente', {
+      logger.info('📱 [WEBHOOK] Asociando respuesta con incidente', {
         telefono,
         incidenteId: idIncidente,
-        respuesta: respuesta
+        respuesta: respuesta,
+        bomberoEncontrado: !!dniBombero
       })
       
       if (!dniBombero) {
-        logger.warn('Bombero no encontrado por teléfono', { telefono })
-        // Aún así guardamos la respuesta para tener registro
+        logger.warn('⚠️ [WEBHOOK] Bombero no encontrado por teléfono - Rechazando respuesta', { 
+          telefono,
+          mensaje: 'No se puede guardar la respuesta sin DNI de bombero'
+        })
+        
+        return {
+          success: false,
+          error: `Número ${telefono} no registrado en el sistema. Por favor contacta al administrador para registrar tu número de teléfono.`,
+          telefono,
+          tipoRespuesta
+        }
       }
       
       // Guardar respuesta (el teléfono se obtiene de la tabla bombero)
@@ -70,31 +113,43 @@ export class RespuestaIncidenteService {
         ipOrigen
       }
       
-      const respuestaId = await this.respuestaRepository.guardarRespuesta(respuestaData)
+      logger.info('💾 [WEBHOOK] Guardando respuesta en BD...', { respuestaData })
       
-      logger.info('📱 Respuesta de bombero procesada', {
-        respuestaId,
-        telefono,
-        bombero: nombreBombero,
-        tipoRespuesta,
-        incidente: idIncidente
-      })
-      
-      // Nota: El mensaje de confirmación se envía directamente desde el webhook usando TwiML
-      
-      return {
-        success: true,
-        respuestaId,
-        telefono,
-        bombero: nombreBombero,
-        tipoRespuesta,
-        mensaje: this.obtenerMensajeRespuesta(tipoRespuesta),
-        incidenteId: idIncidente
+      try {
+        const respuestaId = await this.respuestaRepository.guardarRespuesta(respuestaData)
+        
+        logger.success('✅ [WEBHOOK] Respuesta guardada exitosamente', {
+          respuestaId,
+          telefono,
+          bombero: nombreBombero,
+          tipoRespuesta,
+          incidente: idIncidente
+        })
+        
+        // Nota: El mensaje de confirmación se envía directamente desde el webhook usando TwiML
+        
+        return {
+          success: true,
+          respuestaId,
+          telefono,
+          bombero: nombreBombero,
+          tipoRespuesta,
+          mensaje: this.obtenerMensajeRespuesta(tipoRespuesta),
+          incidenteId: idIncidente
+        }
+      } catch (saveError) {
+        logger.error('❌ [WEBHOOK] Error al guardar respuesta en BD', {
+          error: saveError.message,
+          stack: saveError.stack,
+          respuestaData
+        })
+        throw saveError
       }
       
     } catch (error) {
-      logger.error('❌ Error al procesar respuesta de webhook', {
+      logger.error('❌ [WEBHOOK] Error general al procesar respuesta', {
         error: error.message,
+        stack: error.stack,
         webhookData
       })
       

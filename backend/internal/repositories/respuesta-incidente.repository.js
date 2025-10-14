@@ -251,4 +251,56 @@ export class MySQLRespuestaIncidenteRepository {
       throw error
     }
   }
+
+  async obtenerIncidenteMasReciente() {
+    logger.info('🔍 [REPO] obtenerIncidenteMasReciente - Iniciando búsqueda...')
+    
+    const connection = await getConnection()
+    
+    try {
+      const query = `
+        SELECT idIncidente, fecha, descripcion
+        FROM ${this.incidenteTable} 
+        WHERE fecha >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+        ORDER BY fecha DESC
+        LIMIT 1
+      `
+      
+      logger.info('🔍 [REPO] Ejecutando query', { 
+        query,
+        table: this.incidenteTable 
+      })
+      
+      const [rows] = await connection.execute(query)
+      
+      logger.info('🔍 [REPO] Query ejecutado', { 
+        rowsCount: rows.length,
+        rows: rows
+      })
+      
+      if (rows.length === 0) {
+        logger.warn('⚠️ [REPO] No se encontró incidente reciente en las últimas 24 horas')
+        return null
+      }
+      
+      const idIncidente = rows[0].idIncidente
+      
+      logger.success('✅ [REPO] Incidente más reciente encontrado', {
+        idIncidente,
+        fecha: rows[0].fecha,
+        descripcion: rows[0].descripcion,
+        timestamp: new Date().toISOString()
+      })
+      
+      return idIncidente
+      
+    } catch (error) {
+      logger.error('❌ [REPO] Error al obtener incidente más reciente', {
+        error: error.message,
+        stack: error.stack,
+        table: this.incidenteTable
+      })
+      throw error
+    }
+  }
 }
