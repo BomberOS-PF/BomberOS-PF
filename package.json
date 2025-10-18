@@ -41,6 +41,6 @@
     "express": "^5.1.0",
     "nodemailer": "^7.0.5",
     "react-select": "^5.10.2",
-    "sweetalert2": "^11.24.1"
+    "sweetalert2": "^11.26.2"
   }
 }

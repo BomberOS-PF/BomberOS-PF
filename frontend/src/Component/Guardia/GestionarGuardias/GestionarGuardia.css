@@ -80,3 +80,11 @@
 .modal-backdrop-custom {
   pointer-events: none;  /* quita captura de clicks; podés quitarlo si querés cerrar al hacer clic afuera */
 }
+
+/* Tramos de guardia donde el bombero fijo NO está asignado */
+.fc-guardia-ajena {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+  cursor: not-allowed;
+  /* seguimos permitiendo hover para tooltip */
+}
