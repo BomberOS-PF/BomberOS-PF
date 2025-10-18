@@ -626,6 +626,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
 
             {/* Columna derecha: Calendario (UNA SOLA FRANJA por bloque) */}
             <div className="col-md-8">
+              
               <FullCalendar
                 ref={calendarRef}
                 plugins={[timeGridPlugin, interactionPlugin]}

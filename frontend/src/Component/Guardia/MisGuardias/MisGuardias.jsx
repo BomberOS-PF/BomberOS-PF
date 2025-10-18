@@ -4,12 +4,6 @@ import { apiRequest, API_URLS } from '../../../config/api'
 import GestionarGuardias from '../GestionarGuardias/GestionarGuardia'
 import { BackToMenuButton } from '../../Common/Button.jsx'
 
-// Utilidades de fecha
-const toISO = (d) => d.toISOString().slice(0, 10)
-const todayISO = () => toISO(new Date())
-
-// Usamos una ventana amplia para detectar pertenencia a grupo vía guardias del usuario.
-// Si tu backend necesita otro rango, ajustalo acá.
 const DETECTION_START = '1970-01-01'
 const DETECTION_END = '2100-01-01'
 
@@ -21,7 +15,6 @@ const MisGuardias = ({ onVolver }) => {
   const [error, setError] = useState('')
   const [grupo, setGrupo] = useState(null)
 
-  // Nombre completo del usuario logueado (fallback si no viene en la lista del grupo)
   const nombreLogueado = useMemo(() => {
     const n = [usuario?.nombre, usuario?.apellido].filter(Boolean).join(' ')
     return n || String(dni || '')
@@ -36,19 +29,14 @@ const MisGuardias = ({ onVolver }) => {
           return
         }
 
-        // 1) Intentamos inferir el grupo del usuario consultando sus guardias
-        //    (endpoint EXISTENTE en tu config: API_URLS.guardias.porDni)
         const respGuardias = await apiRequest(
           API_URLS.guardias.porDni(dni, DETECTION_START, DETECTION_END)
         )
         const filas = Array.isArray(respGuardias?.data) ? respGuardias.data : []
-
-        // Buscamos alguna fila que tenga id de grupo
         const filaConGrupo =
           filas.find(f => f.idGrupo || f.id_grupo || f.grupoId || f.grupo_id) || null
 
         if (!filaConGrupo) {
-          // No pertenece (o no tiene asignaciones registradas)
           setGrupo(null)
           setLoading(false)
           return
@@ -63,36 +51,50 @@ const MisGuardias = ({ onVolver }) => {
           return
         }
 
-        // 2) Obtenemos los bomberos del grupo (endpoint EXISTENTE)
         const respBomberos = await apiRequest(API_URLS.grupos.obtenerBomberosDelGrupo(idGrupo))
         const listaBomberos = Array.isArray(respBomberos?.data) ? respBomberos.data : []
 
-        // 3) Nombre del grupo (si vino en la fila, lo usamos; si no, generamos)
-        const nombreGrupo =
+        let nombreGrupo =
           filaConGrupo.nombreGrupo ||
           filaConGrupo.nombre_grupo ||
           filaConGrupo.grupo ||
-          `Grupo ${idGrupo}`
+          ''
 
-        setGrupo({
-          idGrupo,
-          nombreGrupo,
-          bomberos: listaBomberos
-        })
+        const esNombreInvalido = !nombreGrupo || /^\d+$/.test(String(nombreGrupo).trim())
+        if (esNombreInvalido) {
+          try {
+            const params = new URLSearchParams({ pagina: 1, limite: 1000 })
+            const url = `${API_URLS.grupos.buscar}?${params.toString()}`
+            const respBuscar = await apiRequest(url)
+            const lista = Array.isArray(respBuscar?.data) ? respBuscar.data : []
+            const encontrado = lista.find(g =>
+              Number(g.idGrupo ?? g.id_grupo ?? g.grupoId ?? g.grupo_id) === idGrupo
+            )
+            const nombreDetallado =
+              encontrado?.nombreGrupo || encontrado?.nombre || encontrado?.grupo || ''
+            if (nombreDetallado) nombreGrupo = nombreDetallado
+          } catch { /* fallback */ }
+        }
+        if (!nombreGrupo) nombreGrupo = `Grupo ${idGrupo}`
+
+        setGrupo({ idGrupo, nombreGrupo, bomberos: listaBomberos })
       } catch (e) {
         setError(e?.message || 'Error al obtener datos')
       } finally {
         setLoading(false)
       }
     }
-
     run()
   }, [dni])
 
+  // 🔄 Spinner rojo + texto gris
   if (loading) {
     return (
-      <div className='container py-5'>
-        <div className='alert alert-info'>Cargando…</div>
+      <div className="container py-5">
+        <div className="d-flex flex-column align-items-center justify-content-center py-5">
+          <div className="spinner-border text-danger" role="status" aria-label="Cargando guardias..."></div>
+          <div className="mt-3 text-secondary fw-semibold">Cargando guardias...</div>
+        </div>
       </div>
     )
   }
@@ -106,7 +108,6 @@ const MisGuardias = ({ onVolver }) => {
     )
   }
 
-  // Si no se detectó grupo para el usuario logueado → card informativa
   if (!grupo?.idGrupo) {
     return (
       <div className='container py-5'>
