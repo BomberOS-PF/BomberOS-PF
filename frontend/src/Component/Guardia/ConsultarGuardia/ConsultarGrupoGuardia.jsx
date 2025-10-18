@@ -22,6 +22,9 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
   // Carga/acciones locales (el Pagination maneja su propio loading de lista)
   const [loadingAccion, setLoadingAccion] = useState(false)
 
+  // Spinner previo a ir a GestionarGuardias (igual que en Mis Guardias)
+  const [loadingGotoGestion, setLoadingGotoGestion] = useState(false)
+
   // Forzar recarga del Pagination (como en Bomberos/Incidentes)
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -60,7 +63,6 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
     }
   }
 
-
   const volverListado = () => {
     setGrupoSeleccionado(null)
     setBomberosDelGrupo([])
@@ -97,6 +99,18 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
     throw new Error(data?.message || 'Error al obtener grupos')
   }
 
+  // ✅ Spinner previo a navegar a GestionarGuardias (igual UX que Mis Guardias)
+  if (loadingGotoGestion) {
+    return (
+      <div className="container-fluid py-5 consultar-grupo registrar-guardia">
+        <div className="text-center my-5">
+          <div className="spinner-border text-danger" role="status" aria-label="Cargando guardias..."></div>
+          <div className="mt-3 text-secondary fw-semibold">Cargando guardias...</div>
+        </div>
+      </div>
+    )
+  }
+
   // Vista edición
   if (modoEdicion && grupoSeleccionado) {
     return (
@@ -126,7 +140,19 @@ const ConsultarGrupoGuardia = ({ onVolver, onIrAGestionarGuardias }) => {
         mensaje={mensaje}
         loading={loadingAccion}
         onEditar={editarGrupo}
-        onIrAGestionarGuardias={onIrAGestionarGuardias}
+        // 👇 Envolvemos el handler para mostrar primero el spinner y luego delegar
+        onIrAGestionarGuardias={(...args) => {
+          setLoadingGotoGestion(true)
+          // Dejo un micro delay para que se pinte el spinner antes de delegar
+          setTimeout(() => {
+            try {
+              onIrAGestionarGuardias?.(...args)
+            } finally {
+              // No lo apagamos acá: la pantalla siguiente se hará cargo.
+              // Si hiciera falta volver, se puede resetear en volverListado().
+            }
+          }, 0)
+        }}
       />
     )
   }
