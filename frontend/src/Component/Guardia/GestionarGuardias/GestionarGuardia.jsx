@@ -99,6 +99,9 @@ const yyyyMmDd = (d) => {
   return `${y}-${m}-${day}`
 }
 
+// HH:MM exacto (00-23:00-59)
+const validaHM = (s) => typeof s === 'string' && /^\d{2}:\d{2}$/.test(s)
+
 // Recolecta TODAS las asignaciones de un día desde los eventos y consolida por DNI
 const asignacionesDelDiaDesdeEventos = (eventos, fechaStr) => {
   const out = []
@@ -491,7 +494,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
         body: JSON.stringify({ asignaciones })
       })
 
-      if (!resp?.success) throw new Error(resp?.error || 'Error al guardar');
+      if (!resp?.success) throw new Error(resp?.error || 'Error al guardar')
       setMensaje('Guardias guardadas con exito')
       setTimeout(() => setMensaje(''), 3000)
     } catch (e) {
@@ -694,7 +697,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
                   if (tooltip && tooltip.parentNode) tooltip.parentNode.removeChild(tooltip)
                   delete tooltipsRef.current[info.event.id]
                 }}
-                eventClick={(info) => {
+                eventClick={async (info) => {
                   // Si hay bombero fijo y el evento NO lo incluye → no permitir abrir modal
                   if (bomberoFijoDni && info?.event?.extendedProps?.hasFijo === false) {
                     info.jsEvent.preventDefault()
@@ -702,9 +705,21 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
                   }
 
                   info.jsEvent.preventDefault()
+
+                  // oculto tooltip si existe
                   const tooltip = tooltipsRef.current[info.event.id]
                   if (tooltip) tooltip.style.display = 'none'
 
+                  // 🔔 SweetAlert de confirmación antes de abrir el modal
+                  const r = await swalConfirm({
+                    title: 'Confirmar acción',
+                    html: '¿Desea modificar la guardia seleccionada?',
+                    confirmText: 'Modificar',
+                    icon: 'question'
+                  })
+                  if (!r.isConfirmed) return
+
+                  // abrir modal si confirmó
                   const ev = info.event
                   setEventoSeleccionado(ev)
                   setModalEdicionAbierto(true)
@@ -881,19 +896,20 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
                           className="btn btn-accept btn-lg btn-medium"
                           disabled={!tieneCambios}
                           onClick={async () => {
+                            // 🔔 Confirmación general antes de guardar
+                            const confirmGeneral = await swalConfirm({
+                              title: 'Confirmar acción',
+                              html: '¿Desea guardar los cambios realizados en esta guardia?',
+                              confirmText: 'Guardar',
+                              icon: 'question'
+                            })
+                            if (!confirmGeneral.isConfirmed) return
+
                             const fechaBase = new Date(eventoSeleccionado.start)
                             const fechaStr = yyyyMmDd(fechaBase)
 
-                            // Si quedaron 0 filas → eliminar franja completa
+                            // Si quedaron 0 filas → eliminar franja completa y cerrar modal
                             if (bomberosEditados.length === 0) {
-                              const r = await swalConfirm({
-                                title: 'Guardar cambios',
-                                html: 'Se eliminará la guardia. ¿Desea continuar?',
-                                confirmText: 'Guardar',
-                                icon: 'question'
-                              })
-                              if (!r.isConfirmed) return
-
                               const nextEventos = eventos.filter(ev => ev.id !== eventoSeleccionado.id)
                               setEventos(nextEventos)
                               setModalEdicionAbierto(false)
@@ -916,6 +932,28 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
                               }
                               return
                             }
+
+                            // === Validaciones por fila (modal) ===
+                            const errores = []
+                            bomberosEditados.forEach((b) => {
+                              const desdeOk = validaHM(b?.desde)
+                              const hastaOk = validaHM(b?.hasta)
+
+                              if (!desdeOk || !hastaOk) {
+                                errores.push(`Debes completar correctamente ambos horarios (HH:MM) para ${b?.nombre || b?.dni}`)
+                                return
+                              }
+
+                              if (b.hasta <= b.desde) {
+                                errores.push(`La hora de fin debe ser posterior a la de inicio (${b?.nombre || b?.dni})`)
+                              }
+                            })
+
+                            if (errores.length > 0) {
+                              setMensajesModal(errores)
+                              return
+                            }
+                            setMensajesModal([])
 
                             // Recalcular bloque único (o varios si hay huecos entre propias filas)
                             const bomberosNormalizados = mergeByDni(bomberosEditados)
@@ -975,6 +1013,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
                               setMensaje(`Error al guardar: ${e.message}`)
                               await swalError('Error', e.message)
                             }
+                            // cierre del modal tras guardar
                             setModalEdicionAbierto(false)
                             setEventoSeleccionado(null)
                           }}
