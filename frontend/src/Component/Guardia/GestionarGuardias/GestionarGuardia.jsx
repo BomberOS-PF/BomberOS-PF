@@ -99,7 +99,7 @@ const yyyyMmDd = (d) => {
   return `${y}-${m}-${day}`
 }
 
-// HH:MM exacto (00-23:00-59)
+// HH:MM exacto
 const validaHM = (s) => typeof s === 'string' && /^\d{2}:\d{2}$/.test(s)
 
 // Recolecta TODAS las asignaciones de un día desde los eventos y consolida por DNI
@@ -173,7 +173,6 @@ const asignacionesAEventos = (rows, nombreByDni = new Map()) => {
     x.idGrupo && x.fecha && x.hora_desde && x.hora_hasta && !Number.isNaN(x.dni)
   )
 
-  // Agrupo por día, y combino en "una sola franja" por cada bloque que se solape (sin partir por bombero)
   const porDia = {}
   for (const a of norm) {
     const key = `${a.idGrupo}-${a.fecha}`
@@ -197,7 +196,7 @@ const asignacionesAEventos = (rows, nombreByDni = new Map()) => {
 
     for (let i = 1; i < arr.length; i++) {
       const a = arr[i]
-      const overlapEstricto = a.hora_desde < bloqueEnd // si se solapan, se fusiona en UNA SOLA FRANJA
+      const overlapEstricto = a.hora_desde < bloqueEnd
       if (overlapEstricto) {
         if (a.hora_hasta > bloqueEnd) bloqueEnd = a.hora_hasta
         bloqueBom.push({
@@ -207,7 +206,6 @@ const asignacionesAEventos = (rows, nombreByDni = new Map()) => {
           hasta: a.hora_hasta
         })
       } else {
-        // cierro el bloque anterior (UNA SOLA FRANJA)
         const [hs, ms] = bloqueStart.split(':').map(Number)
         const [he, me] = bloqueEnd.split(':').map(Number)
         eventos.push({
@@ -218,7 +216,6 @@ const asignacionesAEventos = (rows, nombreByDni = new Map()) => {
           allDay: false,
           extendedProps: { bomberos: mergeByDni(bloqueBom) }
         })
-        // nuevo bloque
         bloqueStart = a.hora_desde
         bloqueEnd = a.hora_hasta
         bloqueBom = [{
@@ -230,7 +227,6 @@ const asignacionesAEventos = (rows, nombreByDni = new Map()) => {
       }
     }
 
-    // push final del último bloque
     const [hs, ms] = bloqueStart.split(':').map(Number)
     const [he, me] = bloqueEnd.split(':').map(Number)
     eventos.push({
@@ -273,6 +269,9 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
   const [bomberosOriginales, setBomberosOriginales] = useState([])
   const [tieneCambios, setTieneCambios] = useState(false)
 
+  // Fondo que se bloquea (NO incluye modal)
+  const backgroundRef = useRef(null)
+
   useEffect(() => {
     setTieneCambios(!igualesProfundo(bomberosEditados, bomberosOriginales))
   }, [bomberosEditados, bomberosOriginales])
@@ -302,7 +301,15 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
     if (fijo) setBomberoSeleccionado(fijo)
   }, [bomberoFijoDni, opcionesBomberos])
 
-  // Fusionar bloques que se solapan (sin partir por otros bomberos)
+  // Bloqueo scroll del body mientras el modal esté abierto
+  useEffect(() => {
+    if (!modalEdicionAbierto) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [modalEdicionAbierto])
+
+  // Fusionar bloques que se solapan
   const fusionarEventos = (listaEventos) => {
     const ordenados = [...listaEventos].sort((a, b) => new Date(a.start) - new Date(b.start))
     const fusionados = []
@@ -338,7 +345,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
     return fusionados
   }
 
-  // ✅ SIN segmentar: solo añadimos flag hasFijo a nivel de evento (entero)
+  // flag hasFijo a nivel de evento
   const eventosRender = useMemo(() => {
     if (!bomberoFijoDni) return eventos
     return eventos.map(ev => {
@@ -425,7 +432,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
         })
       }
 
-      return fusionarEventos(eventosActualizados) // ← mantiene UNA SOLA FRANJA por bloque
+      return fusionarEventos(eventosActualizados)
     })()
 
     setEventos(nextEventos)
@@ -519,6 +526,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
     return 'alert-warning'
   }, [mensaje])
 
+  // Props para bloquear completamente el fondo
+  const fondoBloqueadoStyle = modalEdicionAbierto ? { pointerEvents: 'none' } : undefined
+  const fondoA11yProps = modalEdicionAbierto ? { 'aria-hidden': true } : {}
+
   return (
     <div className="container-fluid py-5 px-0">
       <div className='text-center mb-4'>
@@ -530,512 +541,513 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
         </span>
       </div>
 
-      <div className="card edge-to-edge shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
-        <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
-          <strong>Gestión de guardias - {nombreGrupo}</strong>
-        </div>
-        <div className="card-body">
-          {mensaje && <div className={`alert ${mensajeClass}`} role="alert">{mensaje}</div>}
+      {/* ===== FONDO (bloqueado con pointer-events cuando hay modal) ===== */}
+      <div ref={backgroundRef} style={fondoBloqueadoStyle} {...fondoA11yProps}>
+        <div className="card edge-to-edge shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm">
+          <div className="card-header bg-danger text-white d-flex align-items-center gap-2 py-4">
+            <strong>Gestión de guardias - {nombreGrupo}</strong>
+          </div>
+          <div className="card-body">
+            {mensaje && <div className={`alert ${mensajeClass}`} role="alert">{mensaje}</div>}
 
-          <div className="row">
-            {/* Columna izquierda */}
-            <div className="col-md-4 mb-3">
-              <h4 className="text-black">Bomberos del grupo</h4>
+            <div className="row">
+              {/* Columna izquierda */}
+              <div className="col-md-4 mb-3">
+                <h4 className="text-black">Bomberos del grupo</h4>
 
-              <Select
-                options={opcionesBomberosSelect}
-                value={bomberoSeleccionado}
-                onChange={setBomberoSeleccionado}
-                classNamePrefix="rs"
-                placeholder="Seleccionar bombero"
-                isClearable={!bomberoFijoDni}
-                isDisabled={!!bomberoFijoDni}
-              />
-
-              <div className="text-black mt-3">
-                <label>Día:</label>
                 <Select
-                  options={diasSemana}
-                  value={diaSeleccionado}
-                  onChange={setDiaSeleccionado}
+                  options={opcionesBomberosSelect}
+                  value={bomberoSeleccionado}
+                  onChange={setBomberoSeleccionado}
                   classNamePrefix="rs"
-                  placeholder="Seleccionar día"
-                  isClearable
+                  placeholder="Seleccionar bombero"
+                  isClearable={!bomberoFijoDni}
+                  isDisabled={!!bomberoFijoDni}
                 />
 
-                <label className="mt-2">Desde:</label>
-                <div className="d-flex gap-3">
-                  <div className="flex-grow-1 time-select">
-                    <Select
-                      options={horas}
-                      value={horaDesde ? { label: horaDesde.split(':')[0], value: horaDesde.split(':')[0] } : null}
-                      onChange={(selected) => {
-                        const nuevo = selected?.value || ''
-                        setHoraDesde(`${nuevo}:${horaDesde.split(':')[1] || '00'}`)
-                      }}
-                      classNamePrefix="rs"
-                      placeholder="HH"
-                      isClearable
-                    />
+                <div className="text-black mt-3">
+                  <label>Día:</label>
+                  <Select
+                    options={diasSemana}
+                    value={diaSeleccionado}
+                    onChange={setDiaSeleccionado}
+                    classNamePrefix="rs"
+                    placeholder="Seleccionar día"
+                    isClearable
+                  />
+
+                  <label className="mt-2">Desde:</label>
+                  <div className="d-flex gap-3">
+                    <div className="flex-grow-1 time-select">
+                      <Select
+                        options={horas}
+                        value={horaDesde ? { label: horaDesde.split(':')[0], value: horaDesde.split(':')[0] } : null}
+                        onChange={(selected) => {
+                          const nuevo = selected?.value || ''
+                          setHoraDesde(`${nuevo}:${horaDesde.split(':')[1] || '00'}`)
+                        }}
+                        classNamePrefix="rs"
+                        placeholder="HH"
+                        isClearable
+                      />
+                    </div>
+                    <div className="flex-grow-1 time-select">
+                      <Select
+                        options={minutos}
+                        value={horaDesde ? { label: horaDesde.split(':')[1], value: horaDesde.split(':')[1] } : null}
+                        onChange={(selected) => {
+                          const nuevosMin = selected?.value || ''
+                          setHoraDesde(`${horaDesde.split(':')[0] || '00'}:${nuevosMin}`)
+                        }}
+                        classNamePrefix="rs"
+                        placeholder="MM"
+                        isClearable
+                        isSearchable
+                      />
+                    </div>
                   </div>
-                  <div className="flex-grow-1 time-select">
-                    <Select
-                      options={minutos}
-                      value={horaDesde ? { label: horaDesde.split(':')[1], value: horaDesde.split(':')[1] } : null}
-                      onChange={(selected) => {
-                        const nuevosMin = selected?.value || ''
-                        setHoraDesde(`${horaDesde.split(':')[0] || '00'}:${nuevosMin}`)
-                      }}
-                      classNamePrefix="rs"
-                      placeholder="MM"
-                      isClearable
-                      isSearchable
-                    />
-                  </div>
-                </div>
 
-                <label className="mt-2">Hasta:</label>
-                <div className="d-flex gap-3">
-                  <div className="flex-grow-1 time-select">
-                    <Select
-                      options={horas}
-                      value={horaHasta ? { label: horaHasta.split(':')[0], value: horaHasta.split(':')[0] } : null}
-                      onChange={(selected) => {
-                        const nueva = selected?.value || ''
-                        setHoraHasta(`${nueva}:${horaHasta.split(':')[1] || '00'}`)
-                      }}
-                      classNamePrefix="rs"
-                      placeholder="HH"
-                      isClearable
-                    />
-                  </div>
-                  <div className="flex-grow-1 time-select">
-                    <Select
-                      options={minutos}
-                      value={horaHasta ? { label: horaHasta.split(':')[1], value: horaHasta.split(':')[1] } : null}
-                      onChange={(selected) => {
-                        const nuevosMin = selected?.value || ''
-                        setHoraHasta(`${horaHasta.split(':')[0] || '00'}:${nuevosMin}`)
-                      }}
-                      classNamePrefix="rs"
-                      placeholder="MM"
-                      isClearable
-                      isSearchable
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Columna derecha: Calendario (UNA SOLA FRANJA por bloque) */}
-            <div className="col-md-8">
-              
-              <FullCalendar
-                ref={calendarRef}
-                plugins={[timeGridPlugin, interactionPlugin]}
-                initialView="timeGridWeek"
-                events={eventosRender}
-                locale={esLocale}
-                scrollTime="00:00:00"
-                slotMinTime="00:00:00"
-                firstDay={1}
-                headerToolbar={{ left: 'prev,next today', center: 'title', right: '' }}
-                allDaySlot={false}
-                slotDuration="00:30:00"
-                slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
-                eventClassNames={(info) => {
-                  const classes = ['fc-guardia']
-                  // Si hay bombero fijo y el evento NO lo incluye en ningún tramo → grisado completo
-                  if (bomberoFijoDni && info.event.extendedProps && info.event.extendedProps.hasFijo === false) {
-                    classes.push('fc-guardia-ajena')
-                  }
-                  return classes
-                }}
-                eventContent={() => ({ domNodes: [] })}
-                eventDidMount={(info) => {
-                  info.el.removeAttribute('title')
-                  info.el.querySelectorAll('[title]').forEach(el => el.removeAttribute('title'))
-
-                  const tooltip = document.createElement('div')
-                  tooltip.className = 'tooltip-dinamico'
-                  document.body.appendChild(tooltip)
-                  tooltipsRef.current[info.event.id] = tooltip
-
-                  const lista = info.event.extendedProps?.bomberos || []
-                  tooltip.innerText = lista
-                    .slice()
-                    .sort((a, b) => a.desde.localeCompare(b.desde) || (Number(a.dni) - Number(b.dni)))
-                    .map((b) => `${b.nombre || nombrePorDni.get(Number(b.dni)) || b.dni} (${b.desde}-${b.hasta})`)
-                    .join('\n')
-
-                  const place = (e) => {
-                    const margin = 10
-                    const x = Math.min(e.clientX + margin, window.innerWidth - tooltip.offsetWidth - margin)
-                    const y = Math.min(e.clientY + margin, window.innerHeight - tooltip.offsetHeight - margin)
-                    tooltip.style.left = `${x}px`
-                    tooltip.style.top = `${y}px`
-                  }
-
-                  const onEnter = (e) => { tooltip.style.display = 'block'; place(e) }
-                  const onMove = (e) => place(e)
-                  const onLeave = () => { tooltip.style.display = 'none' }
-
-                  info.el.addEventListener('mouseenter', onEnter)
-                  info.el.addEventListener('mousemove', onMove)
-                  info.el.addEventListener('mouseleave', onLeave)
-                  info.el._ttHandlers = { onEnter, onMove, onLeave }
-                }}
-                eventWillUnmount={(info) => {
-                  const h = info.el._ttHandlers
-                  if (h) {
-                    info.el.removeEventListener('mouseenter', h.onEnter)
-                    info.el.removeEventListener('mousemove', h.onMove)
-                    info.el.removeEventListener('mouseleave', h.onLeave)
-                    delete info.el._ttHandlers
-                  }
-                  const tooltip = tooltipsRef.current[info.event.id]
-                  if (tooltip && tooltip.parentNode) tooltip.parentNode.removeChild(tooltip)
-                  delete tooltipsRef.current[info.event.id]
-                }}
-                eventClick={async (info) => {
-                  // Si hay bombero fijo y el evento NO lo incluye → no permitir abrir modal
-                  if (bomberoFijoDni && info?.event?.extendedProps?.hasFijo === false) {
-                    info.jsEvent.preventDefault()
-                    return
-                  }
-
-                  info.jsEvent.preventDefault()
-
-                  // oculto tooltip si existe
-                  const tooltip = tooltipsRef.current[info.event.id]
-                  if (tooltip) tooltip.style.display = 'none'
-
-                  // 🔔 SweetAlert de confirmación antes de abrir el modal
-                  const r = await swalConfirm({
-                    title: 'Confirmar acción',
-                    html: '¿Desea modificar la guardia seleccionada?',
-                    confirmText: 'Modificar',
-                    icon: 'question'
-                  })
-                  if (!r.isConfirmed) return
-
-                  // abrir modal si confirmó
-                  const ev = info.event
-                  setEventoSeleccionado(ev)
-                  setModalEdicionAbierto(true)
-                  const base = (ev.extendedProps?.bomberos || []).map(b => ({
-                    ...b,
-                    nombre: b.nombre || nombrePorDni.get(Number(b.dni)) || String(b.dni)
-                  }))
-                  setBomberosEditados(base)
-                  setBomberosOriginales(base)
-                  setMensajesModal([])
-                  setTieneCambios(false)
-                }}
-                datesSet={(arg) => {
-                  const s = arg.start?.toISOString?.() || ''
-                  const e = arg.end?.toISOString?.() || ''
-                  if (ultimoRangoRef.current.start !== s || ultimoRangoRef.current.end !== e) {
-                    ultimoRangoRef.current = { start: s, end: e }
-                    cargarSemanaServidor(arg.start, arg.end)
-                  }
-                }}
-              />
-
-              {/* Modal de edición: filas de otros bomberos bloqueadas */}
-              {modalEdicionAbierto && eventoSeleccionado && (
-                <div className="modal fade show d-block modal-backdrop-custom" tabIndex={-1} role="dialog" aria-modal="true" style={{ zIndex: 1060 }}>
-                  <div className="modal-dialog modal-lg">
-                    <div className="modal-content modal-content-white">
-                      <div className="bg-danger modal-header">
-                        <h5 className="modal-title text-white">Modificar guardia</h5>
-                        <button type="button" className="btn-close" onClick={() => { setModalEdicionAbierto(false); setEventoSeleccionado(null) }} />
-                      </div>
-
-                      <div className="modal-body">
-                        {mensajesModal.length > 0 && (
-                          <div>{mensajesModal.map((m, idx) => (<div key={idx} className="alert alert-warning">{m}</div>))}</div>
-                        )}
-
-                        <p className="mb-2"><strong>Fecha:</strong> {new Date(eventoSeleccionado.start).toLocaleDateString()}</p>
-                        {bomberoFijoDni && (
-                          <p className="text-muted small mb-3">Solo podés editar tus propias filas. Las de otros bomberos aparecen bloqueadas.</p>
-                        )}
-
-                        <table className="table table-bordered">
-                          <thead>
-                            <tr>
-                              <th>Bombero</th>
-                              <th>Hora desde</th>
-                              <th>Hora hasta</th>
-                              <th>Acciones</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {bomberosEditados.map((b, idx) => {
-                              const esEditable = !bomberoFijoDni || Number(b.dni) === Number(bomberoFijoDni)
-                              const disabledProps = {
-                                isDisabled: !esEditable,
-                                styles: {
-                                  control: (base) => !esEditable ? ({ ...base, backgroundColor: '#f5f5f5' }) : base,
-                                  menuPortal: (base) => ({ ...base, zIndex: 99999 }),
-                                  menu: (base) => ({ ...base, zIndex: 99999 })
-                                },
-                                menuPortalTarget: typeof document !== 'undefined' ? document.body : null,
-                                menuPosition: 'fixed',
-                                menuShouldScrollIntoView: false
-                              }
-                              return (
-                                <tr key={idx} className={!esEditable ? 'table-light' : ''}>
-                                  <td>
-                                    {b.nombre}
-                                    {!esEditable && <small className="text-muted d-block">No editable</small>}
-                                  </td>
-                                  <td>
-                                    <div className="d-flex gap-2">
-                                      <Select
-                                        options={horas}
-                                        value={{ label: b.desde.split(':')[0], value: b.desde.split(':')[0] }}
-                                        onChange={(selected) => {
-                                          if (!esEditable) return
-                                          const nuevo = bomberosEditados.map((item, i) =>
-                                            i === idx ? { ...item, desde: `${selected.value}:${b.desde.split(':')[1]}` } : item
-                                          )
-                                          setBomberosEditados(nuevo)
-                                        }}
-                                        classNamePrefix="rs"
-                                        placeholder="HH"
-                                        {...disabledProps}
-                                      />
-                                      <Select
-                                        options={minutos}
-                                        value={{ label: b.desde.split(':')[1], value: b.desde.split(':')[1] }}
-                                        onChange={(selected) => {
-                                          if (!esEditable) return
-                                          const nuevo = bomberosEditados.map((item, i) =>
-                                            i === idx ? { ...item, desde: `${b.desde.split(':')[0]}:${selected.value}` } : item
-                                          )
-                                          setBomberosEditados(nuevo)
-                                        }}
-                                        classNamePrefix="rs"
-                                        placeholder="MM"
-                                        isSearchable
-                                        {...disabledProps}
-                                      />
-                                    </div>
-                                  </td>
-                                  <td>
-                                    <div className="d-flex gap-2">
-                                      <Select
-                                        options={horas}
-                                        value={{ label: b.hasta.split(':')[0], value: b.hasta.split(':')[0] }}
-                                        onChange={(selected) => {
-                                          if (!esEditable) return
-                                          const nuevo = bomberosEditados.map((item, i) =>
-                                            i === idx ? { ...item, hasta: `${selected.value}:${b.hasta.split(':')[1]}` } : item
-                                          )
-                                          setBomberosEditados(nuevo)
-                                        }}
-                                        classNamePrefix="rs"
-                                        placeholder="HH"
-                                        {...disabledProps}
-                                      />
-                                      <Select
-                                        options={minutos}
-                                        value={{ label: b.hasta.split(':')[1], value: b.hasta.split(':')[1] }}
-                                        onChange={(selected) => {
-                                          if (!esEditable) return
-                                          const nuevo = bomberosEditados.map((item, i) =>
-                                            i === idx ? { ...item, hasta: `${b.hasta.split(':')[0]}:${selected.value}` } : item
-                                          )
-                                          setBomberosEditados(nuevo)
-                                        }}
-                                        classNamePrefix="rs"
-                                        placeholder="MM"
-                                        isSearchable
-                                        {...disabledProps}
-                                      />
-                                    </div>
-                                  </td>
-                                  <td className="text-center">
-                                    <button
-                                      className="btn btn-outline-danger btn-detail"
-                                      title={esEditable ? 'Eliminar asignación' : 'No permitido'}
-                                      disabled={!esEditable}
-                                      onClick={async () => {
-                                        if (!esEditable) return
-                                        const nombre = b?.nombre || nombrePorDni.get(Number(b?.dni)) || b?.dni
-                                        const r = await swalConfirm({
-                                          title: `¿Eliminar asignación de "${nombre}"?`,
-                                          html: `Desde <b>${b?.desde}</b> hasta <b>${b?.hasta}</b>.`,
-                                          confirmText: 'Eliminar',
-                                          icon: 'warning'
-                                        })
-                                        if (!r.isConfirmed) return
-                                        setBomberosEditados(prev => prev.filter((_, i) => i !== idx))
-                                        setTieneCambios(true)
-                                        swalToast({ title: 'Asignación eliminada', icon: 'success' })
-                                      }}
-                                    >
-                                      <i className="bi bi-trash"></i>
-                                    </button>
-                                  </td>
-                                </tr>
-                              )
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
-                        <button className="btn btn-back btn-medium" onClick={() => { setModalEdicionAbierto(false); setEventoSeleccionado(null) }}>
-                          Volver
-                        </button>
-
-                        <button
-                          className="btn btn-accept btn-lg btn-medium"
-                          disabled={!tieneCambios}
-                          onClick={async () => {
-                            // 🔔 Confirmación general antes de guardar
-                            const confirmGeneral = await swalConfirm({
-                              title: 'Confirmar acción',
-                              html: '¿Desea guardar los cambios realizados en esta guardia?',
-                              confirmText: 'Guardar',
-                              icon: 'question'
-                            })
-                            if (!confirmGeneral.isConfirmed) return
-
-                            const fechaBase = new Date(eventoSeleccionado.start)
-                            const fechaStr = yyyyMmDd(fechaBase)
-
-                            // Si quedaron 0 filas → eliminar franja completa y cerrar modal
-                            if (bomberosEditados.length === 0) {
-                              const nextEventos = eventos.filter(ev => ev.id !== eventoSeleccionado.id)
-                              setEventos(nextEventos)
-                              setModalEdicionAbierto(false)
-                              setEventoSeleccionado(null)
-                              setGuardando(true)
-                              try {
-                                await apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
-                                  method: 'PUT',
-                                  body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDelDiaDesdeEventos(nextEventos, fechaStr) })
-                                })
-                                setMensaje('Guardia eliminada y actualizada con éxito')
-                                const api = calendarRef.current?.getApi()
-                                if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
-                                swalToast({ title: 'Cambios guardados', icon: 'success' })
-                              } catch (e) {
-                                setMensaje(`Error al guardar: ${e.message}`)
-                                await swalError('Error', e.message)
-                              } finally {
-                                setGuardando(false)
-                              }
-                              return
-                            }
-
-                            // === Validaciones por fila (modal) ===
-                            const errores = []
-                            bomberosEditados.forEach((b) => {
-                              const desdeOk = validaHM(b?.desde)
-                              const hastaOk = validaHM(b?.hasta)
-
-                              if (!desdeOk || !hastaOk) {
-                                errores.push(`Debes completar correctamente ambos horarios (HH:MM) para ${b?.nombre || b?.dni}`)
-                                return
-                              }
-
-                              if (b.hasta <= b.desde) {
-                                errores.push(`La hora de fin debe ser posterior a la de inicio (${b?.nombre || b?.dni})`)
-                              }
-                            })
-
-                            if (errores.length > 0) {
-                              setMensajesModal(errores)
-                              return
-                            }
-                            setMensajesModal([])
-
-                            // Recalcular bloque único (o varios si hay huecos entre propias filas)
-                            const bomberosNormalizados = mergeByDni(bomberosEditados)
-                            const ordenados = [...bomberosNormalizados].sort((a, b) => a.desde.localeCompare(b.desde))
-
-                            // Re-armo "subbloques" solo si quedaron huecos entre intervalos (sigue siendo UNA FRANJA por bloque disjunto)
-                            const nuevosBloques = []
-                            let cur = { start: ordenados[0].desde, end: ordenados[0].hasta, bomberos: [ordenados[0]] }
-                            for (let i = 1; i < ordenados.length; i++) {
-                              const b = ordenados[i]
-                              if (b.desde > cur.end) {
-                                nuevosBloques.push({ ...cur, bomberos: mergeByDni(cur.bomberos) })
-                                cur = { start: b.desde, end: b.hasta, bomberos: [b] }
-                              } else {
-                                if (b.hasta > cur.end) cur.end = b.hasta
-                                cur.bomberos.push(b)
-                              }
-                            }
-                            nuevosBloques.push({ ...cur, bomberos: mergeByDni(cur.bomberos) })
-
-                            // Reemplazo el evento seleccionado por los nuevos (si son 1 o más disjuntos)
-                            const sinEvento = eventos.filter(ev => ev.id !== eventoSeleccionado.id)
-                            const nuevosEventos = nuevosBloques.map((bloque, idx) => {
-                              const [hStart, mStart] = bloque.start.split(':').map(Number)
-                              const [hEnd, mEnd] = bloque.end.split(':').map(Number)
-                              return {
-                                id: `${eventoSeleccionado.id}-split-${idx}-${Date.now()}`,
-                                title: '',
-                                start: new Date(fechaBase.getFullYear(), fechaBase.getMonth(), fechaBase.getDate(), hStart, mStart),
-                                end: new Date(fechaBase.getFullYear(), fechaBase.getMonth(), fechaBase.getDate(), hEnd, mEnd),
-                                allDay: false,
-                                extendedProps: { bomberos: mergeByDni(bloque.bomberos) }
-                              }
-                            })
-
-                            // Fusión final para mantener UNA SOLA FRANJA por bloque
-                            const merged = (() => {
-                              const temp = fusionarEventos([...sinEvento, ...nuevosEventos])
-                              return fusionarEventos(temp)
-                            })()
-
-                            setEventos(merged)
-
-                            try {
-                              await apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
-                                method: 'PUT',
-                                body: JSON.stringify({
-                                  fecha: fechaStr,
-                                  asignaciones: asignacionesDelDiaDesdeEventos(merged, fechaStr)
-                                })
-                              })
-                              setMensaje('Cambios guardados para ese día con éxito')
-                              const api = calendarRef.current?.getApi()
-                              if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
-                              swalToast({ title: 'Cambios guardados', icon: 'success' })
-                            } catch (e) {
-                              setMensaje(`Error al guardar: ${e.message}`)
-                              await swalError('Error', e.message)
-                            }
-                            // cierre del modal tras guardar
-                            setModalEdicionAbierto(false)
-                            setEventoSeleccionado(null)
-                          }}
-                        >
-                          Confirmar
-                        </button>
-                      </div>
+                  <label className="mt-2">Hasta:</label>
+                  <div className="d-flex gap-3">
+                    <div className="flex-grow-1 time-select">
+                      <Select
+                        options={horas}
+                        value={horaHasta ? { label: horaHasta.split(':')[0], value: horaHasta.split(':')[0] } : null}
+                        onChange={(selected) => {
+                          const nueva = selected?.value || ''
+                          setHoraHasta(`${nueva}:${horaHasta.split(':')[1] || '00'}`)
+                        }}
+                        classNamePrefix="rs"
+                        placeholder="HH"
+                        isClearable
+                      />
+                    </div>
+                    <div className="flex-grow-1 time-select">
+                      <Select
+                        options={minutos}
+                        value={horaHasta ? { label: horaHasta.split(':')[1], value: horaHasta.split(':')[1] } : null}
+                        onChange={(selected) => {
+                          const nuevosMin = selected?.value || ''
+                          setHoraHasta(`${horaHasta.split(':')[0] || '00'}:${nuevosMin}`)
+                        }}
+                        classNamePrefix="rs"
+                        placeholder="MM"
+                        isClearable
+                        isSearchable
+                      />
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
 
+              {/* Columna derecha: Calendario */}
+              <div className="col-md-8">
+                <FullCalendar
+                  ref={calendarRef}
+                  plugins={[timeGridPlugin, interactionPlugin]}
+                  initialView="timeGridWeek"
+                  events={eventosRender}
+                  locale={esLocale}
+                  scrollTime="00:00:00"
+                  slotMinTime="00:00:00"
+                  firstDay={1}
+                  headerToolbar={{ left: 'prev,next today', center: 'title', right: '' }}
+                  allDaySlot={false}
+                  slotDuration="00:30:00"
+                  slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
+                  eventClassNames={(info) => {
+                    const classes = ['fc-guardia']
+                    if (bomberoFijoDni && info.event.extendedProps && info.event.extendedProps.hasFijo === false) {
+                      classes.push('fc-guardia-ajena')
+                    }
+                    return classes
+                  }}
+                  eventContent={() => ({ domNodes: [] })}
+                  eventDidMount={(info) => {
+                    info.el.removeAttribute('title')
+                    info.el.querySelectorAll('[title]').forEach(el => el.removeAttribute('title'))
+
+                    const tooltip = document.createElement('div')
+                    tooltip.className = 'tooltip-dinamico'
+                    document.body.appendChild(tooltip)
+                    tooltipsRef.current[info.event.id] = tooltip
+
+                    const lista = info.event.extendedProps?.bomberos || []
+                    tooltip.innerText = lista
+                      .slice()
+                      .sort((a, b) => a.desde.localeCompare(b.desde) || (Number(a.dni) - Number(b.dni)))
+                      .map((b) => `${b.nombre || nombrePorDni.get(Number(b.dni)) || b.dni} (${b.desde}-${b.hasta})`)
+                      .join('\n')
+
+                    const place = (e) => {
+                      const margin = 10
+                      const x = Math.min(e.clientX + margin, window.innerWidth - tooltip.offsetWidth - margin)
+                      const y = Math.min(e.clientY + margin, window.innerHeight - tooltip.offsetHeight - margin)
+                      tooltip.style.left = `${x}px`
+                      tooltip.style.top = `${y}px`
+                    }
+
+                    const onEnter = (e) => { tooltip.style.display = 'block'; place(e) }
+                    const onMove = (e) => place(e)
+                    const onLeave = () => { tooltip.style.display = 'none' }
+
+                    info.el.addEventListener('mouseenter', onEnter)
+                    info.el.addEventListener('mousemove', onMove)
+                    info.el.addEventListener('mouseleave', onLeave)
+                    info.el._ttHandlers = { onEnter, onMove, onLeave }
+                  }}
+                  eventWillUnmount={(info) => {
+                    const h = info.el._ttHandlers
+                    if (h) {
+                      info.el.removeEventListener('mouseenter', h.onEnter)
+                      info.el.removeEventListener('mousemove', h.onMove)
+                      info.el.removeEventListener('mouseleave', h.onLeave)
+                      delete info.el._ttHandlers
+                    }
+                    const tooltip = tooltipsRef.current[info.event.id]
+                    if (tooltip && tooltip.parentNode) tooltip.parentNode.removeChild(tooltip)
+                    delete tooltipsRef.current[info.event.id]
+                  }}
+                  eventClick={async (info) => {
+                    // ⛔ Bloquear clicks en el calendario si el modal está abierto (doble seguro)
+                    if (modalEdicionAbierto) {
+                      info.jsEvent.preventDefault()
+                      return
+                    }
+
+                    if (bomberoFijoDni && info?.event?.extendedProps?.hasFijo === false) {
+                      info.jsEvent.preventDefault()
+                      return
+                    }
+
+                    info.jsEvent.preventDefault()
+
+                    const tooltip = tooltipsRef.current[info.event.id]
+                    if (tooltip) tooltip.style.display = 'none'
+
+                    const r = await swalConfirm({
+                      title: 'Confirmar acción',
+                      html: '¿Desea modificar la guardia seleccionada?',
+                      confirmText: 'Modificar',
+                      icon: 'question'
+                    })
+                    if (!r.isConfirmed) return
+
+                    const ev = info.event
+                    setEventoSeleccionado(ev)
+                    setModalEdicionAbierto(true)
+                    const base = (ev.extendedProps?.bomberos || []).map(b => ({
+                      ...b,
+                      nombre: b.nombre || nombrePorDni.get(Number(b.dni)) || String(b.dni)
+                    }))
+                    setBomberosEditados(base)
+                    setBomberosOriginales(base)
+                    setMensajesModal([])
+                    setTieneCambios(false)
+                  }}
+                  datesSet={(arg) => {
+                    const s = arg.start?.toISOString?.() || ''
+                    const e = arg.end?.toISOString?.() || ''
+                    if (ultimoRangoRef.current.start !== s || ultimoRangoRef.current.end !== e) {
+                      ultimoRangoRef.current = { start: s, end: e }
+                      cargarSemanaServidor(arg.start, arg.end)
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+            <BackToMenuButton onClick={onVolver} />
+            <button className="btn btn-accept btn-lg btn-medium" onClick={asignarGuardia} disabled={guardando}>
+              {guardando ? 'Guardando…' : 'Guardar'}
+            </button>
           </div>
         </div>
-        <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
-          <BackToMenuButton onClick={onVolver} />
-          <button className="btn btn-accept btn-lg btn-medium" onClick={asignarGuardia} disabled={guardando}>
-            {guardando ? 'Guardando…' : 'Guardar'}
-          </button>
-        </div>
       </div>
+
+      {/* ===== MODAL (fuera del fondo bloqueado) ===== */}
+      {modalEdicionAbierto && eventoSeleccionado && (
+        <>
+          {/* Backdrop que bloquea clics afuera (z-index muy alto para superar cualquier z del calendario) */}
+          <div
+            className="modal-backdrop fade show"
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9998 }}
+            onClick={(e) => { e.stopPropagation() /* no cerrar por fuera */ }}
+          />
+          <div className="modal fade show d-block modal-backdrop-custom" tabIndex={-1} role="dialog" aria-modal="true" style={{ zIndex: 9999 }}>
+            <div className="modal-dialog modal-lg">
+              <div className="modal-content modal-content-white">
+                <div className="bg-danger modal-header">
+                  <h5 className="modal-title text-white">Modificar guardia</h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => { setModalEdicionAbierto(false); setEventoSeleccionado(null) }}
+                  />
+                </div>
+
+                <div className="modal-body">
+                  {mensajesModal.length > 0 && (
+                    <div>{mensajesModal.map((m, idx) => (<div key={idx} className="alert alert-warning">{m}</div>))}</div>
+                  )}
+
+                  <p className="mb-2"><strong>Fecha:</strong> {new Date(eventoSeleccionado.start).toLocaleDateString()}</p>
+
+                  <table className="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Bombero</th>
+                        <th>Hora desde</th>
+                        <th>Hora hasta</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bomberosEditados.map((b, idx) => {
+                        const esEditable = !bomberoFijoDni || Number(b.dni) === Number(bomberoFijoDni)
+                        const disabledProps = {
+                          isDisabled: !esEditable,
+                          styles: {
+                            control: (base) => !esEditable ? ({ ...base, backgroundColor: '#f5f5f5' }) : base,
+                            menuPortal: (base) => ({ ...base, zIndex: 99999 }),
+                            menu: (base) => ({ ...base, zIndex: 99999 })
+                          },
+                          menuPortalTarget: typeof document !== 'undefined' ? document.body : null,
+                          menuPosition: 'fixed',
+                          menuShouldScrollIntoView: false
+                        }
+                        return (
+                          <tr key={idx} className={!esEditable ? 'table-light' : ''}>
+                            <td>
+                              {b.nombre}
+                              {!esEditable && <small className="text-muted d-block">No editable</small>}
+                            </td>
+                            <td>
+                              <div className="d-flex gap-2">
+                                <Select
+                                  options={horas}
+                                  value={{ label: b.desde.split(':')[0], value: b.desde.split(':')[0] }}
+                                  onChange={(selected) => {
+                                    if (!esEditable) return
+                                    const nuevo = bomberosEditados.map((item, i) =>
+                                      i === idx ? { ...item, desde: `${selected.value}:${b.desde.split(':')[1]}` } : item
+                                    )
+                                    setBomberosEditados(nuevo)
+                                  }}
+                                  classNamePrefix="rs"
+                                  placeholder="HH"
+                                  {...disabledProps}
+                                />
+                                <Select
+                                  options={minutos}
+                                  value={{ label: b.desde.split(':')[1], value: b.desde.split(':')[1] }}
+                                  onChange={(selected) => {
+                                    if (!esEditable) return
+                                    const nuevo = bomberosEditados.map((item, i) =>
+                                      i === idx ? { ...item, desde: `${b.desde.split(':')[0]}:${selected.value}` } : item
+                                    )
+                                    setBomberosEditados(nuevo)
+                                  }}
+                                  classNamePrefix="rs"
+                                  placeholder="MM"
+                                  isSearchable
+                                  {...disabledProps}
+                                />
+                              </div>
+                            </td>
+                            <td>
+                              <div className="d-flex gap-2">
+                                <Select
+                                  options={horas}
+                                  value={{ label: b.hasta.split(':')[0], value: b.hasta.split(':')[0] }}
+                                  onChange={(selected) => {
+                                    if (!esEditable) return
+                                    const nuevo = bomberosEditados.map((item, i) =>
+                                      i === idx ? { ...item, hasta: `${selected.value}:${b.hasta.split(':')[1]}` } : item
+                                    )
+                                    setBomberosEditados(nuevo)
+                                  }}
+                                  classNamePrefix="rs"
+                                  placeholder="HH"
+                                  {...disabledProps}
+                                />
+                                <Select
+                                  options={minutos}
+                                  value={{ label: b.hasta.split(':')[1], value: b.hasta.split(':')[1] }}
+                                  onChange={(selected) => {
+                                    if (!esEditable) return
+                                    const nuevo = bomberosEditados.map((item, i) =>
+                                      i === idx ? { ...item, hasta: `${b.hasta.split(':')[0]}:${selected.value}` } : item
+                                    )
+                                    setBomberosEditados(nuevo)
+                                  }}
+                                  classNamePrefix="rs"
+                                  placeholder="MM"
+                                  isSearchable
+                                  {...disabledProps}
+                                />
+                              </div>
+                            </td>
+                            <td className="text-center">
+                              <button
+                                className="btn btn-outline-danger btn-detail"
+                                title={esEditable ? 'Eliminar asignación' : 'No permitido'}
+                                disabled={!esEditable}
+                                onClick={async () => {
+                                  if (!esEditable) return
+                                  const nombre = b?.nombre || nombrePorDni.get(Number(b?.dni)) || b?.dni
+                                  const r = await swalConfirm({
+                                    title: `¿Eliminar asignación de "${nombre}"?`,
+                                    html: `Desde <b>${b?.desde}</b> hasta <b>${b?.hasta}</b>.`,
+                                    confirmText: 'Eliminar',
+                                    icon: 'warning'
+                                  })
+                                  if (!r.isConfirmed) return
+                                  setBomberosEditados(prev => prev.filter((_, i) => i !== idx))
+                                  setTieneCambios(true)
+                                  swalToast({ title: 'Asignación eliminada', icon: 'success' })
+                                }}
+                              >
+                                <i className="bi bi-trash"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+                  <button className="btn btn-back btn-medium" onClick={() => { setModalEdicionAbierto(false); setEventoSeleccionado(null) }}>
+                    Volver
+                  </button>
+
+                  <button
+                    className="btn btn-accept btn-lg btn-medium"
+                    disabled={!tieneCambios}
+                    onClick={async () => {
+                      const confirmGeneral = await swalConfirm({
+                        title: 'Confirmar acción',
+                        html: '¿Desea guardar los cambios realizados en esta guardia?',
+                        confirmText: 'Guardar',
+                        icon: 'question'
+                      })
+                      if (!confirmGeneral.isConfirmed) return
+
+                      const fechaBase = new Date(eventoSeleccionado.start)
+                      const fechaStr = yyyyMmDd(fechaBase)
+
+                      if (bomberosEditados.length === 0) {
+                        const nextEventos = eventos.filter(ev => ev.id !== eventoSeleccionado.id)
+                        setEventos(nextEventos)
+                        setModalEdicionAbierto(false)
+                        setEventoSeleccionado(null)
+                        setGuardando(true)
+                        try {
+                          await apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
+                            method: 'PUT',
+                            body: JSON.stringify({ fecha: fechaStr, asignaciones: asignacionesDelDiaDesdeEventos(nextEventos, fechaStr) })
+                          })
+                          setMensaje('Guardia eliminada y actualizada con éxito')
+                          const api = calendarRef.current?.getApi()
+                          if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
+                          swalToast({ title: 'Cambios guardados', icon: 'success' })
+                        } catch (e) {
+                          setMensaje(`Error al guardar: ${e.message}`)
+                          await swalError('Error', e.message)
+                        } finally {
+                          setGuardando(false)
+                        }
+                        return
+                      }
+
+                      const errores = []
+                      bomberosEditados.forEach((b) => {
+                        const desdeOk = validaHM(b?.desde)
+                        const hastaOk = validaHM(b?.hasta)
+                        if (!desdeOk || !hastaOk) {
+                          errores.push(`Debes completar correctamente ambos horarios (HH:MM) para ${b?.nombre || b?.dni}`)
+                          return
+                        }
+                        if (b.hasta <= b.desde) {
+                          errores.push(`La hora de fin debe ser posterior a la de inicio (${b?.nombre || b?.dni})`)
+                        }
+                      })
+                      if (errores.length > 0) {
+                        setMensajesModal(errores)
+                        return
+                      }
+                      setMensajesModal([])
+
+                      const bomberosNormalizados = mergeByDni(bomberosEditados)
+                      const ordenados = [...bomberosNormalizados].sort((a, b) => a.desde.localeCompare(b.desde))
+
+                      const nuevosBloques = []
+                      let cur = { start: ordenados[0].desde, end: ordenados[0].hasta, bomberos: [ordenados[0]] }
+                      for (let i = 1; i < ordenados.length; i++) {
+                        const b = ordenados[i]
+                        if (b.desde > cur.end) {
+                          nuevosBloques.push({ ...cur, bomberos: mergeByDni(cur.bomberos) })
+                          cur = { start: b.desde, end: b.hasta, bomberos: [b] }
+                        } else {
+                          if (b.hasta > cur.end) cur.end = b.hasta
+                          cur.bomberos.push(b)
+                        }
+                      }
+                      nuevosBloques.push({ ...cur, bomberos: mergeByDni(cur.bomberos) })
+
+                      const sinEvento = eventos.filter(ev => ev.id !== eventoSeleccionado.id)
+                      const nuevosEventos = nuevosBloques.map((bloque, idx) => {
+                        const [hStart, mStart] = bloque.start.split(':').map(Number)
+                        const [hEnd, mEnd] = bloque.end.split(':').map(Number)
+                        return {
+                          id: `${eventoSeleccionado.id}-split-${idx}-${Date.now()}`,
+                          title: '',
+                          start: new Date(fechaBase.getFullYear(), fechaBase.getMonth(), fechaBase.getDate(), hStart, mStart),
+                          end: new Date(fechaBase.getFullYear(), fechaBase.getMonth(), fechaBase.getDate(), hEnd, mEnd),
+                          allDay: false,
+                          extendedProps: { bomberos: mergeByDni(bloque.bomberos) }
+                        }
+                      })
+
+                      const merged = (() => {
+                        const temp = fusionarEventos([...sinEvento, ...nuevosEventos])
+                        return fusionarEventos(temp)
+                      })()
+
+                      setEventos(merged)
+
+                      try {
+                        await apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
+                          method: 'PUT',
+                          body: JSON.stringify({
+                            fecha: fechaStr,
+                            asignaciones: asignacionesDelDiaDesdeEventos(merged, fechaStr)
+                          })
+                        })
+                        setMensaje('Cambios guardados para ese día con éxito')
+                        const api = calendarRef.current?.getApi()
+                        if (api?.view) cargarSemanaServidor(api.view.activeStart, api.view.activeEnd)
+                        swalToast({ title: 'Cambios guardados', icon: 'success' })
+                      } catch (e) {
+                        setMensaje(`Error al guardar: ${e.message}`)
+                        await swalError('Error', e.message)
+                      }
+                      setModalEdicionAbierto(false)
+                      setEventoSeleccionado(null)
+                    }}
+                  >
+                    Confirmar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
