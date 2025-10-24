@@ -269,6 +269,55 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
   const [bomberosOriginales, setBomberosOriginales] = useState([])
   const [tieneCambios, setTieneCambios] = useState(false)
 
+  // 👇👇👇 MOVER AQUÍ (antes de cualquier useEffect que los use)
+  // Guarda el último evento a enfocar (id + datos de búsqueda)
+  const [ultimoFoco, setUltimoFoco] = useState(null)
+  // Mapa idEvento -> elemento DOM (para scroll y highlight)
+  const eventElsRef = useRef({})
+
+  // ¿Mismo día?
+  const sameDay = (a, b) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+
+  // Busca el id del evento que contiene [horaStart, horaEnd] en ese día
+  const findEventIdByRange = (listaEventos, fechaBase, horaStart, horaEnd) => {
+    const startTime = new Date(
+      fechaBase.getFullYear(), fechaBase.getMonth(), fechaBase.getDate(),
+      Number(horaStart.split(':')[0] || 0), Number(horaStart.split(':')[1] || 0)
+    )
+    const endTime = new Date(
+      fechaBase.getFullYear(), fechaBase.getMonth(), fechaBase.getDate(),
+      Number(horaEnd.split(':')[0] || 0), Number(horaEnd.split(':')[1] || 0)
+    )
+    for (const ev of listaEventos) {
+      const evS = new Date(ev.start)
+      const evE = new Date(ev.end)
+      if (!sameDay(evS, fechaBase)) continue
+      if (evS <= startTime && evE >= endTime) return ev.id
+    }
+    return null
+  }
+
+  // Resalta y centra visualmente un evento por su id
+  const focusEventById = (id) => {
+    const el = eventElsRef.current[id]
+    if (!el) return
+    // centra en pantalla
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    // highlight temporal
+    const prevTransition = el.style.transition
+    const prevBoxShadow = el.style.boxShadow
+    el.style.transition = 'box-shadow 0.25s ease'
+    el.style.boxShadow = '0 0 0 4px rgba(255,0,0,0.35)'
+    setTimeout(() => {
+      el.style.boxShadow = prevBoxShadow || ''
+      el.style.transition = prevTransition || ''
+    }, 2000)
+  }
+  // ☝️☝️☝️ FIN del bloque movido
+
   // Fondo que se bloquea (NO incluye modal)
   const backgroundRef = useRef(null)
 
@@ -369,6 +418,21 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
     })
   }, [eventosRender, nombrePorDni])
 
+  // 🔧 Efecto que usa ultimoFoco/findEventIdByRange/focusEventById (ya declarados arriba)
+  useEffect(() => {
+    if (!ultimoFoco) return
+    const t = setTimeout(() => {
+      if (ultimoFoco.id) {
+        focusEventById(ultimoFoco.id)
+      } else if (ultimoFoco.fallback) {
+        const { fechaBase, horaStart, horaEnd } = ultimoFoco.fallback
+        const id = findEventIdByRange(eventos, fechaBase, horaStart, horaEnd)
+        if (id) focusEventById(id)
+      }
+    }, 50)
+    return () => clearTimeout(t)
+  }, [eventos, ultimoFoco])
+
   // Asignar nueva guardia
   const asignarGuardia = async () => {
     if (!bomberoSeleccionado || !horaDesde || !horaHasta || diaSeleccionado === null) {
@@ -436,6 +500,19 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
     })()
 
     setEventos(nextEventos)
+
+    // Guardamos qué evento enfocar: por ID si lo tenemos, o por rango de fallback
+    const focoId = findEventIdByRange(
+      nextEventos,
+      new Date(nuevoInicioDate),
+      horaDesde,
+      horaHasta
+    )
+    setUltimoFoco(
+      focoId
+        ? { id: focoId }
+        : { fallback: { fechaBase: new Date(nuevoInicioDate), horaStart: horaDesde, horaEnd: horaHasta } }
+    )
 
     const fechaStr = yyyyMmDd(fechaObjetivo)
     const asignacionesDia = asignacionesDelDiaDesdeEventos(nextEventos, fechaStr)
@@ -695,6 +772,8 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
                     info.el.addEventListener('mousemove', onMove)
                     info.el.addEventListener('mouseleave', onLeave)
                     info.el._ttHandlers = { onEnter, onMove, onLeave }
+                    eventElsRef.current[info.event.id] = info.el
+
                   }}
                   eventWillUnmount={(info) => {
                     const h = info.el._ttHandlers
@@ -707,6 +786,7 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
                     const tooltip = tooltipsRef.current[info.event.id]
                     if (tooltip && tooltip.parentNode) tooltip.parentNode.removeChild(tooltip)
                     delete tooltipsRef.current[info.event.id]
+                    delete eventElsRef.current[info.event.id]
                   }}
                   eventClick={async (info) => {
                     // ⛔ Bloquear clicks en el calendario si el modal está abierto (doble seguro)
@@ -770,11 +850,10 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
       {/* ===== MODAL (fuera del fondo bloqueado) ===== */}
       {modalEdicionAbierto && eventoSeleccionado && (
         <>
-          {/* Backdrop que bloquea clics afuera (z-index muy alto para superar cualquier z del calendario) */}
           <div
             className="modal-backdrop fade show"
             style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9998 }}
-            onClick={(e) => { e.stopPropagation() /* no cerrar por fuera */ }}
+            onClick={(e) => { e.stopPropagation() }}
           />
           <div className="modal fade show d-block modal-backdrop-custom" tabIndex={-1} role="dialog" aria-modal="true" style={{ zIndex: 9999 }}>
             <div className="modal-dialog modal-lg">
@@ -907,7 +986,6 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
                                   if (!r.isConfirmed) return
                                   setBomberosEditados(prev => prev.filter((_, i) => i !== idx))
                                   setTieneCambios(true)
-                                  swalToast({ title: 'Asignación eliminada', icon: 'success' })
                                 }}
                               >
                                 <i className="bi bi-trash"></i>
@@ -1019,6 +1097,22 @@ const GestionarGuardias = ({ idGrupo, nombreGrupo, bomberos = [], onVolver, bomb
                       })()
 
                       setEventos(merged)
+
+                      // Elegimos un bloque representativo (el primero nuevo) para enfocar
+                      const bloqueRef = nuevosBloques[0]
+                      if (bloqueRef) {
+                        const focoId = findEventIdByRange(
+                          merged,
+                          new Date(fechaBase),
+                          bloqueRef.start,
+                          bloqueRef.end
+                        )
+                        setUltimoFoco(
+                          focoId
+                            ? { id: focoId }
+                            : { fallback: { fechaBase: new Date(fechaBase), horaStart: bloqueRef.start, horaEnd: bloqueRef.end } }
+                        )
+                      }
 
                       try {
                         await apiRequest(API_URLS.grupos.guardias.reemplazarDia(idGrupo), {
