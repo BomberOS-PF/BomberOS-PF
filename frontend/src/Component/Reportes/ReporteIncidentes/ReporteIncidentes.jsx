@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import ReactApexChart from 'react-apexcharts'
 import { BarChart3, Calendar, Filter, Loader2 } from 'lucide-react'
 import { API_URLS, apiRequest } from '../../../config/api.js'
@@ -15,10 +15,66 @@ const ultimoDiaMes = (anio, mes01) => {
 
 const construirRango = ({ modo, anio, mes01 }) => {
   if (modo === 'anual') {
-    return { start: `${anio}-01-01`, end: `${anio}-12-31` }
+    return { desde: `${anio}-01-01`, hasta: `${anio}-12-31` }
   }
   const last = ultimoDiaMes(anio, mes01)
-  return { start: `${anio}-${pad2(mes01)}-01`, end: `${anio}-${pad2(mes01)}-${pad2(last)}` }
+  return { desde: `${anio}-${pad2(mes01)}-01`, hasta: `${anio}-${pad2(mes01)}-${pad2(last)}` }
+}
+
+const parseFecha = f => {
+  if (!f) return null
+  const s = typeof f === 'string' ? f.replace(' ', 'T') : f
+  const d = new Date(s)
+  return isNaN(d.getTime()) ? null : d
+}
+
+const filtrarPorRango = (arr, { desde, hasta }) => {
+  // seguridad extra por si el backend no aplica el filtro
+  const startDate = new Date(`${desde}T00:00:00`)
+  const endDate = new Date(`${hasta}T23:59:59`)
+  return arr.filter(x => {
+    const f = parseFecha(x.fecha || x.fechaIncidente || x.fechaHora || x.createdAt || x.updatedAt)
+    return f && f >= startDate && f <= endDate
+  })
+}
+
+// Paginación usando el MISMO contrato que ConsultarIncidente: pagina/limite/desde/hasta
+const fetchTodasLasPaginasPorPeriodo = async ({ desde, hasta }, limite = 200, maxPages = 1000) => {
+  let pagina = 1
+  const acumulado = []
+  let total = null
+
+  while (pagina <= maxPages) {
+    const params = new URLSearchParams({
+      pagina: String(pagina),
+      limite: String(limite)
+    })
+    if (desde) params.append('desde', desde)
+    if (hasta) params.append('hasta', hasta)
+
+    const url = `${API_URLS.incidentes.getAll}?${params.toString()}`
+    const res = await apiRequest(url, { method: 'GET' })
+
+    // El listado que funciona interpreta así:
+    // - res = { data: [], total: N }  (más común)
+    // - o a veces un array directo
+    const pageItems = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : (res?.data || [])
+    const pageTotal = typeof res?.total === 'number'
+      ? res.total
+      : (Array.isArray(res) ? res.length : (Array.isArray(res?.data) ? res.data.length : 0))
+
+    if (total == null) total = pageTotal
+
+    acumulado.push(...pageItems)
+
+    // corte por longitud (cuando ya descargamos todo) o cuando la página trae menos que el límite
+    if (acumulado.length >= total) break
+    if (pageItems.length < limite) break
+
+    pagina += 1
+  }
+
+  return { items: acumulado, total: total ?? acumulado.length }
 }
 
 const meses = [
@@ -46,85 +102,56 @@ const ReporteIncidentes = ({ onVolver }) => {
   const [anio, setAnio] = useState(now.getFullYear())
   const [mes01, setMes01] = useState(now.getMonth() + 1)
 
-  const [tipos, setTipos] = useState([])
   const [datos, setDatos] = useState([])
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    const traerTipos = async () => {
-      try {
-        const res = await apiRequest(API_URLS.tiposIncidente)
-        const arr = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []
-        setTipos(arr)
-      } catch (e) {
-        setTipos([])
-      }
-    }
-    traerTipos()
-  }, [])
-
-  const mapTipos = useMemo(() => {
-    const m = new Map()
-    tipos.forEach(t => {
-      const id = t.idTipoIncidente ?? t.id ?? t.value ?? t.tipoId
-      const nombre = t.nombre ?? t.descripcion ?? t.label ?? String(id)
-      m.set(String(id), nombre)
-    })
-    return m
-  }, [tipos])
 
   const rango = useMemo(() => construirRango({ modo, anio, mes01 }), [modo, anio, mes01])
 
   const traerIncidentes = async () => {
     setCargando(true)
     setError('')
+    setDatos([])
+
     try {
-      const url = API_URLS.incidentes.listar({ start: rango.start, end: rango.end })
-      const res = await apiRequest(url)
-      const arr = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []
-      setDatos(arr)
+      // 1) Bajamos TODAS las páginas usando pagina/limite/desde/hasta
+      const { items } = await fetchTodasLasPaginasPorPeriodo(rango, 200)
+
+      // 2) Seguridad: recorte en cliente por si el backend ignora filtros
+      const filtrados = filtrarPorRango(items, rango)
+
+      setDatos(filtrados)
     } catch (e) {
-      try {
-        const resAll = await apiRequest(API_URLS.incidentes.getAll)
-        const arr = Array.isArray(resAll?.data) ? resAll.data : Array.isArray(resAll) ? resAll : []
-        const startDate = new Date(rango.start + 'T00:00:00')
-        const endDate = new Date(rango.end + 'T23:59:59')
-        const filtrados = arr.filter(x => {
-          const f = x.fecha ? new Date(x.fecha) : null
-          return f && f >= startDate && f <= endDate
-        })
-        setDatos(filtrados)
-      } catch (e2) {
-        setError('No se pudieron obtener incidentes para el período seleccionado')
-        setDatos([])
-      }
+      setError('No se pudieron obtener incidentes para el período seleccionado')
+      setDatos([])
     } finally {
       setCargando(false)
     }
   }
 
+  // Conteo por tipo: preferimos tipoDescripcion; si no, agrupamos por id
   const conteoPorTipo = useMemo(() => {
     const acc = new Map()
     datos.forEach(it => {
-      const idTipo = it.idTipoIncidente ?? it.tipoIncidenteId ?? it.id_tipo
-      if (idTipo == null) return
-      const k = String(idTipo)
-      acc.set(k, (acc.get(k) || 0) + 1)
+      const nombreTipo =
+        it.tipoDescripcion ||
+        (it.idTipoIncidente != null ? `Tipo ${it.idTipoIncidente}` : 'Sin tipo')
+
+      acc.set(nombreTipo, (acc.get(nombreTipo) || 0) + 1)
     })
     return acc
   }, [datos])
 
+  // Ordenamos categorías por cantidad desc para una lectura más clara
   const categories = useMemo(() => {
-    const keys = Array.from(conteoPorTipo.keys())
-    if (keys.length === 0 && mapTipos.size > 0) {
-      return Array.from(mapTipos.values()).sort((a, b) => a.localeCompare(b))
-    }
-    return keys.map(k => mapTipos.get(k) || `Tipo ${k}`)
-  }, [conteoPorTipo, mapTipos])
+    const pares = Array.from(conteoPorTipo.entries()) // [ [tipo, count], ... ]
+    pares.sort((a, b) => b[1] - a[1])
+    return pares.map(([tipo]) => tipo)
+  }, [conteoPorTipo])
 
   const series = useMemo(() => {
-    const valores = Array.from(conteoPorTipo.keys()).map(k => conteoPorTipo.get(k))
+    const pares = Array.from(conteoPorTipo.entries()).sort((a, b) => b[1] - a[1])
+    const valores = pares.map(([, count]) => count)
     return [{ name: 'Incidentes', data: valores }]
   }, [conteoPorTipo])
 
