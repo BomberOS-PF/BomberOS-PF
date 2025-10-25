@@ -1,0 +1,21 @@
+.reporte-incidentes .filtros-reporte .btn-group .btn {
+  min-width: 96px
+}
+
+.reporte-incidentes .apexcharts-tooltip {
+  text-transform: none
+}
+
+.spin {
+  animation: spin 1s linear infinite
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg) }
+}
+
+@media (max-width: 576px) {
+  .reporte-incidentes .filtros-reporte .btn-group {
+    width: 100%
+  }
+}
