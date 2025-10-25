@@ -19,3 +19,9 @@
     width: 100%
   }
 }
+
+/* ReporteIncidentes.css */
+.apexcharts-series path,
+.apexcharts-series rect {
+  cursor: pointer;
+}
