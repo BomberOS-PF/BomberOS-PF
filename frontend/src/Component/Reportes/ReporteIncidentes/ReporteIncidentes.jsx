@@ -1,10 +1,16 @@
+// frontend/src/Component/Reportes/ReporteIncidentes/ReporteIncidentes.jsx
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import ReactApexChart from 'react-apexcharts'
 import { BarChart3, Calendar, Filter, Loader2 } from 'lucide-react'
 import { API_URLS, apiRequest } from '../../../config/api.js'
 import { BackToMenuButton } from '../../Common/Button.jsx'
 import './ReporteIncidentes.css'
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import html2canvas from 'html2canvas'              // ⬅️ NUEVO: captura DOM a imagen
 
+/* =========================
+   Helpers de fecha y rango
+========================= */
 const now = new Date()
 const pad2 = n => String(n).padStart(2, '0')
 
@@ -20,45 +26,73 @@ const construirRango = ({ modo, anio, mes01 }) => {
 }
 
 const parseFecha = f => {
-  if (!f) return null
-  const s = typeof f === 'string' ? f.replace(' ', 'T') : f
-  const d = new Date(s)
-  return isNaN(d.getTime()) ? null : d
+  try {
+    if (!f) return null
+    const s = typeof f === 'string' ? f.replace(' ', 'T') : f
+    const d = new Date(s)
+    return isNaN(d.getTime()) ? null : d
+  } catch { return null }
 }
 
 const filtrarPorRango = (arr, { desde, hasta }) => {
-  const startDate = new Date(`${desde}T00:00:00`)
-  const endDate = new Date(`${hasta}T23:59:59`)
-  return arr.filter(x => {
-    const f = parseFecha(x.fecha || x.fechaIncidente || x.fechaHora || x.createdAt || x.updatedAt)
-    return f && f >= startDate && f <= endDate
-  })
+  try {
+    const startDate = new Date(`${desde}T00:00:00`)
+    const endDate = new Date(`${hasta}T23:59:59`)
+    if (isNaN(startDate) || isNaN(endDate)) return Array.isArray(arr) ? arr : []
+    return (arr || []).filter(x => {
+      const f = parseFecha(x?.fecha || x?.fechaIncidente || x?.fechaHora || x?.createdAt || x?.updatedAt)
+      return f && f >= startDate && f <= endDate
+    })
+  } catch { return Array.isArray(arr) ? arr : [] }
 }
 
-// Paginación usando el MISMO contrato que ConsultarIncidente
+/* =========================
+   Fetch paginado
+========================= */
 const fetchTodasLasPaginasPorPeriodo = async ({ desde, hasta }, limite = 200, maxPages = 1000) => {
+  if (!API_URLS?.incidentes?.getAll) throw new Error('API_URLS.incidentes.getAll no está definido')
+
   let pagina = 1
   const acumulado = []
   let total = null
+
   while (pagina <= maxPages) {
     const params = new URLSearchParams({ pagina: String(pagina), limite: String(limite) })
     if (desde) params.append('desde', desde)
     if (hasta) params.append('hasta', hasta)
     const url = `${API_URLS.incidentes.getAll}?${params.toString()}`
-    const res = await apiRequest(url, { method: 'GET' })
-    const pageItems = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : (res?.data || [])
-    const pageTotal = typeof res?.total === 'number'
-      ? res.total
-      : (Array.isArray(res) ? res.length : (Array.isArray(res?.data) ? res.data.length : 0))
+
+    const res = await apiRequest(url, { method: 'GET' }).catch(err => {
+      console.error('Error apiRequest:', err)
+      throw new Error('Falló la petición al backend de incidentes')
+    })
+
+    const pageItems = Array.isArray(res?.data)
+      ? res.data
+      : Array.isArray(res)
+      ? res
+      : Array.isArray(res?.items)
+      ? res.items
+      : []
+
+    const pageTotal = Number.isFinite(res?.total)
+      ? Number(res.total)
+      : (Array.isArray(res?.data) ? res.data.length : Array.isArray(res) ? res.length : pageItems.length)
+
     if (total == null) total = pageTotal
     acumulado.push(...pageItems)
+
     if (acumulado.length >= total) break
     if (pageItems.length < limite) break
     pagina += 1
   }
+
   return { items: acumulado, total: total ?? acumulado.length }
 }
 
+/* =========================
+   Constantes UI
+========================= */
 const meses = [
   { value: 1, label: 'Enero' }, { value: 2, label: 'Febrero' }, { value: 3, label: 'Marzo' },
   { value: 4, label: 'Abril' }, { value: 5, label: 'Mayo' }, { value: 6, label: 'Junio' },
@@ -71,7 +105,9 @@ const aniosPorDefecto = (() => {
   return [y - 3, y - 2, y - 1, y, y + 1]
 })()
 
-// ===== ApexCharts: obtener categoría del click =====
+/* =========================
+   Utilidades de UI
+========================= */
 const getCategoriaFromEvent = (chartCtx, config) => {
   const byX = chartCtx?.w?.config?.xaxis?.categories?.[config?.dataPointIndex]
   if (byX) return byX
@@ -82,7 +118,6 @@ const getCategoriaFromEvent = (chartCtx, config) => {
   return null
 }
 
-// ===== Helpers de LOCALIZACIÓN =====
 const getLocalizacionDesdeObjeto = (o) => {
   if (!o || typeof o !== 'object') return ''
   const direccion = o.direccion ?? o.descripcion ?? ''
@@ -125,45 +160,126 @@ const getLocalizacionTexto = (it) => {
   }
   const txtRoot = getLocalizacionDesdeObjeto(it)
   if (txtRoot) return txtRoot
-  if (it.localizacionDescripcion) return it.localizacionDescripcion
-  if (typeof it.ubicacion === 'string') return it.ubicacion
-  if (typeof it.direccion === 'string') return it.direccion
-  const lat = it.lat ?? it.latitud
-  const lng = it.lng ?? it.longitud ?? it.lon
+  if (it?.localizacionDescripcion) return it.localizacionDescripcion
+  if (typeof it?.ubicacion === 'string') return it.ubicacion
+  if (typeof it?.direccion === 'string') return it.direccion
+  const lat = it?.lat ?? it?.latitud
+  const lng = it?.lng ?? it?.longitud ?? it?.lon
   if (lat != null && lng != null) return `(${lat}, ${lng})`
-  if (it.idLocalizacion != null) return `Localización #${it.idLocalizacion}`
+  if (it?.idLocalizacion != null) return `Localización #${it.idLocalizacion}`
   return '-'
 }
 
-// ===== Scroll helpers: detectar contenedor y llevar al inicio exacto =====
-const isScrollable = (el) => {
-  if (!el) return false
-  const style = window.getComputedStyle(el)
-  const oy = style.overflowY
-  return (oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight
-}
-const getScrollableParent = (el) => {
-  let p = el?.parentElement
-  while (p) {
-    if (isScrollable(p)) return p
-    p = p.parentElement
-  }
-  return window // fallback
-}
-const scrollToElementStart = (el, offset = 0) => {
-  const parent = getScrollableParent(el)
-  if (parent === window) {
-    const top = el.getBoundingClientRect().top + window.scrollY - offset
-    window.scrollTo({ top, behavior: 'smooth' })
-  } else {
-    const parentRect = parent.getBoundingClientRect()
-    const elRect = el.getBoundingClientRect()
-    const target = parent.scrollTop + (elRect.top - parentRect.top) - offset
-    parent.scrollTo({ top: target, behavior: 'smooth' })
-  }
+/* =========================
+   Export helpers
+========================= */
+const downloadBlob = (blob, filename) => {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
-const ReporteIncidentes = ({ onVolver }) => {
+/* =========================
+   ErrorBoundary global
+========================= */
+function ErrorBoundary({ children }) {
+  const [err, setErr] = React.useState(null)
+
+  React.useEffect(() => {
+    const onError = (e) => { console.error('Global error:', e?.error || e?.message || e); setErr(e?.error || new Error(e?.message || 'Error')) }
+    const onUnhandled = (e) => { console.error('Unhandled rejection:', e?.reason); setErr(e?.reason || new Error('Promesa rechazada')) }
+    window.addEventListener('error', onError)
+    window.addEventListener('unhandledrejection', onUnhandled)
+    return () => {
+      window.removeEventListener('error', onError)
+      window.removeEventListener('unhandledrejection', onUnhandled)
+    }
+  }, [])
+
+  if (err) {
+    return (
+      <div className="container py-5">
+        <div className="alert alert-danger">
+          <b>Ocurrió un error al renderizar el reporte.</b><br/>
+          Revisá la consola del navegador (F12) para el detalle técnico.<br/>
+          Mensaje: {String(err?.message || err)}
+        </div>
+      </div>
+    )
+  }
+  return children
+}
+
+/* =========================================================
+   ChartShell
+========================================================= */
+function ChartShell ({ options, series, chartId, height = 360, onMountedRef }) {
+  const hostRef = useRef(null)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    let raf1, raf2
+    raf1 = requestAnimationFrame(() => {
+      if (!hostRef.current) return
+      raf2 = requestAnimationFrame(() => setReady(true))
+    })
+    return () => {
+      cancelAnimationFrame(raf1)
+      cancelAnimationFrame(raf2)
+      setReady(false)
+      if (onMountedRef) onMountedRef.current = false
+    }
+  }, [options?.xaxis?.categories?.join('|'), JSON.stringify(series?.[0]?.data || [])])
+
+  const handleMounted = () => {
+    if (onMountedRef) onMountedRef.current = true
+  }
+
+  return (
+    <div ref={hostRef} style={{ minHeight: height }}>
+      {ready && (
+        <ReactApexChart
+          key={`${chartId}-${options?.xaxis?.categories?.join('|') || 'nocat'}`}
+          options={{
+            ...options,
+            chart: {
+              ...options?.chart,
+              id: chartId,
+              animations: { enabled: false },
+              parentHeightOffset: 0,
+              redrawOnParentResize: true,
+              redrawOnWindowResize: true,
+              events: {
+                ...(options?.chart?.events || {}),
+                mounted: (...args) => {
+                  handleMounted()
+                  options?.chart?.events?.mounted?.(...args)
+                },
+                updated: (...args) => {
+                  handleMounted()
+                  options?.chart?.events?.updated?.(...args)
+                }
+              }
+            }
+          }}
+          series={series}
+          type='bar'
+          height={height}
+        />
+      )}
+    </div>
+  )
+}
+
+/* =========================
+   Componente principal
+========================= */
+function ReporteIncidentesCore({ onVolver }) {
   const [modo, setModo] = useState('anual')
   const [anio, setAnio] = useState(now.getFullYear())
   const [mes01, setMes01] = useState(now.getMonth() + 1)
@@ -174,78 +290,229 @@ const ReporteIncidentes = ({ onVolver }) => {
 
   // Drill-down
   const [detalleAbierto, setDetalleAbierto] = useState(false)
-  const [tipoSeleccionado, setTipoSeleccionado] = useState(null) // { id, nombre }
+  const [tipoSeleccionado, setTipoSeleccionado] = useState(null)
   const [detalleItems, setDetalleItems] = useState([])
   const [detalleCargando, setDetalleCargando] = useState(false)
   const [detalleError, setDetalleError] = useState('')
 
-  // Enfoque/scroll a la card
   const detalleRef = useRef(null)
   const [pendingFocusDetalle, setPendingFocusDetalle] = useState(false)
-  const SCROLL_OFFSET = 0 // si tenés header sticky, poné su altura (p.ej., 80)
+  const SCROLL_OFFSET = 0
+
+  const CHART_ID = 'incidentes-chart'
+  const chartMountedRef = useRef(false)
+
+  // Refs de captura para exportación DOM→imagen
+  const kpisRef = useRef(null)          // ⬅️ contenedor KPIs
+  const chartBoxRef = useRef(null)      // ⬅️ contenedor del gráfico
+
+  // Dropdown Exportar
+  const [showExport, setShowExport] = useState(false)
+  const exportRef = useRef(null)
+  useEffect(() => {
+    const onDocClick = e => { if (!exportRef.current) return; if (!exportRef.current.contains(e.target)) setShowExport(false) }
+    const onEsc = e => { if (e.key === 'Escape') setShowExport(false) }
+    document.addEventListener('click', onDocClick)
+    document.addEventListener('keydown', onEsc)
+    return () => { document.removeEventListener('click', onDocClick); document.removeEventListener('keydown', onEsc) }
+  }, [])
 
   const rango = useMemo(() => construirRango({ modo, anio, mes01 }), [modo, anio, mes01])
 
   const traerIncidentes = async () => {
     setCargando(true); setError(''); setDatos([])
+    setDetalleAbierto(false); setTipoSeleccionado(null); setDetalleItems([]); setDetalleError('')
+    chartMountedRef.current = false
     try {
       const { items } = await fetchTodasLasPaginasPorPeriodo(rango, 200)
-      setDatos(filtrarPorRango(items, rango))
-      setDetalleAbierto(false); setTipoSeleccionado(null); setDetalleItems([]); setDetalleError('')
-    } catch {
-      setError('No se pudieron obtener incidentes para el período seleccionado'); setDatos([])
+      const filtrados = filtrarPorRango(items, rango)
+      setDatos(Array.isArray(filtrados) ? filtrados : [])
+    } catch (e) {
+      console.error(e)
+      setError(e?.message || 'No se pudieron obtener incidentes para el período seleccionado')
+      setDatos([])
     } finally { setCargando(false) }
   }
 
-  // KPIs
-  const kpiTotal = useMemo(() => datos.length, [datos])
-  const kpiTopTipo = useMemo(() => {
-    if (!datos.length) return { nombre: '-', cantidad: 0, porcentaje: 0 }
+  /* ====== Export: CSV ====== */
+  const csvEscape = (v) => {
+    const s = (v ?? '').toString()
+    if (s.includes('"') || s.includes(',') || s.includes('\n')) return `"${s.replace(/"/g, '""')}"`
+    return s
+  }
+  const getId = it => it?.idIncidente ?? it?.id ?? it?.ID ?? it?.id_incidente ?? '-'
+  const getFecha = it => it?.fecha ?? it?.fechaIncidente ?? it?.fechaHora ?? it?.createdAt ?? it?.updatedAt ?? '-'
+  const getDescripcion = it => it?.descripcion ?? it?.descripcionIncidente ?? it?.detalle ?? '-'
+
+  const exportCSV = () => {
+    const fuente = detalleAbierto ? detalleItems : datos
+    const rows = [
+      ['ID', 'Fecha', 'Descripción', 'Localización'],
+      ...fuente.map(it => [getId(it), getFecha(it), getDescripcion(it), getLocalizacionTexto(it)])
+    ]
+    const csv = rows.map(r => r.map(csvEscape).join(',')).join('\n')
+    downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
+      `incidentes_${rango.desde}_${rango.hasta}${detalleAbierto ? '_detalle' : ''}.csv`)
+  }
+
+  /* ====== Export: PNG del gráfico (DOM → imagen) ====== */
+  const exportPNG = async () => {
+    try {
+      if (!chartBoxRef.current) throw new Error('El contenedor del gráfico no está listo')
+      // aseguramos que el gráfico esté montado
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+      const canvas = await html2canvas(chartBoxRef.current, { backgroundColor: '#ffffff', useCORS: true, scale: 2, logging: false })
+      canvas.toBlob(blob => {
+        if (!blob) throw new Error('No se pudo generar la imagen')
+        downloadBlob(blob, `grafico_incidentes_${rango.desde}_${rango.hasta}.png`)
+      })
+    } catch (e) {
+      console.error('exportPNG error:', e)
+      alert(`No se pudo exportar el gráfico a PNG: ${e?.message || e}`)
+    }
+  }
+
+  /* ====== Export: PDF (KPIs + Gráfico) con jsPDF (sin ApexCharts.exec) ====== */
+  const exportPDF = async () => {
+    try {
+      // import dinámico de jsPDF para no cargarlo si no hace falta
+      const { default: jsPDF } = await import('jspdf')
+
+      // snapshot de KPIs
+      if (!kpisRef.current) throw new Error('Los KPIs no están listos')
+      if (!chartBoxRef.current) throw new Error('El contenedor del gráfico no está listo')
+
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+
+      const [kpiCanvas, chartCanvas] = await Promise.all([
+        html2canvas(kpisRef.current, { backgroundColor: '#ffffff', useCORS: true, scale: 2, logging: false }),
+        html2canvas(chartBoxRef.current, { backgroundColor: '#ffffff', useCORS: true, scale: 2, logging: false })
+      ])
+
+      const kpiImg = kpiCanvas.toDataURL('image/png')
+      const chartImg = chartCanvas.toDataURL('image/png')
+
+      // armar PDF en A4 apaisado
+      const doc = new jsPDF({ orientation: 'l', unit: 'pt', format: 'a4' })
+      const pageW = doc.internal.pageSize.getWidth()
+      const pageH = doc.internal.pageSize.getHeight()
+      const margin = 32
+      const innerW = pageW - margin * 2
+
+      const fechaEmision = new Date().toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' })
+      const periodoTexto = (() => {
+        if (modo === 'anual') return `Período: Anual • Año ${anio}`
+        const nomMes = meses.find(m => m.value === mes01)?.label || mes01
+        return `Período: Mensual • ${nomMes} ${anio}`
+      })()
+
+      // Header rojo
+      doc.setFillColor(213, 43, 30)
+      doc.rect(0, 0, pageW, 64, 'F')
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(18)
+      doc.text('Reporte de Incidentes', margin, 40)
+
+      // Metadatos
+      let y = 64 + 20
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(0, 0, 0)
+      doc.setFontSize(12)
+      doc.text(`Fecha de emisión: ${fechaEmision}`, margin, y)
+      y += 18
+      doc.text(periodoTexto, margin, y)
+      y += 16
+
+      // Insertar KPIs
+      const kpiTargetW = innerW
+      const kpiScale = kpiTargetW / kpiCanvas.width
+      const kpiH = kpiCanvas.height * kpiScale
+      doc.addImage(kpiImg, 'PNG', margin, y, kpiTargetW, kpiH)
+      y += kpiH + 16
+
+      // Título del gráfico
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(12)
+      doc.text('Incidentes por tipo', margin, y)
+      y += 8
+
+      // Insertar gráfico escalado a ancho útil
+      const chartTargetW = innerW
+      const chartScale = chartTargetW / chartCanvas.width
+      const chartH = chartCanvas.height * chartScale
+      const maxH = pageH - y - 24
+      const finalChartH = Math.min(chartH, maxH)
+      const finalChartW = chartCanvas.width * (finalChartH / chartCanvas.height)
+      doc.addImage(chartImg, 'PNG', margin, y, finalChartW, finalChartH)
+
+      doc.save(`reporte_incidentes_${rango.desde}_${rango.hasta}.pdf`)
+    } catch (e) {
+      console.error('exportPDF error:', e)
+      alert(`No se pudo exportar el reporte a PDF: ${e?.message || e}`)
+    }
+  }
+
+  /* ====== KPIs y series ====== */
+  const kpiTotal = useMemo(() => (Array.isArray(datos) ? datos.length : 0), [datos])
+
+  const kpiTopTipos = useMemo(() => {
+    if (!Array.isArray(datos) || !datos.length) return []
     const conteo = datos.reduce((acc, it) => {
-      const nombre = it.tipoDescripcion || (it.idTipoIncidente != null ? `Tipo ${it.idTipoIncidente}` : 'Sin tipo')
+      const nombre = it?.tipoDescripcion || (it?.idTipoIncidente != null ? `Tipo ${it.idTipoIncidente}` : 'Sin tipo')
       acc[nombre] = (acc[nombre] || 0) + 1
       return acc
     }, {})
-    const [nombre, cantidad] = Object.entries(conteo).sort((a, b) => b[1] - a[1])[0]
-    const porcentaje = kpiTotal > 0 ? ((cantidad / kpiTotal) * 100) : 0
-    return { nombre, cantidad, porcentaje: Number(porcentaje.toFixed(1)) }
+    const entries = Object.entries(conteo)
+    if (!entries.length) return []
+    const max = Math.max(...entries.map(([, c]) => c))
+    return entries
+      .filter(([, c]) => c === max)
+      .map(([nombre, cantidad]) => ({
+        nombre,
+        cantidad,
+        porcentaje: Number(((cantidad / (kpiTotal || 1)) * 100).toFixed(1))
+      }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre))
   }, [datos, kpiTotal])
+
   const kpiPromedioDia = useMemo(() => {
-    if (!datos.length) return 0
+    if (!Array.isArray(datos) || !datos.length) return 0
     const inicio = new Date(`${rango.desde}T00:00:00`)
     const fin = new Date(`${rango.hasta}T23:59:59`)
     const dias = Math.max(1, Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)))
     return Number((kpiTotal / dias).toFixed(2))
   }, [datos, rango, kpiTotal])
 
-  // Series
   const conteoPorTipo = useMemo(() => {
     const acc = new Map()
-    datos.forEach(it => {
-      const nombreTipo = it.tipoDescripcion || (it.idTipoIncidente != null ? `Tipo ${it.idTipoIncidente}` : 'Sin tipo')
+    ;(Array.isArray(datos) ? datos : []).forEach(it => {
+      const nombreTipo = it?.tipoDescripcion || (it?.idTipoIncidente != null ? `Tipo ${it.idTipoIncidente}` : 'Sin tipo')
       acc.set(nombreTipo, (acc.get(nombreTipo) || 0) + 1)
     })
     return acc
   }, [datos])
+
   const categories = useMemo(() => {
     const pares = Array.from(conteoPorTipo.entries()).sort((a, b) => b[1] - a[1])
     return pares.map(([tipo]) => tipo)
   }, [conteoPorTipo])
+
   const series = useMemo(() => {
     const pares = Array.from(conteoPorTipo.entries()).sort((a, b) => b[1] - a[1])
     return [{ name: 'Incidentes', data: pares.map(([, count]) => count) }]
   }, [conteoPorTipo])
 
-  // Drill-down helpers
+  /* ====== Drill-down ====== */
   const inferirIdTipoDesdeNombre = useCallback((nombreTipo) => {
     if (!nombreTipo) return null
     const lower = String(nombreTipo).toLowerCase()
     if (lower.includes('accidente') && (lower.includes('trán') || lower.includes('tran'))) return 1
     const ids = [
       ...new Set(
-        datos
-          .filter(d => (d.tipoDescripcion || (d.idTipoIncidente != null ? `Tipo ${d.idTipoIncidente}` : 'Sin tipo')) === nombreTipo)
-          .map(d => d.idTipoIncidente)
+        (Array.isArray(datos) ? datos : [])
+          .filter(d => (d?.tipoDescripcion || (d?.idTipoIncidente != null ? `Tipo ${d.idTipoIncidente}` : 'Sin tipo')) === nombreTipo)
+          .map(d => d?.idTipoIncidente)
           .filter(Boolean)
       )
     ]
@@ -268,22 +535,39 @@ const ReporteIncidentes = ({ onVolver }) => {
       const params = new URLSearchParams({ pagina: '1', limite: '50', desde: rango.desde, hasta: rango.hasta, tipo: String(tipoId) })
       const url = `${API_URLS.incidentes.getAll}?${params.toString()}`
       const res = await apiRequest(url, { method: 'GET' })
-      const items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : (res?.data || [])
+      const items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : (Array.isArray(res?.items) ? res.items : [])
       setDetalleItems(items)
-    } catch {
+    } catch (e) {
+      console.error(e)
       setDetalleError('No se pudo cargar el detalle del tipo seleccionado'); setDetalleItems([])
     } finally { setDetalleCargando(false) }
   }, [inferirIdTipoDesdeNombre, rango])
 
-  // >>> Scroll EXACTO al inicio de la card (maneja contenedor scrollable)
   useEffect(() => {
     if (detalleAbierto && pendingFocusDetalle) {
       const el = detalleRef.current
       if (el) {
-        // Esperar a que el DOM pinte (dos frames por seguridad)
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            scrollToElementStart(el, SCROLL_OFFSET)
+            const parent = (() => {
+              let p = el.parentElement
+              while (p) {
+                const style = window.getComputedStyle(p)
+                const oy = style.overflowY
+                if ((oy === 'auto' || oy === 'scroll') && p.scrollHeight > p.clientHeight) return p
+                p = p.parentElement
+              }
+              return window
+            })()
+            if (parent === window) {
+              const top = el.getBoundingClientRect().top + window.scrollY
+              window.scrollTo({ top, behavior: 'smooth' })
+            } else {
+              const parentRect = parent.getBoundingClientRect()
+              const elRect = el.getBoundingClientRect()
+              const target = parent.scrollTop + (elRect.top - parentRect.top)
+              parent.scrollTo({ top: target, behavior: 'smooth' })
+            }
             try { el.focus({ preventScroll: true }) } catch {}
             setPendingFocusDetalle(false)
           })
@@ -294,11 +578,19 @@ const ReporteIncidentes = ({ onVolver }) => {
     }
   }, [detalleAbierto, pendingFocusDetalle])
 
+  /* ====== Opciones del gráfico ====== */
   const options = useMemo(() => ({
     chart: {
+      id: CHART_ID,
       type: 'bar',
-      toolbar: { show: true },
+      animations: { enabled: false },
+      toolbar: { show: false },
+      parentHeightOffset: 0,
+      redrawOnParentResize: true,
+      redrawOnWindowResize: true,
       events: {
+        mounted: () => { chartMountedRef.current = true },
+        updated: () => { chartMountedRef.current = true },
         dataPointSelection: (event, chartCtx, config) => {
           const categoria = getCategoriaFromEvent(chartCtx, config)
           if (categoria) abrirDetallePorCategoria(categoria)
@@ -319,12 +611,7 @@ const ReporteIncidentes = ({ onVolver }) => {
     return `Período ${nomMes} ${anio}`
   }, [modo, anio, mes01])
 
-  const hayDatos = series[0]?.data?.length > 0
-
-  // Table mappers
-  const getId = it => it.idIncidente ?? it.id ?? it.ID ?? it.id_incidente ?? '-'
-  const getFecha = it => it.fecha ?? it.fechaIncidente ?? it.fechaHora ?? it.createdAt ?? it.updatedAt ?? '-'
-  const getDescripcion = it => it.descripcion ?? it.descripcionIncidente ?? it.detalle ?? '-'
+  const hayDatos = series?.[0]?.data?.length > 0
 
   return (
     <div className='container-fluid py-5 consultar-incidente registrar-guardia consultar-grupo'>
@@ -350,10 +637,10 @@ const ReporteIncidentes = ({ onVolver }) => {
         <div className='card-body'>
           <div className='row g-3 align-items-end filtros-reporte'>
             <div className='col-12 col-md-3'>
-              <label className='form-label text-dark fw-semibold'>Modo</label>
+              <label className='form-label text-dark fw-semibold'>Periodo</label>
               <div className='btn-group w-100' role='group'>
-                <button className={`btn btn-sm ${modo === 'anual' ? 'btn-danger' : 'btn-outline-danger'}`} onClick={() => setModo('anual')}>Anual</button>
-                <button className={`btn btn-sm ${modo === 'mensual' ? 'btn-danger' : 'btn-outline-danger'}`} onClick={() => setModo('mensual')}>Mensual</button>
+                <button className={`btn ${modo === 'anual' ? 'btn-danger' : 'btn-outline-danger'} ctrl-sm`} onClick={() => setModo('anual')}>Anual</button>
+                <button className={`btn ${modo === 'mensual' ? 'btn-danger' : 'btn-outline-danger'} ctrl-sm`} onClick={() => setModo('mensual')}>Mensual</button>
               </div>
             </div>
 
@@ -374,7 +661,7 @@ const ReporteIncidentes = ({ onVolver }) => {
             )}
 
             <div className='col-12 col-md-3 text-md-end'>
-              <button className='btn btn-danger w-100 btn-sm' onClick={traerIncidentes} disabled={cargando}>
+              <button className='btn btn-danger w-100 ctrl-sm' onClick={traerIncidentes} disabled={cargando}>
                 {cargando ? (<><Loader2 className='spin me-1' size={16} /> Generando…</>) : 'Generar'}
               </button>
             </div>
@@ -382,8 +669,8 @@ const ReporteIncidentes = ({ onVolver }) => {
 
           {error && (<div className='alert alert-danger mt-3'>{error}</div>)}
 
-          {/* KPIs */}
-          <div className="row g-3 mb-4 text-center mt-4">
+          {/* KPIs + Exportar */}
+          <div ref={kpisRef} className="row g-3 mb-4 text-center mt-4">
             <div className="col-md-3">
               <div className="card shadow-sm border-0 bg-danger text-white h-100">
                 <div className="card-body">
@@ -394,20 +681,74 @@ const ReporteIncidentes = ({ onVolver }) => {
             </div>
 
             <div className="col-md-3">
-              <div className="card shadow-sm border-0 bg-dark text-white h-100">
+              <div className="card shadow-sm border-0 bg-secondary text-white h-100">
                 <div className="card-body">
-                  <h6 className="text-uppercase fw-bold mb-1">Top tipo</h6>
-                  <h5 className="fw-semibold mb-0">{kpiTopTipo.nombre}</h5>
-                  <small>{kpiTopTipo.cantidad} ({kpiTopTipo.porcentaje}%)</small>
+                  <h6 className="text-uppercase fw-bold mb-1">Promedio por día</h6>
+                  <h2 className="fw-bolder mb-0">{kpiPromedioDia}</h2>
                 </div>
               </div>
             </div>
 
             <div className="col-md-3">
-              <div className="card shadow-sm border-0 bg-secondary text-white h-100">
+              <div className="card shadow-sm border-0 bg-dark text-white h-100">
                 <div className="card-body">
-                  <h6 className="text-uppercase fw-bold mb-1">Promedio por día</h6>
-                  <h2 className="fw-bolder mb-0">{kpiPromedioDia}</h2>
+                  <h6 className="text-uppercase fw-bold mb-1">Top tipo</h6>
+                  {kpiTopTipos.length ? (
+                    <>
+                      <h5 className="fw-semibold mb-1">
+                        {kpiTopTipos.map(t => t.nombre).join(' - ')}
+                      </h5>
+                      <small>
+                        {kpiTopTipos[0].cantidad} ({kpiTopTipos[0].porcentaje}%)
+                        {kpiTopTipos.length > 1 ? ' • empate' : ''}
+                      </small>
+                    </>
+                  ) : (
+                    <>
+                      <h5 className="fw-semibold mb-0">-</h5>
+                      <small>0 (0%)</small>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-3">
+              <div className="card shadow-sm border-0 h-100 d-flex align-items-center justify-content-center">
+                <div className="p-3 w-100 text-center">
+                  <div ref={exportRef} className="w-100 position-relative" style={{ zIndex: 2050 }}>
+                    <button
+                      type="button"
+                      className="btn btn-outline-dark w-100 dropdown-toggle"
+                      aria-expanded={showExport ? 'true' : 'false'}
+                      onClick={(e) => { e.preventDefault(); setShowExport(s => !s) }}
+                      disabled={!hayDatos}
+                    >
+                      Exportar
+                    </button>
+
+                    <ul
+                      className={`dropdown-menu w-100 ${showExport ? 'show' : ''}`}
+                      style={{ position: 'absolute', inset: 'auto 0 0 0', transform: 'translateY(100%)' }}
+                      role="menu"
+                    >
+                      <li>
+                        <button className="dropdown-item" onClick={() => { setShowExport(false); exportCSV() }} disabled={!hayDatos}>
+                          Descargar CSV
+                        </button>
+                      </li>
+                      <li>
+                        <button className="dropdown-item" onClick={() => { setShowExport(false); exportPNG() }} disabled={!hayDatos}>
+                          Descargar PNG
+                        </button>
+                      </li>
+                      <li>
+                        <button className="dropdown-item" onClick={() => { setShowExport(false); exportPDF() }} disabled={!hayDatos}>
+                          Descargar PDF
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -430,15 +771,19 @@ const ReporteIncidentes = ({ onVolver }) => {
 
             {!cargando && (hayDatos ? (
               <>
-                <ReactApexChart options={options} series={series} type='bar' height={360} />
+                {/* Contenedor capturable del gráfico */}
+                <div ref={chartBoxRef}>
+                  <ChartShell
+                    options={options}
+                    series={series}
+                    chartId={CHART_ID}
+                    height={360}
+                    onMountedRef={chartMountedRef}
+                  />
+                </div>
 
                 {detalleAbierto && (
-                  <div
-                    className='card mt-4 shadow-sm'
-                    ref={detalleRef}
-                    tabIndex={-1}
-                    aria-label='Detalle de incidentes por tipo'
-                  >
+                  <div className='card mt-4 shadow-sm' ref={detalleRef} tabIndex={-1} aria-label='Detalle de incidentes por tipo'>
                     <div className='card-header d-flex align-items-center justify-content-between'>
                       <div>
                         <strong>Detalle</strong>{' '}
@@ -512,7 +857,7 @@ const ReporteIncidentes = ({ onVolver }) => {
             {onVolver && <BackToMenuButton onClick={onVolver} />}
             <button
               type='button'
-              className='btn btn-outline-secondary btn-sm'
+              className='btn btn-outline-secondary'
               onClick={() => {
                 setError('')
                 setDatos([])
@@ -521,6 +866,7 @@ const ReporteIncidentes = ({ onVolver }) => {
                 setDetalleItems([])
                 setDetalleError('')
                 setPendingFocusDetalle(false)
+                chartMountedRef.current = false
               }}
             >
               <Loader2 className='me-1' size={16} />
@@ -533,4 +879,13 @@ const ReporteIncidentes = ({ onVolver }) => {
   )
 }
 
-export default ReporteIncidentes
+/* =========================
+   Wrapper con ErrorBoundary
+========================= */
+export default function ReporteIncidentes (props) {
+  return (
+    <ErrorBoundary>
+      <ReporteIncidentesCore {...props} />
+    </ErrorBoundary>
+  )
+}

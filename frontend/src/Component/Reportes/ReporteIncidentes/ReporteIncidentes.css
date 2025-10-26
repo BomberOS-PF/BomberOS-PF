@@ -25,3 +25,26 @@
 .apexcharts-series rect {
   cursor: pointer;
 }
+
+/* Igualar altura de botones a .form-select-sm */
+.ctrl-sm.btn {
+  padding: .25rem .5rem;          /* como .form-select-sm */
+  font-size: .875rem;             /* como .form-select-sm */
+  line-height: 1.5;               /* como .form-select-sm */
+  border-radius: .2rem;           /* como .form-select-sm */
+  height: calc(1.5em + .5rem + 2px); /* altura efectiva del select sm */
+}
+
+/* Asegura consistencia en grupos */
+.btn-group .ctrl-sm.btn {
+  height: calc(1.5em + .5rem + 2px);
+}
+
+/* Evita cortes del dropdown de exportación */
+.container-fluid, .card, .filtros-reporte { overflow: visible }
+
+.apexcharts-toolbar,
+.apexcharts-menu,
+.apexcharts-menu-icon {
+  display: none !important;
+}
