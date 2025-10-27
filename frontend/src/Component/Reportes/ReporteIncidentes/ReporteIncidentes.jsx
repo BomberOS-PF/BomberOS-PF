@@ -6,7 +6,7 @@ import { API_URLS, apiRequest } from '../../../config/api.js'
 import { BackToMenuButton } from '../../Common/Button.jsx'
 import './ReporteIncidentes.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
-import html2canvas from 'html2canvas'              // ⬅️ NUEVO: captura DOM a imagen
+import html2canvas from 'html2canvas'
 
 /* =========================
    Helpers de fecha y rango
@@ -171,7 +171,7 @@ const getLocalizacionTexto = (it) => {
 }
 
 /* =========================
-   Export helpers
+   Export helpers + Logo + Header
 ========================= */
 const downloadBlob = (blob, filename) => {
   const url = URL.createObjectURL(blob)
@@ -182,6 +182,53 @@ const downloadBlob = (blob, filename) => {
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
+}
+
+// Carga una imagen y devuelve dataURL (ideal para /public)
+const loadImageDataURL = (url) => new Promise((resolve, reject) => {
+  const img = new Image()
+  img.crossOrigin = 'anonymous'
+  img.onload = () => {
+    try {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0)
+      resolve(canvas.toDataURL('image/png'))
+    } catch (e) { reject(e) }
+  }
+  img.onerror = () => reject(new Error('No se pudo cargar el logo'))
+  img.src = url
+})
+
+// Dibuja encabezado con barra roja + logo + título y devuelve Y inicial
+const drawHeader = (doc, { logoDataUrl, title = 'Reporte de Incidentes' }) => {
+  const pageW = doc.internal.pageSize.getWidth()
+  const margin = 32
+  const headerH = 64
+
+  doc.setFillColor(213, 43, 30)
+  doc.rect(0, 0, pageW, headerH, 'F')
+
+  if (logoDataUrl) {
+    const logoH = 40
+    const logoW = 40
+    const xLogo = margin
+    const yLogo = (headerH - logoH) / 2
+    doc.addImage(logoDataUrl, 'PNG', xLogo, yLogo, logoW, logoH)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(18)
+    doc.text(title, xLogo + logoW + 12, 40)
+  } else {
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(18)
+    doc.text(title, margin, 40)
+  }
+
+  return headerH + 20
 }
 
 /* =========================
@@ -216,7 +263,7 @@ function ErrorBoundary({ children }) {
 }
 
 /* =========================================================
-   ChartShell
+   ChartShell (toolbar de ApexCharts deshabilitada)
 ========================================================= */
 function ChartShell ({ options, series, chartId, height = 360, onMountedRef }) {
   const hostRef = useRef(null)
@@ -254,6 +301,7 @@ function ChartShell ({ options, series, chartId, height = 360, onMountedRef }) {
               parentHeightOffset: 0,
               redrawOnParentResize: true,
               redrawOnWindowResize: true,
+              toolbar: { show: false }, // 👈 Ocultar menú ApexCharts
               events: {
                 ...(options?.chart?.events || {}),
                 mounted: (...args) => {
@@ -295,6 +343,7 @@ function ReporteIncidentesCore({ onVolver }) {
   const [detalleCargando, setDetalleCargando] = useState(false)
   const [detalleError, setDetalleError] = useState('')
 
+  // Refs
   const detalleRef = useRef(null)
   const [pendingFocusDetalle, setPendingFocusDetalle] = useState(false)
   const SCROLL_OFFSET = 0
@@ -303,12 +352,12 @@ function ReporteIncidentesCore({ onVolver }) {
   const chartMountedRef = useRef(false)
 
   // Refs de captura para exportación DOM→imagen
-  const kpisRef = useRef(null)          // ⬅️ contenedor KPIs
-  const chartBoxRef = useRef(null)      // ⬅️ contenedor del gráfico
+  const kpisRef = useRef(null)          // contenedor KPIs
+  const chartBoxRef = useRef(null)      // contenedor del gráfico
+  const exportRef = useRef(null)        // contenedor del botón Exportar (para ocultarlo durante la captura)
 
   // Dropdown Exportar
   const [showExport, setShowExport] = useState(false)
-  const exportRef = useRef(null)
   useEffect(() => {
     const onDocClick = e => { if (!exportRef.current) return; if (!exportRef.current.contains(e.target)) setShowExport(false) }
     const onEsc = e => { if (e.key === 'Escape') setShowExport(false) }
@@ -355,11 +404,10 @@ function ReporteIncidentesCore({ onVolver }) {
       `incidentes_${rango.desde}_${rango.hasta}${detalleAbierto ? '_detalle' : ''}.csv`)
   }
 
-  /* ====== Export: PNG del gráfico (DOM → imagen) ====== */
+  /* ====== Export: PNG del gráfico ====== */
   const exportPNG = async () => {
     try {
       if (!chartBoxRef.current) throw new Error('El contenedor del gráfico no está listo')
-      // aseguramos que el gráfico esté montado
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
       const canvas = await html2canvas(chartBoxRef.current, { backgroundColor: '#ffffff', useCORS: true, scale: 2, logging: false })
       canvas.toBlob(blob => {
@@ -372,86 +420,215 @@ function ReporteIncidentesCore({ onVolver }) {
     }
   }
 
-  /* ====== Export: PDF (KPIs + Gráfico) con jsPDF (sin ApexCharts.exec) ====== */
-  const exportPDF = async () => {
-    try {
-      // import dinámico de jsPDF para no cargarlo si no hace falta
-      const { default: jsPDF } = await import('jspdf')
+/* ====== Export: PDF (KPIs + Gráfico + Listado) ====== */
+const exportPDF = async () => {
+  try {
+    const [{ default: jsPDF }, autoTableMod] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable').catch(() => null)
+    ])
 
-      // snapshot de KPIs
-      if (!kpisRef.current) throw new Error('Los KPIs no están listos')
-      if (!chartBoxRef.current) throw new Error('El contenedor del gráfico no está listo')
+    const exportNode = exportRef.current
+    const prevDisplay = exportNode ? exportNode.style.display : null
+    if (exportNode) exportNode.style.display = 'none'
 
-      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
 
-      const [kpiCanvas, chartCanvas] = await Promise.all([
-        html2canvas(kpisRef.current, { backgroundColor: '#ffffff', useCORS: true, scale: 2, logging: false }),
-        html2canvas(chartBoxRef.current, { backgroundColor: '#ffffff', useCORS: true, scale: 2, logging: false })
-      ])
+    if (!kpisRef.current) throw new Error('Los KPIs no están listos')
+    if (!chartBoxRef.current) throw new Error('El contenedor del gráfico no está listo')
 
-      const kpiImg = kpiCanvas.toDataURL('image/png')
-      const chartImg = chartCanvas.toDataURL('image/png')
+    const [kpiCanvas, chartCanvas] = await Promise.all([
+      html2canvas(kpisRef.current, { backgroundColor: '#ffffff', useCORS: true, scale: 2, logging: false }),
+      html2canvas(chartBoxRef.current, { backgroundColor: '#ffffff', useCORS: true, scale: 2, logging: false })
+    ])
 
-      // armar PDF en A4 apaisado
-      const doc = new jsPDF({ orientation: 'l', unit: 'pt', format: 'a4' })
-      const pageW = doc.internal.pageSize.getWidth()
-      const pageH = doc.internal.pageSize.getHeight()
-      const margin = 32
-      const innerW = pageW - margin * 2
+    if (exportNode) exportNode.style.display = prevDisplay ?? ''
 
-      const fechaEmision = new Date().toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' })
-      const periodoTexto = (() => {
-        if (modo === 'anual') return `Período: Anual • Año ${anio}`
-        const nomMes = meses.find(m => m.value === mes01)?.label || mes01
-        return `Período: Mensual • ${nomMes} ${anio}`
-      })()
+    const kpiImg = kpiCanvas.toDataURL('image/png')
+    const chartImg = chartCanvas.toDataURL('image/png')
 
-      // Header rojo
-      doc.setFillColor(213, 43, 30)
-      doc.rect(0, 0, pageW, 64, 'F')
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(18)
-      doc.text('Reporte de Incidentes', margin, 40)
+    const doc = new jsPDF({ orientation: 'l', unit: 'pt', format: 'a4' })
+    const pageW = doc.internal.pageSize.getWidth()
+    const pageH = doc.internal.pageSize.getHeight()
+    const margin = 32
+    const innerW = pageW - margin * 2
 
-      // Metadatos
-      let y = 64 + 20
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(0, 0, 0)
-      doc.setFontSize(12)
-      doc.text(`Fecha de emisión: ${fechaEmision}`, margin, y)
-      y += 18
-      doc.text(periodoTexto, margin, y)
-      y += 16
+    let logoDataUrl = null
+    try { logoDataUrl = await loadImageDataURL('/img/logo-bomberos.png') } catch {}
 
-      // Insertar KPIs
-      const kpiTargetW = innerW
-      const kpiScale = kpiTargetW / kpiCanvas.width
-      const kpiH = kpiCanvas.height * kpiScale
-      doc.addImage(kpiImg, 'PNG', margin, y, kpiTargetW, kpiH)
-      y += kpiH + 16
+    // Encabezado 1ra página
+    let y = drawHeader(doc, { logoDataUrl, title: 'Reporte de Incidentes' })
+    doc.setTextColor(0, 0, 0) // <-- forzamos negro tras header
 
-      // Título del gráfico
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(12)
-      doc.text('Incidentes por tipo', margin, y)
-      y += 8
+    // Metadatos
+    const fechaEmision = new Date().toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' })
+    const periodoTexto = (() => {
+      if (modo === 'anual') return `Período: Anual • Año ${anio}`
+      const nomMes = meses.find(m => m.value === mes01)?.label || mes01
+      return `Período: Mensual • ${nomMes} ${anio}`
+    })()
 
-      // Insertar gráfico escalado a ancho útil
-      const chartTargetW = innerW
-      const chartScale = chartTargetW / chartCanvas.width
-      const chartH = chartCanvas.height * chartScale
-      const maxH = pageH - y - 24
-      const finalChartH = Math.min(chartH, maxH)
-      const finalChartW = chartCanvas.width * (finalChartH / chartCanvas.height)
-      doc.addImage(chartImg, 'PNG', margin, y, finalChartW, finalChartH)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(12)
+    doc.text(`Fecha de emisión: ${fechaEmision}`, margin, y); y += 18
+    doc.text(periodoTexto, margin, y); y += 16
 
-      doc.save(`reporte_incidentes_${rango.desde}_${rango.hasta}.pdf`)
-    } catch (e) {
-      console.error('exportPDF error:', e)
-      alert(`No se pudo exportar el reporte a PDF: ${e?.message || e}`)
+    // KPIs
+    const kpiTargetW = innerW
+    const kpiScale = kpiTargetW / kpiCanvas.width
+    const kpiH = kpiCanvas.height * kpiScale
+    doc.addImage(kpiImg, 'PNG', margin, y, kpiTargetW, kpiH)
+    y += kpiH + 16
+
+    // Título gráfico
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(12)
+    doc.text('Incidentes por tipo', margin, y); y += 8
+
+    // Gráfico
+    const chartTargetW = innerW
+    const chartScale = chartTargetW / chartCanvas.width
+    const chartH = chartCanvas.height * chartScale
+    const maxH = pageH - y - 24
+    const finalChartH = Math.min(chartH, maxH)
+    const finalChartW = chartCanvas.width * (finalChartH / chartCanvas.height)
+    doc.addImage(chartImg, 'PNG', margin, y, finalChartW, finalChartH)
+
+    // Fuente del listado
+    const fuenteListado = (detalleAbierto ? detalleItems : datos) || []
+    const fuenteOrdenada = [...fuenteListado].sort((a, b) => {
+      const fa = parseFecha(getFecha(a))?.getTime() ?? 0
+      const fb = parseFecha(getFecha(b))?.getTime() ?? 0
+      return fb - fa
+    })
+
+    const hayAutoTable = !!autoTableMod && !!doc.autoTable
+
+    if (hayAutoTable) {
+      // Nueva página: encabezado + reset de color
+      doc.addPage()
+      const top = drawHeader(doc, { logoDataUrl, title: 'Reporte de Incidentes' })
+      doc.setTextColor(0, 0, 0) // <-- negro tras header
+
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12)
+      const tituloListado = detalleAbierto
+        ? `Listado (detalle seleccionado) • ${fuenteOrdenada.length}`
+        : `Listado de incidentes considerados (${fuenteOrdenada.length})`
+      doc.text(tituloListado, margin, top + 0)
+
+      const rows = fuenteOrdenada.map(it => ([
+        String(getId(it) ?? ''),
+        String(getFecha(it) ?? ''),
+        String(getDescripcion(it) ?? ''),
+        String(getLocalizacionTexto(it) ?? '')
+      ]))
+
+      doc.autoTable({
+        startY: top + 18,
+        margin: { left: margin, right: margin },
+        head: [['ID', 'Fecha', 'Descripción', 'Localización']],
+        body: rows,
+        theme: 'grid',
+        styles: { font: 'helvetica', fontSize: 10, cellPadding: 4, overflow: 'linebreak', textColor: [20,20,20] }, // <-- negro
+        headStyles: { fillColor: [213, 43, 30], textColor: 255, halign: 'left' },
+        bodyStyles: { textColor: [20,20,20] }, // <-- negro
+        alternateRowStyles: { fillColor: [245,245,245] },
+        tableLineColor: [200,200,200],
+        tableLineWidth: 0.5,
+        didDrawPage: (data) => {
+          // Re-encabezado y color en cada página nueva de la tabla
+          const yHead = drawHeader(doc, { logoDataUrl, title: 'Reporte de Incidentes' })
+          doc.setTextColor(0, 0, 0) // <-- negro tras header
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(12)
+          doc.text(tituloListado, margin, yHead)
+        }
+      })
+    } else {
+      // Fallback manual
+      const safe = (v) => (v == null ? '' : String(v))
+      const col = {
+        id:    { x: margin,       w: 90,  label: 'ID' },
+        fecha: { x: margin + 90,  w: 120, label: 'Fecha' },
+        desc:  { x: margin + 210, w: 350, label: 'Descripción' },
+        loc:   { x: margin + 560, w: innerW - 560, label: 'Localización' }
+      }
+      const lineH = 14
+      const headerH = 22
+
+      const drawTableHeader = (title) => {
+        doc.addPage()
+        const yHead = drawHeader(doc, { logoDataUrl, title: 'Reporte de Incidentes' })
+        doc.setTextColor(0, 0, 0) // <-- negro tras header
+        let yy = yHead
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(12)
+        doc.text(title, margin, yy); yy += 10
+        doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5)
+        doc.line(margin, yy, pageW - margin, yy); yy += 10
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(11)
+        doc.text(col.id.label, col.id.x, yy)
+        doc.text(col.fecha.label, col.fecha.x, yy)
+        doc.text(col.desc.label, col.desc.x, yy)
+        doc.text(col.loc.label, col.loc.x, yy)
+        yy += headerH
+        return yy
+      }
+
+      const addDetailRows = (yy, items) => {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(10)
+        doc.setTextColor(0, 0, 0) // <-- aseguramos negro antes de filas
+        let yCursor = yy
+        for (const it of items) {
+          const idTxt = safe(getId(it))
+          const fechaTxt = safe(getFecha(it))
+          const descTxt = doc.splitTextToSize(safe(getDescripcion(it)), col.desc.w - 4)
+          const locTxt = doc.splitTextToSize(safe(getLocalizacionTexto(it)), col.loc.w - 4)
+
+          const lines = Math.max(descTxt.length, locTxt.length, 1)
+          const rowHeight = 6 + lines * lineH + 6
+
+          if (yCursor + rowHeight > pageH - 32) {
+            yCursor = drawTableHeader('Continuación del listado')
+          }
+
+          // (opcional) raya guía de fila muy tenue para contraste
+          doc.setDrawColor(245,245,245); doc.setLineWidth(0.5)
+          doc.line(margin, yCursor - 10, pageW - margin, yCursor - 10)
+
+          doc.setTextColor(0, 0, 0) // <-- por si algún método cambió el color
+          doc.text(idTxt, col.id.x, yCursor)
+          doc.text(fechaTxt, col.fecha.x, yCursor)
+          let yText = yCursor
+          for (let i = 0; i < descTxt.length; i++) { doc.text(descTxt[i], col.desc.x, yText); yText += lineH }
+          yText = yCursor
+          for (let i = 0; i < locTxt.length; i++) { doc.text(locTxt[i], col.loc.x, yText); yText += lineH }
+
+          yCursor += rowHeight
+        }
+        return yCursor
+      }
+
+      const tituloListado = detalleAbierto
+        ? `Listado (detalle seleccionado) • ${fuenteOrdenada.length}`
+        : `Listado de incidentes considerados (${fuenteOrdenada.length})`
+
+      let yDetail = drawTableHeader(tituloListado)
+      if (fuenteOrdenada.length) addDetailRows(yDetail, fuenteOrdenada)
+      else {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(11)
+        doc.setTextColor(0, 0, 0) // <-- negro
+        doc.text('No hay incidentes en el período seleccionado.', margin, yDetail)
+      }
     }
+
+    doc.save(`reporte_incidentes_${rango.desde}_${rango.hasta}.pdf`)
+  } catch (e) {
+    console.error('exportPDF error:', e)
+    alert(`No se pudo exportar el reporte a PDF: ${e?.message || e}`)
   }
+}
+
+
+
 
   /* ====== KPIs y series ====== */
   const kpiTotal = useMemo(() => (Array.isArray(datos) ? datos.length : 0), [datos])
@@ -543,6 +720,7 @@ function ReporteIncidentesCore({ onVolver }) {
     } finally { setDetalleCargando(false) }
   }, [inferirIdTipoDesdeNombre, rango])
 
+  // Scroll suave al abrir detalle
   useEffect(() => {
     if (detalleAbierto && pendingFocusDetalle) {
       const el = detalleRef.current
@@ -578,7 +756,7 @@ function ReporteIncidentesCore({ onVolver }) {
     }
   }, [detalleAbierto, pendingFocusDetalle])
 
-  /* ====== Opciones del gráfico ====== */
+  /* ====== Opciones del gráfico (sin toolbar) ====== */
   const options = useMemo(() => ({
     chart: {
       id: CHART_ID,
@@ -713,6 +891,7 @@ function ReporteIncidentesCore({ onVolver }) {
               </div>
             </div>
 
+            {/* Único botón Exportar */}
             <div className="col-md-3">
               <div className="card shadow-sm border-0 h-100 d-flex align-items-center justify-content-center">
                 <div className="p-3 w-100 text-center">
