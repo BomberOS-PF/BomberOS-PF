@@ -420,7 +420,7 @@ function ReporteIncidentesCore({ onVolver }) {
     }
   }
 
-/* ====== Export: PDF (KPIs + Gráfico + Listado) ====== */
+/* ====== Export: PDF (KPIs + Gráfico + Listado SIEMPRE COMPLETO) ====== */
 const exportPDF = async () => {
   try {
     const [{ default: jsPDF }, autoTableMod] = await Promise.all([
@@ -428,6 +428,7 @@ const exportPDF = async () => {
       import('jspdf-autotable').catch(() => null)
     ])
 
+    // ocultamos el dropdown durante la captura
     const exportNode = exportRef.current
     const prevDisplay = exportNode ? exportNode.style.display : null
     if (exportNode) exportNode.style.display = 'none'
@@ -453,14 +454,14 @@ const exportPDF = async () => {
     const margin = 32
     const innerW = pageW - margin * 2
 
+    // logo + encabezado
     let logoDataUrl = null
     try { logoDataUrl = await loadImageDataURL('/img/logo-bomberos.png') } catch {}
-
-    // Encabezado 1ra página
     let y = drawHeader(doc, { logoDataUrl, title: 'Reporte de Incidentes' })
-    doc.setTextColor(0, 0, 0) // <-- forzamos negro tras header
+    doc.setTextColor(0, 0, 0)
+    doc.setFont('helvetica', 'normal') // <- aseguramos normal tras header
 
-    // Metadatos
+    // metadatos
     const fechaEmision = new Date().toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' })
     const periodoTexto = (() => {
       if (modo === 'anual') return `Período: Anual • Año ${anio}`
@@ -468,7 +469,6 @@ const exportPDF = async () => {
       return `Período: Mensual • ${nomMes} ${anio}`
     })()
 
-    doc.setFont('helvetica', 'normal')
     doc.setFontSize(12)
     doc.text(`Fecha de emisión: ${fechaEmision}`, margin, y); y += 18
     doc.text(periodoTexto, margin, y); y += 16
@@ -480,12 +480,13 @@ const exportPDF = async () => {
     doc.addImage(kpiImg, 'PNG', margin, y, kpiTargetW, kpiH)
     y += kpiH + 16
 
-    // Título gráfico
+    // título gráfico
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(12)
     doc.text('Incidentes por tipo', margin, y); y += 8
+    doc.setFont('helvetica', 'normal') // <- volvemos a normal
 
-    // Gráfico
+    // gráfico
     const chartTargetW = innerW
     const chartScale = chartTargetW / chartCanvas.width
     const chartH = chartCanvas.height * chartScale
@@ -494,8 +495,10 @@ const exportPDF = async () => {
     const finalChartW = chartCanvas.width * (finalChartH / chartCanvas.height)
     doc.addImage(chartImg, 'PNG', margin, y, finalChartW, finalChartH)
 
-    // Fuente del listado
-    const fuenteListado = (detalleAbierto ? detalleItems : datos) || []
+    /* =========================
+       LISTADO: SIEMPRE TODOS LOS CONSIDERADOS (datos)
+    ========================== */
+    const fuenteListado = Array.isArray(datos) ? datos : []
     const fuenteOrdenada = [...fuenteListado].sort((a, b) => {
       const fa = parseFecha(getFecha(a))?.getTime() ?? 0
       const fb = parseFecha(getFecha(b))?.getTime() ?? 0
@@ -505,16 +508,18 @@ const exportPDF = async () => {
     const hayAutoTable = !!autoTableMod && !!doc.autoTable
 
     if (hayAutoTable) {
-      // Nueva página: encabezado + reset de color
+      // nueva página para listado completo
       doc.addPage()
       const top = drawHeader(doc, { logoDataUrl, title: 'Reporte de Incidentes' })
-      doc.setTextColor(0, 0, 0) // <-- negro tras header
+      doc.setTextColor(0, 0, 0)
+      doc.setFont('helvetica', 'normal')
 
+      const tituloListado = `Listado de incidentes considerados (${fuenteOrdenada.length})`
+
+      // título del listado en bold, luego volvemos a normal ANTES de la tabla
       doc.setFont('helvetica', 'bold'); doc.setFontSize(12)
-      const tituloListado = detalleAbierto
-        ? `Listado (detalle seleccionado) • ${fuenteOrdenada.length}`
-        : `Listado de incidentes considerados (${fuenteOrdenada.length})`
       doc.text(tituloListado, margin, top + 0)
+      doc.setFont('helvetica', 'normal')
 
       const rows = fuenteOrdenada.map(it => ([
         String(getId(it) ?? ''),
@@ -526,26 +531,30 @@ const exportPDF = async () => {
       doc.autoTable({
         startY: top + 18,
         margin: { left: margin, right: margin },
-        head: [['ID', 'Fecha', 'Descripción', 'Localización']],
+        head: [['ID', 'Fecha', 'Descripción', 'Localización']], // <-- solo columnas en negrita
         body: rows,
         theme: 'grid',
-        styles: { font: 'helvetica', fontSize: 10, cellPadding: 4, overflow: 'linebreak', textColor: [20,20,20] }, // <-- negro
-        headStyles: { fillColor: [213, 43, 30], textColor: 255, halign: 'left' },
-        bodyStyles: { textColor: [20,20,20] }, // <-- negro
+        styles: { font: 'helvetica', fontSize: 10, fontStyle: 'normal', cellPadding: 4, overflow: 'linebreak', textColor: [20,20,20] }, // <- normal
+        headStyles: { fillColor: [213, 43, 30], textColor: 255, fontStyle: 'bold', halign: 'left' }, // <- bold solo en header
+        bodyStyles: { textColor: [20,20,20], fontStyle: 'normal' }, // <- normal
         alternateRowStyles: { fillColor: [245,245,245] },
         tableLineColor: [200,200,200],
         tableLineWidth: 0.5,
-        didDrawPage: (data) => {
-          // Re-encabezado y color en cada página nueva de la tabla
+        didDrawPage: () => {
+          // re-encabezado por página
           const yHead = drawHeader(doc, { logoDataUrl, title: 'Reporte de Incidentes' })
-          doc.setTextColor(0, 0, 0) // <-- negro tras header
+          doc.setTextColor(0, 0, 0)
+          // título de página en bold y volver a normal inmediatamente
           doc.setFont('helvetica', 'bold'); doc.setFontSize(12)
           doc.text(tituloListado, margin, yHead)
+          doc.setFont('helvetica', 'normal') // <- clave: no dejar la fuente en bold
         }
       })
+      // extra safety: volver a normal al finalizar autotable
+      doc.setFont('helvetica', 'normal')
     } else {
-      // Fallback manual
-      const safe = (v) => (v == null ? '' : String(v))
+      // fallback manual (sin “Continuación del listado”, solo header de columnas en negrita)
+      const safe = v => (v == null ? '' : String(v))
       const col = {
         id:    { x: margin,       w: 90,  label: 'ID' },
         fecha: { x: margin + 90,  w: 120, label: 'Fecha' },
@@ -555,28 +564,43 @@ const exportPDF = async () => {
       const lineH = 14
       const headerH = 22
 
-      const drawTableHeader = (title) => {
+      const drawTableHeader = (opts = { showTitle: true }) => {
         doc.addPage()
         const yHead = drawHeader(doc, { logoDataUrl, title: 'Reporte de Incidentes' })
-        doc.setTextColor(0, 0, 0) // <-- negro tras header
+        doc.setTextColor(0, 0, 0)
+        doc.setFont('helvetica', 'normal')
         let yy = yHead
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(12)
-        doc.text(title, margin, yy); yy += 10
+
+        if (opts.showTitle) {
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(12)
+          const tituloListado = `Listado de incidentes considerados (${fuenteOrdenada.length})`
+          doc.text(tituloListado, margin, yy)
+          yy += 10
+          doc.setFont('helvetica', 'normal') // <- volvemos a normal después del título
+        }
+
         doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5)
-        doc.line(margin, yy, pageW - margin, yy); yy += 10
+        doc.line(margin, yy, pageW - margin, yy)
+        yy += 10
+
+        // nombres de columnas en negrita
         doc.setFont('helvetica', 'bold'); doc.setFontSize(11)
         doc.text(col.id.label, col.id.x, yy)
         doc.text(col.fecha.label, col.fecha.x, yy)
         doc.text(col.desc.label, col.desc.x, yy)
         doc.text(col.loc.label, col.loc.x, yy)
         yy += headerH
+
+        // importantísimo: dejar fuente en NORMAL para las filas
+        doc.setFont('helvetica', 'normal')
         return yy
       }
 
       const addDetailRows = (yy, items) => {
         doc.setFont('helvetica', 'normal'); doc.setFontSize(10)
-        doc.setTextColor(0, 0, 0) // <-- aseguramos negro antes de filas
+        doc.setTextColor(0, 0, 0)
         let yCursor = yy
+
         for (const it of items) {
           const idTxt = safe(getId(it))
           const fechaTxt = safe(getFecha(it))
@@ -587,18 +611,22 @@ const exportPDF = async () => {
           const rowHeight = 6 + lines * lineH + 6
 
           if (yCursor + rowHeight > pageH - 32) {
-            yCursor = drawTableHeader('Continuación del listado')
+            // nueva página solo con header (columnas en bold) y volvemos a normal
+            yCursor = drawTableHeader({ showTitle: false })
           }
 
-          // (opcional) raya guía de fila muy tenue para contraste
+          // raya tenue
           doc.setDrawColor(245,245,245); doc.setLineWidth(0.5)
           doc.line(margin, yCursor - 10, pageW - margin, yCursor - 10)
 
-          doc.setTextColor(0, 0, 0) // <-- por si algún método cambió el color
+          // filas en NORMAL
+          doc.setFont('helvetica', 'normal')
           doc.text(idTxt, col.id.x, yCursor)
           doc.text(fechaTxt, col.fecha.x, yCursor)
+
           let yText = yCursor
           for (let i = 0; i < descTxt.length; i++) { doc.text(descTxt[i], col.desc.x, yText); yText += lineH }
+
           yText = yCursor
           for (let i = 0; i < locTxt.length; i++) { doc.text(locTxt[i], col.loc.x, yText); yText += lineH }
 
@@ -607,16 +635,12 @@ const exportPDF = async () => {
         return yCursor
       }
 
-      const tituloListado = detalleAbierto
-        ? `Listado (detalle seleccionado) • ${fuenteOrdenada.length}`
-        : `Listado de incidentes considerados (${fuenteOrdenada.length})`
-
-      let yDetail = drawTableHeader(tituloListado)
-      if (fuenteOrdenada.length) addDetailRows(yDetail, fuenteOrdenada)
+      const yDetailStart = drawTableHeader({ showTitle: true })
+      if (fuenteOrdenada.length) addDetailRows(yDetailStart, fuenteOrdenada)
       else {
         doc.setFont('helvetica', 'normal'); doc.setFontSize(11)
-        doc.setTextColor(0, 0, 0) // <-- negro
-        doc.text('No hay incidentes en el período seleccionado.', margin, yDetail)
+        doc.setTextColor(0, 0, 0)
+        doc.text('No hay incidentes en el período seleccionado.', margin, yDetailStart)
       }
     }
 
@@ -626,9 +650,6 @@ const exportPDF = async () => {
     alert(`No se pudo exportar el reporte a PDF: ${e?.message || e}`)
   }
 }
-
-
-
 
   /* ====== KPIs y series ====== */
   const kpiTotal = useMemo(() => (Array.isArray(datos) ? datos.length : 0), [datos])
