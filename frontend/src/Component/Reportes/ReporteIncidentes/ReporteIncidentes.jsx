@@ -231,9 +231,9 @@ const drawHeader = (doc, { logoDataUrl, title = 'Reporte de Incidentes' }) => {
   return headerH + 20
 }
 
-/* =========================
+/* =========================================================
    ErrorBoundary global
-========================= */
+========================================================= */
 function ErrorBoundary({ children }) {
   const [err, setErr] = React.useState(null)
 
@@ -301,7 +301,7 @@ function ChartShell ({ options, series, chartId, height = 360, onMountedRef }) {
               parentHeightOffset: 0,
               redrawOnParentResize: true,
               redrawOnWindowResize: true,
-              toolbar: { show: false }, // 👈 Ocultar menú ApexCharts
+              toolbar: { show: false }, // ocultar menú ApexCharts
               events: {
                 ...(options?.chart?.events || {}),
                 mounted: (...args) => {
@@ -324,6 +324,20 @@ function ChartShell ({ options, series, chartId, height = 360, onMountedRef }) {
   )
 }
 
+/* =========================================================
+   Helpers para "Generado por"
+========================================================= */
+const leerJSON = k => {
+  try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null } catch { return null }
+}
+const obtenerNombreUsuario = () => {
+  const u = leerJSON('user') || leerJSON('authUser') || leerJSON('usuario') || leerJSON('currentUser') || leerJSON('auth') || {}
+  const nombre = u?.nombre ?? u?.bombero?.nombre
+  const apellido = u?.apellido ?? u?.bombero?.apellido
+  const full = [nombre, apellido].filter(Boolean).join(' ').trim()
+  return full || u?.nombreCompleto || u?.displayName || u?.usuario || u?.email || '-'
+}
+
 /* =========================
    Componente principal
 ========================= */
@@ -336,6 +350,10 @@ function ReporteIncidentesCore({ onVolver }) {
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
 
+  // Nombre de usuario para "Generado por" (solo PDF)
+  const [nombreUsuario, setNombreUsuario] = useState('-')
+  useEffect(() => { setNombreUsuario(obtenerNombreUsuario()) }, [])
+
   // Drill-down
   const [detalleAbierto, setDetalleAbierto] = useState(false)
   const [tipoSeleccionado, setTipoSeleccionado] = useState(null)
@@ -346,7 +364,6 @@ function ReporteIncidentesCore({ onVolver }) {
   // Refs
   const detalleRef = useRef(null)
   const [pendingFocusDetalle, setPendingFocusDetalle] = useState(false)
-  const SCROLL_OFFSET = 0
 
   const CHART_ID = 'incidentes-chart'
   const chartMountedRef = useRef(false)
@@ -363,7 +380,10 @@ function ReporteIncidentesCore({ onVolver }) {
     const onEsc = e => { if (e.key === 'Escape') setShowExport(false) }
     document.addEventListener('click', onDocClick)
     document.addEventListener('keydown', onEsc)
-    return () => { document.removeEventListener('click', onDocClick); document.removeEventListener('keydown', onEsc) }
+    return () => {
+      document.removeEventListener('click', onDocClick)
+      document.removeEventListener('keydown', onEsc)
+    }
   }, [])
 
   const rango = useMemo(() => construirRango({ modo, anio, mes01 }), [modo, anio, mes01])
@@ -420,236 +440,248 @@ function ReporteIncidentesCore({ onVolver }) {
     }
   }
 
-/* ====== Export: PDF (KPIs + Gráfico + Listado SIEMPRE COMPLETO) ====== */
-const exportPDF = async () => {
-  try {
-    const [{ default: jsPDF }, autoTableMod] = await Promise.all([
-      import('jspdf'),
-      import('jspdf-autotable').catch(() => null)
-    ])
+  /* ====== Export: PDF (KPIs + Gráfico + Listado COMPLETO con paginado) ====== */
+  const exportPDF = async () => {
+    try {
+      const [{ default: jsPDF }] = await Promise.all([
+        import('jspdf')
+      ])
+      // importa y registra autotable (si está instalada)
+      try { await import('jspdf-autotable') } catch {}
 
-    // ocultamos el dropdown durante la captura
-    const exportNode = exportRef.current
-    const prevDisplay = exportNode ? exportNode.style.display : null
-    if (exportNode) exportNode.style.display = 'none'
+      // ocultamos el dropdown durante la captura
+      const exportNode = exportRef.current
+      const prevDisplay = exportNode ? exportNode.style.display : null
+      if (exportNode) exportNode.style.display = 'none'
 
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
 
-    if (!kpisRef.current) throw new Error('Los KPIs no están listos')
-    if (!chartBoxRef.current) throw new Error('El contenedor del gráfico no está listo')
+      if (!kpisRef.current) throw new Error('Los KPIs no están listos')
+      if (!chartBoxRef.current) throw new Error('El contenedor del gráfico no está listo')
 
-    const [kpiCanvas, chartCanvas] = await Promise.all([
-      html2canvas(kpisRef.current, { backgroundColor: '#ffffff', useCORS: true, scale: 2, logging: false }),
-      html2canvas(chartBoxRef.current, { backgroundColor: '#ffffff', useCORS: true, scale: 2, logging: false })
-    ])
+      const [kpiCanvas, chartCanvas] = await Promise.all([
+        html2canvas(kpisRef.current, { backgroundColor: '#ffffff', useCORS: true, scale: 2, logging: false }),
+        html2canvas(chartBoxRef.current, { backgroundColor: '#ffffff', useCORS: true, scale: 2, logging: false })
+      ])
 
-    if (exportNode) exportNode.style.display = prevDisplay ?? ''
+      if (exportNode) exportNode.style.display = prevDisplay ?? ''
 
-    const kpiImg = kpiCanvas.toDataURL('image/png')
-    const chartImg = chartCanvas.toDataURL('image/png')
+      const kpiImg = kpiCanvas.toDataURL('image/png')
+      const chartImg = chartCanvas.toDataURL('image/png')
 
-    const doc = new jsPDF({ orientation: 'l', unit: 'pt', format: 'a4' })
-    const pageW = doc.internal.pageSize.getWidth()
-    const pageH = doc.internal.pageSize.getHeight()
-    const margin = 32
-    const innerW = pageW - margin * 2
+      const doc = new jsPDF({ orientation: 'l', unit: 'pt', format: 'a4' })
+      const pageW = doc.internal.pageSize.getWidth()
+      const pageH = doc.internal.pageSize.getHeight()
+      const margin = 32
+      const innerW = pageW - margin * 2
 
-    // logo + encabezado
-    let logoDataUrl = null
-    try { logoDataUrl = await loadImageDataURL('/img/logo-bomberos.png') } catch {}
-    let y = drawHeader(doc, { logoDataUrl, title: 'Reporte de Incidentes' })
-    doc.setTextColor(0, 0, 0)
-    doc.setFont('helvetica', 'normal') // <- aseguramos normal tras header
-
-    // metadatos
-    const fechaEmision = new Date().toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' })
-    const periodoTexto = (() => {
-      if (modo === 'anual') return `Período: Anual • Año ${anio}`
-      const nomMes = meses.find(m => m.value === mes01)?.label || mes01
-      return `Período: Mensual • ${nomMes} ${anio}`
-    })()
-
-    doc.setFontSize(12)
-    doc.text(`Fecha de emisión: ${fechaEmision}`, margin, y); y += 18
-    doc.text(periodoTexto, margin, y); y += 16
-
-    // KPIs
-    const kpiTargetW = innerW
-    const kpiScale = kpiTargetW / kpiCanvas.width
-    const kpiH = kpiCanvas.height * kpiScale
-    doc.addImage(kpiImg, 'PNG', margin, y, kpiTargetW, kpiH)
-    y += kpiH + 16
-
-    // título gráfico
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(12)
-    doc.text('Incidentes por tipo', margin, y); y += 8
-    doc.setFont('helvetica', 'normal') // <- volvemos a normal
-
-    // gráfico
-    const chartTargetW = innerW
-    const chartScale = chartTargetW / chartCanvas.width
-    const chartH = chartCanvas.height * chartScale
-    const maxH = pageH - y - 24
-    const finalChartH = Math.min(chartH, maxH)
-    const finalChartW = chartCanvas.width * (finalChartH / chartCanvas.height)
-    doc.addImage(chartImg, 'PNG', margin, y, finalChartW, finalChartH)
-
-    /* =========================
-       LISTADO: SIEMPRE TODOS LOS CONSIDERADOS (datos)
-    ========================== */
-    const fuenteListado = Array.isArray(datos) ? datos : []
-    const fuenteOrdenada = [...fuenteListado].sort((a, b) => {
-      const fa = parseFecha(getFecha(a))?.getTime() ?? 0
-      const fb = parseFecha(getFecha(b))?.getTime() ?? 0
-      return fb - fa
-    })
-
-    const hayAutoTable = !!autoTableMod && !!doc.autoTable
-
-    if (hayAutoTable) {
-      // nueva página para listado completo
-      doc.addPage()
-      const top = drawHeader(doc, { logoDataUrl, title: 'Reporte de Incidentes' })
+      // logo + encabezado
+      let logoDataUrl = null
+      try { logoDataUrl = await loadImageDataURL('/img/logo-bomberos.png') } catch {}
+      let y = drawHeader(doc, { logoDataUrl, title: 'Reporte de Incidentes' })
       doc.setTextColor(0, 0, 0)
       doc.setFont('helvetica', 'normal')
 
+      // metadatos
+      const fechaEmision = new Date().toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' })
+      const periodoTexto = (() => {
+        if (modo === 'anual') return `Período: Anual • Año ${anio}`
+        const nomMes = meses.find(m => m.value === mes01)?.label || mes01
+        return `Período: Mensual • ${nomMes} ${anio}`
+      })()
+
+      doc.setFontSize(12)
+      doc.text(`Fecha de emisión: ${fechaEmision}`, margin, y); y += 18
+      doc.text(periodoTexto, margin, y); y += 16
+      // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+      // *** Generado por (SOLO EN PDF, debajo del período) ***
+      doc.text(`Generado por: ${nombreUsuario}`, margin, y); y += 16
+      // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+      // KPIs
+      const kpiTargetW = innerW
+      const kpiScale = kpiTargetW / kpiCanvas.width
+      const kpiH = kpiCanvas.height * kpiScale
+      doc.addImage(kpiImg, 'PNG', margin, y, kpiTargetW, kpiH)
+      y += kpiH + 16
+
+      // título gráfico
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(12)
+      doc.text('Incidentes por tipo', margin, y); y += 8
+      doc.setFont('helvetica', 'normal')
+
+      // gráfico
+      const chartTargetW = innerW
+      const chartScale = chartTargetW / chartCanvas.width
+      const chartH = chartCanvas.height * chartScale
+      const maxH = pageH - y - 24
+      const finalChartH = Math.min(chartH, maxH)
+      const finalChartW = chartCanvas.width * (finalChartH / chartCanvas.height)
+      doc.addImage(chartImg, 'PNG', margin, y, finalChartW, finalChartH)
+
+      /* =========================
+         LISTADO COMPLETO + PAGINADO EN PDF
+      ========================== */
+      const fuenteListado = Array.isArray(datos) ? datos : []
+      const fuenteOrdenada = [...fuenteListado].sort((a, b) => {
+        const fa = parseFecha(getFecha(a))?.getTime() ?? 0
+        const fb = parseFecha(getFecha(b))?.getTime() ?? 0
+        return fb - fa
+      })
+
       const tituloListado = `Listado de incidentes considerados (${fuenteOrdenada.length})`
 
-      // título del listado en bold, luego volvemos a normal ANTES de la tabla
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(12)
-      doc.text(tituloListado, margin, top + 0)
-      doc.setFont('helvetica', 'normal')
+      if (typeof doc.autoTable === 'function') {
+        const totalPagesExp = '{total_pages_count_string}'
+        doc.addPage()
+        const top = drawHeader(doc, { logoDataUrl, title: 'Reporte de Incidentes' })
+        doc.setTextColor(0, 0, 0)
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(12)
+        doc.text(tituloListado, margin, top)
+        doc.setFont('helvetica', 'normal')
 
-      const rows = fuenteOrdenada.map(it => ([
-        String(getId(it) ?? ''),
-        String(getFecha(it) ?? ''),
-        String(getDescripcion(it) ?? ''),
-        String(getLocalizacionTexto(it) ?? '')
-      ]))
+        const rows = fuenteOrdenada.map(it => ([
+          String(getId(it) ?? ''),
+          String(getFecha(it) ?? ''),
+          String(getDescripcion(it) ?? ''),
+          String(getLocalizacionTexto(it) ?? '')
+        ]))
 
-      doc.autoTable({
-        startY: top + 18,
-        margin: { left: margin, right: margin },
-        head: [['ID', 'Fecha', 'Descripción', 'Localización']], // <-- solo columnas en negrita
-        body: rows,
-        theme: 'grid',
-        styles: { font: 'helvetica', fontSize: 10, fontStyle: 'normal', cellPadding: 4, overflow: 'linebreak', textColor: [20,20,20] }, // <- normal
-        headStyles: { fillColor: [213, 43, 30], textColor: 255, fontStyle: 'bold', halign: 'left' }, // <- bold solo en header
-        bodyStyles: { textColor: [20,20,20], fontStyle: 'normal' }, // <- normal
-        alternateRowStyles: { fillColor: [245,245,245] },
-        tableLineColor: [200,200,200],
-        tableLineWidth: 0.5,
-        didDrawPage: () => {
-          // re-encabezado por página
+        doc.autoTable({
+          startY: top + 18,
+          margin: { left: margin, right: margin },
+          head: [['ID', 'Fecha', 'Descripción', 'Localización']],
+          body: rows,
+          theme: 'grid',
+          styles: { font: 'helvetica', fontSize: 10, fontStyle: 'normal', cellPadding: 4, overflow: 'linebreak', textColor: [20,20,20] },
+          headStyles: { fillColor: [213, 43, 30], textColor: 255, fontStyle: 'bold', halign: 'left' },
+          alternateRowStyles: { fillColor: [245,245,245] },
+          tableLineColor: [200,200,200],
+          tableLineWidth: 0.5,
+          didDrawPage: (data) => {
+            const str = (typeof doc.putTotalPages === 'function')
+              ? `Página ${doc.internal.getNumberOfPages()} de ${totalPagesExp}`
+              : `Página ${doc.internal.getNumberOfPages()}`
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(10)
+            doc.text(
+              str,
+              doc.internal.pageSize.getWidth() - data.settings.margin.right,
+              doc.internal.pageSize.getHeight() - 10,
+              { align: 'right' }
+            )
+          }
+        })
+
+        if (typeof doc.putTotalPages === 'function') {
+          doc.putTotalPages(totalPagesExp)
+        }
+      } else {
+        // Fallback manual sin autoTable
+        const pageW2 = doc.internal.pageSize.getWidth()
+        const pageH2 = doc.internal.pageSize.getHeight()
+        const margin2 = 32
+        const col = {
+          id:    { x: margin2,       w: 90,  label: 'ID' },
+          fecha: { x: margin2 + 90,  w: 120, label: 'Fecha' },
+          desc:  { x: margin2 + 210, w: 350, label: 'Descripción' },
+          loc:   { x: margin2 + 560, w: (pageW2 - margin2) - (margin2 + 560), label: 'Localización' }
+        }
+        const lineH = 14
+        const headerH = 22
+
+        const drawTableHeader = (opts = { showTitle: true }) => {
+          doc.addPage()
           const yHead = drawHeader(doc, { logoDataUrl, title: 'Reporte de Incidentes' })
           doc.setTextColor(0, 0, 0)
-          // título de página en bold y volver a normal inmediatamente
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(12)
-          doc.text(tituloListado, margin, yHead)
-          doc.setFont('helvetica', 'normal') // <- clave: no dejar la fuente en bold
-        }
-      })
-      // extra safety: volver a normal al finalizar autotable
-      doc.setFont('helvetica', 'normal')
-    } else {
-      // fallback manual (sin “Continuación del listado”, solo header de columnas en negrita)
-      const safe = v => (v == null ? '' : String(v))
-      const col = {
-        id:    { x: margin,       w: 90,  label: 'ID' },
-        fecha: { x: margin + 90,  w: 120, label: 'Fecha' },
-        desc:  { x: margin + 210, w: 350, label: 'Descripción' },
-        loc:   { x: margin + 560, w: innerW - 560, label: 'Localización' }
-      }
-      const lineH = 14
-      const headerH = 22
+          doc.setFont('helvetica', 'normal')
+          let yy = yHead
 
-      const drawTableHeader = (opts = { showTitle: true }) => {
-        doc.addPage()
-        const yHead = drawHeader(doc, { logoDataUrl, title: 'Reporte de Incidentes' })
-        doc.setTextColor(0, 0, 0)
-        doc.setFont('helvetica', 'normal')
-        let yy = yHead
-
-        if (opts.showTitle) {
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(12)
-          const tituloListado = `Listado de incidentes considerados (${fuenteOrdenada.length})`
-          doc.text(tituloListado, margin, yy)
-          yy += 10
-          doc.setFont('helvetica', 'normal') // <- volvemos a normal después del título
-        }
-
-        doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5)
-        doc.line(margin, yy, pageW - margin, yy)
-        yy += 10
-
-        // nombres de columnas en negrita
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(11)
-        doc.text(col.id.label, col.id.x, yy)
-        doc.text(col.fecha.label, col.fecha.x, yy)
-        doc.text(col.desc.label, col.desc.x, yy)
-        doc.text(col.loc.label, col.loc.x, yy)
-        yy += headerH
-
-        // importantísimo: dejar fuente en NORMAL para las filas
-        doc.setFont('helvetica', 'normal')
-        return yy
-      }
-
-      const addDetailRows = (yy, items) => {
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(10)
-        doc.setTextColor(0, 0, 0)
-        let yCursor = yy
-
-        for (const it of items) {
-          const idTxt = safe(getId(it))
-          const fechaTxt = safe(getFecha(it))
-          const descTxt = doc.splitTextToSize(safe(getDescripcion(it)), col.desc.w - 4)
-          const locTxt = doc.splitTextToSize(safe(getLocalizacionTexto(it)), col.loc.w - 4)
-
-          const lines = Math.max(descTxt.length, locTxt.length, 1)
-          const rowHeight = 6 + lines * lineH + 6
-
-          if (yCursor + rowHeight > pageH - 32) {
-            // nueva página solo con header (columnas en bold) y volvemos a normal
-            yCursor = drawTableHeader({ showTitle: false })
+          if (opts.showTitle) {
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(12)
+            doc.text(tituloListado, margin2, yy)
+            yy += 10
+            doc.setFont('helvetica', 'normal')
           }
 
-          // raya tenue
-          doc.setDrawColor(245,245,245); doc.setLineWidth(0.5)
-          doc.line(margin, yCursor - 10, pageW - margin, yCursor - 10)
+          doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5)
+          doc.line(margin2, yy, pageW2 - margin2, yy)
+          yy += 10
 
-          // filas en NORMAL
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(11)
+          doc.text(col.id.label, col.id.x, yy)
+          doc.text(col.fecha.label, col.fecha.x, yy)
+          doc.text(col.desc.label, col.desc.x, yy)
+          doc.text(col.loc.label, col.loc.x, yy)
+          yy += headerH
+
           doc.setFont('helvetica', 'normal')
-          doc.text(idTxt, col.id.x, yCursor)
-          doc.text(fechaTxt, col.fecha.x, yCursor)
-
-          let yText = yCursor
-          for (let i = 0; i < descTxt.length; i++) { doc.text(descTxt[i], col.desc.x, yText); yText += lineH }
-
-          yText = yCursor
-          for (let i = 0; i < locTxt.length; i++) { doc.text(locTxt[i], col.loc.x, yText); yText += lineH }
-
-          yCursor += rowHeight
+          return yy
         }
-        return yCursor
+
+        const addFooter = () => {
+          const pageNumber = doc.internal.getNumberOfPages()
+          doc.setFont('helvetica','normal'); doc.setFontSize(10)
+          doc.text(`Página ${pageNumber}`, pageW2 - margin2, pageH2 - 10, { align: 'right' })
+        }
+
+        const addDetailRows = (yy, items) => {
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(10)
+          doc.setTextColor(0, 0, 0)
+          let yCursor = yy
+
+          const safe = v => (v == null ? '' : String(v))
+
+          for (const it of items) {
+            const idTxt = safe(getId(it))
+            const fechaTxt = safe(getFecha(it))
+            const descTxt = doc.splitTextToSize(safe(getDescripcion(it)), col.desc.w - 4)
+            const locTxt = doc.splitTextToSize(safe(getLocalizacionTexto(it)), col.loc.w - 4)
+
+            const lines = Math.max(descTxt.length, locTxt.length, 1)
+            const rowHeight = 6 + lines * lineH + 6
+
+            if (yCursor + rowHeight > pageH2 - 32) {
+              addFooter()
+              yCursor = drawTableHeader({ showTitle: false })
+            }
+
+            doc.setDrawColor(245,245,245); doc.setLineWidth(0.5)
+            doc.line(margin2, yCursor - 10, pageW2 - margin2, yCursor - 10)
+
+            doc.setFont('helvetica', 'normal')
+            doc.text(idTxt, col.id.x, yCursor)
+            doc.text(fechaTxt, col.fecha.x, yCursor)
+
+            let yText = yCursor
+            for (let i = 0; i < descTxt.length; i++) { doc.text(descTxt[i], col.desc.x, yText); yText += lineH }
+
+            yText = yCursor
+            for (let i = 0; i < locTxt.length; i++) { doc.text(locTxt[i], col.loc.x, yText); yText += lineH }
+
+            yCursor += rowHeight
+          }
+          return yCursor
+        }
+
+        const yDetailStart = drawTableHeader({ showTitle: true })
+        if (fuenteOrdenada.length) {
+          addDetailRows(yDetailStart, fuenteOrdenada)
+          addFooter()
+        } else {
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(11)
+          doc.setTextColor(0, 0, 0)
+          doc.text('No hay incidentes en el período seleccionado.', margin2, yDetailStart)
+          addFooter()
+        }
       }
 
-      const yDetailStart = drawTableHeader({ showTitle: true })
-      if (fuenteOrdenada.length) addDetailRows(yDetailStart, fuenteOrdenada)
-      else {
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(11)
-        doc.setTextColor(0, 0, 0)
-        doc.text('No hay incidentes en el período seleccionado.', margin, yDetailStart)
-      }
+      doc.save(`reporte_incidentes_${rango.desde}_${rango.hasta}.pdf`)
+    } catch (e) {
+      console.error('exportPDF error:', e)
+      alert(`No se pudo exportar el reporte a PDF: ${e?.message || e}`)
     }
-
-    doc.save(`reporte_incidentes_${rango.desde}_${rango.hasta}.pdf`)
-  } catch (e) {
-    console.error('exportPDF error:', e)
-    alert(`No se pudo exportar el reporte a PDF: ${e?.message || e}`)
   }
-}
 
   /* ====== KPIs y series ====== */
   const kpiTotal = useMemo(() => (Array.isArray(datos) ? datos.length : 0), [datos])
@@ -701,6 +733,14 @@ const exportPDF = async () => {
     return [{ name: 'Incidentes', data: pares.map(([, count]) => count) }]
   }, [conteoPorTipo])
 
+  const tituloPeriodo = useMemo(() => {
+    if (modo === 'anual') return `Período ${anio}`
+    const nomMes = meses.find(m => m.value === mes01)?.label || mes01
+    return `Período ${nomMes} ${anio}`
+  }, [modo, anio, mes01])
+
+  const hayDatos = series?.[0]?.data?.length > 0
+
   /* ====== Drill-down ====== */
   const inferirIdTipoDesdeNombre = useCallback((nombreTipo) => {
     if (!nombreTipo) return null
@@ -722,12 +762,10 @@ const exportPDF = async () => {
     if (!tipoId) {
       setTipoSeleccionado({ id: null, nombre: categoriaNombre })
       setDetalleAbierto(true); setDetalleError('No se pudo determinar el tipo de incidente seleccionado')
-      setDetalleItems([]); setPendingFocusDetalle(true)
-      return
+      setDetalleItems([]); return
     }
     setTipoSeleccionado({ id: tipoId, nombre: categoriaNombre })
     setDetalleAbierto(true); setDetalleCargando(true); setDetalleError(''); setDetalleItems([])
-    setPendingFocusDetalle(true)
 
     try {
       const params = new URLSearchParams({ pagina: '1', limite: '50', desde: rango.desde, hasta: rango.hasta, tipo: String(tipoId) })
@@ -740,42 +778,6 @@ const exportPDF = async () => {
       setDetalleError('No se pudo cargar el detalle del tipo seleccionado'); setDetalleItems([])
     } finally { setDetalleCargando(false) }
   }, [inferirIdTipoDesdeNombre, rango])
-
-  // Scroll suave al abrir detalle
-  useEffect(() => {
-    if (detalleAbierto && pendingFocusDetalle) {
-      const el = detalleRef.current
-      if (el) {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            const parent = (() => {
-              let p = el.parentElement
-              while (p) {
-                const style = window.getComputedStyle(p)
-                const oy = style.overflowY
-                if ((oy === 'auto' || oy === 'scroll') && p.scrollHeight > p.clientHeight) return p
-                p = p.parentElement
-              }
-              return window
-            })()
-            if (parent === window) {
-              const top = el.getBoundingClientRect().top + window.scrollY
-              window.scrollTo({ top, behavior: 'smooth' })
-            } else {
-              const parentRect = parent.getBoundingClientRect()
-              const elRect = el.getBoundingClientRect()
-              const target = parent.scrollTop + (elRect.top - parentRect.top)
-              parent.scrollTo({ top: target, behavior: 'smooth' })
-            }
-            try { el.focus({ preventScroll: true }) } catch {}
-            setPendingFocusDetalle(false)
-          })
-        })
-      } else {
-        setPendingFocusDetalle(false)
-      }
-    }
-  }, [detalleAbierto, pendingFocusDetalle])
 
   /* ====== Opciones del gráfico (sin toolbar) ====== */
   const options = useMemo(() => ({
@@ -804,14 +806,6 @@ const exportPDF = async () => {
     noData: { text: 'Sin datos para el período seleccionado' }
   }), [categories, abrirDetallePorCategoria])
 
-  const tituloPeriodo = useMemo(() => {
-    if (modo === 'anual') return `Período ${anio}`
-    const nomMes = meses.find(m => m.value === mes01)?.label || mes01
-    return `Período ${nomMes} ${anio}`
-  }, [modo, anio, mes01])
-
-  const hayDatos = series?.[0]?.data?.length > 0
-
   return (
     <div className='container-fluid py-5 consultar-incidente registrar-guardia consultar-grupo'>
       <div className='text-center mb-4'>
@@ -825,6 +819,7 @@ const exportPDF = async () => {
           <Filter className='me-2' />
           Incidentes por Tipo • {tituloPeriodo}
         </span>
+        {/* Se QUITA "Generado por" del front, queda solo en el PDF */}
       </div>
 
       <div className='card edge-to-edge shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm'>
@@ -978,7 +973,6 @@ const exportPDF = async () => {
                     series={series}
                     chartId={CHART_ID}
                     height={360}
-                    onMountedRef={chartMountedRef}
                   />
                 </div>
 
