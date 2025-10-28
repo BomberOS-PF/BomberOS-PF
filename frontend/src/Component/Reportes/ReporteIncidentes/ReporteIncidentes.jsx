@@ -184,7 +184,6 @@ const downloadBlob = (blob, filename) => {
   URL.revokeObjectURL(url)
 }
 
-// Carga una imagen y devuelve dataURL (ideal para /public)
 const loadImageDataURL = (url) => new Promise((resolve, reject) => {
   const img = new Image()
   img.crossOrigin = 'anonymous'
@@ -202,7 +201,6 @@ const loadImageDataURL = (url) => new Promise((resolve, reject) => {
   img.src = url
 })
 
-// Dibuja encabezado con barra roja + logo + título y devuelve Y inicial
 const drawHeader = (doc, { logoDataUrl, title = 'Reporte de Incidentes' }) => {
   const pageW = doc.internal.pageSize.getWidth()
   const margin = 32
@@ -301,7 +299,7 @@ function ChartShell ({ options, series, chartId, height = 360, onMountedRef }) {
               parentHeightOffset: 0,
               redrawOnParentResize: true,
               redrawOnWindowResize: true,
-              toolbar: { show: false }, // ocultar menú ApexCharts
+              toolbar: { show: false },
               events: {
                 ...(options?.chart?.events || {}),
                 mounted: (...args) => {
@@ -369,9 +367,9 @@ function ReporteIncidentesCore({ onVolver }) {
   const chartMountedRef = useRef(false)
 
   // Refs de captura para exportación DOM→imagen
-  const kpisRef = useRef(null)          // contenedor KPIs
-  const chartBoxRef = useRef(null)      // contenedor del gráfico
-  const exportRef = useRef(null)        // contenedor del botón Exportar (para ocultarlo durante la captura)
+  const kpisRef = useRef(null)
+  const chartBoxRef = useRef(null)
+  const exportRef = useRef(null)
 
   // Dropdown Exportar
   const [showExport, setShowExport] = useState(false)
@@ -403,7 +401,7 @@ function ReporteIncidentesCore({ onVolver }) {
     } finally { setCargando(false) }
   }
 
-  /* ====== Export: CSV ====== */
+  /* ====== Export: CSV — SIEMPRE TODOS LOS INCIDENTES DEL PERÍODO ====== */
   const csvEscape = (v) => {
     const s = (v ?? '').toString()
     if (s.includes('"') || s.includes(',') || s.includes('\n')) return `"${s.replace(/"/g, '""')}"`
@@ -414,14 +412,19 @@ function ReporteIncidentesCore({ onVolver }) {
   const getDescripcion = it => it?.descripcion ?? it?.descripcionIncidente ?? it?.detalle ?? '-'
 
   const exportCSV = () => {
-    const fuente = detalleAbierto ? detalleItems : datos
+    // ignora cualquier detalle abierto y usa SIEMPRE todos los incidentes del período
+    const fuenteOrdenada = [...(Array.isArray(datos) ? datos : [])].sort((a, b) => {
+      const fa = parseFecha(getFecha(a))?.getTime() ?? 0
+      const fb = parseFecha(getFecha(b))?.getTime() ?? 0
+      return fb - fa
+    })
     const rows = [
       ['ID', 'Fecha', 'Descripción', 'Localización'],
-      ...fuente.map(it => [getId(it), getFecha(it), getDescripcion(it), getLocalizacionTexto(it)])
+      ...fuenteOrdenada.map(it => [getId(it), getFecha(it), getDescripcion(it), getLocalizacionTexto(it)])
     ]
     const csv = rows.map(r => r.map(csvEscape).join(',')).join('\n')
     downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
-      `incidentes_${rango.desde}_${rango.hasta}${detalleAbierto ? '_detalle' : ''}.csv`)
+      `incidentes_${rango.desde}_${rango.hasta}.csv`)
   }
 
   /* ====== Export: PNG del gráfico ====== */
@@ -440,16 +443,16 @@ function ReporteIncidentesCore({ onVolver }) {
     }
   }
 
-  /* ====== Export: PDF (KPIs + Gráfico + Listado COMPLETO con paginado) ====== */
+  /* ====== Export: PDF (KPIs + Gráfico + Listado COMPLETO) ====== */
   const exportPDF = async () => {
     try {
       const [{ default: jsPDF }] = await Promise.all([
         import('jspdf')
       ])
-      // importa y registra autotable (si está instalada)
+      // registramos autotable si está disponible (no usamos su paginador interno)
       try { await import('jspdf-autotable') } catch {}
 
-      // ocultamos el dropdown durante la captura
+      // ocultamos dropdown durante la captura
       const exportNode = exportRef.current
       const prevDisplay = exportNode ? exportNode.style.display : null
       if (exportNode) exportNode.style.display = 'none'
@@ -475,7 +478,7 @@ function ReporteIncidentesCore({ onVolver }) {
       const margin = 32
       const innerW = pageW - margin * 2
 
-      // logo + encabezado
+      // encabezado
       let logoDataUrl = null
       try { logoDataUrl = await loadImageDataURL('/img/logo-bomberos.png') } catch {}
       let y = drawHeader(doc, { logoDataUrl, title: 'Reporte de Incidentes' })
@@ -493,10 +496,7 @@ function ReporteIncidentesCore({ onVolver }) {
       doc.setFontSize(12)
       doc.text(`Fecha de emisión: ${fechaEmision}`, margin, y); y += 18
       doc.text(periodoTexto, margin, y); y += 16
-      // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-      // *** Generado por (SOLO EN PDF, debajo del período) ***
       doc.text(`Generado por: ${nombreUsuario}`, margin, y); y += 16
-      // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
       // KPIs
       const kpiTargetW = innerW
@@ -521,7 +521,7 @@ function ReporteIncidentesCore({ onVolver }) {
       doc.addImage(chartImg, 'PNG', margin, y, finalChartW, finalChartH)
 
       /* =========================
-         LISTADO COMPLETO + PAGINADO EN PDF
+         LISTADO COMPLETO EN NUEVA(S) PÁGINA(S)
       ========================== */
       const fuenteListado = Array.isArray(datos) ? datos : []
       const fuenteOrdenada = [...fuenteListado].sort((a, b) => {
@@ -532,8 +532,8 @@ function ReporteIncidentesCore({ onVolver }) {
 
       const tituloListado = `Listado de incidentes considerados (${fuenteOrdenada.length})`
 
+      // Intentamos con autoTable si existe (sin didDrawPage para no duplicar paginado)
       if (typeof doc.autoTable === 'function') {
-        const totalPagesExp = '{total_pages_count_string}'
         doc.addPage()
         const top = drawHeader(doc, { logoDataUrl, title: 'Reporte de Incidentes' })
         doc.setTextColor(0, 0, 0)
@@ -558,28 +558,12 @@ function ReporteIncidentesCore({ onVolver }) {
           headStyles: { fillColor: [213, 43, 30], textColor: 255, fontStyle: 'bold', halign: 'left' },
           alternateRowStyles: { fillColor: [245,245,245] },
           tableLineColor: [200,200,200],
-          tableLineWidth: 0.5,
-          didDrawPage: (data) => {
-            const str = (typeof doc.putTotalPages === 'function')
-              ? `Página ${doc.internal.getNumberOfPages()} de ${totalPagesExp}`
-              : `Página ${doc.internal.getNumberOfPages()}`
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(10)
-            doc.text(
-              str,
-              doc.internal.pageSize.getWidth() - data.settings.margin.right,
-              doc.internal.pageSize.getHeight() - 10,
-              { align: 'right' }
-            )
-          }
+          tableLineWidth: 0.5
+          // SIN didDrawPage: el paginado lo escribimos al final en TODAS las páginas
         })
-
-        if (typeof doc.putTotalPages === 'function') {
-          doc.putTotalPages(totalPagesExp)
-        }
       } else {
-        // Fallback manual sin autoTable
+        // Fallback manual (sin autoTable)
         const pageW2 = doc.internal.pageSize.getWidth()
-        const pageH2 = doc.internal.pageSize.getHeight()
         const margin2 = 32
         const col = {
           id:    { x: margin2,       w: 90,  label: 'ID' },
@@ -619,12 +603,6 @@ function ReporteIncidentesCore({ onVolver }) {
           return yy
         }
 
-        const addFooter = () => {
-          const pageNumber = doc.internal.getNumberOfPages()
-          doc.setFont('helvetica','normal'); doc.setFontSize(10)
-          doc.text(`Página ${pageNumber}`, pageW2 - margin2, pageH2 - 10, { align: 'right' })
-        }
-
         const addDetailRows = (yy, items) => {
           doc.setFont('helvetica', 'normal'); doc.setFontSize(10)
           doc.setTextColor(0, 0, 0)
@@ -640,16 +618,15 @@ function ReporteIncidentesCore({ onVolver }) {
 
             const lines = Math.max(descTxt.length, locTxt.length, 1)
             const rowHeight = 6 + lines * lineH + 6
+            const pageH2 = doc.internal.pageSize.getHeight()
 
             if (yCursor + rowHeight > pageH2 - 32) {
-              addFooter()
               yCursor = drawTableHeader({ showTitle: false })
             }
 
             doc.setDrawColor(245,245,245); doc.setLineWidth(0.5)
             doc.line(margin2, yCursor - 10, pageW2 - margin2, yCursor - 10)
 
-            doc.setFont('helvetica', 'normal')
             doc.text(idTxt, col.id.x, yCursor)
             doc.text(fechaTxt, col.fecha.x, yCursor)
 
@@ -667,13 +644,23 @@ function ReporteIncidentesCore({ onVolver }) {
         const yDetailStart = drawTableHeader({ showTitle: true })
         if (fuenteOrdenada.length) {
           addDetailRows(yDetailStart, fuenteOrdenada)
-          addFooter()
         } else {
           doc.setFont('helvetica', 'normal'); doc.setFontSize(11)
           doc.setTextColor(0, 0, 0)
           doc.text('No hay incidentes en el período seleccionado.', margin2, yDetailStart)
-          addFooter()
         }
+      }
+
+      /* =========================
+         NUMERACIÓN EN TODAS LAS PÁGINAS (desde la 1)
+      ========================== */
+      const totalPages = doc.internal.getNumberOfPages()
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i)
+        const w = doc.internal.pageSize.getWidth()
+        const h = doc.internal.pageSize.getHeight()
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(10)
+        doc.text(`Página ${i} de ${totalPages}`, w - 32, h - 10, { align: 'right' })
       }
 
       doc.save(`reporte_incidentes_${rango.desde}_${rango.hasta}.pdf`)
@@ -749,7 +736,7 @@ function ReporteIncidentesCore({ onVolver }) {
     const ids = [
       ...new Set(
         (Array.isArray(datos) ? datos : [])
-          .filter(d => (d?.tipoDescripcion || (d?.idTipoIncidente != null ? `Tipo ${d.idTipoIncidente}` : 'Sin tipo')) === nombreTipo)
+          .filter(d => (d?.tipoDescripcion || (d?.idTipoIncidente != null ? `Tipo ${d?.idTipoIncidente}` : 'Sin tipo')) === nombreTipo)
           .map(d => d?.idTipoIncidente)
           .filter(Boolean)
       )
@@ -790,8 +777,6 @@ function ReporteIncidentesCore({ onVolver }) {
       redrawOnParentResize: true,
       redrawOnWindowResize: true,
       events: {
-        mounted: () => { chartMountedRef.current = true },
-        updated: () => { chartMountedRef.current = true },
         dataPointSelection: (event, chartCtx, config) => {
           const categoria = getCategoriaFromEvent(chartCtx, config)
           if (categoria) abrirDetallePorCategoria(categoria)
@@ -819,7 +804,7 @@ function ReporteIncidentesCore({ onVolver }) {
           <Filter className='me-2' />
           Incidentes por Tipo • {tituloPeriodo}
         </span>
-        {/* Se QUITA "Generado por" del front, queda solo en el PDF */}
+        {/* "Generado por" solo en el PDF */}
       </div>
 
       <div className='card edge-to-edge shadow-sm border-0 bg-white bg-opacity-1 backdrop-blur-sm'>
@@ -907,7 +892,6 @@ function ReporteIncidentesCore({ onVolver }) {
               </div>
             </div>
 
-            {/* Único botón Exportar */}
             <div className="col-md-3">
               <div className="card shadow-sm border-0 h-100 d-flex align-items-center justify-content-center">
                 <div className="p-3 w-100 text-center">
@@ -966,7 +950,6 @@ function ReporteIncidentesCore({ onVolver }) {
 
             {!cargando && (hayDatos ? (
               <>
-                {/* Contenedor capturable del gráfico */}
                 <div ref={chartBoxRef}>
                   <ChartShell
                     options={options}
@@ -1000,7 +983,7 @@ function ReporteIncidentesCore({ onVolver }) {
                     <div className='card-body'>
                       {detalleCargando && (
                         <div className='text-center py-3'>
-                          <div className='spinner-border' role='status'><span className='visually-hidden'>Cargando…</span></div>
+                          <div className='spinner-border' role='status'><span className='visualmente-hidden'>Cargando…</span></div>
                         </div>
                       )}
 
