@@ -7,10 +7,13 @@ import { BackToMenuButton } from '../../Common/Button.jsx'
 import './ReporteIncidentes.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import html2canvas from 'html2canvas'
+import Select from 'react-select'
 
 /* =========================
    Helpers de fecha y rango
 ========================= */
+const BRAND_RED = '#d52b1e'
+
 const now = new Date()
 const pad2 = n => String(n).padStart(2, '0')
 
@@ -104,6 +107,74 @@ const aniosPorDefecto = (() => {
   const y = now.getFullYear()
   return [y - 3, y - 2, y - 1, y, y + 1]
 })()
+
+const RS_CONTROL_H = 44 // px  ← altura unificada select/botones
+
+const rsStyles = {
+  control: (base, state) => ({
+    ...base,
+    minHeight: `${RS_CONTROL_H}px`,
+    height: `${RS_CONTROL_H}px`,
+    borderRadius: '.375rem',
+    borderColor: state.isFocused ? '#d52b1e' : '#dee2e6',
+    boxShadow: state.isFocused ? '0 0 0 .25rem rgba(213,43,30,.25)' : 'none',
+    '&:hover': { borderColor: '#d52b1e' },
+    fontSize: '.95rem',          // tamaño del texto en el control
+    lineHeight: 1.5,
+  }),
+  valueContainer: (base) => ({
+    ...base,
+    padding: '0 .625rem'
+  }),
+  indicatorsContainer: (base) => ({
+    ...base,
+    height: '100%'
+  }),
+  dropdownIndicator: (base, state) => ({
+    ...base,
+    padding: '.25rem .5rem',
+    color: state.isFocused ? '#d52b1e' : base.color,
+    '&:hover': { color: '#d52b1e' }
+  }),
+  option: (base, state) => ({
+    ...base,
+    fontSize: '.9rem',           // ↓ opciones del menú más chicas
+    backgroundColor: state.isSelected
+      ? '#d52b1e'
+      : state.isFocused
+      ? 'rgba(213,43,30,.1)'
+      : base.backgroundColor,
+    color: state.isSelected ? '#fff' : base.color,
+    '&:active': {
+      ...base['&:active'],
+      backgroundColor: 'rgba(213,43,30,.2)'
+    }
+  }),
+  menu: (base) => ({
+    ...base,
+    zIndex: 2050
+  }),
+  singleValue: (base) => ({
+    ...base,
+    fontSize: '.95rem'           // texto elegido en el control
+  }),
+  input: (base) => ({
+    ...base,
+    fontSize: '.95rem'
+  })
+}
+
+const rsTheme = theme => ({
+  ...theme,
+  colors: {
+    ...theme.colors,
+    primary: '#d52b1e',
+    primary75: 'rgba(213,43,30,.75)',
+    primary50: 'rgba(213,43,30,.50)',
+    primary25: 'rgba(213,43,30,.25)',
+  }
+})
+
 
 /* =========================
    Utilidades de UI
@@ -260,6 +331,7 @@ function ErrorBoundary({ children }) {
   return children
 }
 
+
 /* =========================================================
    ChartShell (toolbar de ApexCharts deshabilitada)
 ========================================================= */
@@ -280,6 +352,8 @@ function ChartShell ({ options, series, chartId, height = 360, onMountedRef }) {
       if (onMountedRef) onMountedRef.current = false
     }
   }, [options?.xaxis?.categories?.join('|'), JSON.stringify(series?.[0]?.data || [])])
+
+  
 
   const handleMounted = () => {
     if (onMountedRef) onMountedRef.current = true
@@ -359,6 +433,26 @@ function ReporteIncidentesCore({ onVolver }) {
   const [detalleCargando, setDetalleCargando] = useState(false)
   const [detalleError, setDetalleError] = useState('')
 
+  // limpia gráfico, KPIs y cualquier detalle abierto
+const resetVisual = useCallback(() => {
+  setError('')
+  setDatos([])
+  setDetalleAbierto(false)
+  setTipoSeleccionado(null)
+  setDetalleItems([])
+  setDetalleError('')
+  setPendingFocusDetalle(false)
+  chartMountedRef.current = false
+}, [])
+
+// cambia modo y limpia
+const handleCambiarModo = useCallback((nuevoModo) => {
+  if (nuevoModo === modo) return
+  setModo(nuevoModo)
+  resetVisual()
+}, [modo, resetVisual])
+
+
   // Refs
   const detalleRef = useRef(null)
   const [pendingFocusDetalle, setPendingFocusDetalle] = useState(false)
@@ -383,6 +477,19 @@ function ReporteIncidentesCore({ onVolver }) {
       document.removeEventListener('keydown', onEsc)
     }
   }, [])
+
+  useEffect(() => {
+  if (pendingFocusDetalle && !detalleCargando) {
+    const id = requestAnimationFrame(() => {
+      // foco accesible + scroll suave al comienzo de la card
+      detalleRef.current?.focus({ preventScroll: true })
+      detalleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' })
+    })
+    // resetea el flag
+    setPendingFocusDetalle(false)
+    return () => cancelAnimationFrame(id)
+  }
+}, [pendingFocusDetalle, detalleCargando, detalleItems.length])
 
   const rango = useMemo(() => construirRango({ modo, anio, mes01 }), [modo, anio, mes01])
 
@@ -748,11 +855,17 @@ function ReporteIncidentesCore({ onVolver }) {
     const tipoId = inferirIdTipoDesdeNombre(categoriaNombre)
     if (!tipoId) {
       setTipoSeleccionado({ id: null, nombre: categoriaNombre })
-      setDetalleAbierto(true); setDetalleError('No se pudo determinar el tipo de incidente seleccionado')
+      setDetalleAbierto(true); 
+      setPendingFocusDetalle(true)
+      setDetalleError('No se pudo determinar el tipo de incidente seleccionado')
       setDetalleItems([]); return
     }
     setTipoSeleccionado({ id: tipoId, nombre: categoriaNombre })
-    setDetalleAbierto(true); setDetalleCargando(true); setDetalleError(''); setDetalleItems([])
+    setDetalleAbierto(true); 
+    setPendingFocusDetalle(true)
+    setDetalleCargando(true); 
+    setDetalleError(''); 
+    setDetalleItems([])
 
     try {
       const params = new URLSearchParams({ pagina: '1', limite: '50', desde: rango.desde, hasta: rango.hasta, tipo: String(tipoId) })
@@ -762,37 +875,65 @@ function ReporteIncidentesCore({ onVolver }) {
       setDetalleItems(items)
     } catch (e) {
       console.error(e)
-      setDetalleError('No se pudo cargar el detalle del tipo seleccionado'); setDetalleItems([])
+      setDetalleError('No se pudo cargar el detalle del tipo seleccionado'); 
+      setDetalleItems([])
     } finally { setDetalleCargando(false) }
   }, [inferirIdTipoDesdeNombre, rango])
 
   /* ====== Opciones del gráfico (sin toolbar) ====== */
-  const options = useMemo(() => ({
-    chart: {
-      id: CHART_ID,
-      type: 'bar',
-      animations: { enabled: false },
-      toolbar: { show: false },
-      parentHeightOffset: 0,
-      redrawOnParentResize: true,
-      redrawOnWindowResize: true,
-      events: {
-        dataPointSelection: (event, chartCtx, config) => {
-          const categoria = getCategoriaFromEvent(chartCtx, config)
-          if (categoria) abrirDetallePorCategoria(categoria)
-        }
+const options = useMemo(() => ({
+  chart: {
+    id: CHART_ID,
+    type: 'bar',
+    animations: { enabled: false },
+    toolbar: { show: false },
+    parentHeightOffset: 0,
+    redrawOnParentResize: true,
+    redrawOnWindowResize: true,
+    events: {
+      dataPointSelection: (event, chartCtx, config) => {
+        const categoria = getCategoriaFromEvent(chartCtx, config)
+        if (categoria) abrirDetallePorCategoria(categoria)
       }
-    },
-    plotOptions: { bar: { horizontal: false, borderRadius: 6, columnWidth: '45%' } },
-    dataLabels: { enabled: true },
-    xaxis: { categories },
-    yaxis: { labels: { formatter: val => Math.trunc(val) } },
-    tooltip: { y: { formatter: val => `${val} incidente${val === 1 ? '' : 's'}` } },
-    noData: { text: 'Sin datos para el período seleccionado' }
-  }), [categories, abrirDetallePorCategoria])
+    }
+  },
+  colors: [BRAND_RED],            // ← barras rojitas
+  plotOptions: {
+    bar: {
+      horizontal: false,
+      borderRadius: 6,
+      columnWidth: '45%'
+    }
+  },
+  states: {
+    normal: { filter: { type: 'none' } },
+    hover:  { filter: { type: 'lighten', value: 0.06 } },   // leve aclarado al hover
+    active: { filter: { type: 'darken',  value: 0.06 } }    // leve oscurecido al click
+  },
+  fill: {
+    type: 'gradient',
+    gradient: {
+      shade: 'light',
+      type: 'vertical',
+      shadeIntensity: 0.1,
+      gradientToColors: [BRAND_RED],
+      inverseColors: false,
+      opacityFrom: 0.95,
+      opacityTo: 0.95,
+      stops: [0, 100]
+    }
+  },
+  dataLabels: { enabled: true },
+  xaxis: { categories },
+  yaxis: { labels: { formatter: val => Math.trunc(val) } },
+  tooltip: { y: { formatter: val => `${val} incidente${val === 1 ? '' : 's'}` } },
+  noData: { text: 'Sin datos para el período seleccionado' }
+}), [categories, abrirDetallePorCategoria])
+
 
   return (
-    <div className='container-fluid py-5 consultar-incidente registrar-guardia consultar-grupo'>
+    <div className='container-fluid py-5 consultar-incidente registrar-guardia consultar-grupo reporte-incidentes'>
+
       <div className='text-center mb-4'>
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
           <div className='bg-danger p-3 rounded-circle'>
@@ -818,31 +959,56 @@ function ReporteIncidentesCore({ onVolver }) {
             <div className='col-12 col-md-3'>
               <label className='form-label text-dark fw-semibold'>Periodo</label>
               <div className='btn-group w-100' role='group'>
-                <button className={`btn ${modo === 'anual' ? 'btn-danger' : 'btn-outline-danger'} ctrl-sm`} onClick={() => setModo('anual')}>Anual</button>
-                <button className={`btn ${modo === 'mensual' ? 'btn-danger' : 'btn-outline-danger'} ctrl-sm`} onClick={() => setModo('mensual')}>Mensual</button>
-              </div>
+  <button
+    className={`btn ${modo === 'anual' ? 'btn-danger' : 'btn-outline-danger'} ctrl-lg`}
+    onClick={() => handleCambiarModo('anual')}
+  >
+    Anual
+  </button>
+  <button
+    className={`btn ${modo === 'mensual' ? 'btn-danger' : 'btn-outline-danger'} ctrl-lg`}
+    onClick={() => handleCambiarModo('mensual')}
+  >
+    Mensual
+  </button>
+</div>
+
             </div>
 
             <div className='col-6 col-md-3'>
-              <label className='form-label text-dark fw-semibold'>Año</label>
-              <select className='form-select form-select-sm' value={anio} onChange={e => setAnio(parseInt(e.target.value))}>
-                {aniosPorDefecto.map(y => (<option key={y} value={y}>{y}</option>))}
-              </select>
-            </div>
+  <label className='form-label text-dark fw-semibold'>Año</label>
+  <Select
+    classNamePrefix='rs'
+    styles={rsStyles}
+    theme={rsTheme}
+    options={aniosPorDefecto.map(y => ({ value: y, label: String(y) }))}
+    value={{ value: anio, label: String(anio) }}
+    onChange={opt => setAnio(opt.value)}
+    isSearchable={false}
+  />
+</div>
 
-            {modo === 'mensual' && (
-              <div className='col-6 col-md-3'>
-                <label className='form-label text-dark fw-semibold'>Mes</label>
-                <select className='form-select form-select-sm' value={mes01} onChange={e => setMes01(parseInt(e.target.value))}>
-                  {meses.map(m => (<option key={m.value} value={m.value}>{m.label}</option>))}
-                </select>
-              </div>
-            )}
+
+           {modo === 'mensual' && (
+  <div className='col-6 col-md-3'>
+    <label className='form-label text-dark fw-semibold'>Mes</label>
+    <Select
+      classNamePrefix='rs'
+      styles={rsStyles}
+      theme={rsTheme}
+      options={meses.map(m => ({ value: m.value, label: m.label }))}
+      value={meses.map(m => ({ value: m.value, label: m.label })).find(o => o.value === mes01) || null}
+      onChange={opt => setMes01(opt.value)}
+      isSearchable={false}
+    />
+  </div>
+)}
+
 
             <div className='col-12 col-md-3 text-md-end'>
-              <button className='btn btn-danger w-100 ctrl-sm' onClick={traerIncidentes} disabled={cargando}>
-                {cargando ? (<><Loader2 className='spin me-1' size={16} /> Generando…</>) : 'Generar'}
-              </button>
+              <button className='btn btn-danger w-100 ctrl-lg' onClick={traerIncidentes} disabled={cargando}>
+  {cargando ? (<><Loader2 className='spin me-1' size={16} /> Generando…</>) : 'Generar'}
+</button>
             </div>
           </div>
 
@@ -943,7 +1109,7 @@ function ReporteIncidentesCore({ onVolver }) {
           <div className='mt-2'>
             {cargando && (
               <div className='text-center py-4'>
-                <div className='spinner-border' role='status'><span className='visually-hidden'>Cargando…</span></div>
+                <div className='spinner-border' role='status'><span className='visually-hidden'></span></div>
                 <div className='small text-muted mt-2'>Procesando datos</div>
               </div>
             )}
@@ -974,6 +1140,7 @@ function ReporteIncidentesCore({ onVolver }) {
                           setTipoSeleccionado(null)
                           setDetalleItems([])
                           setDetalleError('')
+                          setPendingFocusDetalle(false)
                         }}
                       >
                         Volver al gráfico
@@ -983,7 +1150,7 @@ function ReporteIncidentesCore({ onVolver }) {
                     <div className='card-body'>
                       {detalleCargando && (
                         <div className='text-center py-3'>
-                          <div className='spinner-border' role='status'><span className='visualmente-hidden'>Cargando…</span></div>
+                          <div className='spinner-border' role='status'><span className='visualmente-hidden'></span></div>
                         </div>
                       )}
 
