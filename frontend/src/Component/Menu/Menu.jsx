@@ -23,6 +23,7 @@ import EstadoWhatsApp from '../WhatsApp/EstadoWhatsApp'
 
 import CalendarioGuardias from '../Guardia/CalendarioGuardias/CalendarioGuardias'
 import MisGuardias from '../Guardia/MisGuardias/MisGuardias'
+import ReporteIncidentes from '../Reportes/ReporteIncidentes/ReporteIncidentes'
 
 const Menu = ({ user, setUser }) => {
   const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
@@ -231,6 +232,10 @@ const Menu = ({ user, setUser }) => {
             titulo="Calendario de Guardias"
           />
         )
+      case 'reporte-incidentes':
+        return <ReporteIncidentes onVolver={() => setOpcionSeleccionada(null)} />
+
+
 
       default:
         // Si es bombero -> que por defecto vea el Calendario
@@ -286,16 +291,23 @@ const Menu = ({ user, setUser }) => {
       ]
     },
     {
-      id: 'collapseGuardias',
-      icono: 'bi-clock-history',
-      titulo: 'Guardias',
-      botones: isBombero
-        ? [{ texto: 'Mis guardias', accion: 'mis-guardias' }] // ← SIN “Calendario”
-        : [
+  id: 'collapseGuardias',
+  icono: 'bi-clock-history',
+  titulo: 'Guardias',
+  botones: rol === 'administrador'
+    ? [
+        { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
+        { texto: 'Consultar Grupos', accion: 'consultarGuardia' },
+        { texto: 'Mis guardias', accion: 'mis-guardias' }
+      ]
+    : isBombero
+      ? [{ texto: 'Mis guardias', accion: 'mis-guardias' }]
+      : [
           { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
           { texto: 'Consultar Grupos', accion: 'consultarGuardia' }
         ]
-    },
+}
+,
     {
       id: 'collapseWhatsApp',
       icono: 'bi-whatsapp',
@@ -304,7 +316,16 @@ const Menu = ({ user, setUser }) => {
         { texto: 'Dashboard Respuestas', accion: 'dashboard-respuestas' },
         { texto: 'Estado WhatsApp', accion: 'estado-whatsapp' }
       ]
-    }
+    },
+    {
+  id: 'collapseReportes',
+  icono: 'bi-bar-chart-line',
+  titulo: 'Reportes',
+  botones: [
+    { texto: 'Incidentes por tipo', accion: 'reporte-incidentes' }
+  ]
+},
+
   ]
 
   // Filtrar secciones sin botones visibles para este rol

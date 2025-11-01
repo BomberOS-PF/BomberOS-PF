@@ -1,5 +1,5 @@
 /* ================================
-   TARJETA MINI (flotante)
+  TARJETA MINI (flotante)
 ================================ */
 .cal-mini-card {
   position: fixed;
@@ -30,7 +30,7 @@
 }
 
 /* ================================
-   AJUSTES DE FULLCALENDAR
+  AJUSTES DE FULLCALENDAR
 ================================ */
 .cal-mini-card .fc a.fc-daygrid-day-number,
 .cal-mini-card .fc .fc-daygrid-day-number,
@@ -52,7 +52,7 @@
 .fc .fc-daygrid-day-frame { position: relative }
 
 /* ================================
-   OVERLAYS / BADGE HOY
+  OVERLAYS / BADGE HOY
 ================================ */
 .fc-guard-overlay {
   position: absolute;
@@ -86,7 +86,7 @@
 }
 
 /* ================================
-   TOOLTIP FLOTANTE
+  TOOLTIP FLOTANTE
 ================================ */
 .tooltip-dinamico {
   position: fixed;
@@ -103,7 +103,7 @@
 }
 
 /* ================================
-   BOTONERA DE MODO (Mis/Grupos)
+  BOTONERA DE MODO (Mis/Grupos)
 ================================ */
 .calendar-mode-switch .btn {
   line-height: 1.1;
@@ -122,7 +122,7 @@
 }
 
 /* ================================
-   VERSION EN PÁGINA (no flotante)
+  VERSION EN PÁGINA (no flotante)
 ================================ */
 .cal-page-card {
   position: static;
@@ -147,7 +147,7 @@
 }
 
 /* ================================
-   BANDAS POR GRUPO (si las usás)
+  BANDAS POR GRUPO (si las usás)
 ================================ */
 .band-grupo {
   width: 100%;
@@ -162,7 +162,7 @@
 }
 
 /* ================================
-   RESPONSIVE
+  RESPONSIVE
 ================================ */
 @media (max-width: 576px) {
   /* Menor alto mínimo en mobile */
@@ -263,3 +263,141 @@
 .offcanvas-backdrop { z-index: 1040 !important }
 .cal-mini-card { z-index: 1030 !important; }
 body.offcanvas-open .tooltip-dinamico { z-index: 1031 !important; }
+
+/* ===== Centrado duro en mobile, aplicado al wrapper real del JSX ===== */
+@media (max-width: 576px){
+  .calendar-mobile-center{
+    display: grid;
+    justify-items: center;          /* centra horizontalmente hijos */
+    width: 100%;
+  }
+
+  /* El hijo directo (tu calendario) toma un ancho simétrico */
+  .calendar-mobile-center > *{
+    width: min(100%, 392px);        /* 412px viewport → ~10px margen a ambos lados */
+    margin: 0 auto;
+  }
+
+  /* La raíz de FullCalendar ocupa todo el ancho del bloque centrado */
+  .calendar-mobile-center .fc{
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  /* Neutralizamos “empujes” internos que desalinean */
+  .calendar-mobile-center .fc .fc-scrollgrid,
+  .calendar-mobile-center .fc .fc-scrollgrid-sync-table,
+  .calendar-mobile-center .fc .fc-view-harness,
+  .calendar-mobile-center .fc .fc-scroller-harness,
+  .calendar-mobile-center .fc .fc-scroller,
+  .calendar-mobile-center .fc .fc-timegrid,
+  .calendar-mobile-center .fc .fc-daygrid{
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Quitar bordes laterales que “simulan” margen desigual */
+  .calendar-mobile-center .fc .fc-scrollgrid{
+    border-left-width: 0 !important;
+    border-right-width: 0 !important;
+  }
+
+  /* Tabla sin expansión rara */
+  .calendar-mobile-center .fc table{
+    table-layout: fixed !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  /* Header centrado */
+  .calendar-mobile-center .fc .fc-header-toolbar{
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    text-align: center !important;
+  }
+  .calendar-mobile-center .fc .fc-toolbar-chunk{
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+  }
+  .calendar-mobile-center .fc .fc-toolbar-title{
+    width: 100% !important;
+    text-align: center !important;
+    font-size: 1rem !important;
+  }
+}
+
+/* Por las dudas, sin scroll horizontal global */
+html, body { overflow-x: hidden; }
+
+/* ===== Centro exacto en mobile (412×915 incl.) ===== */
+@media (max-width: 576px){
+  /* El contenedor toma todo el ancho y se centra visualmente */
+  .fc-mobile-wrap{
+    width: 100%;
+    max-width: 392px;          /* 412 - 2*10px de margen visual */
+    margin-inline: auto;       /* centrado perfecto */
+    padding-inline: 10px;      /* márgenes simétricos */
+    box-sizing: border-box;
+  }
+
+  /* FullCalendar ocupa el 100% del bloque centrado */
+  .fc-mobile-wrap .fc{
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  /* Neutraliza empujes internos de FullCalendar que rompen el centrado */
+  .fc-mobile-wrap .fc .fc-scrollgrid,
+  .fc-mobile-wrap .fc .fc-scrollgrid-sync-table,
+  .fc-mobile-wrap .fc .fc-view-harness,
+  .fc-mobile-wrap .fc .fc-scroller-harness,
+  .fc-mobile-wrap .fc .fc-scroller,
+  .fc-mobile-wrap .fc .fc-timegrid,
+  .fc-mobile-wrap .fc .fc-daygrid{
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden;
+  }
+
+  /* Quita “margen falso” por bordes laterales */
+  .fc-mobile-wrap .fc .fc-scrollgrid{
+    border-left-width: 0 !important;
+    border-right-width: 0 !important;
+  }
+
+  /* Tabla sin expansión rara */
+  .fc-mobile-wrap .fc table{
+    table-layout: fixed !important;
+    width: 100% !important;
+    margin-inline: auto !important;
+  }
+
+  /* Header centrado */
+  .fc-mobile-wrap .fc .fc-header-toolbar{
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    text-align: center !important;
+  }
+  .fc-mobile-wrap .fc .fc-toolbar-chunk{
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+  }
+  .fc-mobile-wrap .fc .fc-toolbar-title{
+    width: 100% !important;
+    text-align: center !important;
+    font-size: 1rem !important;
+  }
+}
+
+/* Seguridad global contra desborde lateral */
+html, body{ overflow-x: hidden; }
