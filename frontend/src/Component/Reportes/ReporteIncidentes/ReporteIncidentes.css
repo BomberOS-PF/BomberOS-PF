@@ -1,0 +1,156 @@
+.reporte-incidentes .filtros-reporte .btn-group .btn {
+  min-width: 96px
+}
+
+.reporte-incidentes .apexcharts-tooltip {
+  text-transform: none
+}
+
+.spin {
+  animation: spin 1s linear infinite
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg) }
+}
+
+@media (max-width: 576px) {
+  .reporte-incidentes .filtros-reporte .btn-group {
+    width: 100%
+  }
+}
+
+/* ReporteIncidentes.css */
+.apexcharts-series path,
+.apexcharts-series rect {
+  cursor: pointer;
+}
+
+/* Igualar altura de botones a .form-select-sm */
+.ctrl-sm.btn {
+  padding: .25rem .5rem;          /* como .form-select-sm */
+  font-size: .875rem;             /* como .form-select-sm */
+  line-height: 1.5;               /* como .form-select-sm */
+  border-radius: .2rem;           /* como .form-select-sm */
+  height: calc(1.5em + .5rem + 2px); /* altura efectiva del select sm */
+}
+
+/* Asegura consistencia en grupos */
+.btn-group .ctrl-sm.btn {
+  height: calc(1.5em + .5rem + 2px);
+}
+
+/* Evita cortes del dropdown de exportación */
+.container-fluid, .card, .filtros-reporte { overflow: visible }
+
+.apexcharts-toolbar,
+.apexcharts-menu,
+.apexcharts-menu-icon {
+  display: none !important;
+}
+
+/* ====== Select Año/Mes en ReporteIncidentes: hover/focus en rojo ====== */
+.filtros-reporte .form-select {
+  border-color: #dee2e6; /* base */
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+/* Hover (al pasar el mouse) */
+.filtros-reporte .form-select:hover {
+  border-color: #d52b1e; /* rojo BomberOS */
+}
+
+/* Focus (cuando el select está activo) */
+.filtros-reporte .form-select:focus {
+  border-color: #d52b1e !important;
+  box-shadow: 0 0 0 .25rem rgba(213, 43, 30, .25) !important; /* halo rojo */
+}
+
+/* También cubrimos :focus-visible por si el navegador lo usa */
+.filtros-reporte .form-select:focus-visible {
+  border-color: #d52b1e !important;
+  box-shadow: 0 0 0 .25rem rgba(213, 43, 30, .25) !important;
+}
+
+/* ====== Select Año/Mes: hover/focus en rojo (override Bootstrap) ====== */
+.filtros-reporte select.form-select {
+  /* Pisar variables de Bootstrap para el focus del select */
+  --bs-form-select-focus-border-color: #d52b1e;
+  --bs-form-select-focus-box-shadow: 0 0 0 .25rem rgba(213, 43, 30, .25);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+/* Hover */
+.filtros-reporte select.form-select:hover {
+  border-color: #d52b1e !important;
+}
+
+/* Focus (todas las variantes) */
+.filtros-reporte select.form-select:focus,
+.filtros-reporte select.form-select:focus:hover,
+.filtros-reporte select.form-select:focus-visible {
+  border-color: #d52b1e !important;
+  box-shadow: 0 0 0 .25rem rgba(213, 43, 30, .25) !important;
+  outline: none !important;
+}
+
+/* Estados de validación que Bootstrap colorea (por las dudas) */
+.filtros-reporte .was-validated select.form-select:valid:focus,
+.filtros-reporte select.form-select.is-valid:focus,
+.filtros-reporte .was-validated select.form-select:invalid:focus,
+.filtros-reporte select.form-select.is-invalid:focus {
+  border-color: #d52b1e !important;
+  box-shadow: 0 0 0 .25rem rgba(213, 43, 30, .25) !important;
+}
+
+/* ====== Scope Bootstrap primary a ROJO solo dentro del reporte ====== */
+.reporte-incidentes {
+  --bs-primary: #d52b1e;
+  --bs-primary-rgb: 213, 43, 30;
+}
+
+/* Select Año/Mes – hover y focus en rojo usando las vars de arriba */
+.reporte-incidentes .filtros-reporte .form-select,
+.reporte-incidentes .filtros-reporte .form-select.form-select-sm {
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.reporte-incidentes .filtros-reporte .form-select:hover,
+.reporte-incidentes .filtros-reporte .form-select.form-select-sm:hover {
+  border-color: var(--bs-primary) !important;
+}
+
+.reporte-incidentes .filtros-reporte .form-select:focus,
+.reporte-incidentes .filtros-reporte .form-select.form-select-sm:focus,
+.reporte-incidentes .filtros-reporte .form-select:focus-visible,
+.reporte-incidentes .filtros-reporte .form-select.form-select-sm:focus-visible {
+  border-color: var(--bs-primary) !important;
+  box-shadow: 0 0 0 .25rem rgba(var(--bs-primary-rgb), .25) !important;
+  outline: none !important;
+}
+
+/* Firefox: elimina anillo azul del navegador */
+.reporte-incidentes .filtros-reporte .form-select:-moz-focusring,
+.reporte-incidentes .filtros-reporte .form-select.form-select-sm:-moz-focusring {
+  outline: none !important;
+}
+
+/* ====== Tamaño unificado con react-select (44px) ====== */
+.reporte-incidentes .ctrl-lg.btn {
+  padding: .5rem .75rem;
+  font-size: .95rem;
+  line-height: 1.5;
+  border-radius: .375rem;
+  height: 44px; /* ← igual al RS_CONTROL_H */
+}
+
+/* Asegura misma altura en grupos */
+.reporte-incidentes .btn-group .ctrl-lg.btn {
+  height: 44px;
+}
+
+/* Fuerza color de barras dentro del reporte si algún estilo externo pisa opciones */
+.reporte-incidentes .apexcharts-bar-series .apexcharts-series path {
+  fill: #d52b1e !important;
+  stroke: #d52b1e !important;
+}
