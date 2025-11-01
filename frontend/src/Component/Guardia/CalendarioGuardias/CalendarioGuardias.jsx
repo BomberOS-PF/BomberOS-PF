@@ -39,6 +39,7 @@ const CalendarioGuardias = ({ dniUsuario }) => {
         <i className={`bi ${expandido ? 'bi-chevron-down' : 'bi-chevron-up'}`} />
       </button>
     </div>
+
   )
 
   return (
