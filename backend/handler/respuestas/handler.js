@@ -115,14 +115,14 @@ export class RespuestaIncidenteHandler {
         acc.totalIncidentes++
         acc.totalRespuestas += incidente.totalRespuestas
         acc.totalConfirmados += incidente.confirmados
-        acc.totalDeclinados += incidente.declinados
+        acc.totalRechazados += incidente.rechazados
         acc.totalDemorados += incidente.demorados || 0
         return acc
       }, {
         totalIncidentes: 0,
         totalRespuestas: 0,
         totalConfirmados: 0,
-        totalDeclinados: 0,
+        totalRechazados: 0,
         totalDemorados: 0
       })
       

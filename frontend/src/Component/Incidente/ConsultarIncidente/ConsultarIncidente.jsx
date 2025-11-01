@@ -48,8 +48,23 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
   // Incidente pendiente de completar (informativo)
   const [incidentePendiente, setIncidentePendiente] = useState(null)
 
-  const getIncidentTypeColor = (tipoDescripcion) => {
-    const colores = {
+  // ✅ Función mejorada: usa IDs en vez de nombres para evitar problemas de codificación
+  const getIncidentTypeColor = (idTipoIncidente, tipoDescripcion) => {
+    // Mapeo por ID
+    const coloresPorId = {
+      1: 'bg-danger',      // Accidente de tránsito
+      2: 'bg-info',        // Factor climático
+      3: 'bg-warning',     // Incendio estructural
+      4: 'bg-success',     // Incendio forestal
+      5: 'bg-secondary',   // Material peligroso
+      6: 'bg-primary'      // Rescate
+    }
+
+    if (idTipoIncidente && coloresPorId[idTipoIncidente]) {
+      return coloresPorId[idTipoIncidente]
+    }
+
+    const coloresPorNombre = {
       'Accidente de tránsito': 'bg-danger',
       'Rescate': 'bg-primary',
       'Incendio forestal': 'bg-success',
@@ -57,7 +72,8 @@ const ConsultarIncidente = ({ onVolverMenu }) => {
       'Factor climático': 'bg-info',
       'Material peligroso': 'bg-secondary'
     }
-    return colores[tipoDescripcion] || 'bg-dark'
+
+    return coloresPorNombre[tipoDescripcion] || 'bg-dark'
   }
 
   const handleChange = (e) => {
@@ -696,7 +712,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                                 <td className='border-end px-3 text-center fw-bold' data-label='ID'>{it.idIncidente}</td>
                                 <td className='border-end px-3' data-label='Fecha'>{it.fecha}</td>
                                 <td className='border-end px-3' data-label='Tipo'>
-                                  <span className={`badge ${getIncidentTypeColor(it.tipoDescripcion)}`}>
+                                  <span className={`badge ${getIncidentTypeColor(it.idTipoIncidente, it.tipoDescripcion)}`}>
                                     {it.tipoDescripcion}
                                   </span>
                                 </td>

@@ -26,7 +26,7 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
       // Mapear campos específicos del rescate
       lugar: datosPrevios.lugar, // Lugar específico del rescate (dropdown)
       otroLugar: datosPrevios.otroLugar,
-      detalle: datosPrevios.detalle || datosPrevios.descripcion, // Mapear descripcion del backend a detalle del frontend
+      detalle: datosPrevios.detalle || '',
       damnificados: datosPrevios.damnificados || [],
       // Mantener el lugar del incidente base por separado
       lugarIncidente: datosPrevios.descripcion // Lugar del incidente base (solo para mostrar)
@@ -68,7 +68,7 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
         // Mapear campos específicos del rescate
         lugar: datosPrevios.lugar,
         otroLugar: datosPrevios.otroLugar,
-        detalle: datosPrevios.detalle || datosPrevios.descripcion,
+        detalle: datosPrevios.detalle || '',
         damnificados: datosPrevios.damnificados || []
       }
 
