@@ -1,5 +1,5 @@
 /* ================================
-   TARJETA MINI (flotante)
+  TARJETA MINI (flotante)
 ================================ */
 .cal-mini-card {
   position: fixed;
@@ -30,7 +30,7 @@
 }
 
 /* ================================
-   AJUSTES DE FULLCALENDAR
+  AJUSTES DE FULLCALENDAR
 ================================ */
 .cal-mini-card .fc a.fc-daygrid-day-number,
 .cal-mini-card .fc .fc-daygrid-day-number,
@@ -52,7 +52,7 @@
 .fc .fc-daygrid-day-frame { position: relative }
 
 /* ================================
-   OVERLAYS / BADGE HOY
+  OVERLAYS / BADGE HOY
 ================================ */
 .fc-guard-overlay {
   position: absolute;
@@ -86,7 +86,7 @@
 }
 
 /* ================================
-   TOOLTIP FLOTANTE
+  TOOLTIP FLOTANTE
 ================================ */
 .tooltip-dinamico {
   position: fixed;
@@ -103,7 +103,7 @@
 }
 
 /* ================================
-   BOTONERA DE MODO (Mis/Grupos)
+  BOTONERA DE MODO (Mis/Grupos)
 ================================ */
 .calendar-mode-switch .btn {
   line-height: 1.1;
@@ -122,7 +122,7 @@
 }
 
 /* ================================
-   VERSION EN PÁGINA (no flotante)
+  VERSION EN PÁGINA (no flotante)
 ================================ */
 .cal-page-card {
   position: static;
@@ -147,7 +147,7 @@
 }
 
 /* ================================
-   BANDAS POR GRUPO (si las usás)
+  BANDAS POR GRUPO (si las usás)
 ================================ */
 .band-grupo {
   width: 100%;
@@ -162,7 +162,7 @@
 }
 
 /* ================================
-   RESPONSIVE
+  RESPONSIVE
 ================================ */
 @media (max-width: 576px) {
   /* Menor alto mínimo en mobile */
