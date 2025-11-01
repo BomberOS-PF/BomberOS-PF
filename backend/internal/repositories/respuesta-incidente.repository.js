@@ -174,7 +174,7 @@ export class MySQLRespuestaIncidenteRepository {
         SELECT 
           COUNT(*) as total_respuestas,
           SUM(CASE WHEN ca.asistio = 1 THEN 1 ELSE 0 END) as confirmados,
-          SUM(CASE WHEN ca.asistio = 0 THEN 1 ELSE 0 END) as declinados,
+          SUM(CASE WHEN ca.asistio = 0 THEN 1 ELSE 0 END) as rechazados,
           SUM(CASE WHEN ca.asistio IS NULL AND ca.respuesta_whatsapp IS NOT NULL THEN 1 ELSE 0 END) as pendientes,
           SUM(CASE WHEN ca.respuesta_whatsapp IS NOT NULL THEN 1 ELSE 0 END) as respondieron_whatsapp,
           MIN(ca.fecha_whatsapp) as primera_respuesta,
@@ -191,7 +191,7 @@ export class MySQLRespuestaIncidenteRepository {
         idIncidente: parseInt(idIncidente),
         totalRespuestas: parseInt(stats.total_respuestas) || 0,
         confirmados: parseInt(stats.confirmados) || 0,
-        declinados: parseInt(stats.declinados) || 0,
+        rechazados: parseInt(stats.rechazados) || 0,
         pendientes: parseInt(stats.pendientes) || 0,
         respondieronWhatsapp: parseInt(stats.respondieron_whatsapp) || 0,
         primeraRespuesta: stats.primera_respuesta,
@@ -223,7 +223,7 @@ export class MySQLRespuestaIncidenteRepository {
           ti.nombre as nombre_tipo_incidente,
           COUNT(ca.idConfirmacion) as total_respuestas,
           SUM(CASE WHEN ca.asistio = 1 THEN 1 ELSE 0 END) as confirmados,
-          SUM(CASE WHEN ca.asistio = 0 THEN 1 ELSE 0 END) as declinados,
+          SUM(CASE WHEN ca.asistio = 0 THEN 1 ELSE 0 END) as rechazados,
           SUM(CASE WHEN ca.asistio IS NULL AND ca.respuesta_whatsapp IS NOT NULL THEN 1 ELSE 0 END) as pendientes,
           SUM(CASE WHEN ca.respuesta_whatsapp IS NOT NULL THEN 1 ELSE 0 END) as respondieron_whatsapp
         FROM ${this.incidenteTable} i
@@ -245,7 +245,7 @@ export class MySQLRespuestaIncidenteRepository {
         fecha: row.fecha,
         totalRespuestas: parseInt(row.total_respuestas) || 0,
         confirmados: parseInt(row.confirmados) || 0,
-        declinados: parseInt(row.declinados) || 0,
+        rechazados: parseInt(row.rechazados) || 0,
         pendientes: parseInt(row.pendientes) || 0,
         respondieronWhatsapp: parseInt(row.respondieron_whatsapp) || 0
       }))

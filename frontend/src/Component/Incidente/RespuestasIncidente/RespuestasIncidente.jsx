@@ -114,8 +114,8 @@ const RespuestasIncidente = ({ idIncidente, onVolver }) => {
           <div className="stat-card declinado">
             <div className="stat-icon">❌</div>
             <div className="stat-content">
-              <h3>{estadisticas.declinados}</h3>
-              <p>Declinados</p>
+              <h3>{estadisticas.rechazados}</h3>
+              <p>Rechazados</p>
             </div>
           </div>
 

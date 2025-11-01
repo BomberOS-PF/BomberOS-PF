@@ -21,7 +21,7 @@ const TendenciasGrafico = ({ incidentes }) => {
       const stats = incidentesDia.reduce((acc, inc) => {
         acc.incidentes++
         acc.confirmados += inc.confirmados || 0
-        acc.declinados += inc.declinados || 0
+        acc.rechazados += inc.rechazados || 0
         acc.pendientes += inc.pendientes || 0
         acc.total += inc.totalRespuestas || 0
         return acc
@@ -29,7 +29,7 @@ const TendenciasGrafico = ({ incidentes }) => {
         fecha: fecha,
         incidentes: 0,
         confirmados: 0,
-        declinados: 0,
+        rechazados: 0,
         pendientes: 0,
         total: 0
       })
@@ -109,13 +109,13 @@ const TendenciasGrafico = ({ incidentes }) => {
                         title={`${dia.confirmados} confirmado${dia.confirmados !== 1 ? 's' : ''}`}
                       />
                     )}
-                    {dia.declinados > 0 && (
+                    {dia.rechazados > 0 && (
                       <div 
                         className="barra-segmento declinado"
                         style={{ 
-                          height: `${(dia.declinados / dia.total) * 100}%`
+                          height: `${(dia.rechazados / dia.total) * 100}%`
                         }}
-                        title={`${dia.declinados} declinado${dia.declinados !== 1 ? 's' : ''}`}
+                        title={`${dia.rechazados} declinado${dia.rechazados !== 1 ? 's' : ''}`}
                       />
                     )}
                     {dia.pendientes > 0 && (
@@ -150,7 +150,7 @@ const TendenciasGrafico = ({ incidentes }) => {
         </div>
         <div className="leyenda-item">
           <span className="leyenda-color declinado"></span>
-          <span>Declinados</span>
+          <span>Rechazados</span>
         </div>
         <div className="leyenda-item">
           <span className="leyenda-color pendiente"></span>
