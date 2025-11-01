@@ -1,0 +1,266 @@
+.tendencias-grafico {
+  background: rgba(42, 42, 42, 0.9);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 30px;
+  border: 1px solid #555;
+  backdrop-filter: blur(10px);
+}
+
+.tendencias-grafico h3 {
+  color: #ffffff;
+  margin: 0 0 24px 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.grafico-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 32px;
+  margin-bottom: 24px;
+}
+
+.grafico-seccion h4 {
+  color: #e0e0e0;
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.grafico-barras {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  height: 280px; /* Aumentado para que los números quepan */
+  padding: 20px;
+  background: rgba(28, 28, 28, 0.6);
+  border-radius: 8px;
+  gap: 8px;
+}
+
+.barra-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 80px;
+}
+
+.barra-wrapper {
+  width: 100%;
+  height: 230px; /* Aumentado para dar espacio al número arriba */
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: relative;
+  padding-top: 30px; /* Espacio para el número */
+}
+
+.barra {
+  width: 100%;
+  background: linear-gradient(180deg, #f44336, #c62828);
+  border-radius: 6px 6px 0 0;
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 0;
+  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+}
+
+.barra:hover {
+  transform: scaleY(1.05);
+  box-shadow: 0 6px 20px rgba(244, 67, 54, 0.6);
+}
+
+.barra.incidentes-barra {
+  background: linear-gradient(180deg, #2196f3, #1565c0);
+  box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
+}
+
+.barra.incidentes-barra:hover {
+  box-shadow: 0 6px 20px rgba(33, 150, 243, 0.6);
+}
+
+.barra-stack {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse;
+  overflow: hidden;
+  min-height: 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.barra-stack:hover {
+  transform: scaleY(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.barra-segmento {
+  width: 100%;
+  transition: opacity 0.2s;
+}
+
+.barra-segmento:hover {
+  opacity: 0.8;
+}
+
+.barra-segmento.confirmado {
+  background: linear-gradient(180deg, #28a745, #1e7e34);
+}
+
+.barra-segmento.declinado {
+  background: linear-gradient(180deg, #dc3545, #a71d2a);
+}
+
+.barra-segmento.pendiente {
+  background: linear-gradient(180deg, #ffc107, #d39e00);
+}
+
+.barra-valor {
+  color: white;
+  font-size: 0.85rem;
+  font-weight: bold;
+  padding: 4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  max-width: 70px; /* Evitar que números largos se salgan */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.barra-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.barra-label .dia {
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.barra-label .fecha {
+  color: #b0b0b0;
+  font-size: 0.75rem;
+}
+
+/* Leyenda */
+.grafico-leyenda {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding: 16px;
+  background: rgba(28, 28, 28, 0.6);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.leyenda-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e0e0e0;
+  font-size: 0.9rem;
+}
+
+.leyenda-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+}
+
+.leyenda-color.confirmado {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.leyenda-color.declinado {
+  background: linear-gradient(135deg, #dc3545, #a71d2a);
+}
+
+.leyenda-color.pendiente {
+  background: linear-gradient(135deg, #ffc107, #d39e00);
+}
+
+/* Estadísticas de Tendencias */
+.tendencias-stats {
+  display: flex;
+  justify-content: space-around;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(28, 28, 28, 0.6);
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.stat-tendencia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.stat-label {
+  color: #b0b0b0;
+  font-size: 0.85rem;
+}
+
+.stat-value {
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .grafico-container {
+    grid-template-columns: 1fr;
+  }
+
+  .grafico-barras {
+    height: 200px;
+    padding: 15px 10px;
+  }
+
+  .barra-wrapper {
+    height: 150px;
+  }
+
+  .barra-container {
+    max-width: 50px;
+  }
+
+  .barra-label .dia {
+    font-size: 0.75rem;
+  }
+
+  .barra-label .fecha {
+    font-size: 0.65rem;
+  }
+
+  .barra-valor {
+    font-size: 0.75rem;
+  }
+
+  .grafico-leyenda {
+    gap: 12px;
+  }
+
+  .tendencias-stats {
+    flex-direction: column;
+  }
+}
+
