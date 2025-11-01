@@ -489,8 +489,7 @@ export function setupRoutes(app, container) {
   app.get('/api/lugares-rescate/:id', (req, res) => obtenerLugarRescatePorId(req, res, container.lugarRescateService))
 
   // ---------- Tipos de incidente ----------
-  app.get('/api/tipos-incidente', (req, res) => tipoIncidenteHandler.listarTiposIncidente(req, res))
-  app.get('/api/tipos-incidente/:id', (req, res) => tipoIncidenteHandler.obtenerTipoIncidentePorId(req, res))
+  // (Eliminado: duplicado con líneas 567-583 que tienen mejor manejo de errores)
 
   // ---------- Localizaciones ----------
   app.get('/api/localizaciones', (req, res) => localizacionHandler.listarLocalizaciones(req, res))

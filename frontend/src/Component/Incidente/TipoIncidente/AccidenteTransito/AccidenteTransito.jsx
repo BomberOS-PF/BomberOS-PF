@@ -17,7 +17,7 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
     const datosPreviosMapeados = {
       ...datosPrevios,
       // Mapear campos específicos del accidente de tránsito
-      detalle: datosPrevios.detalle || datosPrevios.descripcion, // Mapear descripcion del backend a detalle del frontend
+      detalle: datosPrevios.detalle || '',
       causaAccidente: datosPrevios.causaAccidente || datosPrevios.idCausaAccidente,
       vehiculos: datosPrevios.vehiculos || [],
       damnificados: datosPrevios.damnificados || []
@@ -46,7 +46,7 @@ const AccidenteTransito = ({ datosPrevios = {}, onFinalizar }) => {
       const datosMapeados = {
         ...datosPrevios,
         // Mapear campos específicos del accidente de tránsito
-        detalle: datosPrevios.detalle || datosPrevios.descripcion, // Mapear descripcion del backend a detalle del frontend
+        detalle: datosPrevios.detalle || '',
         causaAccidente: datosPrevios.causaAccidente || datosPrevios.idCausaAccidente,
         vehiculos: datosPrevios.vehiculos || [],
         damnificados: datosPrevios.damnificados || []
