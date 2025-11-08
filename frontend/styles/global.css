@@ -1355,7 +1355,7 @@ body {
 /* Contenedor del trash: no se estira y empuja a la derecha */
 .actions-inline{
   display:flex !important;
-  justify-content:center !important;
+  justify-content:flex-end !important;
   width:auto !important;
   background:transparent !important;
   border:0 !important;
