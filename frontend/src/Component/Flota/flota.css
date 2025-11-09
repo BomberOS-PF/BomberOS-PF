@@ -1,0 +1,70 @@
+/* frontend/src/Component/Flota/flota.css */
+
+.flota-card {
+  background: rgba(20, 20, 20, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35)
+}
+
+.flota-toolbar .form-label {
+  margin-bottom: .35rem
+}
+
+.table-dark-subtle th {
+  background: rgba(255,255,255,.04)
+}
+
+.table tbody tr:hover {
+  background: rgba(255,255,255,.03)
+}
+
+.btn-outline-light {
+  border-color: rgba(255,255,255,.25)
+}
+
+.badge {
+  border-radius: 999px
+}
+/* Ajustes visuales del switch en la toolbar */
+.flota-toolbar .form-check-input {
+  width: 2.6rem;
+  height: 1.35rem;
+}
+.flota-toolbar .form-check-label {
+  margin-bottom: 1px; /* lo centra un pelín verticalmente */
+}
+/* Toolbar de filtros (alineación y espacios) */
+.flota-toolbar {
+  gap: 12px;
+}
+
+/* Switch en línea y centrado vertical */
+.switch-inline {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+/* Tamaño y alineación del toggle */
+.switch-inline .form-check-input {
+  width: 2.4rem;
+  height: 1.25rem;
+  margin-top: 0;            /* quita el desfasaje vertical */
+  vertical-align: middle;   /* centra con el label */
+  cursor: pointer;
+}
+
+/* Ajuste fino del label para que no “salte” */
+.switch-inline .form-check-label {
+  line-height: 1;
+  margin-top: 1px;          /* microajuste visual */
+  user-select: none;
+}
+
+/* En mobile, mantené todo prolijo */
+@media (max-width: 991.98px) {
+  .flota-toolbar {
+    justify-content: space-between;
+  }
+}
