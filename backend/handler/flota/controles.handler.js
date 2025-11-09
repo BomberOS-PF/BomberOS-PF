@@ -53,15 +53,22 @@ definicion = async (_req, res) => {
         }
     }
 
-    actualizarHeader = async (req, res) => {
-        try {
-            const ctrl = await this.controlService.actualizarHeader(req.params.id, req.body)
-            return res.json(ctrl)
-        } catch (e) {
-            this.logger.error('actualizarHeader control', e)
-            return res.status(500).json({ error: 'Error interno' })
-        }
+    // handlers/flota/controles.handler.js
+actualizarHeader = async (req, res) => {
+  try {
+    // si viene finalizado:1 -> usar camino especial
+    if (req.body?.finalizado) {
+      const r = await this.controlService.finalizar(req.params.id, req.body)
+      return res.json(r)
     }
+    const ctrl = await this.controlService.actualizarHeader(req.params.id, req.body)
+    return res.json(ctrl)
+  } catch (e) {
+    this.logger.error('actualizarHeader control', e)
+    return res.status(500).json({ error: 'Error interno' })
+  }
+}
+
 
     upsertRespuestas = async (req, res) => {
         try {

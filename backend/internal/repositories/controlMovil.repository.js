@@ -17,6 +17,12 @@ export class ControlMovilRepository {
       finalizado: 0
     }
   }
+  // repository
+async actualizarEstadoMovil(idMovil, estado) {
+  const conn = await getConnection()
+  await conn.execute(`UPDATE movil SET estado=? WHERE idMovil=?`, [estado, idMovil])
+}
+
 
 
   async obtenerControlCompleto(idControl) {

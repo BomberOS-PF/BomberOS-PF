@@ -68,3 +68,19 @@
     justify-content: space-between;
   }
 }
+
+/* Colorear etiquetas de los ítems del control */
+.control-movil .form-label {
+  color: #000 !important;
+  font-weight: 600; /* opcional */
+}
+
+/* Si querés también el título de cada tarjeta en negro */
+.control-movil .card-header {
+  color: #000 !important;
+}
+
+/* Si tu card está sobre fondo oscuro y querés contraste extra */
+.control-movil .card {
+  background-color: #ffffff;      /* opcional */
+}

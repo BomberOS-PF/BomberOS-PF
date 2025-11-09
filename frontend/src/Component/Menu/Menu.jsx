@@ -239,9 +239,14 @@ const Menu = ({ user, setUser }) => {
         )
       case 'reporte-incidentes':
         return <ReporteIncidentes onVolver={() => setOpcionSeleccionada(null)} />
+       case 'flota-moviles':
+      return <ListarMoviles key="flota-moviles" />
 
       /* ==== NUEVO: Flota ==== */
-      case 'flota-nuevo-control':case 'flota-control': return <ControlesMain />
+          case 'flota-nuevo-control':
+      return <ControlesMain key="flota-nuevo" initialView="new" />
+    case 'flota-control':
+      return <ControlesMain key="flota-control" initialView="control" />
       
 
       default:

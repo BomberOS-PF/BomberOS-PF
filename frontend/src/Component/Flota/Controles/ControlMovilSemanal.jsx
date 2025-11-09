@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiRequest } from '../../../config/api'
 import 'bootstrap/dist/css/bootstrap.min.css'
+import Swal from 'sweetalert2'
+import 'sweetalert2/dist/sweetalert2.min.css'
 
 const OPC_OK_NO = ['OK', 'NO OK']
 const OPC_OK_NO_INEX = ['OK', 'NO OK', 'INEXISTENTE']
@@ -55,18 +57,22 @@ export default function ControlMovilSemanal({ controlId, onFinalizado, onVolver 
     return []
   }
 
-  const enqueueSave = payload => {
-    if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(async () => {
-      setSaving(true)
-      try {
-        // 👇 PUT con payload (sin armar headers ni stringify)
-        await apiRequest('PUT', `/api/flota/controles/${controlId}/respuestas`, { respuestas: payload })
-      } finally {
-        setSaving(false)
-      }
-    }, 300)
-  }
+const enqueueSave = payload => {
+  if (saveTimer.current) clearTimeout(saveTimer.current)
+  saveTimer.current = setTimeout(async () => {
+    setSaving(true)
+    try {
+      const r = await fetch(`/api/flota/controles/${controlId}/respuestas`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ respuestas: payload })
+      })
+      if (!r.ok) throw new Error(`${r.status} ${r.statusText}`)
+    } finally {
+      setSaving(false)
+    }
+  }, 300)
+}
 
   const setValue = (clave, valorTexto) => {
     setValues(v => {
@@ -76,18 +82,48 @@ export default function ControlMovilSemanal({ controlId, onFinalizado, onVolver 
     })
   }
 
-  const finalizar = async () => {
-    await apiRequest('PUT', `/api/flota/controles/${controlId}`, {
-      finalizado: 1,
-      observaciones: values.observaciones || ''
+const finalizar = async () => {
+  const { isConfirmed } = await Swal.fire({
+    title: '¿Finalizar control?',
+    text: 'Se guardarán las observaciones y se cerrará el control.',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, finalizar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#dc3545'
+  })
+  if (!isConfirmed) return
+
+  try {
+    const r = await fetch(`/api/flota/controles/${controlId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ finalizado: 1, observaciones: values.observaciones || '' })
     })
+    if (!r.ok) throw new Error(`${r.status} ${r.statusText}`)
+
+    await Swal.fire({
+      title: 'Control finalizado',
+      text: 'El control se cerró correctamente.',
+      icon: 'success',
+      timer: 1500,
+      showConfirmButton: false
+    })
+
     onFinalizado && onFinalizado()
+  } catch (e) {
+    await Swal.fire({
+      title: 'No se pudo finalizar',
+      text: 'Revisá la conexión o intentá nuevamente.',
+      icon: 'error'
+    })
   }
+}
 
   if (loading) return <div className='container py-3'>Cargando control…</div>
 
   return (
-    <div className='container py-3'>
+    <div className='container py-3 control-movil'>
       <div className='d-flex align-items-center justify-content-between mb-3'>
         <h4 className='mb-0'>Control – {header?.vehiculo?.interno || '#'}</h4>
         <div className='small text-muted'>{saving ? 'Guardando…' : 'Cambios guardados'}</div>
