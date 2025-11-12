@@ -11,7 +11,7 @@ import Select from 'react-select'
 
 const PAGE_SIZE_DEFAULT = 10
 
-export default function ListarMoviles() {
+export default function ListarMoviles({ onVolverMenu }) {
     // UI & modo
     const [mode, setMode] = useState('list')
     const [editing, setEditing] = useState(null)
@@ -124,20 +124,20 @@ export default function ListarMoviles() {
 
     const tableRows = (rows) => rows.map(row => (
         <tr key={row.idMovil}>
-            <td className='text-nowrap fw-semibold'>{row.interno}</td>
-            <td>{row.dominio || '-'}</td>
-            <td>{row.marca || '-'}</td>
-            <td>{row.modelo || '-'}</td>
-            <td className='text-center'>{row.anio || '-'}</td>
-            <td className='text-center'>
+            <td className='border-end px-3 text-center fw-bold' data-label='Iterno'>{row.interno}</td>
+            <td className='border-end px-3' data-label='Dominio'>{row.dominio || '-'}</td>
+            <td className='border-end px-3' data-label='Marca'>{row.marca || '-'}</td>
+            <td className='border-end px-3' data-label='Modelo'>{row.modelo || '-'}</td>
+            <td className='border-end px-3' data-label='Año'>{row.anio || '-'}</td>
+            <td className='border-end px-3' data-label='Estado'>
                 <span className={`badge px-3 py-2 ${row.activo ? 'bg-success' : 'bg-secondary'}`}>
                     {row.activo ? 'Activo' : 'Baja'}
                 </span>
             </td>
-            <td className='text-end'>
-                <div className='btn-group'>
-                    <button className='btn btn-sm btn-outline-primary' onClick={() => editar(row)}>Editar</button>
-                    <button className='btn btn-sm btn-outline-danger' onClick={() => eliminar(row)}>Baja</button>
+            <td className='text-center' data-label='Acciones'>
+                <div className='d-inline-flex align-items-center justify-content-center gap-2 flex-nowrap actions-inline'>
+                    <button className='btn btn-sm btn-outline-primary btn-detail btn-ver' onClick={() => editar(row)}>Editar</button>
+                    <button className='btn btn-sm btn-outline-danger btn-detail btn-ver' onClick={() => eliminar(row)}>Baja</button>
                 </div>
             </td>
         </tr>
@@ -245,16 +245,16 @@ export default function ListarMoviles() {
 
                                     {items.length > 0 ? (
                                         <div className='table-responsive rounded border'>
-                                            <table className='table table-dark table-hover align-middle mb-0'>
-                                                <thead className='table-dark-subtle'>
+                                            <table className='table table-hover align-middle mb-0 rg-table'>
+                                                <thead className='bg-light'>
                                                     <tr>
-                                                        <th>Interno</th>
-                                                        <th>Dominio</th>
-                                                        <th>Marca</th>
-                                                        <th>Modelo</th>
-                                                        <th className='text-center'>Año</th>
-                                                        <th className='text-center'>Estado</th>
-                                                        <th className='text-end'>Acciones</th>
+                                                        <th className='border-end text-center'>Interno</th>
+                                                        <th className='border-end text-center'>Dominio</th>
+                                                        <th className='border-end text-center'>Marca</th>
+                                                        <th className='border-end text-center'>Modelo</th>
+                                                        <th className='border-end text-center'>Año</th>
+                                                        <th className='border-end text-center'>Estado</th>
+                                                        <th className='text-center'>Acciones</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>{tableRows(items)}</tbody>
@@ -270,6 +270,9 @@ export default function ListarMoviles() {
                                 </>
                             )}
                         </Pagination>
+                        <hr className="mb-4" />
+
+                        <BackToMenuButton onClick={onVolverMenu} />
                     </div>
                 </div>
             </div>
