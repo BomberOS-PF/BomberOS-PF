@@ -1,76 +1,54 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiRequest } from '../../../config/api'
 import FormMovil from './FormMovil'
 import '../flota.css'
 import Swal from 'sweetalert2'
 import 'sweetalert2/dist/sweetalert2.min.css'
 import { Car } from 'lucide-react'
+import { BackToMenuButton } from '../../Common/Button'
+import Pagination from '../../Common/Pagination'
+import Select from 'react-select'
+
+const PAGE_SIZE_DEFAULT = 10
 
 export default function ListarMoviles() {
-  const [items, setItems] = useState([])
-  const [texto, setTexto] = useState('')
-  const [soloActivos, setSoloActivos] = useState(true)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  // UI & modo
   const [mode, setMode] = useState('list')
   const [editing, setEditing] = useState(null)
+  const [error, setError] = useState('')
 
+  // Filtros
+  const [soloActivos, setSoloActivos] = useState(true)
+  const [inputTexto, setInputTexto] = useState('')     // lo que escribe el usuario
+  const [texto, setTexto] = useState('')               // valor debounced que usa la paginación
   const debounceRef = useRef(null)
 
-  const load = useCallback(async () => {
-    setError('')
-    setLoading(true)
-    try {
-      const qs = new URLSearchParams()
-      if (texto?.trim()) qs.set('texto', texto.trim())
-      if (soloActivos) qs.set('activo', '1')
+  // Para forzar recargas del pager (por ej. tras borrar)
+  const [pagerTick, setPagerTick] = useState(0)
 
-      const data = await apiRequest(`/api/flota/moviles${qs.toString() ? `?${qs.toString()}` : ''}`)
-      setItems(data || [])
-    } catch (e) {
-      setError('No se pudieron cargar los móviles')
-    } finally {
-      setLoading(false)
-    }
-  }, [texto, soloActivos])
-
-  // Carga inicial
-  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Búsqueda dinámica con debounce cuando cambia el texto
+  // Debounce de 400ms
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      load()
-    }, 400)
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-    }
-  }, [texto, load])
-
-  // Cambio de switch: recarga inmediata
-  useEffect(() => {
-    load()
-  }, [soloActivos, load])
+    debounceRef.current = setTimeout(() => setTexto(inputTexto.trim()), 400)
+    return () => debounceRef.current && clearTimeout(debounceRef.current)
+  }, [inputTexto])
 
   const onKeyDown = e => {
     if (e.key === 'Enter') {
       e.preventDefault()
       if (debounceRef.current) clearTimeout(debounceRef.current)
-      load()
+      setTexto(inputTexto.trim()) // aplica al instante
     }
   }
 
   const aplicarAhora = () => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    load()
+    setTexto(inputTexto.trim())
   }
 
   const limpiar = () => {
+    setInputTexto('')
     setTexto('')
-    // forzar recarga sin texto
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    load()
   }
 
   const nuevo = () => { setEditing(null); setMode('form') }
@@ -87,12 +65,11 @@ export default function ListarMoviles() {
       reverseButtons: true,
       confirmButtonColor: '#d33',
     })
-
     if (!resp.isConfirmed) return
 
     try {
       await apiRequest('DELETE', `/api/flota/moviles/${row.idMovil}`)
-      await load()
+      setPagerTick(t => t + 1) // refresca la tabla
       Swal.fire({
         icon: 'success',
         title: 'Móvil dado de baja',
@@ -109,30 +86,62 @@ export default function ListarMoviles() {
     }
   }
 
-  const recargar = async () => { await load(); setMode('list'); setEditing(null) }
+  const recargar = async () => {
+    setMode('list')
+    setEditing(null)
+    setPagerTick(t => t + 1)
+  }
 
-  const tableRows = useMemo(() =>
-    items.map(row => (
-      <tr key={row.idMovil}>
-        <td className='text-nowrap fw-semibold'>{row.interno}</td>
-        <td>{row.dominio || '-'}</td>
-        <td>{row.marca || '-'}</td>
-        <td>{row.modelo || '-'}</td>
-        <td className='text-center'>{row.anio || '-'}</td>
-        <td className='text-center'>
-          <span className={`badge px-3 py-2 ${row.activo ? 'bg-success' : 'bg-secondary'}`}>
-            {row.activo ? 'Activo' : 'Baja'}
-          </span>
-        </td>
-        <td className='text-end'>
-          <div className='btn-group'>
-            <button className='btn btn-sm btn-outline-primary' onClick={() => editar(row)}>Editar</button>
-            <button className='btn btn-sm btn-outline-danger' onClick={() => eliminar(row)}>Baja</button>
-          </div>
-        </td>
-      </tr>
-    ))
-  , [items])
+  // ---- fetchPage para Pagination (server-side) ----
+  const fetchMovilesPage = async ({ page, limit, filters }) => {
+    setError('')
+
+    const params = new URLSearchParams({
+      pagina: String(page),
+      limite: String(limit)
+    })
+
+    const q = (filters?.q || '').toString().trim()
+    if (q) params.set('texto', q)
+    if (String(filters?.activo) === '1') params.set('activo', '1')
+
+    try {
+      const resp = await apiRequest(`/api/flota/moviles?${params.toString()}`, { method: 'GET' })
+
+      // Soporta ambos formatos de tu backend:
+      // 1) arreglo directo
+      // 2) { data: [], total: n }
+      const data = Array.isArray(resp?.data) ? resp.data : (Array.isArray(resp) ? resp : [])
+      const total = Number.isFinite(resp?.total) ? resp.total : data.length
+
+      if (!Array.isArray(data)) throw new Error('Respuesta inválida del servidor')
+      return { data, total }
+    } catch (err) {
+      setError('No se pudieron cargar los móviles')
+      throw err
+    }
+  }
+
+  const tableRows = (rows) => rows.map(row => (
+    <tr key={row.idMovil}>
+      <td className='text-nowrap fw-semibold'>{row.interno}</td>
+      <td>{row.dominio || '-'}</td>
+      <td>{row.marca || '-'}</td>
+      <td>{row.modelo || '-'}</td>
+      <td className='text-center'>{row.anio || '-'}</td>
+      <td className='text-center'>
+        <span className={`badge px-3 py-2 ${row.activo ? 'bg-success' : 'bg-secondary'}`}>
+          {row.activo ? 'Activo' : 'Baja'}
+        </span>
+      </td>
+      <td className='text-end'>
+        <div className='btn-group'>
+          <button className='btn btn-sm btn-outline-primary' onClick={() => editar(row)}>Editar</button>
+          <button className='btn btn-sm btn-outline-danger' onClick={() => eliminar(row)}>Baja</button>
+        </div>
+      </td>
+    </tr>
+  ))
 
   if (mode === 'form') {
     return (
@@ -166,16 +175,76 @@ export default function ListarMoviles() {
           <strong>Gestionar Móviles</strong>
         </div>
         <div className='card-body'>
+          {/* Buscador superior (con icono) */}
           <div className='mb-3 position-relative col-md-5'>
             <i className='bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary'></i>
             <input
               type='text'
               className='form-control border-secondary ps-5 py-2'
-              placeholder='Interno, dominio, marca o modelo'
-              value={texto}
-              onChange={e => setTexto(e.target.value)}
+              placeholder='Buscar por interno, dominio, marca o modelo'
+              value={inputTexto}
+              onChange={e => setInputTexto(e.target.value)}
               onKeyDown={onKeyDown}
             />
+          </div>
+
+          {/* Paginador + tabla */}
+          <div className='rg-pager'>
+            <Pagination
+              fetchPage={fetchMovilesPage}
+              initialPage={1}
+              initialPageSize={PAGE_SIZE_DEFAULT}
+              filters={{ q: texto, activo: soloActivos ? 1 : 0, _tick: pagerTick }}
+              showControls
+              labels={{
+                prev: '‹ Anterior',
+                next: 'Siguiente ›',
+                of: '/',
+                showing: (shown, total) => `Mostrando ${shown} de ${total} móviles`
+              }}
+            >
+              {({ items, loading, error }) => (
+                <>
+                  {error && (
+                    <div className='alert alert-danger d-flex align-items-center'>
+                      <i className='bi bi-exclamation-triangle-fill me-2'></i>
+                      {String(error)}
+                    </div>
+                  )}
+
+                  {loading && (
+                    <div className='text-center mb-3'>
+                      <div className='spinner-border text-danger' role='status' />
+                    </div>
+                  )}
+
+                  {items.length > 0 ? (
+                    <div className='table-responsive rounded border'>
+                      <table className='table table-dark table-hover align-middle mb-0'>
+                        <thead className='table-dark-subtle'>
+                          <tr>
+                            <th>Interno</th>
+                            <th>Dominio</th>
+                            <th>Marca</th>
+                            <th>Modelo</th>
+                            <th className='text-center'>Año</th>
+                            <th className='text-center'>Estado</th>
+                            <th className='text-end'>Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>{tableRows(items)}</tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    !loading && (
+                      <div className='text-center py-3 text-muted'>
+                        No se encontraron móviles que coincidan con la búsqueda.
+                      </div>
+                    )
+                  )}
+                </>
+              )}
+            </Pagination>
           </div>
         </div>
       </div>
@@ -191,22 +260,17 @@ export default function ListarMoviles() {
                 <input
                   className='form-control'
                   placeholder='Interno, dominio, marca o modelo'
-                  value={texto}
-                  onChange={e => setTexto(e.target.value)}
+                  value={inputTexto}
+                  onChange={e => setInputTexto(e.target.value)}
                   onKeyDown={onKeyDown}
                 />
-                {texto ? (
+                {inputTexto ? (
                   <button className='btn btn-outline-secondary' type='button' onClick={limpiar} title='Limpiar'>
                     <i className='bi bi-x-lg' />
                   </button>
                 ) : null}
-                <button className='btn btn-outline-primary' type='button' onClick={aplicarAhora} disabled={loading}>
-                  {loading ? (
-                    <>
-                      <span className='spinner-border spinner-border-sm me-2' role='status' aria-hidden='true' />
-                      Buscando...
-                    </>
-                  ) : 'Aplicar filtros'}
+                <button className='btn btn-outline-primary' type='button' onClick={aplicarAhora}>
+                  Aplicar filtros
                 </button>
               </div>
               <div className='form-text'>Se actualiza solo mientras escribís. Enter o “Aplicar filtros” fuerza la búsqueda</div>
@@ -222,7 +286,7 @@ export default function ListarMoviles() {
                   checked={soloActivos}
                   onChange={e => setSoloActivos(e.target.checked)}
                 />
-                <label className='form-check-label' htmlFor='chkActivos'>
+              <label className='form-check-label' htmlFor='chkActivos'>
                   Mostrar solo activos
                 </label>
               </div>
@@ -236,42 +300,6 @@ export default function ListarMoviles() {
       </div>
 
       {error && <div className='alert alert-danger'>{error}</div>}
-
-      {/* Tabla */}
-      <div className='card flota-card'>
-        <div className='card-body p-0'>
-          {loading ? (
-            <div className='p-3'>Cargando…</div>
-          ) : (
-            <div className='table-responsive'>
-              <table className='table table-dark table-hover align-middle mb-0'>
-                <thead className='table-dark-subtle'>
-                  <tr>
-                    <th>Interno</th>
-                    <th>Dominio</th>
-                    <th>Marca</th>
-                    <th>Modelo</th>
-                    <th className='text-center'>Año</th>
-                    <th className='text-center'>Estado</th>
-                    <th className='text-end'>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.length ? (
-                    tableRows
-                  ) : (
-                    <tr>
-                      <td colSpan='7' className='text-center py-4 text-muted'>
-                        No hay móviles para mostrar
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   )
 }
