@@ -68,8 +68,12 @@ export default function ListarMoviles({ onVolverMenu }) {
         if (!resp.isConfirmed) return
 
         try {
-            await apiRequest('DELETE', `/api/flota/moviles/${row.idMovil}`)
+            await apiRequest(`/api/flota/moviles/${row.idMovil}`, {
+                method: 'DELETE'
+            })
+
             setPagerTick(t => t + 1) // refresca la tabla
+
             Swal.fire({
                 icon: 'success',
                 title: 'Móvil dado de baja',
@@ -85,6 +89,7 @@ export default function ListarMoviles({ onVolverMenu }) {
             })
         }
     }
+
 
     const recargar = async () => {
         setMode('list')

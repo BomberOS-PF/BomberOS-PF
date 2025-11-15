@@ -7,8 +7,6 @@ import Pagination from '../../Common/Pagination'
 
 const PAGE_SIZE_DEFAULT = 10
 
-
-
 // fetch directo, sin tocar api.js
 async function fetchJson(url) {
   const r = await fetch(url, { headers: { Accept: 'application/json' } })
@@ -43,6 +41,42 @@ const normalizeBomberos = (arr) =>
     })
     .filter(b => b.dni && b.label && b.label !== ',')
     .sort((a, b) => a.label.localeCompare(b.label))
+const formatFechaHora = (fechaRaw, horaRaw) => {
+  if (!fechaRaw) return '-'
+
+  const str = fechaRaw.toString()
+  let yyyy, mm, dd
+
+  // Si viene en formato tipo "2025-11-14" o "2025-11-14T..."
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    yyyy = str.slice(0, 4)
+    mm = str.slice(5, 7)
+    dd = str.slice(8, 10)
+  } else {
+    // fallback usando Date solo para día/mes/año
+    const d = new Date(str)
+    if (isNaN(d.getTime())) return str // si no se puede parsear, devolvemos crudo
+
+    const pad = n => (n < 10 ? `0${n}` : String(n))
+    dd = pad(d.getDate())
+    mm = pad(d.getMonth() + 1)
+    yyyy = d.getFullYear()
+  }
+
+  const base = `${dd}/${mm}/${yyyy}`
+
+  // Si no hay hora, mostramos solo la fecha
+  if (!horaRaw) return base
+
+  // Tomamos solo HH:mm de lo que venga
+  const horaStr = horaRaw.toString().slice(0, 5)
+
+  // Si la hora es "00:00" (sin relevancia), también mostramos solo fecha
+  if (horaStr === '00:00') return base
+
+  return `${base} ${horaStr}`
+}
+
 
 export default function NuevoControlMovil({ onCreated, onCancel }) {
   const [moviles, setMoviles] = useState([])
@@ -55,41 +89,42 @@ export default function NuevoControlMovil({ onCreated, onCancel }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [loadingData, setLoadingData] = useState(true)
+  const [filtroMovilId, setFiltroMovilId] = useState('')
 
   useEffect(() => {
     let mounted = true
-    ;(async () => {
-      setError('')
-      setLoadingData(true)
-      try {
-        // 1) Móviles
-        const movsRaw = await tryMany([
-          '/api/flota/moviles?activo=1',
-          '/api/flota/moviles'
-        ])
-        const movs = normalizeArray(movsRaw)
-        if (mounted) setMoviles(movs)
+      ; (async () => {
+        setError('')
+        setLoadingData(true)
+        try {
+          // 1) Móviles
+          const movsRaw = await tryMany([
+            '/api/flota/moviles?activo=1',
+            '/api/flota/moviles'
+          ])
+          const movs = normalizeArray(movsRaw)
+          if (mounted) setMoviles(movs)
 
-        // 2) Bomberos
-        const bombsRaw = await tryMany([
-          '/api/bomberos/buscar?pagina=1&limite=1000&busqueda=',
-          '/api/bomberos?min=1',
-          '/api/bomberos/listar?min=1',
-          '/api/bomberos'
-        ])
-        const bombs = normalizeBomberos(normalizeArray(bombsRaw))
-        if (mounted) setBomberos(bombs)
-      } catch (e) {
-        console.error('[NuevoControl] Error cargando datos:', e)
-        if (mounted) {
-          setError('No se pudieron cargar móviles y/o bomberos')
-          setMoviles([])
-          setBomberos([])
+          // 2) Bomberos
+          const bombsRaw = await tryMany([
+            '/api/bomberos/buscar?pagina=1&limite=1000&busqueda=',
+            '/api/bomberos?min=1',
+            '/api/bomberos/listar?min=1',
+            '/api/bomberos'
+          ])
+          const bombs = normalizeBomberos(normalizeArray(bombsRaw))
+          if (mounted) setBomberos(bombs)
+        } catch (e) {
+          console.error('[NuevoControl] Error cargando datos:', e)
+          if (mounted) {
+            setError('No se pudieron cargar móviles y/o bomberos')
+            setMoviles([])
+            setBomberos([])
+          }
+        } finally {
+          if (mounted) setLoadingData(false)
         }
-      } finally {
-        if (mounted) setLoadingData(false)
-      }
-    })()
+      })()
     return () => { mounted = false }
   }, [])
 
@@ -145,41 +180,55 @@ export default function NuevoControlMovil({ onCreated, onCancel }) {
   }
 
   // ---- fetchPage para el historial de controles ----
- // ---- fetchPage para el historial de controles ----
-const fetchControlesPage = async ({ page, limit, filters }) => {
-  const params = new URLSearchParams({
-    pagina: String(page),
-    limite: String(limit)
-  })
+  // ---- fetchPage para el historial de controles ----
+  const fetchControlesPage = async ({ page, limit, filters }) => {
+    const params = new URLSearchParams({
+      pagina: String(page),
+      limite: String(limit)
+    })
 
-  const idMovil = filters?.idMovil
-  if (idMovil) params.set('idMovil', idMovil)
+    const idMovilFilter = filters?.idMovil
 
-  try {
-    const resp = await tryMany([
-      `/api/flota/controles?${params.toString()}`,
-      `/api/flota/controles/listar?${params.toString()}`
-    ])
+    // Se lo mandamos al backend por si lo soporta
+    if (idMovilFilter) params.set('idMovil', idMovilFilter)
 
-    const dataRaw = Array.isArray(resp?.data)
-      ? resp.data
-      : (Array.isArray(resp) ? resp : normalizeArray(resp))
+    try {
+      const resp = await tryMany([
+        `/api/flota/controles?${params.toString()}`,
+        `/api/flota/controles/listar?${params.toString()}`
+      ])
 
-    const total = Number.isFinite(resp?.total) ? resp.total : dataRaw.length
+      let dataRaw = Array.isArray(resp?.data)
+        ? resp.data
+        : (Array.isArray(resp) ? resp : normalizeArray(resp))
 
-    if (!Array.isArray(dataRaw)) throw new Error('Respuesta inválida del servidor')
+      if (!Array.isArray(dataRaw)) throw new Error('Respuesta inválida del servidor')
 
-    // 🔹 acá hacemos el paginado en front
-    const start = (page - 1) * limit
-    const end = start + limit
-    const data = dataRaw.slice(start, end)
+      // 🔹 Filtro adicional en FRONT por móvil (por si el backend no lo aplica)
+      if (idMovilFilter) {
+        dataRaw = dataRaw.filter(row => {
+          const movilIdRow =
+            row.idMovil ??
+            row.movilId ??
+            row.id_movil
 
-    return { data, total }
-  } catch (err) {
-    console.error('[NuevoControl] Error cargando historial:', err)
-    throw err
+          return String(movilIdRow) === String(idMovilFilter)
+        })
+      }
+
+      const total = dataRaw.length
+
+      // 🔹 paginado en frontend (de a 10)
+      const start = (page - 1) * limit
+      const end = start + limit
+      const data = dataRaw.slice(start, end)
+
+      return { data, total }
+    } catch (err) {
+      console.error('[NuevoControl] Error cargando historial:', err)
+      throw err
+    }
   }
-}
 
 
   // helper para mostrar filas de la tabla
@@ -190,6 +239,12 @@ const fetchControlesPage = async ({ page, limit, filters }) => {
         row.fechaRevision ||
         row.fechaControl ||
         row.fecha_control ||
+        ''
+      const hora =
+        row.hora ||
+        row.horaRevision ||
+        row.horaControl ||
+        row.hora_control ||
         ''
 
       const responsableDni =
@@ -224,7 +279,7 @@ const fetchControlesPage = async ({ page, limit, filters }) => {
       return (
         <tr key={row.idControl || `${movilId}-${fecha}-${responsableDni}`}>
           <td className='border-end px-3 text-center' data-label='Fecha revisión'>
-            {fecha ? fecha.toString().slice(0, 10) : '-'}
+            {formatFechaHora(fecha, hora)}
           </td>
           <td className='border-end px-3' data-label='Responsable'>
             {responsable}
@@ -278,7 +333,9 @@ const fetchControlesPage = async ({ page, limit, filters }) => {
               <select
                 className='form-select'
                 value={form.idMovil}
-                onChange={e => setValue('idMovil', e.target.value)}
+                onChange={e => {
+                  setValue('idMovil', e.target.value)
+                }}
                 disabled={loadingData}
               >
                 <option value=''>
@@ -359,68 +416,82 @@ const fetchControlesPage = async ({ page, limit, filters }) => {
           {/* Historial de controles */}
           <hr className='my-4' />
 
-          {form.idMovil ? (
-            <div className='rg-pager'>
-              <h5 className='mb-3'>Historial de revisiones del móvil seleccionado</h5>
+          <div className='rg-pager'>
+            <div className='d-flex flex-wrap justify-content-between align-items-end mb-3 gap-3'>
+              <h5 className='mb-0'>Historial de revisiones</h5>
 
-              <Pagination
-                fetchPage={fetchControlesPage}
-                initialPage={1}
-                initialPageSize={PAGE_SIZE_DEFAULT}
-                filters={{ idMovil: form.idMovil }}
-                showControls
-                labels={{
-                  prev: '‹ Anterior',
-                  next: 'Siguiente ›',
-                  of: '/',
-                  showing: (shown, total) => `Mostrando ${shown} de ${total} controles`
-                }}
-              >
-                {({ items, loading: loadingHist, error: errorHist }) => (
-                  <>
-                    {errorHist && (
-                      <div className='alert alert-danger d-flex align-items-center'>
-                        <i className='bi bi-exclamation-triangle-fill me-2'></i>
-                        {String(errorHist)}
-                      </div>
-                    )}
-
-                    {loadingHist && (
-                      <div className='text-center mb-3'>
-                        <div className='spinner-border text-danger' role='status' />
-                      </div>
-                    )}
-
-                    {items.length > 0 ? (
-                      <div className='table-responsive rounded border'>
-                        <table className='table table-hover align-middle mb-0 rg-table'>
-                          <thead className='bg-light'>
-                            <tr>
-                              <th className='border-end text-center'>Fecha de revisión</th>
-                              <th className='border-end text-center'>Responsable</th>
-                              <th className='border-end text-center'>Móvil</th>
-                              <th className='text-center'>Estado</th>
-                            </tr>
-                          </thead>
-                          <tbody>{renderHistorialRows(items)}</tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      !loadingHist && (
-                        <div className='text-center py-3 text-muted'>
-                          No hay controles registrados para este móvil.
-                        </div>
-                      )
-                    )}
-                  </>
-                )}
-              </Pagination>
+              <div className='col-12 col-md-4'>
+                <label className='form-label'>Filtrar por móvil</label>
+                <select
+                  className='form-select'
+                  value={filtroMovilId}
+                  onChange={e => {
+                    setFiltroMovilId(e.target.value)// sincroniza también el combo de arriba
+                  }}
+                >
+                  <option value=''>Todos los móviles</option>
+                  {moviles.map(m => (
+                    <option key={m.idMovil} value={m.idMovil}>
+                      {m.interno} {m.dominio ? `- ${m.dominio}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-          ) : (
-            <div className='text-muted mt-2'>
-              Seleccioná un móvil para ver el historial de revisiones.
-            </div>
-          )}
+
+            <Pagination
+              fetchPage={fetchControlesPage}
+              initialPage={1}
+              initialPageSize={PAGE_SIZE_DEFAULT}
+              filters={{ idMovil: filtroMovilId || undefined }}
+              showControls
+              labels={{
+                prev: '‹ Anterior',
+                next: 'Siguiente ›',
+                of: '/',
+                showing: (shown, total) => `Mostrando ${shown} de ${total} controles`
+              }}
+            >
+              {({ items, loading: loadingHist, error: errorHist }) => (
+                <>
+                  {errorHist && (
+                    <div className='alert alert-danger d-flex align-items-center'>
+                      <i className='bi bi-exclamation-triangle-fill me-2'></i>
+                      {String(errorHist)}
+                    </div>
+                  )}
+
+                  {loadingHist && (
+                    <div className='text-center mb-3'>
+                      <div className='spinner-border text-danger' role='status' />
+                    </div>
+                  )}
+
+                  {items.length > 0 ? (
+                    <div className='table-responsive rounded border'>
+                      <table className='table table-hover align-middle mb-0 rg-table'>
+                        <thead className='bg-light'>
+                          <tr>
+                            <th className='border-end text-center'>Fecha de revisión</th>
+                            <th className='border-end text-center'>Responsable</th>
+                            <th className='border-end text-center'>Móvil</th>
+                            <th className='text-center'>Estado</th>
+                          </tr>
+                        </thead>
+                        <tbody>{renderHistorialRows(items)}</tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    !loadingHist && (
+                      <div className='text-center py-3 text-muted'>
+                        No hay controles registrados para los filtros seleccionados.
+                      </div>
+                    )
+                  )}
+                </>
+              )}
+            </Pagination>
+          </div>
 
           <hr className='mb-4 mt-4' />
 
