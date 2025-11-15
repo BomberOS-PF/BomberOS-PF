@@ -438,4 +438,31 @@ export class MySQLBomberoRepository {
       throw new Error('Error al sincronizar correo del bombero')
     }
   }
+
+  async clearFichaMedica(dni) {
+    const query = `
+      UPDATE ${this.tableName}
+      SET fichaMedica = 0,
+          fichaMedicaPDF = NULL,
+          fichaMedicaArchivo = NULL,
+          fechaFichaMedica = NULL
+      WHERE dni = ?
+    `
+
+    const connection = getConnection()
+
+    try {
+      const [result] = await connection.execute(query, [dni])
+      logger.info('Ficha médica eliminada en BD', { dni, filas: result.affectedRows })
+      return result.affectedRows > 0
+    } catch (error) {
+      logger.error('Error al eliminar ficha médica', {
+        dni,
+        error: error.message,
+        code: error.code
+      })
+      throw new Error('Error al eliminar la ficha médica')
+    }
+  }
+
 } 

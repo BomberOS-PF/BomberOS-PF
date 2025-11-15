@@ -142,7 +142,7 @@ export class BomberoService {
       }
 
       return resultado
-      
+
     } catch (error) {
       logger.error('Error al actualizar bombero', { id, error: error.message })
       throw error
@@ -290,4 +290,25 @@ export class BomberoService {
 
     // Los Value Objects se encargan del resto de validaciones
   }
+
+  async eliminarFichaMedica(dni) {
+    try {
+      logger.debug('Servicio: Eliminar ficha médica', { dni })
+
+      if (!dni) {
+        throw new Error('DNI es requerido')
+      }
+
+      const bombero = await this.bomberoRepository.findById(dni)
+      if (!bombero) {
+        throw new Error('Bombero no encontrado')
+      }
+
+      return await this.bomberoRepository.clearFichaMedica(dni)
+    } catch (error) {
+      logger.error('Error al eliminar ficha médica', { dni, error: error.message })
+      throw error
+    }
+  }
+
 } 
