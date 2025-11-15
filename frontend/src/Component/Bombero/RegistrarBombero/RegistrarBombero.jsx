@@ -183,7 +183,7 @@ const RegistrarBombero = ({ onVolver }) => {
           setMessage('¡Bombero registrado exitosamente!')
           setMessageType('success')
         }
-        setFormData({ dni: '', nombre: '', apellido: '', domicilio: '', email: '', telefono: '', legajo: '', antiguedad: '', rango: 'Bombero', esPlan: false, fichaMedica: null, fechaFicha: new Date().toISOString().split('T')[0], aptoPsico: true, grupoSanguineo: '', username: '', password: '', emailUsuario: '', rolUsuario: '' })
+        setFormData({ dni: '', nombre: '', apellido: '', domicilio: '', email: '', telefono: '', legajo: '', antiguedad: '', rango: '', esPlan: false, fichaMedica: null, fechaFicha: new Date().toISOString().split('T')[0], aptoPsico: true, grupoSanguineo: '', username: '', password: '', emailUsuario: '', rolUsuario: '' })
       } else {
         const errorMessage = result.message || result.error || 'Error al registrar bombero'
         setMessage(errorMessage)
