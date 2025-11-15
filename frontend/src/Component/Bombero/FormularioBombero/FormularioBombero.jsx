@@ -430,10 +430,16 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
                               fechaFichaMedica: ''
                             }))
 
-                            await swalToast('Ficha médica eliminada correctamente', 'success')
+                            await swalToast({
+                              title: 'Ficha médica eliminada correctamente',
+                              icon: 'success'
+                            })
                           } catch (error) {
                             console.error('Error al eliminar ficha médica:', error)
-                            await swalToast(error.message || 'Error al eliminar la ficha médica', 'error')
+                            await swalToast({
+                              title: error.message || 'Error al eliminar la ficha médica',
+                              icon: 'error'
+                            })
                           }
                         }}
                         title="Eliminar archivo"
