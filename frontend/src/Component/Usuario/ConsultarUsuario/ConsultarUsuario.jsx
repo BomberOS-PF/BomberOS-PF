@@ -42,7 +42,13 @@ const ConsultarUsuario = ({ onVolver }) => {
   }
 
   const seleccionarUsuario = (usuario) => {
-    setUsuarioSeleccionado(usuario)
+    const rolEncontrado = roles.find(
+      r => r.nombreRol.toLowerCase() === (usuario.rol || '').toLowerCase()
+    )
+    setUsuarioSeleccionado({
+      ...usuario,
+      idRol: usuario.idRol || (rolEncontrado ? rolEncontrado.idRol : '')
+    })
     setModoEdicion(false)
     setMensaje('')
   }
@@ -106,7 +112,7 @@ const ConsultarUsuario = ({ onVolver }) => {
           usuario: usuarioValue,
           password: datosActualizados.password || null,
           email: datosActualizados.email,
-          idRol: datosActualizados.idRol
+          idRol: Number(datosActualizados.idRol)
         })
       })
 
@@ -228,6 +234,7 @@ const ConsultarUsuario = ({ onVolver }) => {
 
               <div className='rg-pager'>
                 <Pagination
+                  key={reloadTick}
                   fetchPage={fetchUsuariosPage}
                   initialPage={1}
                   initialPageSize={PAGE_SIZE_DEFAULT}
