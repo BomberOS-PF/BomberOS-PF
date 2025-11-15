@@ -57,4 +57,45 @@ export class MySQLRolRepository {
     await conn.execute(query, [id])
     return { idRol: id }
   }
+
+  async buscarConPaginado({ pagina, limite, busqueda }) {
+    const offset = (pagina - 1) * limite
+    const params = []
+    let whereSql = ''
+
+    if (busqueda) {
+      whereSql = 'WHERE nombreRol LIKE ?'
+      params.push(`%${busqueda}%`)
+    }
+
+    const sqlDatos = `
+      SELECT idRol, nombreRol, descripcion
+      FROM roles
+      ${whereSql}
+      ORDER BY nombreRol ASC
+      LIMIT ? OFFSET ?
+    `
+
+    const sqlTotal = `
+      SELECT COUNT(*) AS total
+      FROM roles
+      ${whereSql}
+    `
+
+    try {
+      const [rows] = await this.connection.execute(sqlDatos, [...params, limite, offset])
+      const [rowsTotal] = await this.connection.execute(sqlTotal, params)
+
+      const total = rowsTotal[0]?.total || 0
+
+      return {
+        data: rows,
+        total
+      }
+    } catch (error) {
+      this.logger.error('Error en buscarConPaginado de roles', { error })
+      throw error
+    }
+  }
+
 }

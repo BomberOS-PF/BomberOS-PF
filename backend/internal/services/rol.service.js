@@ -23,6 +23,25 @@ export class RolService {
     return await this.rolRepository.obtenerTodos()
   }
 
+  async obtenerPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
+    const pageNum = Number.isFinite(Number(pagina)) && Number(pagina) > 0
+      ? Number(pagina)
+      : 1
+
+    const limitNum = Number.isFinite(Number(limite)) && Number(limite) > 0
+      ? Number(limite)
+      : 10
+
+    const filtros = {
+      pagina: pageNum,
+      limite: limitNum,
+      busqueda: (busqueda || '').trim()
+    }
+
+    // El repo devuelve { data, total }
+    return await this.rolRepository.buscarConPaginado(filtros)
+  }
+
   async obtenerRolPorId(id) {
     const rol = await this.rolRepository.obtenerPorId(id)
     if (!rol) throw new Error('Rol no encontrado')
