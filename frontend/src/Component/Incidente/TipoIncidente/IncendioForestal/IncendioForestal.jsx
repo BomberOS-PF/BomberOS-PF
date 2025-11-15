@@ -87,9 +87,15 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
     setFormData(prev => ({ ...prev, [id]: type === 'checkbox' ? checked : value }))
   }
 
-  const guardarLocalmente = () => {
+  const guardarLocalmente = async () => {
     localStorage.setItem(storageKey, JSON.stringify(formData))
-    alert('Datos guardados localmente. Podés continuar después.')
+    await swalConfirm({
+      title: 'Guardado local',
+      html: 'Los datos se guardaron en este equipo. Podés continuar después.',
+      icon: 'success',
+      confirmText: 'Entendido',
+      showCancel: false
+    })
   }
 
   const [errors, setErrors] = useState({})
@@ -442,7 +448,7 @@ const IncendioForestal = ({ datosPrevios = {}, onFinalizar }) => {
 
         <div className="d-flex justify-content-center align-items-center gap-3 mb-3 at-actions">
         </div>
-        
+
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3 at-actions'>
           <button type="button" className="btn btn-back btn-medium" onClick={guardarLocalmente} disabled={loading || notificando}>
             Continuar después
