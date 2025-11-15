@@ -381,7 +381,7 @@ const ConsultarUsuario = ({ onVolver }) => {
                         />
                       </div>
 
-                      <div className='col-md-6 py-3'>
+                      {/* <div className='col-md-6 py-3'>
                         <label className='form-label text-dark d-flex align-items-center gap-2'>
                           <i className='bi bi-shield-lock text-warning'></i> Contraseña (nueva)
                         </label>
@@ -395,7 +395,7 @@ const ConsultarUsuario = ({ onVolver }) => {
                           }
                           disabled={!modoEdicion || loadingAccion}
                         />
-                      </div>
+                      </div> */}
 
                       <div className='col-md-6 py-3'>
                         <label className='form-label text-dark d-flex align-items-center gap-2'>
