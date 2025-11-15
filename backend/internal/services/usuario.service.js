@@ -154,6 +154,22 @@ export class UsuarioService {
         throw new Error(`No se pudo actualizar el usuario con ID ${id}`)
       }
 
+      if (this.bomberoRepository && datosActualizacion.email) {
+        try {
+          await this.bomberoRepository.updateCorreoByIdUsuario(id, datosActualizacion.email)
+          logger.info('Correo de bombero sincronizado tras actualizar usuario', {
+            idUsuario: id,
+            email: datosActualizacion.email
+          })
+        } catch (syncError) {
+          logger.error('No se pudo sincronizar correo del bombero', {
+            idUsuario: id,
+            error: syncError.message
+          })
+          // no tiramos error aquí para no romper la actualización principal del usuario
+        }
+      }
+      
       logger.info('Usuario actualizado exitosamente', {
         id: resultado.id,
         username: resultado.username,

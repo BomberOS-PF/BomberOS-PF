@@ -19,9 +19,9 @@ export class MySQLBomberoRepository {
       FROM ${this.tableName}
       ORDER BY nombre ASC, apellido ASC
     `
-    
+
     const connection = getConnection()
-    
+
     try {
       const [rows] = await connection.execute(query)
       logger.debug('Bomberos obtenidos', { count: rows.length })
@@ -43,9 +43,9 @@ export class MySQLBomberoRepository {
       FROM ${this.tableName} 
       WHERE dni = ?
     `
-    
+
     const connection = getConnection()
-    
+
     try {
       const [rows] = await connection.execute(query, [id])
       return rows.length > 0 ? Bombero.create(rows[0]) : null
@@ -60,24 +60,24 @@ export class MySQLBomberoRepository {
   }
 
 
-async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
-  const offset = (pagina - 1) * limite
-  const connection = getConnection()
+  async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
+    const offset = (pagina - 1) * limite
+    const connection = getConnection()
 
-  let whereClause = ''
-  let valores = []
+    let whereClause = ''
+    let valores = []
 
-  if (busqueda && busqueda.trim() !== '') {
-    const valorLike = `%${busqueda.trim()}%`
-    whereClause = `WHERE (b.dni LIKE ? OR b.legajo LIKE ? OR b.nombre LIKE ? OR b.apellido LIKE ? OR CONCAT(b.nombre, ' ', b.apellido) LIKE ?)`
-    valores = [valorLike, valorLike, valorLike, valorLike, valorLike]
-  }
+    if (busqueda && busqueda.trim() !== '') {
+      const valorLike = `%${busqueda.trim()}%`
+      whereClause = `WHERE (b.dni LIKE ? OR b.legajo LIKE ? OR b.nombre LIKE ? OR b.apellido LIKE ? OR CONCAT(b.nombre, ' ', b.apellido) LIKE ?)`
+      valores = [valorLike, valorLike, valorLike, valorLike, valorLike]
+    }
 
-  const limitInt = parseInt(limite, 10)
-  const offsetInt = parseInt(offset, 10)
+    const limitInt = parseInt(limite, 10)
+    const offsetInt = parseInt(offset, 10)
 
-  try {
-    const query = `
+    try {
+      const query = `
       SELECT 
         b.dni, b.nombre, b.apellido, b.legajo, b.antiguedad, b.idRango, b.correo, b.telefono, 
         b.esDelPlan, b.fichaMedica, b.fichaMedicaArchivo, b.fechaFichaMedica, 
@@ -96,57 +96,57 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
       LIMIT ${limitInt} OFFSET ${offsetInt}
     `
 
-    const [rows] = await connection.execute(query, valores)
+      const [rows] = await connection.execute(query, valores)
 
-    // Hacer un mapeo de los bomberos para acumular los grupos correctamente
-    const bomberos = rows.map(row => ({
-      dni: row.dni,
-      nombre: row.nombre,
-      apellido: row.apellido,
-      legajo: row.legajo,
-      antiguedad: row.antiguedad,
-      idRango: row.idRango,
-      rango: row.rangoDescripcion,
-      correo: row.correo,
-      email: row.correo,  
-      telefono: row.telefono,
-      domicilio: row.domicilio,
-      grupoSanguineo: row.grupoSanguineo,
-      esDelPlan: Boolean(row.esDelPlan),
-      fichaMedica: row.fichaMedica,
-      fichaMedicaArchivo: row.fichaMedicaArchivo,
-      fechaFichaMedica: row.fechaFichaMedica,
-      aptoPsicologico: Boolean(row.aptoPsicologico),
-      idUsuario: row.idUsuario,
-      grupoGuardia: row.grupos ? row.grupos.split(', ') : [] // Separar los grupos por coma
-    }))
+      // Hacer un mapeo de los bomberos para acumular los grupos correctamente
+      const bomberos = rows.map(row => ({
+        dni: row.dni,
+        nombre: row.nombre,
+        apellido: row.apellido,
+        legajo: row.legajo,
+        antiguedad: row.antiguedad,
+        idRango: row.idRango,
+        rango: row.rangoDescripcion,
+        correo: row.correo,
+        email: row.correo,
+        telefono: row.telefono,
+        domicilio: row.domicilio,
+        grupoSanguineo: row.grupoSanguineo,
+        esDelPlan: Boolean(row.esDelPlan),
+        fichaMedica: row.fichaMedica,
+        fichaMedicaArchivo: row.fichaMedicaArchivo,
+        fechaFichaMedica: row.fechaFichaMedica,
+        aptoPsicologico: Boolean(row.aptoPsicologico),
+        idUsuario: row.idUsuario,
+        grupoGuardia: row.grupos ? row.grupos.split(', ') : [] // Separar los grupos por coma
+      }))
 
-    // Consulta para contar el total de bomberos
-    const countQuery = `
+      // Consulta para contar el total de bomberos
+      const countQuery = `
       SELECT COUNT(DISTINCT b.dni) as total
       FROM ${this.tableName} b
       LEFT JOIN bomberosGrupo bg ON bg.dni = b.dni
       LEFT JOIN grupoGuardia g ON g.idGrupo = bg.idGrupo
       ${whereClause}
     `
-    const [countRows] = await connection.execute(countQuery, valores)
+      const [countRows] = await connection.execute(countQuery, valores)
 
-    return {
-      data: bomberos,
-      total: countRows[0].total
+      return {
+        data: bomberos,
+        total: countRows[0].total
+      }
+
+    } catch (error) {
+      logger.error('Error al buscar bomberos con paginado', {
+        error: error.message
+      })
+      throw new Error('Error interno al buscar bomberos')
     }
-
-  } catch (error) {
-    logger.error('Error al buscar bomberos con paginado', {
-      error: error.message
-    })
-    throw new Error('Error interno al buscar bomberos')
   }
-}
 
   async create(bombero) {
     const data = bombero.toDatabase()
-    
+
     // Validar campos obligatorios
     if (!data.dni) throw new Error('El DNI es obligatorio')
     if (!data.nombre) throw new Error('El nombre es obligatorio')
@@ -156,7 +156,7 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
     if (!data.telefono) throw new Error('El teléfono es obligatorio')
     if (!data.domicilio) throw new Error('El domicilio es obligatorio')
     if (!data.grupoSanguineo) throw new Error('El grupo sanguíneo es obligatorio')
-    
+
     const query = `
       INSERT INTO ${this.tableName} (
         dni, nombre, apellido, legajo, antiguedad, idRango, correo, telefono, 
@@ -164,7 +164,7 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
         aptoPsicologico, domicilio, grupoSanguineo, idUsuario
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
-    
+
     const params = [
       data.dni, data.nombre, data.apellido, data.legajo || null, data.antiguedad || 0,
       data.idRango, data.correo, data.telefono, data.esDelPlan || false,
@@ -172,9 +172,9 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
       data.aptoPsicologico || false, data.domicilio, data.grupoSanguineo,
       data.idUsuario || null
     ]
-    
+
     const connection = getConnection()
-    
+
     try {
       await connection.execute(query, params)
       logger.debug('Bombero creado', { dni: data.dni })
@@ -185,7 +185,7 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
         error: error.message,
         code: error.code
       })
-      
+
       if (error.code === 'ER_DUP_ENTRY') {
         throw new Error('Ya existe un bombero con ese DNI')
       }
@@ -198,14 +198,14 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
       if (error.message.includes('cannot be null')) {
         throw new Error('Faltan campos obligatorios')
       }
-      
+
       throw new Error('Error al crear bombero. Verifique que todos los campos estén completos')
     }
   }
 
   async update(id, bombero) {
     const data = bombero.toDatabase()
-    
+
     // Validar campos obligatorios
     if (!data.nombre) throw new Error('El nombre es obligatorio')
     if (!data.apellido) throw new Error('El apellido es obligatorio')
@@ -214,7 +214,7 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
     if (!data.telefono) throw new Error('El teléfono es obligatorio')
     if (!data.domicilio) throw new Error('El domicilio es obligatorio')
     if (!data.grupoSanguineo) throw new Error('El grupo sanguíneo es obligatorio')
-    
+
     const query = `
       UPDATE ${this.tableName} 
       SET nombre = ?, apellido = ?, legajo = ?, antiguedad = ?, idRango = ?, 
@@ -223,16 +223,16 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
           domicilio = ?, grupoSanguineo = ?, idUsuario = ?
       WHERE dni = ?
     `
-    
+
     const params = [
       data.nombre, data.apellido, data.legajo || null, data.antiguedad || 0, data.idRango,
       data.correo, data.telefono, data.esDelPlan || false, data.fichaMedica || null,
       data.fechaFichaMedica || null, data.aptoPsicologico || false,
       data.domicilio, data.grupoSanguineo, data.idUsuario || null, id
     ]
-    
+
     const connection = getConnection()
-    
+
     try {
       const [result] = await connection.execute(query, params)
       logger.debug('Bombero actualizado', { dni: id })
@@ -243,7 +243,7 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
         error: error.message,
         code: error.code
       })
-      
+
       if (error.message.includes('Bind parameters must not contain undefined')) {
         throw new Error('Faltan campos obligatorios. Complete todos los campos requeridos')
       }
@@ -256,7 +256,7 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
       if (error.message.includes('cannot be null')) {
         throw new Error('Faltan campos obligatorios')
       }
-      
+
       throw new Error('Error al actualizar bombero. Verifique que todos los campos estén completos')
     }
   }
@@ -264,7 +264,7 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
   async delete(id) {
     const query = `DELETE FROM ${this.tableName} WHERE dni = ?`
     const connection = getConnection()
-    
+
     try {
       const [result] = await connection.execute(query, [id])
       logger.debug('Bombero eliminado', { dni: id })
@@ -291,9 +291,9 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
           fechaFichaMedica = ?
       WHERE dni = ?
     `
-    
+
     const connection = getConnection()
-    
+
     try {
       const [result] = await connection.execute(query, [
         pdfBuffer,
@@ -323,15 +323,15 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
       FROM ${this.tableName}
       WHERE dni = ? AND fichaMedicaPDF IS NOT NULL
     `
-    
+
     const connection = getConnection()
-    
+
     try {
       const [rows] = await connection.execute(query, [dni])
       if (rows.length === 0) {
         return null
       }
-      
+
       return {
         pdf: rows[0].fichaMedicaPDF,
         fecha: rows[0].fechaFichaMedica
@@ -354,9 +354,9 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
       FROM ${this.tableName} 
       WHERE legajo = ?
     `
-    
+
     const connection = getConnection()
-    
+
     try {
       const [rows] = await connection.execute(query, [legajo])
       return rows.length > 0 ? Bombero.create(rows[0]) : null
@@ -379,9 +379,9 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
       WHERE esDelPlan = 1
       ORDER BY apellido ASC, nombre ASC
     `
-    
+
     const connection = getConnection()
-    
+
     try {
       const [rows] = await connection.execute(query)
       logger.debug('Bomberos del plan obtenidos', { count: rows.length })
@@ -414,6 +414,28 @@ async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
         code: error.code
       })
       throw new Error(`Error al buscar bombero por idUsuario: ${error.message}`)
+    }
+  }
+  async updateCorreoByIdUsuario(idUsuario, correo) {
+    const query = `
+    UPDATE ${this.tableName}
+    SET correo = ?
+    WHERE idUsuario = ?
+  `
+    const connection = getConnection()
+    try {
+      const [result] = await connection.execute(query, [correo, idUsuario])
+      logger.debug('Correo de bombero sincronizado desde usuario', {
+        idUsuario,
+        filas: result.affectedRows
+      })
+      return result.affectedRows > 0
+    } catch (error) {
+      logger.error('Error al sincronizar correo de bombero desde usuario', {
+        idUsuario,
+        error: error.message
+      })
+      throw new Error('Error al sincronizar correo del bombero')
     }
   }
 } 
