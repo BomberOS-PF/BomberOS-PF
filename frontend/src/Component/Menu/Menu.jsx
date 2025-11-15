@@ -281,7 +281,7 @@ const Menu = ({ user, setUser }) => {
       icono: 'bi-person-circle',
       titulo: 'Usuarios y Roles',
       botones: [
-        { texto: 'Registrar Usuario', accion: 'registrarUsuario' },
+        // { texto: 'Registrar Usuario', accion: 'registrarUsuario' },
         { texto: 'Consultar Usuarios', accion: 'consultarUsuario' },
         { texto: 'Registrar Rol', accion: 'registrarRol' },
         { texto: 'Consultar Roles', accion: 'consultarRol' }
