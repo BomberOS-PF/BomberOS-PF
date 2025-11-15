@@ -322,5 +322,29 @@ export class MySQLUsuarioRepository {
     logger.debug('Contraseña actualizada por email', { email })
     return result.affectedRows > 0
   }
+
+  async updateEmail(idUsuario, email) {
+  const query = `
+    UPDATE usuario
+    SET email = ?
+    WHERE idUsuario = ?
+  `
+  const connection = getConnection()
+  try {
+    const [result] = await connection.execute(query, [email, idUsuario])
+    logger.debug('Email de usuario actualizado desde bombero', {
+      idUsuario,
+      filas: result.affectedRows
+    })
+    return result.affectedRows > 0
+  } catch (error) {
+    logger.error('Error al actualizar email de usuario desde bombero', {
+      idUsuario,
+      error: error.message
+    })
+    throw new Error('Error al sincronizar email del usuario')
+  }
+}
+
 } 
 

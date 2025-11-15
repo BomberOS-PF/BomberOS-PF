@@ -17,15 +17,42 @@ export const RestApiRolesAdapter = (rolService) => ({
     }
   },
 
-  // Obtener todos los roles
   obtenerRoles: async (req, res) => {
     try {
-      const roles = await rolService.obtenerTodos()
+      // Tomamos query params con defaults
+      const pagina = parseInt(req.query.pagina || '1', 10)
+      const limite = parseInt(req.query.limite || '10', 10)
+      const busqueda = (req.query.busqueda || '').trim().toLowerCase()
+
+      // Traemos todos los roles desde el service
+      const roles = await rolService.obtenerTodos()   // array de Rol
+
+      // Filtrado por nombre si hay búsqueda
+      let filtrados = roles
+      if (busqueda) {
+        filtrados = roles.filter(r => {
+          const nombre = (r.nombreRol || r.nombre || '').toLowerCase()
+          return nombre.includes(busqueda)
+        })
+      }
+
+      const total = filtrados.length
+
+      // Paginado en memoria
+      const page = Number.isFinite(pagina) && pagina > 0 ? pagina : 1
+      const size = Number.isFinite(limite) && limite > 0 ? limite : 10
+      const start = (page - 1) * size
+      const end = start + size
+
+      const pageItems = filtrados.slice(start, end)
+
       res.status(200).json({
         success: true,
-        data: roles.map(r => r.toPlainObject())
+        data: pageItems.map(r => r.toPlainObject ? r.toPlainObject() : r),
+        total
       })
     } catch (err) {
+      console.error('Error en obtenerRoles:', err)
       res.status(500).json({
         success: false,
         error: err.message || 'Error al obtener los roles'

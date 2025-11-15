@@ -344,9 +344,11 @@ const ConsultarRol = ({ onVolver }) => {
                   </div>
 
                   {modoEdicion && (
-                    <button type='submit' className='btn btn-danger btn-medium btn-lg' disabled={loadingAccion}>
-                      {loadingAccion ? 'Guardando...' : 'Guardar cambios'}
-                    </button>
+                    <div className='d-flex justify-content-center align-items-center gap-3'>
+                      <button type='submit' className='btn btn-accept btn-lg btn-medium' disabled={loadingAccion}>
+                        {loadingAccion ? 'Guardando...' : 'Guardar cambios'}
+                      </button>
+                    </div>
                   )}
                 </form>
               </div>
