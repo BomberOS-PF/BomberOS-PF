@@ -94,7 +94,7 @@ const mockEstadoMovilRaw = (row) => {
 const mapEstadoMovil = (raw) => {
   const v = (raw || '').toString().trim().toUpperCase()
 
-  if (!v) return { label: '-', classes: 'bg-secondary' }
+  if (!v) return { label: 'Falta completar revisión', classes: 'bg-secondary' }
 
   if (v === 'OPERATIVO')
     return { label: 'Operativo', classes: 'bg-success' }
@@ -260,102 +260,114 @@ export default function NuevoControlMovil({ onCreated, onCancel }) {
   }
 
   // helper para mostrar filas de la tabla
-  const renderHistorialRows = (rows) =>
-    rows.map(row => {
-      const fecha =
-        row.fecha ||
-        row.fechaRevision ||
-        row.fechaControl ||
-        row.fecha_control ||
-        ''
+const renderHistorialRows = (rows) =>
+  rows.map(row => {
+    const fecha =
+      row.fecha ||
+      row.fechaRevision ||
+      row.fechaControl ||
+      row.fecha_control ||
+      ''
 
-      const hora =
-        row.hora ||
-        row.horaRevision ||
-        row.horaControl ||
-        row.hora_control ||
-        ''
+    const hora =
+      row.hora ||
+      row.horaRevision ||
+      row.horaControl ||
+      row.hora_control ||
+      ''
 
-      const responsableDni =
-        row.realizadoPorDNI ??
-        row.dni ??
-        row.responsableDni
+    const responsableDni =
+      row.realizadoPorDNI ??
+      row.dni ??
+      row.responsableDni
 
-      const movilId =
-        row.idMovil ??
-        row.movilId
+    const movilId =
+      row.idMovil ??
+      row.movilId
 
-      const bombero = bomberos.find(b => b.dni === String(responsableDni))
-      const responsable =
-        bombero?.label ||
-        row.responsable ||
-        row.responsableNombre ||
-        '-'
+    const bombero = bomberos.find(b => b.dni === String(responsableDni))
+    const responsable =
+      bombero?.label ||
+      row.responsable ||
+      row.responsableNombre ||
+      '-'
 
-      const movilObj = moviles.find(m => String(m.idMovil) === String(movilId))
-      const movil = movilObj
-        ? `${movilObj.interno}${movilObj.dominio ? ' - ' + movilObj.dominio : ''}`
-        : (row.movil || row.movilInterno || `#${movilId || '-'}`)
+    const movilObj = moviles.find(m => String(m.idMovil) === String(movilId))
+    const movil = movilObj
+      ? `${movilObj.interno}${movilObj.dominio ? ' - ' + movilObj.dominio : ''}`
+      : (row.movil || row.movilInterno || `#${movilId || '-'}`)
 
-      // Estado revisión
-      const estadoRevisionRaw =
-        row.estado ||
-        row.estadoControl ||
-        (row.completado ? 'Completado' : 'Pendiente')
+    // 🔹 Flag real de finalización (lo usamos para derivar estado si no viene texto)
+    const finalizadoFlag =
+      row.finalizado ??
+      row.completado ??
+      row.cerrado ??
+      0
 
-      const estadoRevision = String(estadoRevisionRaw || '').trim() || 'Pendiente'
-      const isOkRevision =
-        ['completado', 'ok', 'cerrado', 'finalizado'].includes(
-          estadoRevision.toLowerCase()
-        )
+    // 🔹 Estado revisión: primero lo que venga del back, sino lo derivamos
+    let estadoRevisionRaw =
+      row.estado ??
+      row.estadoControl ??
+      ''
 
-      // ESTADO DEL MÓVIL ✔ MOCK SI NO VIENE DEL BACKEND
-      let estadoMovilRaw =
-        row.estadoMovilActual ??
-        row.estado_movil_actual ??
-        row.estado_movil ??
-        row.estadoMovil
+    if (!estadoRevisionRaw) {
+      estadoRevisionRaw = finalizadoFlag ? 'Finalizado' : 'Pendiente'
+    }
 
-      if (!estadoMovilRaw) {
-        estadoMovilRaw = mockEstadoMovilRaw(row)
-      }
-
-      const { label: estadoMovilLabel, classes: estadoMovilClasses } =
-        mapEstadoMovil(estadoMovilRaw)
-
-      return (
-        <tr key={row.idControl || `${movilId}-${fecha}-${responsableDni}`}>
-          <td className='border-end px-3 text-center'>
-            {formatFechaHora(fecha, hora)}
-          </td>
-
-          <td className='border-end px-3'>
-            {responsable}
-          </td>
-
-          <td className='border-end px-3'>
-            {movil}
-          </td>
-
-          <td className='border-end px-3 text-center'>
-            <span
-              className={`badge px-3 py-2 ${
-                isOkRevision ? 'bg-success' : 'bg-warning text-dark'
-              }`}
-            >
-              {estadoRevision}
-            </span>
-          </td>
-
-          {/* ESTADO DEL MÓVIL */}
-          <td className='px-3 text-center'>
-            <span className={`badge px-3 py-2 ${estadoMovilClasses}`}>
-              {estadoMovilLabel}
-            </span>
-          </td>
-        </tr>
+    const estadoRevision = String(estadoRevisionRaw || '').trim() || 'Pendiente'
+    const isOkRevision =
+      ['completado', 'ok', 'cerrado', 'finalizado'].includes(
+        estadoRevision.toLowerCase()
       )
-    })
+
+    // 🔹 ESTADO DEL MÓVIL (real o mockeado)
+    let estadoMovilRaw =
+      row.estadoMovilActual ??
+      row.estado_movil_actual ??
+      row.estado_movil ??
+      row.estadoMovil
+
+    if (!estadoMovilRaw) {
+      estadoMovilRaw = mockEstadoMovilRaw(row)
+    }
+
+    const { label: estadoMovilLabel, classes: estadoMovilClasses } =
+      mapEstadoMovil(estadoMovilRaw)
+
+    return (
+      <tr key={row.idControl || `${movilId}-${fecha}-${responsableDni}`}>
+        <td className='border-end px-3 text-center'>
+          {formatFechaHora(fecha, hora)}
+        </td>
+
+        <td className='border-end px-3'>
+          {responsable}
+        </td>
+
+        <td className='border-end px-3'>
+          {movil}
+        </td>
+
+        {/* ESTADO REVISIÓN */}
+        <td className='border-end px-3 text-center'>
+          <span
+            className={`badge px-3 py-2 ${
+              isOkRevision ? 'bg-success' : 'bg-warning text-dark'
+            }`}
+          >
+            {estadoRevision}
+          </span>
+        </td>
+
+        {/* ESTADO DEL MÓVIL */}
+        <td className='px-3 text-center'>
+          <span className={`badge px-3 py-2 ${estadoMovilClasses}`}>
+            {estadoMovilLabel}
+          </span>
+        </td>
+      </tr>
+    )
+  })
 
   return (
     <div className='container-fluid py-5 consultar-incidente registrar-guardia consultar-grupo'>
