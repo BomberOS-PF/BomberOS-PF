@@ -167,7 +167,7 @@ export default function ControlMovilSemanal({ controlId, onFinalizado, onVolver 
   const toggleGrupo = idx => {
     setExpandidoGrupos(prev => ({
       ...prev,
-      [idx]: !(prev[idx] ?? true) // si no existe, se toma true (expandido)
+      [idx]: !(prev[idx]) // si no existe, se toma true (expandido)
     }))
   }
 
@@ -295,14 +295,14 @@ export default function ControlMovilSemanal({ controlId, onFinalizado, onVolver 
         </div>
 
         <div className='d-flex justify-content-center align-items-center gap-3 mb-3'>
-          <button className='btn btn-accept btn-medium' onClick={finalizar}>
-            Finalizar control
-          </button>
           {onVolver && (
             <button className='btn btn-outline-secondary' onClick={onVolver}>
               Volver
             </button>
           )}
+          <button className='btn btn-accept btn-medium' onClick={finalizar}>
+            Finalizar control
+          </button>
         </div>
       </div>
 

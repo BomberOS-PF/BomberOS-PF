@@ -108,7 +108,7 @@ const mapEstadoMovil = (raw) => {
   return { label: raw, classes: 'bg-secondary' }
 }
 
-export default function NuevoControlMovil({ onCreated, onCancel }) {
+export default function NuevoControlMovil({ onCreated, onVolverMenu, onCancel }) {
   const [moviles, setMoviles] = useState([])
   const [bomberos, setBomberos] = useState([])
   const [form, setForm] = useState({
@@ -123,38 +123,38 @@ export default function NuevoControlMovil({ onCreated, onCancel }) {
 
   useEffect(() => {
     let mounted = true
-    ;(async () => {
-      setError('')
-      setLoadingData(true)
-      try {
-        // 1) Móviles
-        const movsRaw = await tryMany([
-          '/api/flota/moviles?activo=1',
-          '/api/flota/moviles'
-        ])
-        const movs = normalizeArray(movsRaw)
-        if (mounted) setMoviles(movs)
+      ; (async () => {
+        setError('')
+        setLoadingData(true)
+        try {
+          // 1) Móviles
+          const movsRaw = await tryMany([
+            '/api/flota/moviles?activo=1',
+            '/api/flota/moviles'
+          ])
+          const movs = normalizeArray(movsRaw)
+          if (mounted) setMoviles(movs)
 
-        // 2) Bomberos
-        const bombsRaw = await tryMany([
-          '/api/bomberos/buscar?pagina=1&limite=1000&busqueda=',
-          '/api/bomberos?min=1',
-          '/api/bomberos/listar?min=1',
-          '/api/bomberos'
-        ])
-        const bombs = normalizeBomberos(normalizeArray(bombsRaw))
-        if (mounted) setBomberos(bombs)
-      } catch (e) {
-        console.error('[NuevoControl] Error cargando datos:', e)
-        if (mounted) {
-          setError('No se pudieron cargar móviles y/o bomberos')
-          setMoviles([])
-          setBomberos([])
+          // 2) Bomberos
+          const bombsRaw = await tryMany([
+            '/api/bomberos/buscar?pagina=1&limite=1000&busqueda=',
+            '/api/bomberos?min=1',
+            '/api/bomberos/listar?min=1',
+            '/api/bomberos'
+          ])
+          const bombs = normalizeBomberos(normalizeArray(bombsRaw))
+          if (mounted) setBomberos(bombs)
+        } catch (e) {
+          console.error('[NuevoControl] Error cargando datos:', e)
+          if (mounted) {
+            setError('No se pudieron cargar móviles y/o bomberos')
+            setMoviles([])
+            setBomberos([])
+          }
+        } finally {
+          if (mounted) setLoadingData(false)
         }
-      } finally {
-        if (mounted) setLoadingData(false)
-      }
-    })()
+      })()
     return () => { mounted = false }
   }, [])
 
@@ -260,114 +260,113 @@ export default function NuevoControlMovil({ onCreated, onCancel }) {
   }
 
   // helper para mostrar filas de la tabla
-const renderHistorialRows = (rows) =>
-  rows.map(row => {
-    const fecha =
-      row.fecha ||
-      row.fechaRevision ||
-      row.fechaControl ||
-      row.fecha_control ||
-      ''
+  const renderHistorialRows = (rows) =>
+    rows.map(row => {
+      const fecha =
+        row.fecha ||
+        row.fechaRevision ||
+        row.fechaControl ||
+        row.fecha_control ||
+        ''
 
-    const hora =
-      row.hora ||
-      row.horaRevision ||
-      row.horaControl ||
-      row.hora_control ||
-      ''
+      const hora =
+        row.hora ||
+        row.horaRevision ||
+        row.horaControl ||
+        row.hora_control ||
+        ''
 
-    const responsableDni =
-      row.realizadoPorDNI ??
-      row.dni ??
-      row.responsableDni
+      const responsableDni =
+        row.realizadoPorDNI ??
+        row.dni ??
+        row.responsableDni
 
-    const movilId =
-      row.idMovil ??
-      row.movilId
+      const movilId =
+        row.idMovil ??
+        row.movilId
 
-    const bombero = bomberos.find(b => b.dni === String(responsableDni))
-    const responsable =
-      bombero?.label ||
-      row.responsable ||
-      row.responsableNombre ||
-      '-'
+      const bombero = bomberos.find(b => b.dni === String(responsableDni))
+      const responsable =
+        bombero?.label ||
+        row.responsable ||
+        row.responsableNombre ||
+        '-'
 
-    const movilObj = moviles.find(m => String(m.idMovil) === String(movilId))
-    const movil = movilObj
-      ? `${movilObj.interno}${movilObj.dominio ? ' - ' + movilObj.dominio : ''}`
-      : (row.movil || row.movilInterno || `#${movilId || '-'}`)
+      const movilObj = moviles.find(m => String(m.idMovil) === String(movilId))
+      const movil = movilObj
+        ? `${movilObj.interno}${movilObj.dominio ? ' - ' + movilObj.dominio : ''}`
+        : (row.movil || row.movilInterno || `#${movilId || '-'}`)
 
-    // 🔹 Flag real de finalización (lo usamos para derivar estado si no viene texto)
-    const finalizadoFlag =
-      row.finalizado ??
-      row.completado ??
-      row.cerrado ??
-      0
+      // 🔹 Flag real de finalización (lo usamos para derivar estado si no viene texto)
+      const finalizadoFlag =
+        row.finalizado ??
+        row.completado ??
+        row.cerrado ??
+        0
 
-    // 🔹 Estado revisión: primero lo que venga del back, sino lo derivamos
-    let estadoRevisionRaw =
-      row.estado ??
-      row.estadoControl ??
-      ''
+      // 🔹 Estado revisión: primero lo que venga del back, sino lo derivamos
+      let estadoRevisionRaw =
+        row.estado ??
+        row.estadoControl ??
+        ''
 
-    if (!estadoRevisionRaw) {
-      estadoRevisionRaw = finalizadoFlag ? 'Finalizado' : 'Pendiente'
-    }
+      if (!estadoRevisionRaw) {
+        estadoRevisionRaw = finalizadoFlag ? 'Finalizado' : 'Pendiente'
+      }
 
-    const estadoRevision = String(estadoRevisionRaw || '').trim() || 'Pendiente'
-    const isOkRevision =
-      ['completado', 'ok', 'cerrado', 'finalizado'].includes(
-        estadoRevision.toLowerCase()
+      const estadoRevision = String(estadoRevisionRaw || '').trim() || 'Pendiente'
+      const isOkRevision =
+        ['completado', 'ok', 'cerrado', 'finalizado'].includes(
+          estadoRevision.toLowerCase()
+        )
+
+      // 🔹 ESTADO DEL MÓVIL (real o mockeado)
+      let estadoMovilRaw =
+        row.estadoMovilActual ??
+        row.estado_movil_actual ??
+        row.estado_movil ??
+        row.estadoMovil
+
+      if (!estadoMovilRaw) {
+        estadoMovilRaw = mockEstadoMovilRaw(row)
+      }
+
+      const { label: estadoMovilLabel, classes: estadoMovilClasses } =
+        mapEstadoMovil(estadoMovilRaw)
+
+      return (
+        <tr key={row.idControl || `${movilId}-${fecha}-${responsableDni}`}>
+          <td className='border-end px-3 text-center'>
+            {formatFechaHora(fecha, hora)}
+          </td>
+
+          <td className='border-end px-3'>
+            {responsable}
+          </td>
+
+          <td className='border-end px-3'>
+            {movil}
+          </td>
+
+          {/* ESTADO REVISIÓN */}
+          <td className='border-end px-3 text-center'>
+            <span
+              className={`badge px-3 py-2 ${isOkRevision ? 'bg-success' : 'bg-warning text-dark'
+                }`}
+            >
+              {estadoRevision}
+            </span>
+          </td>
+
+          {/* ESTADO DEL MÓVIL */}
+          <td className='px-3 text-center'>
+            <span className={`badge px-3 py-2 ${estadoMovilClasses}`}>
+              {estadoMovilLabel}
+            </span>
+          </td>
+        </tr>
       )
-
-    // 🔹 ESTADO DEL MÓVIL (real o mockeado)
-    let estadoMovilRaw =
-      row.estadoMovilActual ??
-      row.estado_movil_actual ??
-      row.estado_movil ??
-      row.estadoMovil
-
-    if (!estadoMovilRaw) {
-      estadoMovilRaw = mockEstadoMovilRaw(row)
-    }
-
-    const { label: estadoMovilLabel, classes: estadoMovilClasses } =
-      mapEstadoMovil(estadoMovilRaw)
-
-    return (
-      <tr key={row.idControl || `${movilId}-${fecha}-${responsableDni}`}>
-        <td className='border-end px-3 text-center'>
-          {formatFechaHora(fecha, hora)}
-        </td>
-
-        <td className='border-end px-3'>
-          {responsable}
-        </td>
-
-        <td className='border-end px-3'>
-          {movil}
-        </td>
-
-        {/* ESTADO REVISIÓN */}
-        <td className='border-end px-3 text-center'>
-          <span
-            className={`badge px-3 py-2 ${
-              isOkRevision ? 'bg-success' : 'bg-warning text-dark'
-            }`}
-          >
-            {estadoRevision}
-          </span>
-        </td>
-
-        {/* ESTADO DEL MÓVIL */}
-        <td className='px-3 text-center'>
-          <span className={`badge px-3 py-2 ${estadoMovilClasses}`}>
-            {estadoMovilLabel}
-          </span>
-        </td>
-      </tr>
-    )
-  })
+    })
 
   return (
     <div className='container-fluid py-5 consultar-incidente registrar-guardia consultar-grupo'>
@@ -564,13 +563,10 @@ const renderHistorialRows = (rows) =>
           </div>
 
           <hr className='mb-4 mt-4' />
-          
-          <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
-              {onCancel && (
-                <BackToMenuButton onClick={onCancel} />
-              )}
-          </div>
-          
+
+          <BackToMenuButton onClick={onVolverMenu} />
+
+
         </div>
       </div>
     </div>
