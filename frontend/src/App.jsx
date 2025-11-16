@@ -13,7 +13,6 @@ import ConsultarRol from './Component/Rol/ConsultarRol.jsx'
 import RegistrarRol from './Component/Rol/RegistrarRol.jsx'
 import GestionarGuardias from './Component/Guardia/GestionarGuardias/GestionarGuardia.jsx'
 import DashboardRespuestas from './Component/Respuestas/DashboardRespuestas.jsx'
-import EstadoWhatsApp from './Component/WhatsApp/EstadoWhatsApp.jsx'
 
 import RestablecerClave from './Component/RestablecerClave/RestablecerClave.jsx'
 
@@ -40,7 +39,6 @@ const App = () => {
       <Route path="/participacion-incidente" element={<RutaPrivada user={user}><ParticipacionIncidente /></RutaPrivada>} />
       <Route path="/vehiculo-involucrado" element={<RutaPrivada user={user}><VehiculoInvolucrado /></RutaPrivada>} />
       <Route path="/dashboard-respuestas" element={<RutaPrivada user={user}><DashboardRespuestas /></RutaPrivada>} />
-      <Route path="/estado-whatsapp" element={<RutaPrivada user={user}><EstadoWhatsApp /></RutaPrivada>} />
 
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

@@ -26,7 +26,7 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
       // Mapear campos específicos del rescate
       lugar: datosPrevios.lugar, // Lugar específico del rescate (dropdown)
       otroLugar: datosPrevios.otroLugar,
-      detalle: datosPrevios.detalle || datosPrevios.descripcion, // Mapear descripcion del backend a detalle del frontend
+      detalle: datosPrevios.detalle || '',
       damnificados: datosPrevios.damnificados || [],
       // Mantener el lugar del incidente base por separado
       lugarIncidente: datosPrevios.descripcion // Lugar del incidente base (solo para mostrar)
@@ -68,7 +68,7 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
         // Mapear campos específicos del rescate
         lugar: datosPrevios.lugar,
         otroLugar: datosPrevios.otroLugar,
-        detalle: datosPrevios.detalle || datosPrevios.descripcion,
+        detalle: datosPrevios.detalle || '',
         damnificados: datosPrevios.damnificados || []
       }
 
@@ -113,9 +113,15 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
     setFormData(prev => ({ ...prev, [id]: value }))
   }
 
-  const guardarLocalmente = () => {
+  const guardarLocalmente = async () => {
     localStorage.setItem(storageKey, JSON.stringify(formData))
-    alert('Datos guardados localmente. Podés continuar después.')
+    await swalConfirm({
+      title: 'Guardado local',
+      html: 'Los datos se guardaron en este equipo. Podés continuar después.',
+      icon: 'success',
+      confirmText: 'Entendido',
+      showCancel: false
+    })
   }
 
   // Funciones de validación

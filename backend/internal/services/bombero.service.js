@@ -25,13 +25,13 @@ export class BomberoService {
   async obtenerBomberoPorId(id) {
     try {
       logger.debug('Servicio: Obtener bombero por ID', { id })
-      
+
       if (!id) {
         throw new Error('ID es requerido')
       }
 
       const bombero = await this.bomberoRepository.findById(id)
-      
+
       if (!bombero) {
         throw new Error('Bombero no encontrado')
       }
@@ -46,10 +46,10 @@ export class BomberoService {
   async crearBombero(datosBombero) {
     try {
       logger.debug('Servicio: Crear nuevo bombero')
-      
+
       // Validación básica
       this._validarDatosBombero(datosBombero, true)
-      
+
       // Verificar si ya existe un bombero con el mismo dni
       const existente = await this.bomberoRepository.findById(datosBombero.dni || datosBombero.dni)
       if (existente) {
@@ -83,7 +83,7 @@ export class BomberoService {
 
       // Crear bombero - Los Value Objects se encargan de las validaciones
       const bombero = Bombero.create(datosBombero)
-      
+
       return await this.bomberoRepository.create(bombero)
     } catch (error) {
       logger.error('Error al crear bombero', { error: error.message })
@@ -94,7 +94,7 @@ export class BomberoService {
   async actualizarBombero(id, datosBombero) {
     try {
       logger.debug('Servicio: Actualizar bombero', { id })
-      
+
       if (!id) {
         throw new Error('ID es requerido')
       }
@@ -107,7 +107,7 @@ export class BomberoService {
 
       // Validar datos (no es creación, por lo que idUsuario es opcional)
       this._validarDatosBombero(datosBombero, false)
-      
+
       // Verificar legajo duplicado (si se está cambiando)
       if (datosBombero.legajo && datosBombero.legajo !== bomberoExistente.legajo) {
         const existenteLegajo = await this.bomberoRepository.findByLegajo(datosBombero.legajo)
@@ -123,7 +123,26 @@ export class BomberoService {
         idUsuario: datosBombero.idUsuario || bomberoExistente.idUsuario // Preservar idUsuario existente si no se proporciona
       })
 
-      return await this.bomberoRepository.update(id, bomberoActualizado)
+      const resultado = await this.bomberoRepository.update(id, bomberoActualizado)
+
+      // 🔁 SINCRONIZAR EMAIL EN USUARIO (si hay usuario asociado y se mandó correo)
+      if (resultado && bomberoExistente.idUsuario && datosBombero.correo && this.usuarioRepository) {
+        try {
+          await this.usuarioRepository.updateEmail(bomberoExistente.idUsuario, datosBombero.correo)
+          logger.info('Email de usuario sincronizado tras actualizar bombero', {
+            idUsuario: bomberoExistente.idUsuario,
+            correo: datosBombero.correo
+          })
+        } catch (syncError) {
+          logger.error('No se pudo sincronizar email del usuario', {
+            idUsuario: bomberoExistente.idUsuario,
+            error: syncError.message
+          })
+        }
+      }
+
+      return resultado
+
     } catch (error) {
       logger.error('Error al actualizar bombero', { id, error: error.message })
       throw error
@@ -133,7 +152,7 @@ export class BomberoService {
   async eliminarBombero(id) {
     try {
       logger.debug('Servicio: Eliminar bombero', { id })
-      
+
       if (!id) {
         throw new Error('ID es requerido')
       }
@@ -154,7 +173,7 @@ export class BomberoService {
   async actualizarFichaMedica(dni, pdfBuffer, nombreArchivo, fechaFichaMedica) {
     try {
       logger.debug('Servicio: Actualizar ficha médica', { dni, nombreArchivo })
-      
+
       if (!dni) {
         throw new Error('DNI es requerido')
       }
@@ -170,7 +189,7 @@ export class BomberoService {
       }
 
       return await this.bomberoRepository.updateFichaMedica(
-        dni, 
+        dni,
         pdfBuffer,
         nombreArchivo,
         fechaFichaMedica
@@ -184,7 +203,7 @@ export class BomberoService {
   async obtenerFichaMedica(dni) {
     try {
       logger.debug('Servicio: Obtener ficha médica', { dni })
-      
+
       if (!dni) {
         throw new Error('DNI es requerido')
       }
@@ -197,8 +216,8 @@ export class BomberoService {
   }
 
   async listarBomberosPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
-  return await this.bomberoRepository.findConPaginado({ pagina, limite, busqueda })
-}
+    return await this.bomberoRepository.findConPaginado({ pagina, limite, busqueda })
+  }
 
   async listarBomberosDelPlan() {
     try {
@@ -255,7 +274,7 @@ export class BomberoService {
     if (!datos.dni && !datos.dni) {
       throw new Error('dni es requerido')
     }
-    
+
     if (!datos.nombre || !datos.apellido) {
       throw new Error('Los campos nombre y apellido son requeridos')
     }
@@ -263,7 +282,7 @@ export class BomberoService {
     if (!datos.nombre.trim() || !datos.apellido.trim()) {
       throw new Error('Los campos nombre y apellido no pueden estar vacios')
     }
-    
+
     // idUsuario solo es requerido para creaciones, no para actualizaciones
     if (esCreacion && !datos.idUsuario) {
       throw new Error('idUsuario es requerido')
@@ -271,4 +290,25 @@ export class BomberoService {
 
     // Los Value Objects se encargan del resto de validaciones
   }
+
+  async eliminarFichaMedica(dni) {
+    try {
+      logger.debug('Servicio: Eliminar ficha médica', { dni })
+
+      if (!dni) {
+        throw new Error('DNI es requerido')
+      }
+
+      const bombero = await this.bomberoRepository.findById(dni)
+      if (!bombero) {
+        throw new Error('Bombero no encontrado')
+      }
+
+      return await this.bomberoRepository.clearFichaMedica(dni)
+    } catch (error) {
+      logger.error('Error al eliminar ficha médica', { dni, error: error.message })
+      throw error
+    }
+  }
+
 } 

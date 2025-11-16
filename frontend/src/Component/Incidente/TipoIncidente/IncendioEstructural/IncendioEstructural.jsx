@@ -122,9 +122,15 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
     setFormData(prev => ({ ...prev, [id]: type === 'checkbox' ? checked : value }))
   }
 
-  const guardarLocalmente = () => {
+  const guardarLocalmente = async () => {
     localStorage.setItem(storageKey, JSON.stringify(formData))
-    alert('Datos guardados localmente. Podés continuar después.')
+    await swalConfirm({
+      title: 'Guardado local',
+      html: 'Los datos se guardaron en este equipo. Podés continuar después.',
+      icon: 'success',
+      confirmText: 'Entendido',
+      showCancel: false
+    })
   }
 
   const toNumberOrNull = v => {

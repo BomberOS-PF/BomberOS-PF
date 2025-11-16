@@ -19,7 +19,6 @@ import GestionarGuardias from '../Guardia/GestionarGuardias/GestionarGuardia'
 import ParticipacionIncidente from '../Incidente/ParticipacionIncidente/ParticipacionIncidente'
 import VehiculoInvolucrado from '../VehiculoInvolucrado/VehiculoInvolucrado'
 import DashboardRespuestas from '../Respuestas/DashboardRespuestas'
-import EstadoWhatsApp from '../WhatsApp/EstadoWhatsApp'
 
 import CalendarioGuardias from '../Guardia/CalendarioGuardias/CalendarioGuardias'
 import MisGuardias from '../Guardia/MisGuardias/MisGuardias'
@@ -276,8 +275,6 @@ const Menu = ({ user, setUser }) => {
         return <ConsultarIncidente onVolverMenu={() => setOpcionSeleccionada('')} />
       case 'dashboard-respuestas':
         return <DashboardRespuestas onVolver={() => setOpcionSeleccionada(null)} />
-      case 'estado-whatsapp':
-        return <EstadoWhatsApp onVolver={() => setOpcionSeleccionada(null)} />
       case 'mis-guardias':
         return <MisGuardias />
       case 'cal-guardias':
@@ -339,7 +336,7 @@ const Menu = ({ user, setUser }) => {
       icono: 'bi-person-circle',
       titulo: 'Usuarios y Roles',
       botones: [
-        { texto: 'Registrar Usuario', accion: 'registrarUsuario' },
+        // { texto: 'Registrar Usuario', accion: 'registrarUsuario' },
         { texto: 'Consultar Usuarios', accion: 'consultarUsuario' },
         { texto: 'Registrar Rol', accion: 'registrarRol' },
         { texto: 'Consultar Roles', accion: 'consultarRol' }
@@ -363,12 +360,11 @@ const Menu = ({ user, setUser }) => {
             ]
     },
     {
-      id: 'collapseWhatsApp',
-      icono: 'bi-whatsapp',
-      titulo: 'WhatsApp & Respuestas',
+      id: 'collapseNotificaciones',
+      icono: 'bi-bell',
+      titulo: 'Notificaciones',
       botones: [
-        { texto: 'Dashboard Respuestas', accion: 'dashboard-respuestas' },
-        { texto: 'Estado WhatsApp', accion: 'estado-whatsapp' }
+        { texto: 'Dashboard Respuestas', accion: 'dashboard-respuestas' }
       ]
     },
     {

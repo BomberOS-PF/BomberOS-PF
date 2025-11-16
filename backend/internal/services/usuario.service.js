@@ -71,7 +71,7 @@ export class UsuarioService {
       if (usuarioExistentePorEmail) {
         throw new Error(`Correo electrónico ya registrado`)
       }
-      
+
       const nuevoUsuario = Usuario.create({
         username: datosUsuario.username,
         password: datosUsuario.password,
@@ -100,12 +100,14 @@ export class UsuarioService {
 
   async actualizarUsuario(id, datosActualizacion) {
     try {
-      logger.debug('Servicio: Actualizar usuario', { id })
+      logger.debug('Servicio: Actualizar usuario', { id, datosActualizacion })
+
       const usuarioExistente = await this.usuarioRepository.findById(id)
       if (!usuarioExistente) {
         throw new Error(`Usuario con ID ${id} no encontrado`)
       }
 
+      // Validar password solo si quieren cambiarla
       if (datosActualizacion.password) {
         const passwordValidation = PasswordUtils.validatePasswordStrength(datosActualizacion.password)
         if (!passwordValidation.isValid) {
@@ -119,13 +121,28 @@ export class UsuarioService {
         }
       }
 
+      // 👇 Tomar username desde 'usuario' o 'username'
+      const nuevoUsername =
+        datosActualizacion.usuario?.trim() ||
+        datosActualizacion.username?.trim() ||
+        usuarioExistente.username
+
+      // 👇 Si viene idRol en el body, lo usamos; si no, queda el existente
+      const nuevoIdRol =
+        datosActualizacion.idRol !== undefined && datosActualizacion.idRol !== null
+          ? Number(datosActualizacion.idRol)
+          : usuarioExistente.idRol
+
       const datosCompletos = {
         id: usuarioExistente.id,
-        username: usuarioExistente.username,
+        username: nuevoUsername,
         password: datosActualizacion.password || usuarioExistente.password,
         email: datosActualizacion.email || usuarioExistente.email,
-        rol: datosActualizacion.rol || usuarioExistente.rol,
-        activo: datosActualizacion.activo !== undefined ? datosActualizacion.activo : usuarioExistente.activo,
+        idRol: nuevoIdRol,                                               // 👈 CLAVE
+        activo:
+          datosActualizacion.activo !== undefined
+            ? datosActualizacion.activo
+            : usuarioExistente.activo,
         createdAt: usuarioExistente.createdAt,
         updatedAt: new Date()
       }
@@ -133,11 +150,30 @@ export class UsuarioService {
       const usuarioActualizado = Usuario.create(datosCompletos)
       const resultado = await this.usuarioRepository.update(id, usuarioActualizado)
 
-      if (!resultado) throw new Error(`No se pudo actualizar el usuario con ID ${id}`)
+      if (!resultado) {
+        throw new Error(`No se pudo actualizar el usuario con ID ${id}`)
+      }
 
+      if (this.bomberoRepository && datosActualizacion.email) {
+        try {
+          await this.bomberoRepository.updateCorreoByIdUsuario(id, datosActualizacion.email)
+          logger.info('Correo de bombero sincronizado tras actualizar usuario', {
+            idUsuario: id,
+            email: datosActualizacion.email
+          })
+        } catch (syncError) {
+          logger.error('No se pudo sincronizar correo del bombero', {
+            idUsuario: id,
+            error: syncError.message
+          })
+          // no tiramos error aquí para no romper la actualización principal del usuario
+        }
+      }
+      
       logger.info('Usuario actualizado exitosamente', {
         id: resultado.id,
-        username: resultado.username
+        username: resultado.username,
+        idRol: resultado.idRol
       })
 
       return resultado
@@ -146,6 +182,7 @@ export class UsuarioService {
       throw error
     }
   }
+
 
   async eliminarUsuario(id) {
     try {
@@ -157,19 +194,19 @@ export class UsuarioService {
 
       // Verificar si el usuario tiene un bombero asociado
       const bomberoAsociado = await this.usuarioRepository.findBomberoByIdUsuario(id)
-      
+
       if (bomberoAsociado) {
         logger.debug('Usuario tiene bombero asociado, eliminando bombero primero', {
           userId: id,
           bomberodni: bomberoAsociado.dni
         })
-        
+
         // Eliminar el bombero primero para evitar violación de clave foránea
         const eliminacionBombero = await this.bomberoRepository.delete(bomberoAsociado.dni)
         if (!eliminacionBombero) {
           throw new Error(`No se pudo eliminar el bombero asociado con dni ${bomberoAsociado.dni}`)
         }
-        
+
         logger.info('Bombero asociado eliminado exitosamente', {
           userId: id,
           bomberodni: bomberoAsociado.dni
@@ -179,7 +216,7 @@ export class UsuarioService {
       // Ahora eliminar el usuario
       const eliminado = await this.usuarioRepository.delete(id)
       if (!eliminado) throw new Error(`No se pudo eliminar el usuario con ID ${id}`)
-      
+
       logger.info('Usuario eliminado exitosamente', {
         id,
         username: usuarioExistente.username,

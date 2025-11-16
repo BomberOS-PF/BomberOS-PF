@@ -16,13 +16,7 @@
     "lint": "eslint . --ext .js",
     "lint:fix": "eslint . --ext .js --fix",
     "format": "prettier --write .",
-    "validate": "npm run lint && npm run test",
-    "migration:check": "node scripts/check-migration.js",
-    "db:migrate": "node internal/platform/database/migrations/run-migrations.js",
-    "test:twilio": "node test-twilio-simple.js",
-    "test:webhook": "node test-webhook.js",
-    "simulate:twilio": "node simulate-twilio.js",
-    "test:all-twilio": "node test-all-twilio.js"
+    "validate": "npm run lint && npm run test"
   },
   "keywords": [
     "bomberos",
