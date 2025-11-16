@@ -78,56 +78,34 @@ const formatFechaHora = (fechaRaw, horaRaw) => {
   return `${base} ${horaStr}`
 }
 
-// helpers para badges de estado
-const getEstadoRevisionBadge = (estadoRaw) => {
-  const estado = String(estadoRaw || '').trim() || 'Pendiente'
-  const lower = estado.toLowerCase()
-  const isOk = ['completado', 'ok', 'cerrado', 'finalizado'].includes(lower)
+// --- Mockeo temporal del estado del móvil (para la demo) ---
+const mockEstadoMovilRaw = (row) => {
+  const finalizado = row.finalizado ?? row.completado ?? row.cerrado ?? 0
+  if (!finalizado) return ''
 
-  return {
-    label: estado,
-    className: `badge px-3 py-2 ${isOk ? 'bg-success' : 'bg-warning text-dark'}`
-  }
+  const id = Number(row.idControl || row.id || row.movilId || row.idMovil || 0)
+  const mod = isNaN(id) ? 0 : (id % 3)
+
+  if (mod === 0) return 'OPERATIVO'
+  if (mod === 1) return 'OPERATIVO_CON_OBS'
+  return 'FUERA_DE_SERVICIO'
 }
 
-const getEstadoMovilBadge = (estadoRaw) => {
-  const estado = String(estadoRaw || '').trim()
+const mapEstadoMovil = (raw) => {
+  const v = (raw || '').toString().trim().toUpperCase()
 
-  if (!estado) {
-    return {
-      label: '-',
-      className: 'badge px-3 py-2 bg-secondary'
-    }
-  }
+  if (!v) return { label: '-', classes: 'bg-secondary' }
 
-  const lower = estado.toLowerCase()
+  if (v === 'OPERATIVO')
+    return { label: 'Operativo', classes: 'bg-success' }
 
-  if (['operativo'].includes(lower)) {
-    return {
-      label: 'Operativo',
-      className: 'badge px-3 py-2 bg-success'
-    }
-  }
+  if (v === 'OPERATIVO_CON_OBS')
+    return { label: 'Operativo con observaciones', classes: 'bg-warning text-dark' }
 
-  if (['operativo_con_obs', 'operativo con obs', 'operativo con observaciones'].includes(lower)) {
-    return {
-      label: 'Operativo c/ obs.',
-      className: 'badge px-3 py-2 bg-warning text-dark'
-    }
-  }
+  if (v === 'FUERA_DE_SERVICIO')
+    return { label: 'Fuera de servicio', classes: 'bg-danger' }
 
-  if (['fuera_de_servicio', 'fuera de servicio', 'no operativo'].includes(lower)) {
-    return {
-      label: 'Fuera de servicio',
-      className: 'badge px-3 py-2 bg-danger'
-    }
-  }
-
-  // fallback genérico
-  return {
-    label: estado,
-    className: 'badge px-3 py-2 bg-secondary'
-  }
+  return { label: raw, classes: 'bg-secondary' }
 }
 
 export default function NuevoControlMovil({ onCreated, onCancel }) {
@@ -290,6 +268,7 @@ export default function NuevoControlMovil({ onCreated, onCancel }) {
         row.fechaControl ||
         row.fecha_control ||
         ''
+
       const hora =
         row.hora ||
         row.horaRevision ||
@@ -318,45 +297,60 @@ export default function NuevoControlMovil({ onCreated, onCancel }) {
         ? `${movilObj.interno}${movilObj.dominio ? ' - ' + movilObj.dominio : ''}`
         : (row.movil || row.movilInterno || `#${movilId || '-'}`)
 
-      // 🟡 Estado de la revisión
+      // Estado revisión
       const estadoRevisionRaw =
-        row.estadoRevision ??
-        row.estado ??
-        row.estadoControl ??
+        row.estado ||
+        row.estadoControl ||
         (row.completado ? 'Completado' : 'Pendiente')
 
-      const { label: estadoRevision, className: estadoRevisionClass } =
-        getEstadoRevisionBadge(estadoRevisionRaw)
+      const estadoRevision = String(estadoRevisionRaw || '').trim() || 'Pendiente'
+      const isOkRevision =
+        ['completado', 'ok', 'cerrado', 'finalizado'].includes(
+          estadoRevision.toLowerCase()
+        )
 
-      // 🔴 Estado del móvil
-      const estadoMovilRaw =
+      // ESTADO DEL MÓVIL ✔ MOCK SI NO VIENE DEL BACKEND
+      let estadoMovilRaw =
         row.estadoMovilActual ??
-        row.estadoServicio ??
+        row.estado_movil_actual ??
         row.estado_movil ??
         row.estadoMovil
 
-      const { label: estadoMovil, className: estadoMovilClass } =
-        getEstadoMovilBadge(estadoMovilRaw)
+      if (!estadoMovilRaw) {
+        estadoMovilRaw = mockEstadoMovilRaw(row)
+      }
+
+      const { label: estadoMovilLabel, classes: estadoMovilClasses } =
+        mapEstadoMovil(estadoMovilRaw)
 
       return (
         <tr key={row.idControl || `${movilId}-${fecha}-${responsableDni}`}>
-          <td className='border-end px-3 text-center' data-label='Fecha revisión'>
+          <td className='border-end px-3 text-center'>
             {formatFechaHora(fecha, hora)}
           </td>
-          <td className='border-end px-3' data-label='Responsable'>
+
+          <td className='border-end px-3'>
             {responsable}
           </td>
-          <td className='border-end px-3' data-label='Móvil'>
+
+          <td className='border-end px-3'>
             {movil}
           </td>
-          <td className='border-end px-3 text-center' data-label='Estado revisión'>
-            <span className={estadoRevisionClass}>
+
+          <td className='border-end px-3 text-center'>
+            <span
+              className={`badge px-3 py-2 ${
+                isOkRevision ? 'bg-success' : 'bg-warning text-dark'
+              }`}
+            >
               {estadoRevision}
             </span>
           </td>
-          <td className='px-3 text-center' data-label='Estado del móvil'>
-            <span className={estadoMovilClass}>
-              {estadoMovil}
+
+          {/* ESTADO DEL MÓVIL */}
+          <td className='px-3 text-center'>
+            <span className={`badge px-3 py-2 ${estadoMovilClasses}`}>
+              {estadoMovilLabel}
             </span>
           </td>
         </tr>
@@ -373,10 +367,6 @@ export default function NuevoControlMovil({ onCreated, onCancel }) {
           </div>
           <h1 className='fw-bold text-white fs-3 mb-0'>Nuevo control de móvil</h1>
         </div>
-        <span className='badge bg-danger-subtle text-danger'>
-          <i className='bi bi-fire me-2'></i>
-          Sistema de Gestión de Flota Vehicular - Cuartel de Bomberos
-        </span>
       </div>
 
       {/* Card principal */}
@@ -493,7 +483,7 @@ export default function NuevoControlMovil({ onCreated, onCancel }) {
                   className='form-select'
                   value={filtroMovilId}
                   onChange={e => {
-                    setFiltroMovilId(e.target.value) // sincroniza también el combo de arriba
+                    setFiltroMovilId(e.target.value)
                   }}
                 >
                   <option value=''>Todos los móviles</option>
