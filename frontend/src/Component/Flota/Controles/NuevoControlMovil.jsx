@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Car } from 'lucide-react'
 import '../flota.css'
-import { BackToMenuButton } from '../../Common/Button'
+import { BackToMenuButton } from '../../Common/Button.jsx'
 import Pagination from '../../Common/Pagination'
 
 const PAGE_SIZE_DEFAULT = 10
@@ -398,7 +398,7 @@ const renderHistorialRows = (rows) =>
 
           <form onSubmit={crear} className='row g-3'>
             <div className='col-12 col-md-4'>
-              <label className='form-label'>Móvil</label>
+              <label className='form-label text-dark fw-semibold'>Móvil</label>
               <select
                 className='form-select'
                 value={form.idMovil}
@@ -422,7 +422,7 @@ const renderHistorialRows = (rows) =>
             </div>
 
             <div className='col-12 col-md-4'>
-              <label className='form-label'>Fecha</label>
+              <label className='form-label text-dark fw-semibold'>Fecha</label>
               <input
                 type='date'
                 className='form-control'
@@ -433,7 +433,7 @@ const renderHistorialRows = (rows) =>
             </div>
 
             <div className='col-12 col-md-4'>
-              <label className='form-label'>Responsable (Bombero)</label>
+              <label className='form-label text-dark fw-semibold'>Responsable (Bombero)</label>
               <select
                 className='form-select'
                 value={form.realizadoPorDNI}
@@ -564,8 +564,13 @@ const renderHistorialRows = (rows) =>
           </div>
 
           <hr className='mb-4 mt-4' />
-
-          {onCancel && <BackToMenuButton onClick={onCancel} />}
+          
+          <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+              {onCancel && (
+                <BackToMenuButton onClick={onCancel} />
+              )}
+          </div>
+          
         </div>
       </div>
     </div>
