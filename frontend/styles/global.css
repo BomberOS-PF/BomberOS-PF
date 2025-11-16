@@ -1451,3 +1451,7 @@ body:not(:has(.login-page)) .rs__control{
   background:#fff !important; color:#000 !important; border-color: var(--input-border) !important;
 }
 body:not(:has(.login-page)) .rs__menu{ background:#fff !important; color:#000 !important }
+
+.card-header.btn-link {
+  text-decoration: none !important;
+}

@@ -65,8 +65,24 @@ export function setupRoutes(app, container) {
 
     // Respuestas de incidentes
     respuestaIncidenteHandler,
-    respuestaIncidenteService
+    respuestaIncidenteService,
+    controlesHandler,
+    movilesHandler
   } = container
+
+
+  app.get('/api/flota/moviles', (req, res) => movilesHandler.listar(req, res))
+  app.get('/api/flota/moviles/:id', (req, res) => movilesHandler.detalle(req, res))
+  app.post('/api/flota/moviles', (req, res) => movilesHandler.crear(req, res))
+  app.put('/api/flota/moviles/:id', (req, res) => movilesHandler.actualizar(req, res))
+  app.delete('/api/flota/moviles/:id', (req, res) => movilesHandler.baja(req, res))
+
+  app.get('/api/flota/controles/definicion', (req, res) => controlesHandler.definicion(req, res))
+  app.post('/api/flota/controles', (req, res) => controlesHandler.crear(req, res))
+  app.get('/api/flota/controles', (req, res) => controlesHandler.listar(req, res))
+  app.get('/api/flota/controles/:id', (req, res) => controlesHandler.detalle(req, res))
+  app.put('/api/flota/controles/:id', (req, res) => controlesHandler.actualizarHeader(req, res))
+  app.put('/api/flota/controles/:id/respuestas', (req, res) => controlesHandler.upsertRespuestas(req, res))
 
   // ---------- Acciones persona/material ----------
   app.get('/api/acciones-persona', (req, res) => accionPersonaHandler.listar(req, res))
