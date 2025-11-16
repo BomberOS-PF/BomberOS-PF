@@ -127,7 +127,10 @@ const Menu = ({ user, setUser }) => {
     bombero: [
       'cargarIncidente',
       'consultarIncidente',
-      'mis-guardias'
+      'mis-guardias',
+      'flota-moviles',
+      'flota-nuevo-control',
+      'flota-control'
     ]
   }
   const puedeVer = clave => permisos[rol]?.includes('*') || permisos[rol]?.includes(clave)
@@ -239,15 +242,15 @@ const Menu = ({ user, setUser }) => {
         )
       case 'reporte-incidentes':
         return <ReporteIncidentes onVolver={() => setOpcionSeleccionada(null)} />
-       case 'flota-moviles':
-      return <ListarMoviles key="flota-moviles" />
+      case 'flota-moviles':
+        return <ListarMoviles key="flota-moviles" />
 
       /* ==== NUEVO: Flota ==== */
-          case 'flota-nuevo-control':
-      return <ControlesMain key="flota-nuevo" initialView="new" />
-    case 'flota-control':
-      return <ControlesMain key="flota-control" initialView="control" />
-      
+      case 'flota-nuevo-control':
+        return <ControlesMain key="flota-nuevo" initialView="new" />
+      case 'flota-control':
+        return <ControlesMain key="flota-control" initialView="control" />
+
 
       default:
         return isBombero
@@ -304,16 +307,16 @@ const Menu = ({ user, setUser }) => {
       titulo: 'Guardias',
       botones: rol === 'administrador'
         ? [
-            { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
-            { texto: 'Consultar Grupos', accion: 'consultarGuardia' },
-            { texto: 'Mis guardias', accion: 'mis-guardias' }
-          ]
+          { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
+          { texto: 'Consultar Grupos', accion: 'consultarGuardia' },
+          { texto: 'Mis guardias', accion: 'mis-guardias' }
+        ]
         : isBombero
           ? [{ texto: 'Mis guardias', accion: 'mis-guardias' }]
           : [
-              { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
-              { texto: 'Consultar Grupos', accion: 'consultarGuardia' }
-            ]
+            { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
+            { texto: 'Consultar Grupos', accion: 'consultarGuardia' }
+          ]
     },
     {
       id: 'collapseFlota',                // NUEVO
