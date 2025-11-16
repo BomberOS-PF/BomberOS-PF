@@ -1,4 +1,4 @@
-// frontend/src/Component/Flota/Controles/NuevoControlMovil.jsx
+// frontend/src/Component/Flota/Controles/NuevoControlMovil.jsx 
 import { useEffect, useState } from 'react'
 import { Car } from 'lucide-react'
 import '../flota.css'
@@ -41,6 +41,7 @@ const normalizeBomberos = (arr) =>
     })
     .filter(b => b.dni && b.label && b.label !== ',')
     .sort((a, b) => a.label.localeCompare(b.label))
+
 const formatFechaHora = (fechaRaw, horaRaw) => {
   if (!fechaRaw) return '-'
 
@@ -77,6 +78,57 @@ const formatFechaHora = (fechaRaw, horaRaw) => {
   return `${base} ${horaStr}`
 }
 
+// helpers para badges de estado
+const getEstadoRevisionBadge = (estadoRaw) => {
+  const estado = String(estadoRaw || '').trim() || 'Pendiente'
+  const lower = estado.toLowerCase()
+  const isOk = ['completado', 'ok', 'cerrado', 'finalizado'].includes(lower)
+
+  return {
+    label: estado,
+    className: `badge px-3 py-2 ${isOk ? 'bg-success' : 'bg-warning text-dark'}`
+  }
+}
+
+const getEstadoMovilBadge = (estadoRaw) => {
+  const estado = String(estadoRaw || '').trim()
+
+  if (!estado) {
+    return {
+      label: '-',
+      className: 'badge px-3 py-2 bg-secondary'
+    }
+  }
+
+  const lower = estado.toLowerCase()
+
+  if (['operativo'].includes(lower)) {
+    return {
+      label: 'Operativo',
+      className: 'badge px-3 py-2 bg-success'
+    }
+  }
+
+  if (['operativo_con_obs', 'operativo con obs', 'operativo con observaciones'].includes(lower)) {
+    return {
+      label: 'Operativo c/ obs.',
+      className: 'badge px-3 py-2 bg-warning text-dark'
+    }
+  }
+
+  if (['fuera_de_servicio', 'fuera de servicio', 'no operativo'].includes(lower)) {
+    return {
+      label: 'Fuera de servicio',
+      className: 'badge px-3 py-2 bg-danger'
+    }
+  }
+
+  // fallback genérico
+  return {
+    label: estado,
+    className: 'badge px-3 py-2 bg-secondary'
+  }
+}
 
 export default function NuevoControlMovil({ onCreated, onCancel }) {
   const [moviles, setMoviles] = useState([])
@@ -93,38 +145,38 @@ export default function NuevoControlMovil({ onCreated, onCancel }) {
 
   useEffect(() => {
     let mounted = true
-      ; (async () => {
-        setError('')
-        setLoadingData(true)
-        try {
-          // 1) Móviles
-          const movsRaw = await tryMany([
-            '/api/flota/moviles?activo=1',
-            '/api/flota/moviles'
-          ])
-          const movs = normalizeArray(movsRaw)
-          if (mounted) setMoviles(movs)
+    ;(async () => {
+      setError('')
+      setLoadingData(true)
+      try {
+        // 1) Móviles
+        const movsRaw = await tryMany([
+          '/api/flota/moviles?activo=1',
+          '/api/flota/moviles'
+        ])
+        const movs = normalizeArray(movsRaw)
+        if (mounted) setMoviles(movs)
 
-          // 2) Bomberos
-          const bombsRaw = await tryMany([
-            '/api/bomberos/buscar?pagina=1&limite=1000&busqueda=',
-            '/api/bomberos?min=1',
-            '/api/bomberos/listar?min=1',
-            '/api/bomberos'
-          ])
-          const bombs = normalizeBomberos(normalizeArray(bombsRaw))
-          if (mounted) setBomberos(bombs)
-        } catch (e) {
-          console.error('[NuevoControl] Error cargando datos:', e)
-          if (mounted) {
-            setError('No se pudieron cargar móviles y/o bomberos')
-            setMoviles([])
-            setBomberos([])
-          }
-        } finally {
-          if (mounted) setLoadingData(false)
+        // 2) Bomberos
+        const bombsRaw = await tryMany([
+          '/api/bomberos/buscar?pagina=1&limite=1000&busqueda=',
+          '/api/bomberos?min=1',
+          '/api/bomberos/listar?min=1',
+          '/api/bomberos'
+        ])
+        const bombs = normalizeBomberos(normalizeArray(bombsRaw))
+        if (mounted) setBomberos(bombs)
+      } catch (e) {
+        console.error('[NuevoControl] Error cargando datos:', e)
+        if (mounted) {
+          setError('No se pudieron cargar móviles y/o bomberos')
+          setMoviles([])
+          setBomberos([])
         }
-      })()
+      } finally {
+        if (mounted) setLoadingData(false)
+      }
+    })()
     return () => { mounted = false }
   }, [])
 
@@ -180,7 +232,6 @@ export default function NuevoControlMovil({ onCreated, onCancel }) {
   }
 
   // ---- fetchPage para el historial de controles ----
-  // ---- fetchPage para el historial de controles ----
   const fetchControlesPage = async ({ page, limit, filters }) => {
     const params = new URLSearchParams({
       pagina: String(page),
@@ -230,7 +281,6 @@ export default function NuevoControlMovil({ onCreated, onCancel }) {
     }
   }
 
-
   // helper para mostrar filas de la tabla
   const renderHistorialRows = (rows) =>
     rows.map(row => {
@@ -268,13 +318,25 @@ export default function NuevoControlMovil({ onCreated, onCancel }) {
         ? `${movilObj.interno}${movilObj.dominio ? ' - ' + movilObj.dominio : ''}`
         : (row.movil || row.movilInterno || `#${movilId || '-'}`)
 
-      const estadoRaw =
-        row.estado ||
-        row.estadoControl ||
+      // 🟡 Estado de la revisión
+      const estadoRevisionRaw =
+        row.estadoRevision ??
+        row.estado ??
+        row.estadoControl ??
         (row.completado ? 'Completado' : 'Pendiente')
 
-      const estado = String(estadoRaw || '').trim() || 'Pendiente'
-      const isOk = ['completado', 'ok', 'cerrado', 'finalizado'].includes(estado.toLowerCase())
+      const { label: estadoRevision, className: estadoRevisionClass } =
+        getEstadoRevisionBadge(estadoRevisionRaw)
+
+      // 🔴 Estado del móvil
+      const estadoMovilRaw =
+        row.estadoMovilActual ??
+        row.estadoServicio ??
+        row.estado_movil ??
+        row.estadoMovil
+
+      const { label: estadoMovil, className: estadoMovilClass } =
+        getEstadoMovilBadge(estadoMovilRaw)
 
       return (
         <tr key={row.idControl || `${movilId}-${fecha}-${responsableDni}`}>
@@ -287,9 +349,14 @@ export default function NuevoControlMovil({ onCreated, onCancel }) {
           <td className='border-end px-3' data-label='Móvil'>
             {movil}
           </td>
-          <td className='px-3 text-center' data-label='Estado'>
-            <span className={`badge px-3 py-2 ${isOk ? 'bg-success' : 'bg-warning text-dark'}`}>
-              {estado}
+          <td className='border-end px-3 text-center' data-label='Estado revisión'>
+            <span className={estadoRevisionClass}>
+              {estadoRevision}
+            </span>
+          </td>
+          <td className='px-3 text-center' data-label='Estado del móvil'>
+            <span className={estadoMovilClass}>
+              {estadoMovil}
             </span>
           </td>
         </tr>
@@ -426,7 +493,7 @@ export default function NuevoControlMovil({ onCreated, onCancel }) {
                   className='form-select'
                   value={filtroMovilId}
                   onChange={e => {
-                    setFiltroMovilId(e.target.value)// sincroniza también el combo de arriba
+                    setFiltroMovilId(e.target.value) // sincroniza también el combo de arriba
                   }}
                 >
                   <option value=''>Todos los móviles</option>
@@ -475,7 +542,8 @@ export default function NuevoControlMovil({ onCreated, onCancel }) {
                             <th className='border-end text-center'>Fecha de revisión</th>
                             <th className='border-end text-center'>Responsable</th>
                             <th className='border-end text-center'>Móvil</th>
-                            <th className='text-center'>Estado</th>
+                            <th className='border-end text-center'>Estado revisión</th>
+                            <th className='text-center'>Estado del móvil</th>
                           </tr>
                         </thead>
                         <tbody>{renderHistorialRows(items)}</tbody>
