@@ -214,7 +214,7 @@ export default function ListarMoviles({ onVolverMenu }) {
           </div>
           <h1 className='fw-bold text-white fs-3 mb-0'>Gestionar Móviles</h1>
         </div>
-      <span className='badge bg-danger-subtle text-danger'>
+        <span className='badge bg-danger-subtle text-danger'>
           <i className='bi bi-fire me-2'></i> Sistema de Gestión de Personal - Cuartel de Bomberos
         </span>
       </div>
@@ -225,19 +225,22 @@ export default function ListarMoviles({ onVolverMenu }) {
           <strong>Gestionar Móviles</strong>
         </div>
         <div className='card-body'>
-          {/* Buscador superior (con icono) */}
-          <div className='mb-3 position-relative col-md-5'>
-            <i className='bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary'></i>
-            <input
-              type='text'
-              className='form-control border-secondary ps-5 py-2'
-              placeholder='Buscar por interno, dominio, marca o modelo'
-              value={inputTexto}
-              onChange={e => setInputTexto(e.target.value)}
-              onKeyDown={onKeyDown}
-            />
-          </div>
-          <div className='row g-3 align-items-center'>
+          {/* Fila: buscador + switch + botón nuevo */}
+          <div className='row g-3 align-items-center mb-3'>
+
+            {/* Buscador superior (con icono) */}
+            <div className='col-12 col-lg-7 position-relative'>
+              <i className='bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary'></i>
+              <input
+                type='text'
+                className='form-control border-secondary ps-5 py-2'
+                placeholder='Buscar por interno, dominio, marca o modelo'
+                value={inputTexto}
+                onChange={e => setInputTexto(e.target.value)}
+                onKeyDown={onKeyDown}
+              />
+            </div>
+
             {/* Switch + Nuevo móvil */}
             <div className='col-12 col-lg-5 d-flex justify-content-lg-end align-items-center gap-3 flota-toolbar'>
               <div className='form-check form-switch mb-0 only-thumb'>
@@ -251,7 +254,7 @@ export default function ListarMoviles({ onVolverMenu }) {
                 <label
                   id='lbl-soloActivos'
                   className='form-label text-dark d-flex align-items-center gap-2'
-                  htmlFor='soloActivos'
+                  htmlFor='chkActivos'   // 🔧 corrige el for
                 >
                   Mostrar solo activos
                 </label>
@@ -259,13 +262,13 @@ export default function ListarMoviles({ onVolverMenu }) {
 
               <button
                 className='btn btn-danger d-flex align-items-center gap-2 px-3 py-2'
-                style={{ width: 'fit-content' }}
                 onClick={nuevo}
               >
                 Nuevo móvil
               </button>
             </div>
           </div>
+
           {/* Paginador + tabla */}
           <div className='rg-pager'>
             <Pagination
