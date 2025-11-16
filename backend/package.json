@@ -49,32 +49,12 @@
     "@jest/globals": "^29.0.0",
     "eslint": "^8.0.0",
     "jest": "^29.0.0",
-    "nodemon": "^3.0.0",
+    "nodemon": "^3.1.10",
     "prettier": "^3.0.0"
   },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
-  },
-  "scripts": {
-    "start": "node api/cmd/main.js",
-    "dev": "nodemon api/cmd/main.js --watch . --ext js",
-    "build": "echo 'No build step required'",
-    "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "jest tests/unit --testPathPattern=unit",
-    "test:integration": "jest tests/integration --testPathPattern=integration",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "lint": "eslint . --ext .js",
-    "lint:fix": "eslint . --ext .js --fix",
-    "format": "prettier --write .",
-    "validate": "npm run lint && npm run test",
-    "migration:check": "node scripts/check-migration.js",
-    "db:migrate": "node internal/platform/database/migrations/run-migrations.js",
-    "test:twilio": "node test-twilio-simple.js",
-    "test:webhook": "node test-webhook.js",
-    "simulate:twilio": "node simulate-twilio.js",
-    "test:all-twilio": "node test-all-twilio.js"
   },
   "jest": {
     "testEnvironment": "node",

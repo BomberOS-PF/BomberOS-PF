@@ -25,6 +25,9 @@ import CalendarioGuardias from '../Guardia/CalendarioGuardias/CalendarioGuardias
 import MisGuardias from '../Guardia/MisGuardias/MisGuardias'
 import ReporteIncidentes from '../Reportes/ReporteIncidentes/ReporteIncidentes'
 
+// NUEVO: helper para imprimir RUBA
+import { imprimirRUBA } from '../Ruba/imprimirRUBA'
+
 const Menu = ({ user, setUser }) => {
   const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
   const [usuario, setUsuario] = useState(null)
@@ -119,7 +122,7 @@ const Menu = ({ user, setUser }) => {
     bombero: [
       'cargarIncidente',
       'consultarIncidente',
-      'mis-guardias'      // vista personal
+      'mis-guardias'
     ]
   }
   const puedeVer = clave => permisos[rol]?.includes('*') || permisos[rol]?.includes(clave)
@@ -151,6 +154,59 @@ const Menu = ({ user, setUser }) => {
     localStorage.clear()
     setUser && setUser(null)
     navigate('/login')
+  }
+
+  // ========= NUEVO: Vista rápida para imprimir RUBA =========
+  function RubaQuickPrint({ usuario, onVolver }) {
+    const [idIncidente, setIdIncidente] = useState('')
+
+    const onImprimir = async () => {
+      if (!idIncidente) return
+      try {
+        await imprimirRUBA(Number(idIncidente), usuario)
+      } catch (e) {
+        console.error(e)
+        alert('No se pudo generar el PDF RUBA')
+      }
+    }
+
+    return (
+      <div className='container mt-4'>
+        <div className='card bg-dark text-white'>
+          <div className='card-header d-flex align-items-center gap-2'>
+            <i className='bi bi-file-earmark-pdf' />
+            <span>Imprimir RUBA</span>
+          </div>
+          <div className='card-body'>
+            <div className='row g-3 align-items-end'>
+              <div className='col-12 col-sm-6 col-md-4'>
+                <label className='form-label'>ID de incidente</label>
+                <input
+                  type='number'
+                  className='form-control'
+                  value={idIncidente}
+                  onChange={e => setIdIncidente(e.target.value)}
+                  placeholder='Ej: 651'
+                  min='1'
+                />
+              </div>
+              <div className='col-12 col-sm-6 col-md-4 d-flex gap-2'>
+                <button className='btn btn-danger' onClick={onImprimir}>
+                  <i className='bi bi-printer me-2' />
+                  Generar PDF
+                </button>
+                <button className='btn btn-secondary' onClick={onVolver}>
+                  Volver
+                </button>
+              </div>
+            </div>
+            <p className='text-secondary mt-3 mb-0'>
+              Usa el endpoint <code>/api/incidentes/:id</code> y el generador RUBA.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const renderContenido = () => {
@@ -224,8 +280,7 @@ const Menu = ({ user, setUser }) => {
         return <EstadoWhatsApp onVolver={() => setOpcionSeleccionada(null)} />
       case 'mis-guardias':
         return <MisGuardias />
-
-      case 'cal-guardias': // NUEVO
+      case 'cal-guardias':
         return (
           <CalendarioGuardias
             dniUsuario={usuario?.dni ?? usuarioActual?.dni}
@@ -234,12 +289,15 @@ const Menu = ({ user, setUser }) => {
         )
       case 'reporte-incidentes':
         return <ReporteIncidentes onVolver={() => setOpcionSeleccionada(null)} />
-
-
-
+      // NUEVO: vista de impresión RUBA
+      case 'imprimir-ruba':
+        return (
+          <RubaQuickPrint
+            usuario={usuario || usuarioActual}
+            onVolver={() => setOpcionSeleccionada(null)}
+          />
+        )
       default:
-        // Si es bombero -> que por defecto vea el Calendario
-        // Si no, tu calendario mensual global como antes
         return isBombero
           ? (
             <CalendarioGuardias
@@ -253,13 +311,10 @@ const Menu = ({ user, setUser }) => {
               titulo="Tus Guardias"
             />
           )
-
     }
   }
 
   // ===== Construcción dinámica de secciones según rol =====
-
-
   const secciones = [
     {
       id: 'collapseIncidente',
@@ -291,23 +346,22 @@ const Menu = ({ user, setUser }) => {
       ]
     },
     {
-  id: 'collapseGuardias',
-  icono: 'bi-clock-history',
-  titulo: 'Guardias',
-  botones: rol === 'administrador'
-    ? [
-        { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
-        { texto: 'Consultar Grupos', accion: 'consultarGuardia' },
-        { texto: 'Mis guardias', accion: 'mis-guardias' }
-      ]
-    : isBombero
-      ? [{ texto: 'Mis guardias', accion: 'mis-guardias' }]
-      : [
-          { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
-          { texto: 'Consultar Grupos', accion: 'consultarGuardia' }
-        ]
-}
-,
+      id: 'collapseGuardias',
+      icono: 'bi-clock-history',
+      titulo: 'Guardias',
+      botones: rol === 'administrador'
+        ? [
+            { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
+            { texto: 'Consultar Grupos', accion: 'consultarGuardia' },
+            { texto: 'Mis guardias', accion: 'mis-guardias' }
+          ]
+        : isBombero
+          ? [{ texto: 'Mis guardias', accion: 'mis-guardias' }]
+          : [
+              { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
+              { texto: 'Consultar Grupos', accion: 'consultarGuardia' }
+            ]
+    },
     {
       id: 'collapseWhatsApp',
       icono: 'bi-whatsapp',
@@ -318,14 +372,15 @@ const Menu = ({ user, setUser }) => {
       ]
     },
     {
-  id: 'collapseReportes',
-  icono: 'bi-bar-chart-line',
-  titulo: 'Reportes',
-  botones: [
-    { texto: 'Incidentes por tipo', accion: 'reporte-incidentes' }
-  ]
-},
-
+      id: 'collapseReportes',
+      icono: 'bi-bar-chart-line',
+      titulo: 'Reportes',
+      botones: [
+        { texto: 'Incidentes por tipo', accion: 'reporte-incidentes' },
+        // NUEVO: opción debajo de "Incidentes por tipo"
+        { texto: 'Imprimir RUBA', accion: 'imprimir-ruba' }
+      ]
+    }
   ]
 
   // Filtrar secciones sin botones visibles para este rol
@@ -385,7 +440,6 @@ const Menu = ({ user, setUser }) => {
                 </div>
               </div>
 
-              {/* Dropdown anclado dentro del offcanvas */}
               {mostrarDropdown && (
                 <ul className="dropdown-menu show user-dropdown">
                   <li><button className="dropdown-item" disabled>Mi perfil</button></li>
