@@ -144,7 +144,15 @@ import { DenuncianteService } from '../internal/services/denunciante.service.js'
 // --- Respuestas de incidentes ---
 import { RespuestaIncidenteService } from '../internal/services/respuesta-incidente.service.js'
 import { MySQLRespuestaIncidenteRepository } from '../internal/repositories/respuesta-incidente.repository.js'
-import { RespuestaIncidenteHandler } from '../handler/respuestas/handler.js' 
+import { RespuestaIncidenteHandler } from '../handler/respuestas/handler.js'
+
+//--- Flota
+import { MovilRepository } from '../internal/repositories/flota.repository.js'
+import { ControlMovilRepository } from '../internal/repositories/controlMovil.repository.js'
+import { MovilService } from '../internal/services/movil.service.js'
+import { ControlMovilService } from '../internal/services/controlMovil.service.js'
+import { MovilesHandler } from '../handler/flota/moviles.handler.js'
+import { ControlesHandler } from '../handler/flota/controles.handler.js'
 
 export async function createServer(config) {
   try {
@@ -190,6 +198,8 @@ export async function createServer(config) {
     const factorClimaticoRepository = new MySQLFactorClimaticoRepository()
     const rescateRepository = new MySQLRescateRepository()
     const respuestaIncidenteRepository = new MySQLRespuestaIncidenteRepository()
+    const movilRepo = new MovilRepository()
+    const ctrlRepo = new ControlMovilRepository()
 
     // --- Servicios ---
     const whatsappService = new WhatsAppService(config)
@@ -238,11 +248,14 @@ export async function createServer(config) {
       caracteristicasLugarService,
       areaAfectadaService
     )
+    // Flota
+    const movilService = new MovilService(movilRepo, logger)
+    const controlService = new ControlMovilService(ctrlRepo, logger)
 
     // Catálogos Incendio Estructural
     const tipoTechoRepository = new MySQLTipoTechoRepository()
     const tipoTechoService = new TipoTechoService(tipoTechoRepository)
-    
+
     const tipoAberturaRepository = new MySQLTipoAberturaRepository()
     const tipoAberturaService = new TipoAberturaService(tipoAberturaRepository)
 
@@ -297,6 +310,9 @@ export async function createServer(config) {
     const guardiaHandlers = buildGuardiaHandlers(guardiaAsignacionService)
     const denuncianteHandler = buildDenuncianteHandler(denuncianteService)
     const respuestaIncidenteHandler = new RespuestaIncidenteHandler(respuestaIncidenteService)
+    const movilesHandler = new MovilesHandler({ movilService, logger })
+    const controlesHandler = new ControlesHandler({ controlService, logger })
+
 
     // --- Contenedor a exponer a las rutas ---
     const container = {
@@ -333,6 +349,8 @@ export async function createServer(config) {
       incendioEstructuralRepository,
       tokenRepository,
       respuestaIncidenteRepository,
+      movilRepo,
+      ctrlRepo,
 
       // services
       bomberoService,
@@ -363,6 +381,8 @@ export async function createServer(config) {
       guardiaAsignacionService,
       tokenService,
       respuestaIncidenteService,
+      movilService,
+      controlService,
 
       // handlers/adapters
       bomberoHandler,
@@ -392,6 +412,8 @@ export async function createServer(config) {
       validarTokenHandler,
       restablecerClaveHandler,
       respuestaIncidenteHandler,
+      controlesHandler,
+      movilesHandler,
 
       // Catálogos Incendio Estructural
       tipoTechoService,

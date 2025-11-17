@@ -24,6 +24,13 @@ import CalendarioGuardias from '../Guardia/CalendarioGuardias/CalendarioGuardias
 import MisGuardias from '../Guardia/MisGuardias/MisGuardias'
 import ReporteIncidentes from '../Reportes/ReporteIncidentes/ReporteIncidentes'
 
+/* ==== NUEVO: Flota (ABMC + Controles) ==== */
+import ListarMoviles from '../Flota/Moviles/ListarMovil'
+import NuevoControlMovil from '../Flota/Controles/NuevoControlMovil'
+import ControlMovilSemanal from '../Flota/Controles/ControlMovilSemanal'
+import ControlesMain from '../Flota/Controles/ControlesPanel'
+
+
 // NUEVO: helper para imprimir RUBA
 import { imprimirRUBA } from '../Ruba/imprimirRUBA'
 
@@ -40,6 +47,8 @@ const Menu = ({ user, setUser }) => {
 
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null)
   const [grupoAGestionar, setGrupoAGestionar] = useState(null)
+
+
 
   // Usuario actual y rol
   const usuarioActual = user || JSON.parse(localStorage.getItem('usuario')) || {}
@@ -121,7 +130,10 @@ const Menu = ({ user, setUser }) => {
     bombero: [
       'cargarIncidente',
       'consultarIncidente',
-      'mis-guardias'
+      'mis-guardias',
+      'flota-moviles',
+      'flota-nuevo-control',
+      'flota-control'
     ]
   }
   const puedeVer = clave => permisos[rol]?.includes('*') || permisos[rol]?.includes(clave)
@@ -286,6 +298,16 @@ const Menu = ({ user, setUser }) => {
         )
       case 'reporte-incidentes':
         return <ReporteIncidentes onVolver={() => setOpcionSeleccionada(null)} />
+      case 'flota-moviles':
+        return <ListarMoviles key="flota-moviles" />
+
+      /* ==== NUEVO: Flota ==== */
+      case 'flota-nuevo-control':
+        return <ControlesMain key="flota-nuevo" initialView="new" />
+      case 'flota-control':
+        return <ControlesMain key="flota-control" initialView="control" />
+
+
       // NUEVO: vista de impresión RUBA
       case 'imprimir-ruba':
         return (
@@ -312,6 +334,8 @@ const Menu = ({ user, setUser }) => {
   }
 
   // ===== Construcción dinámica de secciones según rol =====
+
+
   const secciones = [
     {
       id: 'collapseIncidente',
@@ -343,22 +367,23 @@ const Menu = ({ user, setUser }) => {
       ]
     },
     {
-      id: 'collapseGuardias',
-      icono: 'bi-clock-history',
-      titulo: 'Guardias',
-      botones: rol === 'administrador'
-        ? [
-            { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
-            { texto: 'Consultar Grupos', accion: 'consultarGuardia' },
-            { texto: 'Mis guardias', accion: 'mis-guardias' }
-          ]
-        : isBombero
-          ? [{ texto: 'Mis guardias', accion: 'mis-guardias' }]
-          : [
-              { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
-              { texto: 'Consultar Grupos', accion: 'consultarGuardia' }
-            ]
-    },
+  id: 'collapseGuardias',
+  icono: 'bi-clock-history',
+  titulo: 'Guardias',
+  botones: rol === 'administrador'
+    ? [
+        { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
+        { texto: 'Consultar Grupos', accion: 'consultarGuardia' },
+        { texto: 'Mis guardias', accion: 'mis-guardias' }
+      ]
+    : isBombero
+      ? [{ texto: 'Mis guardias', accion: 'mis-guardias' }]
+      : [
+          { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
+          { texto: 'Consultar Grupos', accion: 'consultarGuardia' }
+        ]
+}
+,
     {
       id: 'collapseNotificaciones',
       icono: 'bi-bell',
@@ -379,7 +404,6 @@ const Menu = ({ user, setUser }) => {
     }
   ]
 
-  // Filtrar secciones sin botones visibles para este rol
   const seccionesVisibles = secciones
     .map(sec => ({ ...sec, botones: sec.botones.filter(b => puedeVer(b.accion)) }))
     .filter(sec => sec.botones.length > 0)
@@ -410,7 +434,6 @@ const Menu = ({ user, setUser }) => {
               <span className="navbar-brand mb-0 h1">BomberOS</span>
             </div>
           </div>
-
         </div>
       </nav>
 
