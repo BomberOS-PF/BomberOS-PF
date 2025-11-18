@@ -85,20 +85,34 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
   useEffect(() => {
     const cargarCatalogos = async () => {
       try {
+        console.log('🔍 Cargando catálogos de tipos de techo y abertura...')
+        console.log('🌐 URL Base API:', buildApiUrl('/api/tipos-techo'))
+        console.log('🌐 URL Base API:', buildApiUrl('/api/tipos-abertura'))
+        
         const [tiposTecho, tiposAbertura] = await Promise.all([
-          apiRequest('/api/tipos-techo'),
-          apiRequest('/api/tipos-abertura')
+          apiRequest(buildApiUrl('/api/tipos-techo')),
+          apiRequest(buildApiUrl('/api/tipos-abertura'))
         ])
+        
+        console.log('📦 Respuesta tipos de techo:', tiposTecho)
+        console.log('📦 Respuesta tipos de abertura:', tiposAbertura)
         
         const techoArray = Array.isArray(tiposTecho?.data) ? tiposTecho.data : 
                           Array.isArray(tiposTecho) ? tiposTecho : []
         const aberturaArray = Array.isArray(tiposAbertura?.data) ? tiposAbertura.data : 
                              Array.isArray(tiposAbertura) ? tiposAbertura : []
         
+        console.log('✅ Arrays procesados:', {
+          techoArray,
+          aberturaArray,
+          techoCount: techoArray.length,
+          aberturaCount: aberturaArray.length
+        })
+        
         setOpcionesTipoTecho(techoArray)
         setOpcionesTipoAbertura(aberturaArray)
       } catch (error) {
-        console.error('Error al cargar catálogos:', error)
+        console.error('❌ Error al cargar catálogos:', error)
         setErrorMsg('Error al cargar opciones de formulario')
         setOpcionesTipoTecho([])
         setOpcionesTipoAbertura([])
