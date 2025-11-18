@@ -318,7 +318,11 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
       )
     }
 
-    const datosCombinados = { ...detalle, ...(detalle.detalleEspecifico || {}) }
+    // Combinar datos base con detalleEspecifico
+    const datosCombinados = { 
+      ...detalle, 
+      ...(detalle.detalleEspecifico || {})
+    }
 
     return (
       <ComponenteEspecifico
