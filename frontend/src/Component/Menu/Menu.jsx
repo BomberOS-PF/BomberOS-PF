@@ -30,6 +30,8 @@ import NuevoControlMovil from '../Flota/Controles/NuevoControlMovil'
 import ControlMovilSemanal from '../Flota/Controles/ControlMovilSemanal'
 import ControlesMain from '../Flota/Controles/ControlesPanel'
 
+// 👉 NUEVO: RUBA
+import RubaListado from '../Ruba/RubaListado'
 
 const Menu = ({ user, setUser }) => {
   const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
@@ -251,6 +253,16 @@ const Menu = ({ user, setUser }) => {
       case 'flota-control':
         return <ControlesMain key="flota-control" initialView="control" />
 
+      // NUEVO: vista de impresión RUBA
+      case 'imprimir-ruba':
+      // 👉 NUEVO: RUBA
+      case 'ruba-listado':
+        return (
+          <RubaListado
+            usuario={usuario || usuarioActual}
+            onVolver={() => setOpcionSeleccionada(null)}
+          />
+        )        
 
       default:
         return isBombero
@@ -340,7 +352,8 @@ const Menu = ({ user, setUser }) => {
       icono: 'bi-bar-chart-line',
       titulo: 'Reportes',
       botones: [
-        { texto: 'Incidentes por tipo', accion: 'reporte-incidentes' }
+        { texto: 'Incidentes por tipo', accion: 'reporte-incidentes' },
+        { texto: 'RUBA', accion: 'ruba-listado' }
       ]
     }
   ]

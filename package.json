@@ -39,10 +39,12 @@
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
     "jspdf-autotable": "^5.0.2",
     "nodemailer": "^7.0.5",
     "react-select": "^5.10.2",
-    "sweetalert2": "^11.26.2"
+    "sweetalert2": "^11.26.2",
+    "twilio": "^5.10.4"
   }
 }
