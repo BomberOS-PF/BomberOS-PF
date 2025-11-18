@@ -57,6 +57,7 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
   const [damnificadosErrors, setDamnificadosErrors] = useState([])
   const [opcionesTipoTecho, setOpcionesTipoTecho] = useState([])
   const [opcionesTipoAbertura, setOpcionesTipoAbertura] = useState([])
+  const [catalogosLoaded, setCatalogosLoaded] = useState(false)
   const toastRef = useRef(null)
 
   useEffect(() => {
@@ -88,11 +89,21 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
           apiRequest('/api/tipos-techo'),
           apiRequest('/api/tipos-abertura')
         ])
-        setOpcionesTipoTecho(tiposTecho.data || tiposTecho || [])
-        setOpcionesTipoAbertura(tiposAbertura.data || tiposAbertura || [])
+        
+        const techoArray = Array.isArray(tiposTecho?.data) ? tiposTecho.data : 
+                          Array.isArray(tiposTecho) ? tiposTecho : []
+        const aberturaArray = Array.isArray(tiposAbertura?.data) ? tiposAbertura.data : 
+                             Array.isArray(tiposAbertura) ? tiposAbertura : []
+        
+        setOpcionesTipoTecho(techoArray)
+        setOpcionesTipoAbertura(aberturaArray)
       } catch (error) {
         console.error('Error al cargar catálogos:', error)
         setErrorMsg('Error al cargar opciones de formulario')
+        setOpcionesTipoTecho([])
+        setOpcionesTipoAbertura([])
+      } finally {
+        setCatalogosLoaded(true)
       }
     }
     cargarCatalogos()
@@ -400,31 +411,39 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
         <div className="row mb-3">
           <div className="col-12 col-sm-6">
             <label htmlFor="tipoTecho" className="form-label text-dark d-flex align-items-center gap-2">Tipo de techo *</label>
-            <Select
-              options={opcionesTipoTecho}
-              value={opcionesTipoTecho.find(opt => String(opt.value) === String(formData.tipoTecho)) || null}
-              onChange={(opcion) =>
-                setFormData(prev => ({ ...prev, tipoTecho: opcion ? opcion.value : '' }))
-              }
-              classNamePrefix="rs"
-              placeholder="Seleccione tipo de techo"
-              isClearable
-            />
+            {catalogosLoaded ? (
+              <Select
+                options={opcionesTipoTecho}
+                value={opcionesTipoTecho.find(opt => String(opt.value) === String(formData.tipoTecho)) || null}
+                onChange={(opcion) =>
+                  setFormData(prev => ({ ...prev, tipoTecho: opcion ? opcion.value : '' }))
+                }
+                classNamePrefix="rs"
+                placeholder="Seleccione tipo de techo"
+                isClearable
+              />
+            ) : (
+              <div className="form-control">Cargando opciones...</div>
+            )}
             {errors.tipoTecho && <div className="invalid-feedback d-block" id="error-tipoTecho">{errors.tipoTecho}</div>}
           </div>
 
           <div className="col-12 col-sm-6">
             <label htmlFor="tipoAbertura" className="form-label text-dark d-flex align-items-center gap-2">Tipo de abertura *</label>
-            <Select
-              options={opcionesTipoAbertura}
-              value={opcionesTipoAbertura.find(o => String(o.value) === String(formData.tipoAbertura)) || null}
-              onChange={(opt) =>
-                setFormData(prev => ({ ...prev, tipoAbertura: opt ? opt.value : '' }))
-              }
-              classNamePrefix="rs"
-              placeholder="Seleccione tipo abertura"
-              isClearable
-            />
+            {catalogosLoaded ? (
+              <Select
+                options={opcionesTipoAbertura}
+                value={opcionesTipoAbertura.find(o => String(o.value) === String(formData.tipoAbertura)) || null}
+                onChange={(opt) =>
+                  setFormData(prev => ({ ...prev, tipoAbertura: opt ? opt.value : '' }))
+                }
+                classNamePrefix="rs"
+                placeholder="Seleccione tipo abertura"
+                isClearable
+              />
+            ) : (
+              <div className="form-control">Cargando opciones...</div>
+            )}
             {errors.tipoAbertura && <div className="invalid-feedback d-block" id="error-tipoAbertura">{errors.tipoAbertura}</div>}
           </div>
         </div>
