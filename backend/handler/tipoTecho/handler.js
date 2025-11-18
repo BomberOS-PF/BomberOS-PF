@@ -3,12 +3,13 @@ import { logger } from '../../internal/platform/logger/logger.js'
 export async function obtenerTiposTecho(req, res, tipoTechoService) {
   try {
     const tipos = await tipoTechoService.getAll()
+    logger.info('🏠 Tipos de techo obtenidos:', { count: tipos.length, tipos })
     res.status(200).json({
       success: true,
       data: tipos
     })
   } catch (error) {
-    logger.error('Error al obtener tipos de techo:', error)
+    logger.error('❌ Error al obtener tipos de techo:', error)
     res.status(500).json({
       success: false,
       error: 'Error al obtener tipos de techo'
