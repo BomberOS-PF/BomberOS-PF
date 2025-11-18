@@ -14,36 +14,36 @@ export class BomberoHandler {
   /**
  * Obtener todos los bomberos con paginación y búsqueda
  */
-async getAllBomberos(req, res) {
-  try {
-    logger.info('Solicitud: Obtener bomberos', {
-      method: req.method,
-      url: req.url,
-      ip: req.ip
-    })
+  async getAllBomberos(req, res) {
+    try {
+      logger.info('Solicitud: Obtener bomberos', {
+        method: req.method,
+        url: req.url,
+        ip: req.ip
+      })
 
-    const bomberos = await this.bomberoService.listarBomberos()
+      const bomberos = await this.bomberoService.listarBomberos()
 
-    res.status(200).json({
-      success: true,
-      message: `${bomberos.length} bomberos encontrados`,
-      data: bomberos
-    })
-  } catch (error) {
-    logger.error('Error al obtener bomberos', {
-      error: error.message,
-      method: req.method,
-      url: req.url,
-      responseTime: `${Date.now() - req.startTime}ms`
-    })
+      res.status(200).json({
+        success: true,
+        message: `${bomberos.length} bomberos encontrados`,
+        data: bomberos
+      })
+    } catch (error) {
+      logger.error('Error al obtener bomberos', {
+        error: error.message,
+        method: req.method,
+        url: req.url,
+        responseTime: `${Date.now() - req.startTime}ms`
+      })
 
-    res.status(500).json({
-      success: false,
-      message: 'Error interno del servidor',
-      error: error.message
-    })
+      res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor',
+        error: error.message
+      })
+    }
   }
-}
 
   /**
    * Obtener bombero por ID
@@ -51,7 +51,7 @@ async getAllBomberos(req, res) {
   async getBomberoById(req, res) {
     try {
       const { id } = req.params
-      
+
       logger.info('Solicitud: Obtener bombero por ID', {
         id,
         method: req.method,
@@ -60,7 +60,7 @@ async getAllBomberos(req, res) {
       })
 
       const bombero = await this.bomberoService.obtenerBomberoPorId(id)
-      
+
       res.status(200).json({
         success: true,
         message: 'Bombero encontrado',
@@ -74,9 +74,9 @@ async getAllBomberos(req, res) {
         url: req.url,
         responseTime: `${Date.now() - req.startTime}ms`
       })
-      
+
       const status = error.message.includes('no encontrado') ? 404 : 500
-      
+
       res.status(status).json({
         success: false,
         message: error.message,
@@ -85,29 +85,29 @@ async getAllBomberos(req, res) {
     }
   }
   async buscarBomberos(req, res) {
-  try {
-    const { pagina = 1, limite = 10, busqueda = '' } = req.query
+    try {
+      const { pagina = 1, limite = 10, busqueda = '' } = req.query
 
-    const resultado = await this.bomberoService.listarBomberosPaginado({
-      pagina: parseInt(pagina),
-      limite: parseInt(limite),
-      busqueda
-    })
+      const resultado = await this.bomberoService.listarBomberosPaginado({
+        pagina: parseInt(pagina),
+        limite: parseInt(limite),
+        busqueda
+      })
 
-    res.status(200).json({
-      success: true,
-      total: resultado.total,
-      data: resultado.data
-    })
-  } catch (error) {
-    logger.error('Error al buscar bomberos con paginado', { error: error.message })
-    res.status(500).json({
-      success: false,
-      message: 'Error interno',
-      error: error.message
-    })
+      res.status(200).json({
+        success: true,
+        total: resultado.total,
+        data: resultado.data
+      })
+    } catch (error) {
+      logger.error('Error al buscar bomberos con paginado', { error: error.message })
+      res.status(500).json({
+        success: false,
+        message: 'Error interno',
+        error: error.message
+      })
+    }
   }
-}
 
 
   /**
@@ -122,7 +122,7 @@ async getAllBomberos(req, res) {
       })
 
       const nuevoBombero = await this.bomberoService.crearBombero(req.body)
-      
+
       res.status(201).json({
         success: true,
         message: 'Bombero creado exitosamente',
@@ -135,11 +135,11 @@ async getAllBomberos(req, res) {
         url: req.url,
         responseTime: `${Date.now() - req.startTime}ms`
       })
-      
+
       // El repository ya maneja los errores y devuelve mensajes amigables
       const status = error.message.includes('Ya existe') || error.message.includes('DNI') ? 409 :
-                     error.message.includes('obligatorio') || error.message.includes('requerido') ? 400 : 500
-      
+        error.message.includes('obligatorio') || error.message.includes('requerido') ? 400 : 500
+
       res.status(status).json({
         success: false,
         message: error.message,
@@ -154,7 +154,7 @@ async getAllBomberos(req, res) {
   async updateBombero(req, res) {
     try {
       const { id } = req.params
-      
+
       logger.info('Solicitud: Actualizar bombero', {
         id,
         method: req.method,
@@ -163,7 +163,7 @@ async getAllBomberos(req, res) {
       })
 
       const bomberoActualizado = await this.bomberoService.actualizarBombero(id, req.body)
-      
+
       res.status(200).json({
         success: true,
         message: 'Bombero actualizado exitosamente',
@@ -177,13 +177,13 @@ async getAllBomberos(req, res) {
         url: req.url,
         responseTime: `${Date.now() - req.startTime}ms`
       })
-      
+
       // Mapear errores técnicos a mensajes user-friendly
       // El repository ya maneja los errores y devuelve mensajes amigables
       const status = error.message.includes('no encontrado') ? 404 :
-                     error.message.includes('Ya existe') ? 409 :
-                     error.message.includes('obligatorio') || error.message.includes('requerido') ? 400 : 500
-      
+        error.message.includes('Ya existe') ? 409 :
+          error.message.includes('obligatorio') || error.message.includes('requerido') ? 400 : 500
+
       res.status(status).json({
         success: false,
         message: error.message,
@@ -198,7 +198,7 @@ async getAllBomberos(req, res) {
   async deleteBombero(req, res) {
     try {
       const { id } = req.params
-      
+
       logger.info('Solicitud: Eliminar bombero', {
         id,
         method: req.method,
@@ -207,7 +207,7 @@ async getAllBomberos(req, res) {
       })
 
       await this.bomberoService.eliminarBombero(id)
-      
+
       res.status(200).json({
         success: true,
         message: 'Bombero eliminado exitosamente',
@@ -221,9 +221,9 @@ async getAllBomberos(req, res) {
         url: req.url,
         responseTime: `${Date.now() - req.startTime}ms`
       })
-      
+
       const status = error.message.includes('no encontrado') ? 404 : 500
-      
+
       res.status(status).json({
         success: false,
         message: error.message,
@@ -245,7 +245,7 @@ async getAllBomberos(req, res) {
       })
 
       const bomberos = await this.bomberoService.listarBomberosDelPlan()
-      
+
       res.status(200).json({
         success: true,
         message: `${bomberos.length} bomberos del plan encontrados`,
@@ -258,7 +258,7 @@ async getAllBomberos(req, res) {
         url: req.url,
         responseTime: `${Date.now() - req.startTime}ms`
       })
-      
+
       res.status(500).json({
         success: false,
         message: 'Error interno del servidor',
@@ -289,7 +289,7 @@ async getAllBomberos(req, res) {
   async uploadFichaMedica(req, res) {
     try {
       const { dni } = req.params
-      
+
       if (!req.file) {
         return res.status(400).json({
           success: false,
@@ -346,7 +346,7 @@ async getAllBomberos(req, res) {
       logger.info('Descargando ficha médica desde BD', { dni })
 
       const fichaMedica = await this.bomberoService.obtenerFichaMedica(dni)
-      
+
       if (!fichaMedica) {
         return res.status(404).json({
           success: false,
@@ -369,6 +369,42 @@ async getAllBomberos(req, res) {
       res.status(500).json({
         success: false,
         message: error.message
+      })
+    }
+  }
+
+  async deleteFichaMedica(req, res) {
+    try {
+      const { dni } = req.params
+
+      logger.info('Solicitud: Eliminar ficha médica', {
+        dni,
+        method: req.method,
+        url: req.url,
+        ip: req.ip
+      })
+
+      await this.bomberoService.eliminarFichaMedica(dni)
+
+      res.status(200).json({
+        success: true,
+        message: 'Ficha médica eliminada exitosamente'
+      })
+    } catch (error) {
+      logger.error('Error al eliminar ficha médica', {
+        dni: req.params.dni,
+        error: error.message,
+        method: req.method,
+        url: req.url,
+        responseTime: `${Date.now() - req.startTime}ms`
+      })
+
+      const status = error.message.includes('no encontrado') ? 404 : 500
+
+      res.status(status).json({
+        success: false,
+        message: error.message,
+        error: error.message
       })
     }
   }

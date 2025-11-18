@@ -113,9 +113,15 @@ const Rescate = ({ datosPrevios = {}, onFinalizar }) => {
     setFormData(prev => ({ ...prev, [id]: value }))
   }
 
-  const guardarLocalmente = () => {
+  const guardarLocalmente = async () => {
     localStorage.setItem(storageKey, JSON.stringify(formData))
-    alert('Datos guardados localmente. Podés continuar después.')
+    await swalConfirm({
+      title: 'Guardado local',
+      html: 'Los datos se guardaron en este equipo. Podés continuar después.',
+      icon: 'success',
+      confirmText: 'Entendido',
+      showCancel: false
+    })
   }
 
   // Funciones de validación

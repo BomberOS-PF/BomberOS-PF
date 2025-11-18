@@ -1,0 +1,41 @@
+/* Altura base común para todos los filtros de la barra */
+.ruba-filtro-control {
+  height: 38px;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+  font-size: 0.95rem;
+}
+
+/* Botón "Limpiar" con misma altura que los inputs */
+.ruba-filtro-btn {
+  height: 38px;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+/* React-select: altura igual a la de los inputs */
+.ruba-select__control {
+  min-height: 38px !important;
+  height: 38px !important;
+  border-color: #ced4da;
+  box-shadow: none !important;
+}
+
+/* Alinear contenido interno del react-select */
+.ruba-select__value-container {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+
+/* Dejar el icono del dropdown centrado verticalmente */
+.ruba-select__indicators {
+  height: 100%;
+}
+
+/* Opcional: hover suave en el control de react-select */
+.ruba-select__control--is-focused,
+.ruba-select__control:hover {
+  border-color: #adb5bd !important;
+}

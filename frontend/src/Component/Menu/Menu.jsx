@@ -24,6 +24,15 @@ import CalendarioGuardias from '../Guardia/CalendarioGuardias/CalendarioGuardias
 import MisGuardias from '../Guardia/MisGuardias/MisGuardias'
 import ReporteIncidentes from '../Reportes/ReporteIncidentes/ReporteIncidentes'
 
+/* ==== NUEVO: Flota (ABMC + Controles) ==== */
+import ListarMoviles from '../Flota/Moviles/ListarMovil'
+import NuevoControlMovil from '../Flota/Controles/NuevoControlMovil'
+import ControlMovilSemanal from '../Flota/Controles/ControlMovilSemanal'
+import ControlesMain from '../Flota/Controles/ControlesPanel'
+
+// 👉 NUEVO: RUBA
+import RubaListado from '../Ruba/RubaListado'
+
 const Menu = ({ user, setUser }) => {
   const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
   const [usuario, setUsuario] = useState(null)
@@ -37,6 +46,8 @@ const Menu = ({ user, setUser }) => {
 
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null)
   const [grupoAGestionar, setGrupoAGestionar] = useState(null)
+
+
 
   // Usuario actual y rol
   const usuarioActual = user || JSON.parse(localStorage.getItem('usuario')) || {}
@@ -118,7 +129,10 @@ const Menu = ({ user, setUser }) => {
     bombero: [
       'cargarIncidente',
       'consultarIncidente',
-      'mis-guardias'      // vista personal
+      'mis-guardias',
+      'flota-moviles',
+      'flota-nuevo-control',
+      'flota-control'
     ]
   }
   const puedeVer = clave => permisos[rol]?.includes('*') || permisos[rol]?.includes(clave)
@@ -221,8 +235,7 @@ const Menu = ({ user, setUser }) => {
         return <DashboardRespuestas onVolver={() => setOpcionSeleccionada(null)} />
       case 'mis-guardias':
         return <MisGuardias />
-
-      case 'cal-guardias': // NUEVO
+      case 'cal-guardias':
         return (
           <CalendarioGuardias
             dniUsuario={usuario?.dni ?? usuarioActual?.dni}
@@ -231,12 +244,27 @@ const Menu = ({ user, setUser }) => {
         )
       case 'reporte-incidentes':
         return <ReporteIncidentes onVolver={() => setOpcionSeleccionada(null)} />
+      case 'flota-moviles':
+        return <ListarMoviles key="flota-moviles" />
 
+      /* ==== NUEVO: Flota ==== */
+      case 'flota-nuevo-control':
+        return <ControlesMain key="flota-nuevo" initialView="new" />
+      case 'flota-control':
+        return <ControlesMain key="flota-control" initialView="control" />
 
+      // NUEVO: vista de impresión RUBA
+      case 'imprimir-ruba':
+      // 👉 NUEVO: RUBA
+      case 'ruba-listado':
+        return (
+          <RubaListado
+            usuario={usuario || usuarioActual}
+            onVolver={() => setOpcionSeleccionada(null)}
+          />
+        )        
 
       default:
-        // Si es bombero -> que por defecto vea el Calendario
-        // Si no, tu calendario mensual global como antes
         return isBombero
           ? (
             <CalendarioGuardias
@@ -250,12 +278,10 @@ const Menu = ({ user, setUser }) => {
               titulo="Tus Guardias"
             />
           )
-
     }
   }
 
   // ===== Construcción dinámica de secciones según rol =====
-
 
   const secciones = [
     {
@@ -281,30 +307,38 @@ const Menu = ({ user, setUser }) => {
       icono: 'bi-person-circle',
       titulo: 'Usuarios y Roles',
       botones: [
-        { texto: 'Registrar Usuario', accion: 'registrarUsuario' },
+        // { texto: 'Registrar Usuario', accion: 'registrarUsuario' },
         { texto: 'Consultar Usuarios', accion: 'consultarUsuario' },
         { texto: 'Registrar Rol', accion: 'registrarRol' },
         { texto: 'Consultar Roles', accion: 'consultarRol' }
       ]
     },
     {
-  id: 'collapseGuardias',
-  icono: 'bi-clock-history',
-  titulo: 'Guardias',
-  botones: rol === 'administrador'
-    ? [
-        { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
-        { texto: 'Consultar Grupos', accion: 'consultarGuardia' },
-        { texto: 'Mis guardias', accion: 'mis-guardias' }
-      ]
-    : isBombero
-      ? [{ texto: 'Mis guardias', accion: 'mis-guardias' }]
-      : [
+      id: 'collapseGuardias',
+      icono: 'bi-clock-history',
+      titulo: 'Guardias',
+      botones: rol === 'administrador'
+        ? [
           { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
-          { texto: 'Consultar Grupos', accion: 'consultarGuardia' }
+          { texto: 'Consultar Grupos', accion: 'consultarGuardia' },
+          { texto: 'Mis guardias', accion: 'mis-guardias' }
         ]
-}
-,
+        : isBombero
+          ? [{ texto: 'Mis guardias', accion: 'mis-guardias' }]
+          : [
+            { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
+            { texto: 'Consultar Grupos', accion: 'consultarGuardia' }
+          ]
+    },
+    {
+      id: 'collapseFlota',                // NUEVO
+      icono: 'bi-truck',                  // requiere Bootstrap Icons
+      titulo: 'Flota',
+      botones: [
+        { texto: 'Gestionar Móviles', accion: 'flota-moviles' },
+        { texto: 'Nuevo control de móvil', accion: 'flota-nuevo-control' }
+      ]
+    },
     {
       id: 'collapseNotificaciones',
       icono: 'bi-bell',
@@ -314,17 +348,16 @@ const Menu = ({ user, setUser }) => {
       ]
     },
     {
-  id: 'collapseReportes',
-  icono: 'bi-bar-chart-line',
-  titulo: 'Reportes',
-  botones: [
-    { texto: 'Incidentes por tipo', accion: 'reporte-incidentes' }
+      id: 'collapseReportes',
+      icono: 'bi-bar-chart-line',
+      titulo: 'Reportes',
+      botones: [
+        { texto: 'Incidentes por tipo', accion: 'reporte-incidentes' },
+        { texto: 'RUBA', accion: 'ruba-listado' }
+      ]
+    }
   ]
-},
 
-  ]
-
-  // Filtrar secciones sin botones visibles para este rol
   const seccionesVisibles = secciones
     .map(sec => ({ ...sec, botones: sec.botones.filter(b => puedeVer(b.accion)) }))
     .filter(sec => sec.botones.length > 0)
@@ -355,7 +388,6 @@ const Menu = ({ user, setUser }) => {
               <span className="navbar-brand mb-0 h1">BomberOS</span>
             </div>
           </div>
-
         </div>
       </nav>
 
@@ -381,7 +413,6 @@ const Menu = ({ user, setUser }) => {
                 </div>
               </div>
 
-              {/* Dropdown anclado dentro del offcanvas */}
               {mostrarDropdown && (
                 <ul className="dropdown-menu show user-dropdown">
                   <li><button className="dropdown-item" disabled>Mi perfil</button></li>

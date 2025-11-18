@@ -65,8 +65,24 @@ export function setupRoutes(app, container) {
 
     // Respuestas de incidentes
     respuestaIncidenteHandler,
-    respuestaIncidenteService
+    respuestaIncidenteService,
+    controlesHandler,
+    movilesHandler
   } = container
+
+
+  app.get('/api/flota/moviles', (req, res) => movilesHandler.listar(req, res))
+  app.get('/api/flota/moviles/:id', (req, res) => movilesHandler.detalle(req, res))
+  app.post('/api/flota/moviles', (req, res) => movilesHandler.crear(req, res))
+  app.put('/api/flota/moviles/:id', (req, res) => movilesHandler.actualizar(req, res))
+  app.delete('/api/flota/moviles/:id', (req, res) => movilesHandler.baja(req, res))
+
+  app.get('/api/flota/controles/definicion', (req, res) => controlesHandler.definicion(req, res))
+  app.post('/api/flota/controles', (req, res) => controlesHandler.crear(req, res))
+  app.get('/api/flota/controles', (req, res) => controlesHandler.listar(req, res))
+  app.get('/api/flota/controles/:id', (req, res) => controlesHandler.detalle(req, res))
+  app.put('/api/flota/controles/:id', (req, res) => controlesHandler.actualizarHeader(req, res))
+  app.put('/api/flota/controles/:id/respuestas', (req, res) => controlesHandler.upsertRespuestas(req, res))
 
   // ---------- Acciones persona/material ----------
   app.get('/api/acciones-persona', (req, res) => accionPersonaHandler.listar(req, res))
@@ -84,8 +100,8 @@ export function setupRoutes(app, container) {
   // opcional
   app.put('/api/grupos/:id/guardias/dia', guardiaHandlers.reemplazarDia)
 
-  
-   // Mis guardias por DNI (rango: start inclusivo, end exclusivo)
+
+  // Mis guardias por DNI (rango: start inclusivo, end exclusivo)
   app.get('/api/guardias/por-dni', guardiaHandlers.obtenerAsignacionesPorDni)
 
   // ACCIDENTES DE TRÁNSITO
@@ -302,6 +318,10 @@ export function setupRoutes(app, container) {
     }
   })
 
+  app.delete('/api/bomberos/:dni/ficha-medica', (req, res) =>
+    bomberoHandler.deleteFichaMedica(req, res)
+  )
+
   // USUARIOS
   app.get('/api/usuarios/rol/:rol', async (req, res) => {
     try {
@@ -441,8 +461,8 @@ export function setupRoutes(app, container) {
 
   app.put('/api/incidentes/:id', async (req, res) => {
     try {
-      logger.info('🔄 PUT /api/incidentes/:id recibido', { 
-        id: req.params.id, 
+      logger.info('🔄 PUT /api/incidentes/:id recibido', {
+        id: req.params.id,
         body: req.body,
         headers: req.headers['content-type']
       })
@@ -837,7 +857,7 @@ export function setupRoutes(app, container) {
       })
 
       const { From, Body, MessageSid } = req.body
-      
+
       if (!From || !Body) {
         logger.warn('📱 Webhook WhatsApp incompleto', { From, Body })
         // Devolver TwiML vacío en lugar de JSON
@@ -848,29 +868,29 @@ export function setupRoutes(app, container) {
       // Extraer número de teléfono (remover prefijo whatsapp:)
       const telefono = From.replace('whatsapp:', '')
       const respuesta = Body.trim()
-      
+
       logger.info('📱 Procesando respuesta de WhatsApp', {
         telefono,
         respuesta,
         messageSid: MessageSid
       })
-      
+
       // Procesar respuesta usando el servicio especializado
       const resultado = await respuestaIncidenteService.procesarRespuestaWebhook(
         { From, Body, MessageSid },
         req.ip
       )
-      
+
       logger.info('📱 Resultado del procesamiento', {
         success: resultado.success,
         tipoRespuesta: resultado.tipoRespuesta,
         bombero: resultado.bombero,
         error: resultado.error
       })
-      
+
       // Construir respuesta TwiML
       let mensajeRespuesta = ''
-      
+
       if (resultado.success) {
         logger.info('📱 Respuesta procesada y guardada', {
           respuestaId: resultado.respuestaId,
@@ -878,12 +898,12 @@ export function setupRoutes(app, container) {
           telefono: resultado.telefono,
           tipoRespuesta: resultado.tipoRespuesta
         })
-        
+
         // Obtener mensaje de confirmación basado en el tipo de respuesta
         const nombreBombero = resultado.bombero || 'Bombero'
         const tipoRespuesta = resultado.tipoRespuesta
         const incidenteId = resultado.incidenteId
-        
+
         if (tipoRespuesta === 'CONFIRMADO') {
           mensajeRespuesta = `✅ *Confirmación recibida*
 
@@ -923,7 +943,7 @@ _Cuerpo de Bomberos - Sistema BomberOS_`
         }
       } else {
         logger.error('📱 Error al procesar respuesta', { error: resultado.error })
-        
+
         if (resultado.error && resultado.error.includes('no registrado')) {
           mensajeRespuesta = `⚠️ *Número no registrado*
 
@@ -952,25 +972,25 @@ Para responder a las alertas puedes enviar:
 _Cuerpo de Bomberos - Sistema BomberOS_`
         }
       }
-      
+
       // Devolver TwiML con el mensaje de respuesta
       const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Message>${mensajeRespuesta}</Message>
 </Response>`
-      
+
       res.set('Content-Type', 'text/xml')
       res.status(200).send(twimlResponse)
-      
+
     } catch (error) {
       logger.error('Error en webhook WhatsApp:', error)
-      
+
       // Devolver TwiML de error en lugar de JSON
       const errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Message>⚠️ Error interno del sistema. Por favor intenta más tarde.</Message>
 </Response>`
-      
+
       res.set('Content-Type', 'text/xml')
       res.status(200).send(errorTwiml)
     }
@@ -1054,7 +1074,7 @@ _Cuerpo de Bomberos - Sistema BomberOS_`
         'POST /api/rescate',
         'GET /api/rescate',
         'GET /api/guardias/por-dni'
-        
+
       ]
     })
   })

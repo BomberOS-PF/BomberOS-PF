@@ -244,7 +244,7 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuar
                 />
               </div>
 
-              <div className="col-md-6 py-4">
+              {/* <div className="col-md-6 py-4">
                 <label htmlFor="password" className="text-dark form-label d-flex align-items-center gap-2">
                   <Shield className="text-warning" />Contraseña {usuario && '(nueva)'}</label>
                 <input
@@ -256,9 +256,9 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuar
                   required={!usuario}
                   disabled={loading}
                   placeholder={usuario ? 'Dejar en blanco para no cambiar' : ''}
-                />
+                /> */}
                 {/* Indicador de fortaleza de contraseña */}
-                {passwordStrength && formData.password && (
+                {/* {passwordStrength && formData.password && (
                   <div className="mt-2">
                     <div className="d-flex align-items-center mb-1">
                       <small className="text-black me-2">Fortaleza:</small>
@@ -291,7 +291,7 @@ const RegistrarUsuario = ({ onVolver, usuario, ocultarTitulo = false, listaUsuar
                     )}
                   </div>
                 )}
-              </div>
+              </div> */}
 
               <div className="col-md-6 py-4">
                 <label htmlFor="email" className="text-dark form-label d-flex align-items-center gap-2">

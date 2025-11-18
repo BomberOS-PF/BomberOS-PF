@@ -396,19 +396,50 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
                         type="button"
                         className="btn btn-sm btn-outline-danger"
                         onClick={async () => {
+                          if (!formData.dni) {
+                            alert('No se pudo identificar el DNI del bombero')
+                            return
+                          }
+
+                          const result = await swalConfirm({
+                            title: '¿Eliminar ficha médica?',
+                            html: 'Esta acción no se puede deshacer.',
+                            confirmText: 'Sí, eliminar',
+                            icon: 'warning'
+                          })
+
+                          if (!result.isConfirmed) return
+
                           try {
-                            const response = await fetch(buildApiUrl(`/api/bomberos/${formData.dni}/ficha-medica`))
-                            if (response.ok) {
-                              const blob = await response.blob()
-                              const url = window.URL.createObjectURL(blob)
-                              window.open(url, '_blank')
-                              setTimeout(() => window.URL.revokeObjectURL(url), 100)
-                            } else {
-                              alert('Error al descargar la ficha médica')
+                            const response = await fetch(
+                              buildApiUrl(`/api/bomberos/${formData.dni}/ficha-medica`),
+                              { method: 'DELETE' }
+                            )
+
+                            const data = await response.json().catch(() => ({}))
+
+                            if (!response.ok || !data?.success) {
+                              throw new Error(data?.message || data?.error || 'No se pudo eliminar la ficha médica')
                             }
+
+                            // Limpiar datos en el form
+                            setFormData(prev => ({
+                              ...prev,
+                              fichaMedica: null,
+                              fichaMedicaArchivo: null,
+                              fechaFichaMedica: ''
+                            }))
+
+                            await swalToast({
+                              title: 'Ficha médica eliminada correctamente',
+                              icon: 'success'
+                            })
                           } catch (error) {
-                            console.error('Error:', error)
-                            alert('Error al descargar la ficha médica')
+                            console.error('Error al eliminar ficha médica:', error)
+                            await swalToast({
+                              title: error.message || 'Error al eliminar la ficha médica',
+                              icon: 'error'
+                            })
                           }
                         }}
                         title="Eliminar archivo"
@@ -416,6 +447,7 @@ const FormularioBombero = ({ modo = 'alta', datosIniciales = {}, onSubmit, loadi
                         <i className="bi bi-trash"></i>
                       </button>
                     )}
+
                   </div>
                 </div>
               </div>

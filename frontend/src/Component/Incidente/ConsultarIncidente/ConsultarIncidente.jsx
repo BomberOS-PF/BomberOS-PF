@@ -700,7 +700,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                               <th className='border-end text-center'>ID</th>
                               <th className='border-end text-center'>Fecha</th>
                               <th className='border-end text-center'>Tipo</th>
-                              <th className='border-end text-center'>Descripción</th>
+                              <th className='border-end text-center'>Direccción</th>
                               <th className='border-end text-center'>Localización</th>
                               <th className='border-end text-center'>Estado</th>
                               <th className='text-center'>Acciones</th>
@@ -716,7 +716,7 @@ Los bomberos pueden responder "SI" o "NO" por WhatsApp para confirmar su asisten
                                     {it.tipoDescripcion}
                                   </span>
                                 </td>
-                                <td className='border-end px-3' data-label='Descripción'>{it.descripcion || '-'}</td>
+                                <td className='border-end px-3' data-label='Direccción'>{it.descripcion || '-'}</td>
                                 <td className='border-end px-3' data-label='Localización'>{it.localizacion || '-'}</td>
                                 <td className='border-end px-3' data-label='Estado'>
                                   <span className='badge bg-success'>{it.estado || 'Activo'}</span>

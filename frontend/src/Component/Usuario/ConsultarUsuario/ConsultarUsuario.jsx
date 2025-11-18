@@ -42,7 +42,13 @@ const ConsultarUsuario = ({ onVolver }) => {
   }
 
   const seleccionarUsuario = (usuario) => {
-    setUsuarioSeleccionado(usuario)
+    const rolEncontrado = roles.find(
+      r => r.nombreRol.toLowerCase() === (usuario.rol || '').toLowerCase()
+    )
+    setUsuarioSeleccionado({
+      ...usuario,
+      idRol: usuario.idRol || (rolEncontrado ? rolEncontrado.idRol : '')
+    })
     setModoEdicion(false)
     setMensaje('')
   }
@@ -106,7 +112,7 @@ const ConsultarUsuario = ({ onVolver }) => {
           usuario: usuarioValue,
           password: datosActualizados.password || null,
           email: datosActualizados.email,
-          idRol: datosActualizados.idRol
+          idRol: Number(datosActualizados.idRol)
         })
       })
 
@@ -228,6 +234,7 @@ const ConsultarUsuario = ({ onVolver }) => {
 
               <div className='rg-pager'>
                 <Pagination
+                  key={reloadTick}
                   fetchPage={fetchUsuariosPage}
                   initialPage={1}
                   initialPageSize={PAGE_SIZE_DEFAULT}
@@ -381,7 +388,7 @@ const ConsultarUsuario = ({ onVolver }) => {
                         />
                       </div>
 
-                      <div className='col-md-6 py-3'>
+                      {/* <div className='col-md-6 py-3'>
                         <label className='form-label text-dark d-flex align-items-center gap-2'>
                           <i className='bi bi-shield-lock text-warning'></i> Contraseña (nueva)
                         </label>
@@ -395,7 +402,7 @@ const ConsultarUsuario = ({ onVolver }) => {
                           }
                           disabled={!modoEdicion || loadingAccion}
                         />
-                      </div>
+                      </div> */}
 
                       <div className='col-md-6 py-3'>
                         <label className='form-label text-dark d-flex align-items-center gap-2'>
