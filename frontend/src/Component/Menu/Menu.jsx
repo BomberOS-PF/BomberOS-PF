@@ -31,8 +31,15 @@ import ControlMovilSemanal from '../Flota/Controles/ControlMovilSemanal'
 import ControlesMain from '../Flota/Controles/ControlesPanel'
 
 
-// NUEVO: helper para imprimir RUBA
-import { imprimirRUBA } from '../Ruba/imprimirRUBA'
+/* ==== NUEVO: Flota (ABMC + Controles) ==== */
+import ListarMoviles from '../Flota/Moviles/ListarMovil'
+import NuevoControlMovil from '../Flota/Controles/NuevoControlMovil'
+import ControlMovilSemanal from '../Flota/Controles/ControlMovilSemanal'
+import ControlesMain from '../Flota/Controles/ControlesPanel'
+
+
+// 👉 NUEVO: RUBA
+import RubaListado from '../Ruba/RubaListado'
 
 const Menu = ({ user, setUser }) => {
   const [opcionSeleccionada, setOpcionSeleccionada] = useState('')
@@ -167,59 +174,6 @@ const Menu = ({ user, setUser }) => {
     navigate('/login')
   }
 
-  // ========= NUEVO: Vista rápida para imprimir RUBA =========
-  function RubaQuickPrint({ usuario, onVolver }) {
-    const [idIncidente, setIdIncidente] = useState('')
-
-    const onImprimir = async () => {
-      if (!idIncidente) return
-      try {
-        await imprimirRUBA(Number(idIncidente), usuario)
-      } catch (e) {
-        console.error(e)
-        alert('No se pudo generar el PDF RUBA')
-      }
-    }
-
-    return (
-      <div className='container mt-4'>
-        <div className='card bg-dark text-white'>
-          <div className='card-header d-flex align-items-center gap-2'>
-            <i className='bi bi-file-earmark-pdf' />
-            <span>Imprimir RUBA</span>
-          </div>
-          <div className='card-body'>
-            <div className='row g-3 align-items-end'>
-              <div className='col-12 col-sm-6 col-md-4'>
-                <label className='form-label'>ID de incidente</label>
-                <input
-                  type='number'
-                  className='form-control'
-                  value={idIncidente}
-                  onChange={e => setIdIncidente(e.target.value)}
-                  placeholder='Ej: 651'
-                  min='1'
-                />
-              </div>
-              <div className='col-12 col-sm-6 col-md-4 d-flex gap-2'>
-                <button className='btn btn-danger' onClick={onImprimir}>
-                  <i className='bi bi-printer me-2' />
-                  Generar PDF
-                </button>
-                <button className='btn btn-secondary' onClick={onVolver}>
-                  Volver
-                </button>
-              </div>
-            </div>
-            <p className='text-secondary mt-3 mb-0'>
-              Usa el endpoint <code>/api/incidentes/:id</code> y el generador RUBA.
-            </p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   const renderContenido = () => {
     switch (opcionSeleccionada) {
       case 'cargarIncidente':
@@ -251,27 +205,27 @@ const Menu = ({ user, setUser }) => {
       case 'gestionar-guardias':
         return grupoSeleccionado
           ? (
-            rol === 'administrador'
-              ? (
-                <GestionarGuardias
-                  idGrupo={grupoSeleccionado.idGrupo}
-                  nombreGrupo={grupoSeleccionado.nombreGrupo}
-                  bomberos={grupoSeleccionado.bomberos}
-                  onVolver={() => {
-                    setOpcionSeleccionada('consultar-grupos-guardia')
-                    setGrupoSeleccionado(null)
-                  }}
-                />
-              )
-              : (
-                <>
-                  <div className="alert alert-danger text-center mt-4">
-                    No tenés permisos para acceder a esta sección. Cerrando sesión...
-                  </div>
-                  {setTimeout(() => cerrarSesion(), 3000)}
-                </>
-              )
-          )
+              rol === 'administrador'
+                ? (
+                  <GestionarGuardias
+                    idGrupo={grupoSeleccionado.idGrupo}
+                    nombreGrupo={grupoSeleccionado.nombreGrupo}
+                    bomberos={grupoSeleccionado.bomberos}
+                    onVolver={() => {
+                      setOpcionSeleccionada('consultar-grupos-guardia')
+                      setGrupoSeleccionado(null)
+                    }}
+                  />
+                  )
+                : (
+                  <>
+                    <div className="alert alert-danger text-center mt-4">
+                      No tenés permisos para acceder a esta sección. Cerrando sesión...
+                    </div>
+                    {setTimeout(() => cerrarSesion(), 3000)}
+                  </>
+                  )
+            )
           : null
       case 'participacion-incidente':
         return (
@@ -310,26 +264,30 @@ const Menu = ({ user, setUser }) => {
 
       // NUEVO: vista de impresión RUBA
       case 'imprimir-ruba':
+      // 👉 NUEVO: RUBA
+      case 'ruba-listado':
         return (
-          <RubaQuickPrint
+          <RubaListado
             usuario={usuario || usuarioActual}
             onVolver={() => setOpcionSeleccionada(null)}
           />
         )
+
       default:
+        // Si es bombero -> que por defecto vea el Calendario
         return isBombero
           ? (
             <CalendarioGuardias
               dniUsuario={usuario?.dni ?? usuarioActual?.dni}
               titulo="Calendario de Guardias"
             />
-          )
+            )
           : (
             <CalendarioGuardias
               dniUsuario={usuario?.dni ?? usuarioActual?.dni}
               titulo="Tus Guardias"
             />
-          )
+            )
     }
   }
 
@@ -398,8 +356,8 @@ const Menu = ({ user, setUser }) => {
       titulo: 'Reportes',
       botones: [
         { texto: 'Incidentes por tipo', accion: 'reporte-incidentes' },
-        // NUEVO: opción debajo de "Incidentes por tipo"
-        { texto: 'Imprimir RUBA', accion: 'imprimir-ruba' }
+        // 👉 NUEVO BOTÓN RUBA
+        { texto: 'RUBA', accion: 'ruba-listado' }
       ]
     }
   ]
