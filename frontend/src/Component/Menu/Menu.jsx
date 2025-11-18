@@ -30,14 +30,6 @@ import NuevoControlMovil from '../Flota/Controles/NuevoControlMovil'
 import ControlMovilSemanal from '../Flota/Controles/ControlMovilSemanal'
 import ControlesMain from '../Flota/Controles/ControlesPanel'
 
-
-/* ==== NUEVO: Flota (ABMC + Controles) ==== */
-import ListarMoviles from '../Flota/Moviles/ListarMovil'
-import NuevoControlMovil from '../Flota/Controles/NuevoControlMovil'
-import ControlMovilSemanal from '../Flota/Controles/ControlMovilSemanal'
-import ControlesMain from '../Flota/Controles/ControlesPanel'
-
-
 // 👉 NUEVO: RUBA
 import RubaListado from '../Ruba/RubaListado'
 
@@ -205,27 +197,27 @@ const Menu = ({ user, setUser }) => {
       case 'gestionar-guardias':
         return grupoSeleccionado
           ? (
-              rol === 'administrador'
-                ? (
-                  <GestionarGuardias
-                    idGrupo={grupoSeleccionado.idGrupo}
-                    nombreGrupo={grupoSeleccionado.nombreGrupo}
-                    bomberos={grupoSeleccionado.bomberos}
-                    onVolver={() => {
-                      setOpcionSeleccionada('consultar-grupos-guardia')
-                      setGrupoSeleccionado(null)
-                    }}
-                  />
-                  )
-                : (
-                  <>
-                    <div className="alert alert-danger text-center mt-4">
-                      No tenés permisos para acceder a esta sección. Cerrando sesión...
-                    </div>
-                    {setTimeout(() => cerrarSesion(), 3000)}
-                  </>
-                  )
-            )
+            rol === 'administrador'
+              ? (
+                <GestionarGuardias
+                  idGrupo={grupoSeleccionado.idGrupo}
+                  nombreGrupo={grupoSeleccionado.nombreGrupo}
+                  bomberos={grupoSeleccionado.bomberos}
+                  onVolver={() => {
+                    setOpcionSeleccionada('consultar-grupos-guardia')
+                    setGrupoSeleccionado(null)
+                  }}
+                />
+              )
+              : (
+                <>
+                  <div className="alert alert-danger text-center mt-4">
+                    No tenés permisos para acceder a esta sección. Cerrando sesión...
+                  </div>
+                  {setTimeout(() => cerrarSesion(), 3000)}
+                </>
+              )
+          )
           : null
       case 'participacion-incidente':
         return (
@@ -261,7 +253,6 @@ const Menu = ({ user, setUser }) => {
       case 'flota-control':
         return <ControlesMain key="flota-control" initialView="control" />
 
-
       // NUEVO: vista de impresión RUBA
       case 'imprimir-ruba':
       // 👉 NUEVO: RUBA
@@ -271,28 +262,26 @@ const Menu = ({ user, setUser }) => {
             usuario={usuario || usuarioActual}
             onVolver={() => setOpcionSeleccionada(null)}
           />
-        )
+        )        
 
       default:
-        // Si es bombero -> que por defecto vea el Calendario
         return isBombero
           ? (
             <CalendarioGuardias
               dniUsuario={usuario?.dni ?? usuarioActual?.dni}
               titulo="Calendario de Guardias"
             />
-            )
+          )
           : (
             <CalendarioGuardias
               dniUsuario={usuario?.dni ?? usuarioActual?.dni}
               titulo="Tus Guardias"
             />
-            )
+          )
     }
   }
 
   // ===== Construcción dinámica de secciones según rol =====
-
 
   const secciones = [
     {
@@ -325,23 +314,31 @@ const Menu = ({ user, setUser }) => {
       ]
     },
     {
-  id: 'collapseGuardias',
-  icono: 'bi-clock-history',
-  titulo: 'Guardias',
-  botones: rol === 'administrador'
-    ? [
-        { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
-        { texto: 'Consultar Grupos', accion: 'consultarGuardia' },
-        { texto: 'Mis guardias', accion: 'mis-guardias' }
-      ]
-    : isBombero
-      ? [{ texto: 'Mis guardias', accion: 'mis-guardias' }]
-      : [
+      id: 'collapseGuardias',
+      icono: 'bi-clock-history',
+      titulo: 'Guardias',
+      botones: rol === 'administrador'
+        ? [
           { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
-          { texto: 'Consultar Grupos', accion: 'consultarGuardia' }
+          { texto: 'Consultar Grupos', accion: 'consultarGuardia' },
+          { texto: 'Mis guardias', accion: 'mis-guardias' }
         ]
-}
-,
+        : isBombero
+          ? [{ texto: 'Mis guardias', accion: 'mis-guardias' }]
+          : [
+            { texto: 'Registrar Grupo', accion: 'registrarGuardia' },
+            { texto: 'Consultar Grupos', accion: 'consultarGuardia' }
+          ]
+    },
+    {
+      id: 'collapseFlota',                // NUEVO
+      icono: 'bi-truck',                  // requiere Bootstrap Icons
+      titulo: 'Flota',
+      botones: [
+        { texto: 'Gestionar Móviles', accion: 'flota-moviles' },
+        { texto: 'Nuevo control de móvil', accion: 'flota-nuevo-control' }
+      ]
+    },
     {
       id: 'collapseNotificaciones',
       icono: 'bi-bell',
@@ -356,7 +353,6 @@ const Menu = ({ user, setUser }) => {
       titulo: 'Reportes',
       botones: [
         { texto: 'Incidentes por tipo', accion: 'reporte-incidentes' },
-        // 👉 NUEVO BOTÓN RUBA
         { texto: 'RUBA', accion: 'ruba-listado' }
       ]
     }

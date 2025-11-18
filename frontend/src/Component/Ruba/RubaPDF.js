@@ -288,12 +288,12 @@ export function generarPdfRUBA (datos, meta) {
   // -------- DESCRIPCIÓN --------
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(12)
-  doc.text('Descripción', marginLeft, cursorY)
+  doc.text('Dirección', marginLeft, cursorY)
   cursorY += 6
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(11)
-  const descripcion = incidente.descripcion || 'Sin descripción registrada.'
+  const descripcion = incidente.descripcion || 'Sin dirección registrada.'
   const descLines = doc.splitTextToSize(descripcion, marginRight - marginLeft)
   doc.text(descLines, marginLeft, cursorY)
   cursorY += descLines.length * 5 + 8
