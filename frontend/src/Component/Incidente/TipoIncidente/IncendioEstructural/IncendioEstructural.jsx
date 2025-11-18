@@ -33,13 +33,13 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
     const datosPreviosMapeados = {
       ...datosPrevios,
       // Mapear campos específicos del incendio estructural
-      nombreLugar: datosPrevios.nombreLugar,
-      pisos: datosPrevios.pisos || datosPrevios.cantPisos,
-      ambientes: datosPrevios.ambientes || datosPrevios.cantAmbientes,
-      tipoTecho: datosPrevios.tipoTecho,
-      tipoAbertura: datosPrevios.tipoAbertura,
-      superficie: datosPrevios.superficie,
-      descripcion: datosPrevios.descripcion, // Campo específico del incendio estructural
+      nombreLugar: datosPrevios.nombreLugar || '',
+      pisos: datosPrevios.pisos || datosPrevios.cantPisos || '',
+      ambientes: datosPrevios.ambientes || datosPrevios.cantAmbientes || '',
+      tipoTecho: datosPrevios.tipoTecho || '',
+      tipoAbertura: datosPrevios.tipoAbertura || '',
+      superficie: datosPrevios.superficie || '',
+      descripcion: datosPrevios.descripcion || '', // Campo específico del incendio estructural
       damnificados: datosPrevios.damnificados || []
     }
 
@@ -66,13 +66,13 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
       const datosMapeados = {
         ...datosPrevios,
         // Mapear campos específicos del incendio estructural
-        nombreLugar: datosPrevios.nombreLugar,
-        pisos: datosPrevios.pisos || datosPrevios.cantPisos,
-        ambientes: datosPrevios.ambientes || datosPrevios.cantAmbientes,
-        tipoTecho: datosPrevios.tipoTecho,
-        tipoAbertura: datosPrevios.tipoAbertura,
-        superficie: datosPrevios.superficie,
-        descripcion: datosPrevios.descripcion, // Campo específico del incendio estructural
+        nombreLugar: datosPrevios.nombreLugar || '',
+        pisos: datosPrevios.pisos || datosPrevios.cantPisos || '',
+        ambientes: datosPrevios.ambientes || datosPrevios.cantAmbientes || '',
+        tipoTecho: datosPrevios.tipoTecho || '',
+        tipoAbertura: datosPrevios.tipoAbertura || '',
+        superficie: datosPrevios.superficie || '',
+        descripcion: datosPrevios.descripcion || '', // Campo específico del incendio estructural
         damnificados: datosPrevios.damnificados || []
       }
 
@@ -88,8 +88,8 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
           apiRequest('/api/tipos-techo'),
           apiRequest('/api/tipos-abertura')
         ])
-        setOpcionesTipoTecho(tiposTecho.data || [])
-        setOpcionesTipoAbertura(tiposAbertura.data || [])
+        setOpcionesTipoTecho(tiposTecho.data || tiposTecho || [])
+        setOpcionesTipoAbertura(tiposAbertura.data || tiposAbertura || [])
       } catch (error) {
         console.error('Error al cargar catálogos:', error)
         setErrorMsg('Error al cargar opciones de formulario')
@@ -410,7 +410,7 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
               placeholder="Seleccione tipo de techo"
               isClearable
             />
-            {errors.tipoTecho && <div className="invalid-feedback" id="error-tipoTecho">{errors.tipoTecho}</div>}
+            {errors.tipoTecho && <div className="invalid-feedback d-block" id="error-tipoTecho">{errors.tipoTecho}</div>}
           </div>
 
           <div className="col-12 col-sm-6">
@@ -425,7 +425,7 @@ const IncendioEstructural = ({ datosPrevios = {}, onFinalizar }) => {
               placeholder="Seleccione tipo abertura"
               isClearable
             />
-            {errors.tipoAbertura && <div className="invalid-feedback" id="error-tipoAbertura">{errors.tipoAbertura}</div>}
+            {errors.tipoAbertura && <div className="invalid-feedback d-block" id="error-tipoAbertura">{errors.tipoAbertura}</div>}
           </div>
         </div>
 
