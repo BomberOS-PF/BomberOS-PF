@@ -1,45 +1,40 @@
-// telegram.service.js
 import axios from 'axios'
 import { logger } from '../platform/logger/logger.js'
 
 export class TelegramService {
-  constructor(config) {
-    this.config = config.telegram
+  constructor() {
+    this.enabled = process.env.NOTIFICATION_CHANNEL === 'telegram'
+    this.botToken = process.env.TELEGRAM_BOT_TOKEN
+    this.chatId = process.env.TELEGRAM_CHAT_ID
   }
 
   isEnabled() {
-    return this.config?.enabled && this.config?.botToken
+    return this.enabled && !!this.botToken && !!this.chatId
   }
 
   async enviarNotificacionIncidente(bombero, incidente) {
     if (!this.isEnabled()) {
-      return { success: true, simulated: true }
+      logger.warn('⚠️ Intento de enviar Telegram con servicio deshabilitado')
+      return { success: false, simulated: true }
     }
 
     const nombre = `${bombero.nombre || ''} ${bombero.apellido || ''}`.trim()
 
     try {
       const mensaje = this.construirMensajeIncidente(bombero, incidente)
-
-      const url = `https://api.telegram.org/bot${this.config.botToken}/sendMessage`
+      const url = `https://api.telegram.org/bot${this.botToken}/sendMessage`
 
       await axios.post(url, {
-        chat_id: this.config.chatId, // después lo vemos dinámico si querés
+        chat_id: this.chatId,
         text: mensaje,
         parse_mode: 'Markdown'
       })
 
       logger.info('📨 Telegram enviado', { bombero: nombre })
-
       return { success: true }
     } catch (error) {
       logger.error('❌ Error Telegram', { error: error.message })
-
-      return {
-        success: false,
-        error: error.message,
-        bombero: nombre
-      }
+      return { success: false, error: error.message, bombero: nombre }
     }
   }
 
@@ -75,13 +70,13 @@ export class TelegramService {
 
     return `🚨 *ALERTA DE EMERGENCIA* 🚨
 
-Hola ${bombero.nombre} ${bombero.apellido},
+Hola ${bombero.nombre || ''} ${bombero.apellido || ''},
 
 Se ha reportado un incidente:
 
 📋 *Tipo:* ${incidente.tipo}
 📅 *Fecha/Hora:* ${fecha}
-📍 *Ubicación:* ${incidente.ubicacion}
+📍 *Ubicación:* ${incidente.ubicacion || 'No especificada'}
 🆔 *Incidente #${incidente.id}*
 
 🚨 *¿PUEDES ASISTIR?*

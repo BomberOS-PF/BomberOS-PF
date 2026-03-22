@@ -2,6 +2,8 @@ import { Incidente } from '../../domain/models/incidente.js'
 import { IncidenteServiceInterface } from '../../interfaces/service.interface.js'
 import { logger } from '../platform/logger/logger.js'
 import { getConnection } from '../platform/database/connection.js'
+import { TelegramService } from '../services/telegram.service.js'
+
 
 export class IncidenteService extends IncidenteServiceInterface {
   constructor(
@@ -9,7 +11,6 @@ export class IncidenteService extends IncidenteServiceInterface {
     denuncianteRepository,
     bomberoService = null,
     whatsappService = null,
-    telegramService = null,
     damnificadoRepository = null,
     incendioForestalRepository = null,
     areaAfectadaRepository = null,
@@ -19,14 +20,15 @@ export class IncidenteService extends IncidenteServiceInterface {
     incendioEstructuralRepository = null,
     materialPeligrosoRepository = null,
     rescateRepository = null,
-    factorClimaticoRepository = null
+    factorClimaticoRepository = null,
+
   ) {
     super()
     this.incidenteRepository = incidenteRepository
     this.denuncianteRepository = denuncianteRepository
     this.bomberoService = bomberoService
     this.whatsappService = whatsappService
-    this.telegramService = telegramService
+   
     this.notificationChannel = process.env.NOTIFICATION_CHANNEL || 'whatsapp'
     this.damnificadoRepository = damnificadoRepository
     this.incendioForestalRepository = incendioForestalRepository
@@ -38,7 +40,8 @@ export class IncidenteService extends IncidenteServiceInterface {
     this.incendioEstructuralRepository = incendioEstructuralRepository
     this.materialPeligrosoRepository = materialPeligrosoRepository
     this.rescateRepository = rescateRepository
-    this.factorClimaticoRepository = factorClimaticoRepository
+    this.factorClimaticoRepository = factorClimaticoRepository,
+    this.telegramService = new TelegramService()
   }
 
   // ================== ALTAS ==================
@@ -347,51 +350,74 @@ export class IncidenteService extends IncidenteServiceInterface {
         descripcion: incidente.descripcion
       }
 
-      // aca vaaaaaaaaaaaaa
+let resultado
 
-      let resultado
+// 🔥 decidir canal desde .env
+const canal = (this.notificationChannel || 'whatsapp').toLowerCase()
 
-if (this.notificationChannel === 'whatsapp') {
-  if (!this.whatsappService?.isEnabled?.()) {
-    return {
-      success: false,
-      message: 'WhatsApp no está habilitado',
-      total: 0,
-      exitosos: 0,
-      fallidos: 0,
-      resultados: []
+logger.info('📡 Canal de notificación seleccionado', { canal })
+
+logger.info('DEBUG telegramService', {
+  existe: !!this.telegramService
+})
+
+// ===== WHATSAPP (misma lógica que versión A) =====
+if (canal === 'whatsapp') {
+
+  if (!this.whatsappService) {
+    return { 
+      success: false, 
+      message: 'WhatsAppService no disponible', 
+      total: 0, exitosos: 0, fallidos: 0, resultados: [] 
     }
   }
 
+  if (!this.whatsappService.isEnabled()) {
+    return { 
+      success: false, 
+      message: 'WhatsApp no está habilitado', 
+      total: 0, exitosos: 0, fallidos: 0, resultados: [] 
+    }
+  }
 
   resultado = await this.whatsappService.notificarBomberosIncidente(
     bomberosActivos,
     incidenteParaMensaje
   )
+}
 
-} else if (this.notificationChannel === 'telegram') {
-  if (!this.telegramService?.isEnabled?.()) {
-    return {
-      success: false,
-      message: 'Telegram no está habilitado',
-      total: 0,
-      exitosos: 0,
-      fallidos: 0,
-      resultados: []
+
+
+// ===== TELEGRAM =====
+else if (canal === 'telegram') {
+
+  if (!this.telegramService) {
+    return { 
+      success: false, 
+      message: 'TelegramService no disponible', 
+      total: 0, exitosos: 0, fallidos: 0, resultados: [] 
     }
   }
 
-  logger.info(`📡 Enviando notificación por ${this.notificationChannel}`)
+  if (!this.telegramService.isEnabled()) {
+    return { 
+      success: false, 
+      message: 'Telegram no está habilitado', 
+      total: 0, exitosos: 0, fallidos: 0, resultados: [] 
+    }
+  }
 
   resultado = await this.telegramService.notificarBomberosIncidente(
     bomberosActivos,
     incidenteParaMensaje
   )
+}
 
-} else {
+// ===== canal inválido =====
+else {
   return {
     success: false,
-    message: 'Canal de notificación inválido',
+    message: `Canal de notificación inválido: ${canal}`,
     total: 0,
     exitosos: 0,
     fallidos: 0,
@@ -425,11 +451,23 @@ if (this.notificationChannel === 'whatsapp') {
     }
   }
 
-  async mapearTipoIncidente(idTipo) {
-    if (!this.tipoIncidenteService) throw new Error('TipoIncidenteService no disponible para mapear tipos')
-    const tipo = await this.tipoIncidenteService.obtenerTipoIncidentePorId(idTipo)
-    return tipo ? tipo.nombre : `Tipo ${idTipo}`
+ async mapearTipoIncidente(idTipo) {
+  try {
+    if (
+      this.tipoIncidenteService &&
+      typeof this.tipoIncidenteService.obtenerTipoIncidentePorId === 'function'
+    ) {
+      const tipo = await this.tipoIncidenteService.obtenerTipoIncidentePorId(idTipo)
+      return tipo ? tipo.nombre : `Tipo ${idTipo}`
+    }
+
+    logger.warn('⚠️ tipoIncidenteService no disponible o método inexistente')
+    return `Tipo ${idTipo}`
+  } catch (error) {
+    logger.error('❌ Error mapeando tipo incidente', { error: error.message })
+    return `Tipo ${idTipo}`
   }
+}
 
   async obtenerDetalleCompleto(idIncidente) {
     const cn = getConnection()
