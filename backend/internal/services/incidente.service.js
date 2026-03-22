@@ -9,6 +9,7 @@ export class IncidenteService extends IncidenteServiceInterface {
     denuncianteRepository,
     bomberoService = null,
     whatsappService = null,
+    telegramService = null,
     damnificadoRepository = null,
     incendioForestalRepository = null,
     areaAfectadaRepository = null,
@@ -25,6 +26,8 @@ export class IncidenteService extends IncidenteServiceInterface {
     this.denuncianteRepository = denuncianteRepository
     this.bomberoService = bomberoService
     this.whatsappService = whatsappService
+    this.telegramService = telegramService
+    this.notificationChannel = process.env.NOTIFICATION_CHANNEL || 'whatsapp'
     this.damnificadoRepository = damnificadoRepository
     this.incendioForestalRepository = incendioForestalRepository
     this.areaAfectadaRepository = areaAfectadaRepository
@@ -234,9 +237,9 @@ export class IncidenteService extends IncidenteServiceInterface {
 
     // Enriquecimiento por tipo (opcional según repos disponibles)
     // 1 = Accidente, 2 = Incendio Estructural, 3 = Material Peligroso, 4 = Forestal, 5 = Rescate (ajustá a tus IDs)
-    if (tipo === 1 && this.accidenteRepository?.obtenerPorIncidente) {
-      base.accidenteTransito = await this.accidenteRepository.obtenerPorIncidente(idIncidente)
-    }
+    if (tipo === 1 && this.accidenteTransitoRepository?.obtenerPorIncidente) {
+  base.accidenteTransito = await this.accidenteTransitoRepository.obtenerPorIncidente(idIncidente)
+}
     if (tipo === 2 && this.incendioEstructuralRepository?.obtenerPorIncidente) {
       base.incendioEstructural = await this.incendioEstructuralRepository.obtenerPorIncidente(idIncidente)
     }
@@ -298,46 +301,16 @@ export class IncidenteService extends IncidenteServiceInterface {
         }
       }
 
-      if (!this.whatsappService) {
-        const errorMsg = 'Servicio de WhatsApp no está configurado. Contacta al administrador del sistema.'
-        logger.error('❌ WhatsAppService no disponible')
-        return { 
-          success: false, 
-          message: errorMsg, 
-          total: 0, 
-          exitosos: 0, 
-          fallidos: 0,
-          resultados: [] 
-        }
-      }
-
-      // Verificar si WhatsApp está habilitado
-      if (!this.whatsappService.isEnabled()) {
-        const errorMsg = 'El servicio de WhatsApp no está habilitado. Verifica las credenciales de Twilio en las variables de entorno.'
-        logger.warn('⚠️ WhatsApp deshabilitado', {
-          config: {
-            enabled: this.whatsappService.config?.enabled,
-            hasAccountSid: !!this.whatsappService.config?.accountSid,
-            hasAuthToken: !!this.whatsappService.config?.authToken,
-            whatsappNumber: this.whatsappService.config?.whatsappNumber
-          }
-        })
-        return { 
-          success: false, 
-          message: errorMsg, 
-          total: 0, 
-          exitosos: 0, 
-          fallidos: 0,
-          resultados: [] 
-        }
-      }
-
       const bomberos = await this.bomberoService.listarBomberos()
       const bomberosActivos = bomberos.filter(b => {
         const telefono = b.telefono ? b.telefono.toString().trim() : ''
         const nombre = b.nombre && b.apellido ? `${b.nombre} ${b.apellido}`.trim() : ''
         return telefono !== '' && nombre !== ''
       })
+
+
+
+
 
       if (bomberosActivos.length === 0) {
         const errorMsg = 'No hay bomberos activos con teléfono válido para notificar'
@@ -374,25 +347,58 @@ export class IncidenteService extends IncidenteServiceInterface {
         descripcion: incidente.descripcion
       }
 
-      logger.info('📋 Datos del incidente para mensaje WhatsApp', {
-        incidenteOriginal: {
-          idIncidente: incidente.idIncidente,
-          localizacion: incidente.localizacion,
-          idLocalizacion: incidente.idLocalizacion,
-          descripcion: incidente.descripcion
-        },
-        incidenteParaMensaje
-      })
+      // aca vaaaaaaaaaaaaa
 
-      // Enviar notificaciones
-      const resultado = await this.whatsappService.notificarBomberosIncidente(bomberosActivos, incidenteParaMensaje)
+      let resultado
 
-      logger.info('✅ Notificación de bomberos completada', { 
-        incidenteId, 
-        total: resultado.total,
-        exitosos: resultado.exitosos,
-        fallidos: resultado.fallidos
-      })
+if (this.notificationChannel === 'whatsapp') {
+  if (!this.whatsappService?.isEnabled?.()) {
+    return {
+      success: false,
+      message: 'WhatsApp no está habilitado',
+      total: 0,
+      exitosos: 0,
+      fallidos: 0,
+      resultados: []
+    }
+  }
+
+
+  resultado = await this.whatsappService.notificarBomberosIncidente(
+    bomberosActivos,
+    incidenteParaMensaje
+  )
+
+} else if (this.notificationChannel === 'telegram') {
+  if (!this.telegramService?.isEnabled?.()) {
+    return {
+      success: false,
+      message: 'Telegram no está habilitado',
+      total: 0,
+      exitosos: 0,
+      fallidos: 0,
+      resultados: []
+    }
+  }
+
+  logger.info(`📡 Enviando notificación por ${this.notificationChannel}`)
+
+  resultado = await this.telegramService.notificarBomberosIncidente(
+    bomberosActivos,
+    incidenteParaMensaje
+  )
+
+} else {
+  return {
+    success: false,
+    message: 'Canal de notificación inválido',
+    total: 0,
+    exitosos: 0,
+    fallidos: 0,
+    resultados: []
+  }
+}
+
 
       return { 
         success: true, 
