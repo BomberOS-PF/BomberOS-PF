@@ -109,6 +109,33 @@ export class BomberoHandler {
     }
   }
 
+  async generarCodigoTelegram(req, res) {
+  try {
+    const { id } = req.params
+
+    logger.info('Solicitud: Generar código Telegram', { id })
+
+    const codigo = await this.bomberoService.generarCodigoTelegram(id)
+
+    res.status(200).json({
+      success: true,
+      message: 'Código generado correctamente',
+      data: {
+        codigo
+      }
+    })
+  } catch (error) {
+    logger.error('Error al generar código Telegram', {
+      id: req.params.id,
+      error: error.message
+    })
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    })
+  }
+}
 
   /**
    * Crear nuevo bombero

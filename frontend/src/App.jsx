@@ -13,6 +13,7 @@ import ConsultarRol from './Component/Rol/ConsultarRol.jsx'
 import RegistrarRol from './Component/Rol/RegistrarRol.jsx'
 import GestionarGuardias from './Component/Guardia/GestionarGuardias/GestionarGuardia.jsx'
 import DashboardRespuestas from './Component/Respuestas/DashboardRespuestas.jsx'
+import Perfil from './Component/Perfil/Perfil.jsx'
 
 import RestablecerClave from './Component/RestablecerClave/RestablecerClave.jsx'
 
@@ -27,6 +28,7 @@ const App = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login setUser={setUser} user={user} />} />
+      <Route path="/perfil" element={ <RutaPrivada user={user}><Perfil user={user} /></RutaPrivada>} />
       <Route path="/recuperar-clave" element={<RecuperarClave onVolver={() => navigate('/login')} />} />
       <Route path="/restablecer-clave" element={<RestablecerClave onVolver={() => navigate('/login')} />} />
       <Route path="/" element={<RutaPrivada user={user}><Menu user={user} setUser={setUser} /></RutaPrivada>} />

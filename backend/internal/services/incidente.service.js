@@ -274,182 +274,94 @@ export class IncidenteService extends IncidenteServiceInterface {
 
   // ================== NOTIFICACIONES ==================
   async notificarBomberosIncidente(incidenteId) {
-    try {
-      logger.info('📱 Iniciando notificación de bomberos para incidente', { incidenteId })
+  try {
+    logger.info('📱 Iniciando notificación de bomberos para incidente', { incidenteId });
 
-      const incidente = await this.incidenteRepository.obtenerPorId(incidenteId)
-      if (!incidente) {
-        const errorMsg = `Incidente con ID ${incidenteId} no encontrado`
-        logger.error('❌ ' + errorMsg)
-        return { 
-          success: false, 
-          message: errorMsg, 
-          total: 0, 
-          exitosos: 0, 
-          fallidos: 0,
-          resultados: [] 
-        }
-      }
-
-      if (!this.bomberoService) {
-        const errorMsg = 'BomberoService no disponible para notificaciones'
-        logger.error('❌ ' + errorMsg)
-        return { 
-          success: false, 
-          message: errorMsg, 
-          total: 0, 
-          exitosos: 0, 
-          fallidos: 0,
-          resultados: [] 
-        }
-      }
-
-      const bomberos = await this.bomberoService.listarBomberos()
-      const bomberosActivos = bomberos.filter(b => {
-        const telefono = b.telefono ? b.telefono.toString().trim() : ''
-        const nombre = b.nombre && b.apellido ? `${b.nombre} ${b.apellido}`.trim() : ''
-        return telefono !== '' && nombre !== ''
-      })
-
-
-
-
-
-      if (bomberosActivos.length === 0) {
-        const errorMsg = 'No hay bomberos activos con teléfono válido para notificar'
-        logger.warn('⚠️ ' + errorMsg)
-        return { 
-          success: false, 
-          message: errorMsg, 
-          total: 0, 
-          exitosos: 0, 
-          fallidos: 0,
-          resultados: [] 
-        }
-      }
-
-      // Obtener ubicación real de la base de datos
-      let ubicacionReal = incidente.localizacion || incidente.descripcion || 'Ubicación no especificada'
-      
-      // Si hay idLocalizacion, intentar obtener la dirección real
-      if (incidente.idLocalizacion && !incidente.localizacion) {
-        try {
-          // Aquí deberías tener un método para obtener la localización por ID
-          // Por ahora usamos la descripción como ubicación si está disponible
-          ubicacionReal = incidente.descripcion || 'Ubicación por confirmar'
-        } catch (error) {
-          logger.warn('No se pudo obtener ubicación real', { idLocalizacion: incidente.idLocalizacion })
-        }
-      }
-
-      const incidenteParaMensaje = {
-        id: incidente.idIncidente,
-        tipo: await this.mapearTipoIncidente(incidente.idTipoIncidente),
-        fecha: incidente.fecha,
-        ubicacion: ubicacionReal,
-        descripcion: incidente.descripcion
-      }
-
-let resultado
-
-// 🔥 decidir canal desde .env
-const canal = (this.notificationChannel || 'whatsapp').toLowerCase()
-
-logger.info('📡 Canal de notificación seleccionado', { canal })
-
-logger.info('DEBUG telegramService', {
-  existe: !!this.telegramService
-})
-
-// ===== WHATSAPP (misma lógica que versión A) =====
-if (canal === 'whatsapp') {
-
-  if (!this.whatsappService) {
-    return { 
-      success: false, 
-      message: 'WhatsAppService no disponible', 
-      total: 0, exitosos: 0, fallidos: 0, resultados: [] 
-    }
-  }
-
-  if (!this.whatsappService.isEnabled()) {
-    return { 
-      success: false, 
-      message: 'WhatsApp no está habilitado', 
-      total: 0, exitosos: 0, fallidos: 0, resultados: [] 
-    }
-  }
-
-  resultado = await this.whatsappService.notificarBomberosIncidente(
-    bomberosActivos,
-    incidenteParaMensaje
-  )
-}
-
-
-
-// ===== TELEGRAM =====
-else if (canal === 'telegram') {
-
-  if (!this.telegramService) {
-    return { 
-      success: false, 
-      message: 'TelegramService no disponible', 
-      total: 0, exitosos: 0, fallidos: 0, resultados: [] 
-    }
-  }
-
-  if (!this.telegramService.isEnabled()) {
-    return { 
-      success: false, 
-      message: 'Telegram no está habilitado', 
-      total: 0, exitosos: 0, fallidos: 0, resultados: [] 
-    }
-  }
-
-  resultado = await this.telegramService.notificarBomberosIncidente(
-    bomberosActivos,
-    incidenteParaMensaje
-  )
-}
-
-// ===== canal inválido =====
-else {
-  return {
-    success: false,
-    message: `Canal de notificación inválido: ${canal}`,
-    total: 0,
-    exitosos: 0,
-    fallidos: 0,
-    resultados: []
-  }
-}
-
-
-      return { 
-        success: true, 
-        message: `Notificación enviada a ${resultado.exitosos} de ${resultado.total} bomberos`, 
-        total: resultado.total,
-        exitosos: resultado.exitosos,
-        fallidos: resultado.fallidos,
-        resultados: resultado.resultados || []
-      }
-    } catch (error) {
-      logger.error('❌ Error crítico al notificar bomberos', { 
-        incidenteId, 
-        error: error.message,
-        stack: error.stack 
-      })
+    const incidente = await this.incidenteRepository.obtenerPorId(incidenteId);
+    if (!incidente) {
+      const errorMsg = `Incidente con ID ${incidenteId} no encontrado`;
+      logger.error('❌ ' + errorMsg);
       return { 
         success: false, 
-        message: `Error al procesar notificación: ${error.message}`, 
+        message: errorMsg, 
         total: 0, 
         exitosos: 0, 
         fallidos: 0,
         resultados: [] 
-      }
+      };
     }
+
+    if (!this.bomberoService) {
+      const errorMsg = 'BomberoService no disponible para notificaciones';
+      logger.error('❌ ' + errorMsg);
+      return { 
+        success: false, 
+        message: errorMsg, 
+        total: 0, 
+        exitosos: 0, 
+        fallidos: 0,
+        resultados: [] 
+      };
+    }
+
+    // Obtener bomberos con telegram_chat_id
+    const bomberosTelegram = await this.bomberoService.listarBomberosConTelegram();
+    if (!bomberosTelegram || bomberosTelegram.length === 0) {
+      return {
+        success: false,
+        message: 'No hay bomberos con chatId de Telegram para notificar',
+        total: 0,
+        exitosos: 0,
+        fallidos: 0,
+        resultados: []
+      };
+    }
+
+    // Preparar datos del incidente para el mensaje
+    let ubicacionReal = incidente.localizacion || incidente.descripcion || 'Ubicación no especificada';
+    if (incidente.idLocalizacion && !incidente.localizacion) {
+      ubicacionReal = incidente.descripcion || 'Ubicación por confirmar';
+    }
+
+    const incidenteParaMensaje = {
+      id: incidente.idIncidente,
+      tipo: await this.mapearTipoIncidente(incidente.idTipoIncidente),
+      fecha: incidente.fecha,
+      ubicacion: ubicacionReal,
+      descripcion: incidente.descripcion
+    };
+
+    // 🔥 Usar TelegramService para enviar a cada bombero
+    const resultado = await this.telegramService.notificarBomberosIncidente(
+      bomberosTelegram,
+      incidenteParaMensaje
+    );
+
+    return { 
+      success: true,
+      message: `Notificación enviada a ${resultado.exitosos} de ${resultado.total} bomberos`,
+      total: resultado.total,
+      exitosos: resultado.exitosos,
+      fallidos: resultado.fallidos,
+      resultados: resultado.resultados || []
+    };
+
+  } catch (error) {
+    logger.error('❌ Error crítico al notificar bomberos', { 
+      incidenteId, 
+      error: error.message,
+      stack: error.stack 
+    });
+    return { 
+      success: false, 
+      message: `Error al procesar notificación: ${error.message}`, 
+      total: 0, 
+      exitosos: 0, 
+      fallidos: 0,
+      resultados: [] 
+    };
   }
+}
 
  async mapearTipoIncidente(idTipo) {
   try {

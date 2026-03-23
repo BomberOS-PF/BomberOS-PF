@@ -59,6 +59,10 @@ export class MySQLBomberoRepository {
     }
   }
 
+  async obtenerBomberosConTelegram() {
+  return await this.bomberoRepository.obtenerConTelegramChatId()
+}
+
 
   async findConPaginado({ pagina = 1, limite = 10, busqueda = '' }) {
     const offset = (pagina - 1) * limite
@@ -142,7 +146,45 @@ export class MySQLBomberoRepository {
       })
       throw new Error('Error interno al buscar bomberos')
     }
+  }async actualizarTelegramChatId(dni, telegramChatId) {
+  const query = `
+    UPDATE ${this.tableName} 
+    SET telegram_chat_id = ? 
+    WHERE dni = ?
+  `
+
+  const connection = getConnection()
+
+  try {
+    const [result] = await connection.execute(query, [telegramChatId, dni])
+    if (result.affectedRows > 0) {
+      logger.debug('Telegram actualizado', { dni })
+      return true
+    }
+    return false
+  } catch (error) {
+    logger.error('Error al actualizar Telegram', {
+      dni,
+      error: error.message,
+      code: error.code
+    })
+    throw new Error('Error al actualizar el Telegram del bombero')
   }
+}
+
+
+
+  async obtenerConTelegramChatId() {
+  const connection = getConnection()
+
+  const [rows] = await connection.execute(`
+    SELECT dni, nombre, apellido, telegram_chat_id as telegramChatId
+    FROM bombero
+    WHERE telegram_chat_id IS NOT NULL
+  `)
+
+  return rows
+}
 
   async create(bombero) {
     const data = bombero.toDatabase()
@@ -278,6 +320,27 @@ export class MySQLBomberoRepository {
       throw new Error(`Error al eliminar bombero: ${error.message}`)
     }
   }
+
+  async actualizarTelegramCodigo(dni, codigo) {
+  const query = `
+    UPDATE bombero
+    SET telegram_link_code = ?
+    WHERE dni = ?
+  `
+
+  const connection = getConnection()
+
+  try {
+    const [result] = await connection.execute(query, [codigo, dni])
+    return result.affectedRows > 0
+  } catch (error) {
+    logger.error('Error al actualizar telegram codigo', {
+      dni,
+      error: error.message
+    })
+    throw new Error('Error al actualizar código de Telegram')
+  }
+}
 
   /**
    * Actualizar solo la ficha médica de un bombero (almacena PDF en BD como BLOB)

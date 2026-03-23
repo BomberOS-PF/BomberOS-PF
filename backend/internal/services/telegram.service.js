@@ -3,59 +3,79 @@ import { logger } from '../platform/logger/logger.js'
 
 export class TelegramService {
   constructor() {
-    this.enabled = process.env.NOTIFICATION_CHANNEL === 'telegram'
+    this.enabled = process.env.NOTIFICATION_CHANNEL?.toLowerCase() === 'telegram'
     this.botToken = process.env.TELEGRAM_BOT_TOKEN
-    this.chatId = process.env.TELEGRAM_CHAT_ID
   }
 
   isEnabled() {
-    return this.enabled && !!this.botToken && !!this.chatId
+    return this.enabled && !!this.botToken
   }
 
   async enviarNotificacionIncidente(bombero, incidente) {
     if (!this.isEnabled()) {
-      logger.warn('⚠️ Intento de enviar Telegram con servicio deshabilitado')
+      logger.warn('⚠️ Telegram deshabilitado')
       return { success: false, simulated: true }
     }
 
-    const nombre = `${bombero.nombre || ''} ${bombero.apellido || ''}`.trim()
-
     try {
-      const mensaje = this.construirMensajeIncidente(bombero, incidente)
-      const url = `https://api.telegram.org/bot${this.botToken}/sendMessage`
+      if (!bombero.telegramChatId) {
+        return { success: false, error: 'Bombero sin telegram_chat_id' }
+      }
 
-      await axios.post(url, {
-        chat_id: this.chatId,
-        text: mensaje,
-        parse_mode: 'Markdown'
+      const mensaje = this.construirMensajeIncidente(bombero, incidente)
+      const resultado = await this.enviarMensaje(bombero.telegramChatId, mensaje)
+
+      if (!resultado.success) {
+        return resultado
+      }
+
+      logger.info('📨 Telegram enviado', {
+        bombero: `${bombero.nombre} ${bombero.apellido}`
       })
 
-      logger.info('📨 Telegram enviado', { bombero: nombre })
       return { success: true }
     } catch (error) {
       logger.error('❌ Error Telegram', { error: error.message })
-      return { success: false, error: error.message, bombero: nombre }
+      return { success: false, error: error.message }
     }
   }
 
   async notificarBomberosIncidente(bomberos, incidente) {
+    if (!this.isEnabled()) {
+      logger.warn('⚠️ Telegram deshabilitado')
+      return { success: false, simulated: true }
+    }
+
     const resultados = []
     let exitosos = 0
     let fallidos = 0
 
-    const promesas = bomberos.map(b =>
-      this.enviarNotificacionIncidente(b, incidente).then(r => {
-        if (r.success) exitosos++
-        else fallidos++
-
+    for (const bombero of bomberos) {
+      if (!bombero.telegramChatId) {
         resultados.push({
-          bombero: `${b.nombre} ${b.apellido}`,
-          ...r
+          bombero,
+          success: false,
+          error: 'Bombero sin telegram_chat_id'
         })
-      })
-    )
+        fallidos++
+        continue
+      }
 
-    await Promise.allSettled(promesas)
+      const mensaje = this.construirMensajeIncidente(bombero, incidente)
+      const resultado = await this.enviarMensaje(bombero.telegramChatId, mensaje)
+
+      if (resultado.success) {
+        resultados.push({ bombero, success: true })
+        exitosos++
+      } else {
+        resultados.push({
+          bombero,
+          success: false,
+          error: resultado.error
+        })
+        fallidos++
+      }
+    }
 
     return {
       total: bomberos.length,
@@ -63,6 +83,103 @@ export class TelegramService {
       fallidos,
       resultados
     }
+  }
+
+  async enviarMensaje(chatId, mensaje) {
+    if (!this.isEnabled()) {
+      return { success: false, skipped: true, error: 'Telegram deshabilitado' }
+    }
+
+    const url = `https://api.telegram.org/bot${this.botToken}/sendMessage`
+
+    try {
+      const res = await axios.post(url, {
+        chat_id: chatId,
+        text: mensaje,
+        parse_mode: 'Markdown'
+      })
+
+      if (!res.data.ok) {
+        throw new Error(res.data.description || 'Error Telegram')
+      }
+
+      return { success: true, data: res.data }
+
+    } catch (err) {
+      logger.error('❌ Error enviando Telegram', {
+        chatId,
+        error: err.response?.data || err.message
+      })
+
+      return { success: false, error: err.message }
+    }
+  }
+
+  async enviarConfirmacionRespuesta(chatId, nombre, tipoRespuesta, incidenteId) {
+    if (!this.isEnabled()) {
+      logger.warn('⚠️ Telegram deshabilitado')
+      return { success: false, simulated: true }
+    }
+
+    let mensaje = ''
+
+    if (tipoRespuesta === 'CONFIRMADO') {
+      mensaje = `✅ *Confirmación recibida*
+
+Hola ${nombre},
+
+Confirmaste asistencia al incidente #${incidenteId}.
+
+_Cuerpo de Bomberos - Sistema BomberOS_`
+    } else if (tipoRespuesta === 'DECLINADO') {
+      mensaje = `❌ *Declinación registrada*
+
+Hola ${nombre},
+
+Declinaste asistencia al incidente #${incidenteId}.
+
+_Cuerpo de Bomberos - Sistema BomberOS_`
+    } else {
+      mensaje = `⚠️ *Respuesta no reconocida*
+
+Hola ${nombre},
+
+Envía SI para confirmar o NO para declinar.`
+    }
+
+    const resultado = await this.enviarMensaje(chatId, mensaje)
+
+    if (!resultado.success) {
+      logger.warn('⚠️ No se pudo enviar confirmación Telegram', {
+        chatId,
+        error: resultado.error
+      })
+    }
+
+    return resultado
+  }
+
+  async enviarNotificacionMasiva(mensaje, bomberos) {
+    if (!this.isEnabled()) {
+      logger.warn('⚠️ Telegram deshabilitado')
+      return { success: false, simulated: true }
+    }
+
+    const resultados = []
+
+    for (const bombero of bomberos) {
+      if (!bombero.telegramChatId) continue
+
+      const resultado = await this.enviarMensaje(bombero.telegramChatId, mensaje)
+
+      resultados.push({
+        bomberoId: bombero.id,
+        success: resultado.success,
+        error: resultado.error
+      })
+    }
+
+    return resultados
   }
 
   construirMensajeIncidente(bombero, incidente) {

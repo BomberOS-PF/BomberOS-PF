@@ -1,0 +1,14 @@
+
+/* Estilos para campos deshabilitados */
+.form-control:disabled {
+  background-color: #86888a !important;
+  color: #fff !important;
+  border: 1px solid #34495e !important;
+  cursor: not-allowed;
+  opacity: 1; /* Evitar que se vea transparente */
+}
+
+.form-control:disabled::placeholder {
+  color: #bdc3c7;
+}
+

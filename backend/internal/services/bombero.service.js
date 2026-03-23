@@ -1,6 +1,7 @@
 import { logger } from '../platform/logger/logger.js'
 import { Bombero } from '../../domain/models/bombero.js'
 import { Usuario } from '../../domain/models/usuario.js'
+import { randomUUID } from 'crypto'
 
 /**
  * Servicio de Bomberos
@@ -268,6 +269,27 @@ export class BomberoService {
       throw error
     }
   }
+  async listarBomberosConTelegram() {
+  if (!this.bomberoRepository || typeof this.bomberoRepository.obtenerConTelegramChatId !== 'function') {
+    throw new Error('Repositorio de bomberos no implementa obtenerConTelegramChatId')
+  }
+  return await this.bomberoRepository.obtenerConTelegramChatId()
+}
+
+async generarCodigoTelegram(id) {
+  const bombero = await this.bomberoRepository.findById(id)
+
+  if (!bombero) {
+    throw new Error('Bombero no encontrado')
+  }
+
+  const codigo = Math.floor(100000 + Math.random() * 900000)
+
+  // 👇 ESTA ES LA LÍNEA IMPORTANTE
+  await this.bomberoRepository.actualizarTelegramCodigo(id, codigo)
+
+  return codigo
+}
 
   // Validación básica de datos - Solo campos requeridos
   _validarDatosBombero(datos, esCreacion = false) {

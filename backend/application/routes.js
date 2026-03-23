@@ -3,6 +3,9 @@ import { uploadFichaMedica } from '../config/multer.js'
 import { obtenerTiposTecho, obtenerTipoTechoPorId } from '../handler/tipoTecho/handler.js'
 import { obtenerTiposAbertura, obtenerTipoAberturaPorId } from '../handler/tipoAbertura/handler.js'
 import { obtenerLugaresRescate, obtenerLugarRescatePorId } from '../handler/lugarRescate/handler.js'
+import { crearRespuestaService } from '../internal/services/respuestaServiceFactory.js';
+
+const respuestaService = crearRespuestaService();
 
 export function setupRoutes(app, container) {
   logger.info('🛣️ Configurando rutas...')
@@ -298,6 +301,15 @@ export function setupRoutes(app, container) {
     }
   })
 
+  app.post('/api/bomberos/:id/telegram/codigo', async (req, res) => {
+  try {
+    await bomberoHandler.generarCodigoTelegram(req, res)
+  } catch (error) {
+    logger.error('Error en ruta generarCodigoTelegram:', error)
+    res.status(500).json({ error: 'Error interno' })
+  }
+})
+
   // Subir ficha médica (almacena en BD como BLOB)
   app.post('/api/bomberos/:dni/ficha-medica', uploadFichaMedica.single('fichaMedica'), async (req, res) => {
     try {
@@ -458,7 +470,6 @@ export function setupRoutes(app, container) {
     }
   })
 
-
   app.put('/api/incidentes/:id', async (req, res) => {
     try {
       logger.info('🔄 PUT /api/incidentes/:id recibido', {
@@ -490,6 +501,17 @@ export function setupRoutes(app, container) {
       res.status(500).json({ error: 'Error interno' })
     }
   })
+
+  app.get('/api/bomberos/:id/telegram-chat', async (req, res) => {
+  try {
+    await bomberoHandler.obtenerTelegramChatId(req, res)
+  } catch (error) {
+    logger.error('Error en ruta obtenerTelegramChatId:', error)
+    res.status(500).json({ error: 'Error interno' })
+  }
+})
+
+
 
   // ---------- Rangos ----------
   app.get('/api/rangos', (req, res) => rangoHandler.getAll(req, res))
@@ -995,6 +1017,42 @@ _Cuerpo de Bomberos - Sistema BomberOS_`
       res.status(200).send(errorTwiml)
     }
   })
+
+  app.post('/api/webhooks/telegram', async (req, res) => {
+  try {
+    logger.info('🤖 Webhook Telegram recibido', { body: req.body, headers: req.headers });
+
+    const { chatId, text, messageId } = req.body; // ajusta según payload de Telegram
+
+    if (!chatId || !text) {
+      return res.status(400).json({ success: false, error: 'chatId o text faltante' });
+    }
+
+    const resultado = await respuestaService.procesarRespuestaWebhook(
+      { chatId, text, messageId },
+      req.ip
+    );
+
+    logger.info('🤖 Resultado del procesamiento Telegram', resultado);
+
+    // responder a Telegram con mensaje de confirmación/declinación
+    if (resultado.success) {
+      const mensaje = resultado.tipoRespuesta === 'CONFIRMADO'
+        ? `✅ Hola ${resultado.bombero}, tu confirmación fue registrada para el incidente #${resultado.incidenteId}.`
+        : `❌ Hola ${resultado.bombero}, tu declinación fue registrada para el incidente #${resultado.incidenteId}.`;
+
+      
+    }
+
+    res.status(200).json({ success: true });
+
+  } catch (error) {
+    logger.error('Error en webhook Telegram:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
 
   app.use((req, res) => {
     logger.warn('Ruta no encontrada', { method: req.method, url: req.originalUrl })

@@ -415,7 +415,18 @@ const Menu = ({ user, setUser }) => {
 
               {mostrarDropdown && (
                 <ul className="dropdown-menu show user-dropdown">
-                  <li><button className="dropdown-item" disabled>Mi perfil</button></li>
+                  <li>
+  <button
+    className="dropdown-item"
+    onClick={() => {
+      setMostrarDropdown(false)
+      navigate('/perfil')
+    }}
+  >
+    <i className="bi bi-person me-2"></i>
+    Mi perfil
+  </button>
+</li>
                   <li><button className="dropdown-item" disabled>Configuración</button></li>
                   <li><hr className="dropdown-divider" /></li>
                   <li>
