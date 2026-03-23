@@ -14,9 +14,19 @@ export class RespuestaIncidenteTelegramService {
     try {
       logger.info('🔍 [WEBHOOK] Iniciando procesamiento de respuesta Telegram', { webhookData })
       
-      const chatId = webhookData?.message?.chat?.id
-      const texto = webhookData?.message?.text
+      const chatId =
+  webhookData?.message?.chat?.id ||
+  webhookData?.chatId
 
+const texto =
+  webhookData?.message?.text ||
+  webhookData?.text
+
+  const messageId =
+  webhookData?.message?.message_id ||
+  webhookData?.messageId ||
+  null
+      
       if (!chatId || !texto) {
         logger.error('❌ [WEBHOOK] Datos incompletos', { chatId, texto })
         throw new Error('Datos de webhook incompletos')
@@ -25,8 +35,12 @@ export class RespuestaIncidenteTelegramService {
       const respuesta = texto.trim()
       const respuestaNormalizada = respuesta.toUpperCase()
 
-      logger.info('📱 [WEBHOOK] Datos extraídos', { chatId, respuesta, respuestaNormalizada })
-
+logger.info('📱 [WEBHOOK] Datos extraídos', { 
+  chatId, 
+  respuesta, 
+  respuestaNormalizada,
+  messageId
+})
       // Buscar bombero por chatId de Telegram
       let nombreBombero = null
       let dniBombero = null
@@ -73,15 +87,18 @@ export class RespuestaIncidenteTelegramService {
         }
       }
 
-      // Guardar respuesta
-      const respuestaData = {
-        idIncidente,
-        nombreBombero,
-        dniBombero,
-        tipoRespuesta,
-        respuestaOriginal: respuesta,
-        ipOrigen
-      }
+
+
+const respuestaData = {
+  idIncidente,
+  nombreBombero,
+  dniBombero,
+  tipoRespuesta, // 👈 FALTA ESTO
+  respuestaOriginal: respuesta,
+  canal: 'telegram', // 👈 mejor que viaTelegram
+  messageId,
+  ipOrigen
+}
 
       const respuestaId = await this.respuestaRepository.guardarRespuesta(respuestaData)
       logger.success('✅ [WEBHOOK] Respuesta guardada exitosamente', { respuestaId, chatId, nombreBombero, tipoRespuesta, idIncidente })
@@ -112,15 +129,17 @@ export class RespuestaIncidenteTelegramService {
    * Buscar bombero por chatId de Telegram
    */
   async buscarBomberoPorChatId(chatId) {
-    if (!this.bomberoService) return null
-    try {
-      const bomberos = await this.bomberoService.listarBomberos()
-      return bomberos.find(b => b.chatIdTelegram == chatId)
-    } catch (error) {
-      logger.error('Error al buscar bombero por chatId', { chatId, error: error.message })
-      return null
-    }
+  if (!this.bomberoService) return null
+  try {
+    const bomberos = await this.bomberoService.listarBomberosConTelegram()
+    return bomberos.find(b => 
+      String(b.telegramChatId).trim() === String(chatId).trim()
+    )
+  } catch (error) {
+    logger.error('Error al buscar bombero por chatId', { chatId, error: error.message })
+    return null
   }
+}
 
   /**
    * Determinar tipo de respuesta (similar a WhatsApp)

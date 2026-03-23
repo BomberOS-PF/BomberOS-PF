@@ -1035,9 +1035,12 @@ const DashboardRespuestas = () => {
                         <div className="bombero-info">
                           <strong>{respuesta.nombreBombero || 'Bombero no identificado'}</strong>
                           <span className="telefono">{respuesta.telefonoBombero}</span>
-                          {respuesta.viaWhatsapp && (
-                            <span className="whatsapp-badge">📱 WhatsApp</span>
-                          )}
+                          {respuesta.via === 'whatsapp' && (
+  <span className="whatsapp-badge">📱 WhatsApp</span>
+)}
+{respuesta.via === 'telegram' && (
+  <span className="telegram-badge">📱 Telegram</span>
+)}
                         </div>
                         <div className="respuesta-detalle">
                           <span 

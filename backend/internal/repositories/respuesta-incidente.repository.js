@@ -12,60 +12,67 @@ export class MySQLRespuestaIncidenteRepository {
   /**
    * Guardar respuesta de bombero a incidente
    */
-  async guardarRespuesta(data) {
-    const connection = await getConnection()
-    
-    try {
-      // Primero buscar o crear la participación del bombero
-      let idParticipacion = await this.buscarOCrearParticipacion(
-        data.idIncidente, 
-        data.dniBombero
-      )
-      
-      // Determinar el valor de asistio basado en el tipo de respuesta
-      let asistio = null
-      if (data.tipoRespuesta === 'CONFIRMADO') {
-        asistio = 1
-      } else if (data.tipoRespuesta === 'DECLINADO') {
-        asistio = 0
-      }
-      // Para DEMORADO y NO_RECONOCIDA dejamos null
-      
-      const query = `
-        INSERT INTO ${this.table} 
-        (idParticipacion, asistio, fecha, respuesta_whatsapp, message_sid, fecha_whatsapp)
-        VALUES (?, ?, NOW(), ?, ?, NOW())
-        ON DUPLICATE KEY UPDATE
-        asistio = VALUES(asistio),
-        respuesta_whatsapp = VALUES(respuesta_whatsapp),
-        message_sid = VALUES(message_sid),
-        fecha_whatsapp = NOW()
-      `
-      
-      const [result] = await connection.execute(query, [
-        idParticipacion,
-        asistio,
-        data.respuestaOriginal,
-        data.messageSid || null
-      ])
-      
-      logger.info('📊 Respuesta de bombero guardada', {
-        id: result.insertId || 'actualizado',
-        incidente: data.idIncidente,
-        bombero: data.nombreBombero,
-        respuesta: data.tipoRespuesta,
-        participacion: idParticipacion
-      })
-      
-      return result.insertId || idParticipacion
-    } catch (error) {
-      logger.error('❌ Error al guardar respuesta de bombero', {
-        error: error.message,
-        data
-      })
-      throw error
+async guardarRespuesta(data) {
+  const connection = await getConnection()
+  
+  try {
+    const idParticipacion = await this.buscarOCrearParticipacion(
+      data.idIncidente, 
+      data.dniBombero
+    )
+
+    const asistio = data.tipoRespuesta === 'CONFIRMADO' ? 1
+                  : data.tipoRespuesta === 'DECLINADO' ? 0
+                  : null
+
+    // Columnas según canal
+    let respuestaCol, messageCol, fechaCol
+    if (data.canal === 'telegram') {
+      respuestaCol = 'respuesta_telegram'
+      messageCol = 'telegram_message_id'
+      fechaCol = 'fecha_telegram'
+    } else {
+      respuestaCol = 'respuesta_whatsapp'
+      messageCol = 'message_sid'
+      fechaCol = 'fecha_whatsapp'
     }
+
+    const query = `
+      INSERT INTO ${this.table} 
+      (idParticipacion, asistio, fecha, ${respuestaCol}, ${messageCol}, ${fechaCol})
+      VALUES (?, ?, NOW(), ?, ?, NOW())
+      ON DUPLICATE KEY UPDATE
+        asistio = VALUES(asistio),
+        ${respuestaCol} = VALUES(${respuestaCol}),
+        ${messageCol} = VALUES(${messageCol}),
+        ${fechaCol} = NOW()
+    `
+
+    const [result] = await connection.execute(query, [
+      idParticipacion,
+      asistio,
+      data.respuestaOriginal,
+      data.messageId || null
+    ])
+
+    logger.info('📊 Respuesta guardada', {
+      id: result.insertId || 'actualizado',
+      incidente: data.idIncidente,
+      bombero: data.nombreBombero,
+      respuesta: data.tipoRespuesta,
+      canal: data.canal
+    })
+
+    return result.insertId || idParticipacion
+
+  } catch (error) {
+    logger.error('❌ Error al guardar respuesta', {
+      error: error.message,
+      data
+    })
+    throw error
   }
+}
 
   /**
    * Buscar o crear participación de bombero en incidente
@@ -117,51 +124,72 @@ export class MySQLRespuestaIncidenteRepository {
    * Obtener todas las respuestas de un incidente
    */
   async obtenerRespuestasPorIncidente(idIncidente) {
-    const connection = await getConnection()
+  const connection = await getConnection()
+
+  try {
+    const query = `
+      SELECT 
+        ca.idConfirmacion,
+        ca.asistio,
+        ca.fecha,
+        ca.respuesta_whatsapp,
+        ca.message_sid,
+        ca.fecha_whatsapp,
+        ca.respuesta_telegram,
+        ca.telegram_message_id,
+        ca.fecha_telegram,
+        b.nombre,
+        b.apellido,
+        b.dni,
+        b.telefono,
+        fp.rolEnIncidente
+      FROM ${this.table} ca
+      INNER JOIN ${this.participacionTable} fp ON ca.idParticipacion = fp.idParticipacion
+      INNER JOIN ${this.bomberoTable} b ON fp.idBombero = b.dni
+      WHERE fp.idIncidente = ?
+      ORDER BY 
+        COALESCE(ca.fecha_telegram, ca.fecha_whatsapp, ca.fecha) DESC
+    `
     
-    try {
-      const query = `
-        SELECT 
-          ca.idConfirmacion,
-          ca.asistio,
-          ca.fecha,
-          ca.respuesta_whatsapp,
-          ca.message_sid,
-          ca.fecha_whatsapp,
-          b.nombre,
-          b.apellido,
-          b.dni,
-          b.telefono,
-          fp.rolEnIncidente
-        FROM ${this.table} ca
-        INNER JOIN ${this.participacionTable} fp ON ca.idParticipacion = fp.idParticipacion
-        INNER JOIN ${this.bomberoTable} b ON fp.idBombero = b.dni
-        WHERE fp.idIncidente = ?
-        ORDER BY ca.fecha_whatsapp DESC, ca.fecha DESC
-      `
-      
-      const [rows] = await connection.execute(query, [idIncidente])
-      
-      return rows.map(row => ({
+    const [rows] = await connection.execute(query, [idIncidente])
+
+    return rows.map(row => {
+      // Detectar canal principal
+      let via, respuesta, messageId, fecha
+      if (row.respuesta_telegram) {
+        via = 'telegram'
+        respuesta = row.respuesta_telegram
+        messageId = row.telegram_message_id
+        fecha = row.fecha_telegram
+      } else {
+        via = 'whatsapp'
+        respuesta = row.respuesta_whatsapp
+        messageId = row.message_sid
+        fecha = row.fecha_whatsapp || row.fecha
+      }
+
+      return {
         id: row.idConfirmacion,
-        telefonoBombero: row.telefono, // Viene de la tabla bombero
+        telefonoBombero: row.telefono,
         nombreBombero: `${row.nombre} ${row.apellido}`.trim(),
         dni: row.dni,
         asistio: row.asistio,
-        respuestaWhatsapp: row.respuesta_whatsapp, // Texto original del WhatsApp
-        messageSid: row.message_sid,
-        fechaRespuesta: row.fecha_whatsapp || row.fecha,
-        viaWhatsapp: !!row.respuesta_whatsapp, // Si tiene respuesta_whatsapp, fue por WhatsApp
+        respuesta,
+        messageId,
+        fechaRespuesta: fecha,
+        via,
+        viaWhatsapp: via === 'whatsapp',
         rolEnIncidente: row.rolEnIncidente
-      }))
-    } catch (error) {
-      logger.error('❌ Error al obtener respuestas del incidente', {
-        error: error.message,
-        idIncidente
-      })
-      throw error
-    }
+      }
+    })
+  } catch (error) {
+    logger.error('❌ Error al obtener respuestas del incidente', {
+      error: error.message,
+      idIncidente
+    })
+    throw error
   }
+}
 
   /**
    * Obtener estadísticas de respuestas de un incidente

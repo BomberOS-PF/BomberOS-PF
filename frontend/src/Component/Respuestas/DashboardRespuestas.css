@@ -871,6 +871,15 @@
   font-weight: 600;
   border: 1px solid #c3e6cb;
 }
+.telegram-badge {
+  color: #004c99;             /* azul oscuro para el texto */
+  font-size: 0.75rem;
+  background: #cce5ff;        /* celeste suave para el fondo */
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  border: 1px solid #99ccff;  /* azul más intenso para el borde */
+}
 
 .respuesta-detalle {
   display: flex;

@@ -1,9 +1,13 @@
 // respuestaServiceFactory.js
-
+import { BomberoService } from './bombero.service.js';
 import { RespuestaIncidenteService } from './respuesta-incidente.service.js';
 import { RespuestaIncidenteTelegramService } from './RespuestaIncidenteTelegramService.js';
 
-import { BomberoService } from './bombero.service.js';
+import { MySQLBomberoRepository } from '../repositories/bombero.repository.js';
+import { MySQLUsuarioRepository } from '../repositories/usuario.repository.js';
+
+const bomberoRepository = new MySQLBomberoRepository();
+const usuarioRepository = new MySQLUsuarioRepository();
 
 import { WhatsAppService } from './whatsapp.service.js';
 import { TelegramService } from './telegram.service.js';
@@ -16,7 +20,11 @@ const config = loadConfig();
 const respuestaRepository = new MySQLRespuestaIncidenteRepository();
 
 // services base
-const bomberoService = new BomberoService();
+const bomberoService = new BomberoService(
+  bomberoRepository,
+  usuarioRepository
+);
+
 
 // ⚠️ CREAR ESTOS (esto te faltaba)
 const whatsappService = new WhatsAppService(config);
