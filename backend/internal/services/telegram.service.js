@@ -86,34 +86,50 @@ export class TelegramService {
   }
 
   async enviarMensaje(chatId, mensaje) {
-    if (!this.isEnabled()) {
-      return { success: false, skipped: true, error: 'Telegram deshabilitado' }
-    }
+  if (!this.isEnabled()) return { success: false, skipped: true };
 
-    const url = `https://api.telegram.org/bot${this.botToken}/sendMessage`
+  const url = `https://api.telegram.org/bot${this.botToken}/sendMessage`;
 
-    try {
-      const res = await axios.post(url, {
-        chat_id: chatId,
-        text: mensaje,
-        parse_mode: 'Markdown'
-      })
+  try {
+    const payload = {
+      chat_id: chatId,
+      parse_mode: 'Markdown',
+      ...(typeof mensaje === 'string' ? { text: mensaje } : mensaje)
+    };
 
-      if (!res.data.ok) {
-        throw new Error(res.data.description || 'Error Telegram')
-      }
+    const res = await axios.post(url, payload);
 
-      return { success: true, data: res.data }
+    if (!res.data.ok) throw new Error(res.data.description || 'Error Telegram');
 
-    } catch (err) {
-      logger.error('❌ Error enviando Telegram', {
-        chatId,
-        error: err.response?.data || err.message
-      })
-
-      return { success: false, error: err.message }
-    }
+    return { success: true, data: res.data };
+  } catch (err) {
+    logger.error('❌ Error enviando Telegram', {
+      chatId,
+      error: err.response?.data || err.message
+    });
+    return { success: false, error: err.message };
   }
+}
+  async responderCallbackQuery(callbackQueryId, mensaje) {
+  if (!this.isEnabled()) return { success: false, skipped: true };
+  
+  const url = `https://api.telegram.org/bot${this.botToken}/answerCallbackQuery`;
+  try {
+    const res = await axios.post(url, {
+      callback_query_id: callbackQueryId,
+      text: mensaje,
+      show_alert: false // true si querés un popup en lugar de toast
+    });
+    if (!res.data.ok) throw new Error(res.data.description || 'Error Telegram');
+    return { success: true };
+  } catch (err) {
+    logger.error('❌ Error respondiendo callbackQuery', {
+      callbackQueryId,
+      error: err.response?.data || err.message
+    });
+    return { success: false, error: err.message };
+  }
+}
 
   async enviarConfirmacionRespuesta(chatId, nombre, tipoRespuesta, incidenteId) {
     if (!this.isEnabled()) {
@@ -183,9 +199,10 @@ Envía SI para confirmar o NO para declinar.`
   }
 
   construirMensajeIncidente(bombero, incidente) {
-    const fecha = new Date(incidente.fecha).toLocaleString('es-AR')
+  const fecha = new Date(incidente.fecha).toLocaleString('es-AR');
 
-    return `🚨 *ALERTA DE EMERGENCIA* 🚨
+  return {
+    text: `🚨 *ALERTA DE EMERGENCIA* 🚨
 
 Hola ${bombero.nombre || ''} ${bombero.apellido || ''},
 
@@ -196,9 +213,14 @@ Se ha reportado un incidente:
 📍 *Ubicación:* ${incidente.ubicacion || 'No especificada'}
 🆔 *Incidente #${incidente.id}*
 
-🚨 *¿PUEDES ASISTIR?*
-
-🟢 SI
-🔴 NO`
-  }
+🚨 *¿PUEDES ASISTIR?*`,
+    reply_markup: {
+      inline_keyboard: [
+        // ✅ Botones con callback_data limpio (sin emojis)
+        [{ text: '✅ SI', callback_data: `CONFIRMADO_${incidente.id}` }],
+        [{ text: '❌ NO', callback_data: `DECLINADO_${incidente.id}` }]
+      ]
+    }
+  };
+}
 }

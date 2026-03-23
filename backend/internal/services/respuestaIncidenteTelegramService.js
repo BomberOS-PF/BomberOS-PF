@@ -10,136 +10,145 @@ export class RespuestaIncidenteTelegramService {
   /**
    * Procesar respuesta de bombero desde webhook de Telegram
    */
-  async procesarRespuestaWebhook(webhookData, ipOrigen = null) {
-    try {
-      logger.info('🔍 [WEBHOOK] Iniciando procesamiento de respuesta Telegram', { webhookData })
-      
-      const chatId =
-  webhookData?.message?.chat?.id ||
-  webhookData?.chatId
+async procesarRespuestaWebhook(webhookData, ipOrigen = null) {
+  try {
+    logger.info('🔍 [WEBHOOK] Iniciando procesamiento de respuesta Telegram', { webhookData });
 
-const texto =
-  webhookData?.message?.text ||
-  webhookData?.text
+    const chatId = webhookData?.message?.chat?.id || webhookData?.chatId;
+    const texto = webhookData?.message?.text || webhookData?.text;
+    const messageId = webhookData?.message?.message_id || webhookData?.messageId || null;
 
-  const messageId =
-  webhookData?.message?.message_id ||
-  webhookData?.messageId ||
-  null
-      
-      if (!chatId || !texto) {
-        logger.error('❌ [WEBHOOK] Datos incompletos', { chatId, texto })
-        throw new Error('Datos de webhook incompletos')
-      }
-
-      const respuesta = texto.trim()
-      const respuestaNormalizada = respuesta.toUpperCase()
-
-logger.info('📱 [WEBHOOK] Datos extraídos', { 
-  chatId, 
-  respuesta, 
-  respuestaNormalizada,
-  messageId
-})
-      // Buscar bombero por chatId de Telegram
-      let nombreBombero = null
-      let dniBombero = null
-
-      logger.info('🔍 [WEBHOOK] Buscando bombero por chatId...', { 
-        chatId,
-        hasBomberoService: !!this.bomberoService
-      })
-
-      if (this.bomberoService) {
-        try {
-          const bombero = await this.buscarBomberoPorChatId(chatId)
-          if (bombero) {
-            nombreBombero = bombero.nombreCompleto || `${bombero.nombre || ''} ${bombero.apellido || ''}`.trim()
-            dniBombero = bombero.dni
-            logger.info('✅ [WEBHOOK] Bombero identificado', { nombreBombero, dniBombero })
-          } else {
-            logger.warn('⚠️ [WEBHOOK] Bombero NO encontrado por chatId', { chatId })
-          }
-        } catch (error) {
-          logger.error('❌ [WEBHOOK] Error al buscar bombero', { chatId, error: error.message, stack: error.stack })
-        }
-      } else {
-        logger.warn('⚠️ [WEBHOOK] BomberoService no disponible')
-      }
-
-      // Determinar tipo de respuesta
-      const tipoRespuesta = this.determinarTipoRespuesta(respuestaNormalizada)
-      logger.info('📝 [WEBHOOK] Tipo de respuesta determinado', { tipoRespuesta, respuestaOriginal: respuesta })
-
-      // Obtener el incidente más reciente
-      const idIncidente = await this.respuestaRepository.obtenerIncidenteMasReciente()
-      if (!idIncidente) {
-        logger.error('❌ [WEBHOOK] No hay incidentes activos')
-        throw new Error('No hay incidentes activos para asociar la respuesta')
-      }
-
-      if (!dniBombero) {
-        return {
-          success: false,
-          error: `ChatId ${chatId} no registrado. Por favor contacta al administrador para registrar tu cuenta.`,
-          chatId,
-          tipoRespuesta
-        }
-      }
-
-
-
-const respuestaData = {
-  idIncidente,
-  nombreBombero,
-  dniBombero,
-  tipoRespuesta, // 👈 FALTA ESTO
-  respuestaOriginal: respuesta,
-  canal: 'telegram', // 👈 mejor que viaTelegram
-  messageId,
-  ipOrigen
-}
-
-      const respuestaId = await this.respuestaRepository.guardarRespuesta(respuestaData)
-      logger.success('✅ [WEBHOOK] Respuesta guardada exitosamente', { respuestaId, chatId, nombreBombero, tipoRespuesta, idIncidente })
-
-      // Enviar mensaje de confirmación por Telegram
-      const mensaje = this.construirMensajeConfirmacion(nombreBombero, tipoRespuesta, idIncidente)
-      if (this.telegramService) {
-        await this.telegramService.enviarMensaje(chatId, mensaje)
-      }
-
-      return {
-        success: true,
-        respuestaId,
-        chatId,
-        bombero: nombreBombero,
-        tipoRespuesta,
-        mensaje,
-        incidenteId: idIncidente
-      }
-
-    } catch (error) {
-      logger.error('❌ [WEBHOOK] Error general al procesar respuesta Telegram', { error: error.message, stack: error.stack, webhookData })
-      return { success: false, error: error.message }
+    if (!chatId && !webhookData?.callback_query?.id) {
+      logger.error('❌ [WEBHOOK] Datos incompletos', { chatId, texto });
+      throw new Error('Datos de webhook incompletos');
     }
+
+    let nombreBombero = null;
+    let dniBombero = null;
+
+    // Buscar bombero
+    if (this.bomberoService) {
+      try {
+        const bombero = await this.buscarBomberoPorChatId(chatId);
+        if (bombero) {
+          nombreBombero = bombero.nombreCompleto || `${bombero.nombre || ''} ${bombero.apellido || ''}`.trim();
+          dniBombero = bombero.dni;
+        }
+      } catch (error) {
+        logger.error('❌ Error al buscar bombero', { chatId, error: error.message });
+      }
+    }
+
+    // Variables generales
+    let tipoRespuesta = null;
+    let idIncidente = await this.respuestaRepository.obtenerIncidenteMasReciente();
+    let respuestaOriginal = texto || '';
+    let mensajeFinal = null;
+
+    // --- Manejo de callback (botones) ---
+    if (webhookData?.callback_query?.data) {
+      const partes = webhookData.callback_query.data.split('_');
+      tipoRespuesta = partes[0] === 'CONFIRMADO' ? 'CONFIRMADO' : 'DECLINADO';
+      idIncidente = partes[1] || idIncidente;
+      respuestaOriginal = webhookData.callback_query.data;
+
+      // NombreBombero desde callback si no se encontró en servicio
+      if (!nombreBombero) {
+        nombreBombero = webhookData.callback_query.from.first_name || 'Bombero';
+      }
+
+      // Mostrar popup
+      if (this.telegramService) {
+        await this.telegramService.responderCallbackQuery(
+          webhookData.callback_query.id,
+          tipoRespuesta === 'CONFIRMADO' ? '✅ Confirmación registrada' : '❌ Declinado'
+        );
+      }
+
+      // Construir mensaje y enviarlo **solo una vez**
+      mensajeFinal = this.construirMensajeConfirmacion(nombreBombero, tipoRespuesta, idIncidente);
+      if (this.telegramService) {
+        await this.telegramService.enviarMensaje(chatId, mensajeFinal);
+      }
+
+    } else {
+      // --- Manejo de mensaje textual ---
+      const respuestaNormalizada = (respuestaOriginal || '').trim().toUpperCase();
+      tipoRespuesta = this.determinarTipoRespuesta(respuestaNormalizada);
+
+      // NombreBombero desde mensaje
+      if (!nombreBombero && webhookData?.message?.from?.first_name) {
+        nombreBombero = webhookData.message.from.first_name;
+      }
+
+      // Construir mensaje y enviarlo
+      mensajeFinal = this.construirMensajeConfirmacion(nombreBombero, tipoRespuesta, idIncidente);
+      if (this.telegramService) {
+        await this.telegramService.enviarMensaje(chatId, mensajeFinal);
+      }
+    }
+
+    // --- Validación bombero ---
+    if (!dniBombero) {
+      const mensaje = `⚠️ ChatId ${chatId} no registrado. Por favor contacta al administrador para registrar tu cuenta.`;
+      if (this.telegramService) {
+        await this.telegramService.enviarMensaje(chatId, mensaje);
+      }
+      return { success: false, error: mensaje, chatId, tipoRespuesta };
+    }
+
+    // --- Guardar respuesta ---
+    const respuestaData = {
+      idIncidente,
+      nombreBombero,
+      dniBombero,
+      tipoRespuesta,
+      respuestaOriginal,
+      canal: 'telegram',
+      messageId,
+      ipOrigen
+    };
+
+    const respuestaId = await this.respuestaRepository.guardarRespuesta(respuestaData);
+    logger.success('✅ Respuesta guardada exitosamente', { respuestaId, chatId, tipoRespuesta, idIncidente });
+
+    return {
+      success: true,
+      respuestaId,
+      chatId,
+      bombero: nombreBombero,
+      tipoRespuesta,
+      mensaje: mensajeFinal,
+      incidenteId: idIncidente
+    };
+
+  } catch (error) {
+    logger.error('❌ Error general al procesar respuesta Telegram', { error: error.message, stack: error.stack, webhookData });
+
+    const chatId = webhookData?.message?.chat?.id || webhookData?.chatId;
+    if (chatId && this.telegramService) {
+      await this.telegramService.enviarMensaje(chatId, '⚠️ Hubo un error procesando tu respuesta. Intenta nuevamente.');
+    }
+
+    return { success: false, error: error.message };
   }
+}
 
   /**
    * Buscar bombero por chatId de Telegram
    */
   async buscarBomberoPorChatId(chatId) {
-  if (!this.bomberoService) return null
-  try {
-    const bomberos = await this.bomberoService.listarBomberosConTelegram()
-    return bomberos.find(b => 
-      String(b.telegramChatId).trim() === String(chatId).trim()
-    )
-  } catch (error) {
-    logger.error('Error al buscar bombero por chatId', { chatId, error: error.message })
-    return null
+    if (!this.bomberoService) return null
+    try {
+      const bomberos = await this.bomberoService.listarBomberosConTelegram()
+      return bomberos.find(b => 
+        String(b.telegramChatId).trim() === String(chatId).trim()
+      )
+    } catch (error) {
+      logger.error('Error al buscar bombero por chatId', { chatId, error: error.message })
+      return null
+    }
   }
-}
 
   /**
    * Determinar tipo de respuesta (similar a WhatsApp)

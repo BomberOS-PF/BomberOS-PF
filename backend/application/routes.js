@@ -1018,36 +1018,62 @@ _Cuerpo de Bomberos - Sistema BomberOS_`
     }
   })
 
-  app.post('/api/webhooks/telegram', async (req, res) => {
+app.post('/api/webhooks/telegram', async (req, res) => {
   try {
-    logger.info('🤖 Webhook Telegram recibido', { body: req.body, headers: req.headers });
+    const webhookData = req.body;
+    let chatId, texto, messageId, isCallback = false;
 
-    const { chatId, text, messageId } = req.body; // ajusta según payload de Telegram
-
-    if (!chatId || !text) {
-      return res.status(400).json({ success: false, error: 'chatId o text faltante' });
+    if (webhookData.callback_query) {
+      isCallback = true;
+      chatId = webhookData.callback_query.from.id;
+      texto = webhookData.callback_query.data; // "si" o "no" del botón
+      messageId = webhookData.callback_query.message?.message_id || null;
+    } else if (webhookData.message) {
+      chatId = webhookData.message.chat.id;
+      texto = webhookData.message.text;
+      messageId = webhookData.message.message_id || null;
+    } else {
+      return res.status(400).json({ success: false, error: 'No se encontró callback ni mensaje' });
     }
 
-    const resultado = await respuestaService.procesarRespuestaWebhook(
-      { chatId, text, messageId },
-      req.ip
-    );
+    // Procesar la respuesta con tu servicio
+    const resultado = await respuestaService.procesarRespuestaWebhook({
+      chatId,
+      text: texto,
+      messageId,
+      callback_query: isCallback ? webhookData.callback_query : null,
+    }, req.ip);
 
-    logger.info('🤖 Resultado del procesamiento Telegram', resultado);
+    // Si es callback (botón) mostrar popup
+    if (isCallback && resultado.success) {
+      let mensajePopup = '';
+      switch (resultado.tipoRespuesta) {
+        case 'CONFIRMADO':
+          mensajePopup = '✅ Confirmación registrada';
+          break;
+        case 'DECLINADO':
+          mensajePopup = '❌ Declinado';
+          break;
+        default:
+          mensajePopup = '⚠️ Respuesta no reconocida';
+      }
 
-    // responder a Telegram con mensaje de confirmación/declinación
-    if (resultado.success) {
-      const mensaje = resultado.tipoRespuesta === 'CONFIRMADO'
-        ? `✅ Hola ${resultado.bombero}, tu confirmación fue registrada para el incidente #${resultado.incidenteId}.`
-        : `❌ Hola ${resultado.bombero}, tu declinación fue registrada para el incidente #${resultado.incidenteId}.`;
+      if (respuestaService.telegramService) {
+        await respuestaService.telegramService.responderCallbackQuery(
+          webhookData.callback_query.id,
+          mensajePopup
+        );
+      }
+    }
 
-      
+    // Enviar mensaje de chat solo **una vez**, ya sea botón o texto
+    if (resultado.mensaje && respuestaService.telegramService) {
+      await respuestaService.telegramService.enviarMensaje(chatId, resultado.mensaje);
     }
 
     res.status(200).json({ success: true });
-
   } catch (error) {
-    logger.error('Error en webhook Telegram:', error);
+    console.error('Error en webhook Telegram:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
