@@ -11,8 +11,24 @@ export class RespuestaIncidenteTelegramService {
    * Procesar respuesta de bombero desde webhook de Telegram
    */
 async procesarRespuestaWebhook(webhookData, ipOrigen = null) {
+
+  logger.info('TIPO DE UPDATE', {
+  tieneMessage: !!webhookData?.message,
+  tieneCallback: !!webhookData?.callback_query
+});
+
   try {
     logger.info('🔍 [WEBHOOK] Iniciando procesamiento de respuesta Telegram', { webhookData });
+
+    // 🚫 Evitar procesar dos veces (mensaje duplicado de botones)
+// 🚫 Ignorar "mensaje falso" cuando viene callback
+if (webhookData?.callback_query?.data && webhookData?.message?.text) {
+  logger.info('⛔ Ignorando duplicado (callback + message juntos)', {
+    text: webhookData.message.text,
+    callback: webhookData.callback_query.data
+  });
+  return { ignored: true };
+}
 
     const chatId = webhookData?.message?.chat?.id || webhookData?.chatId;
     const texto = webhookData?.message?.text || webhookData?.text;

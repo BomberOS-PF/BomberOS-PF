@@ -1066,11 +1066,6 @@ app.post('/api/webhooks/telegram', async (req, res) => {
       }
     }
 
-    // Enviar mensaje de chat solo **una vez**, ya sea botón o texto
-    if (resultado.mensaje && respuestaService.telegramService) {
-      await respuestaService.telegramService.enviarMensaje(chatId, resultado.mensaje);
-    }
-
     res.status(200).json({ success: true });
   } catch (error) {
     console.error('Error en webhook Telegram:', error);
