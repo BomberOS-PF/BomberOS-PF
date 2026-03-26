@@ -26,6 +26,7 @@ export class Bombero {
     this._domicilio = this._createDomicilio(data.domicilio)
     this._grupoSanguineo = this._createGrupoSanguineo(data.grupoSanguineo)
     this._idUsuario = data.idUsuario || null
+    this._telegramChatId = data.telegramChatId || null
   }
 
   static create(data) {
@@ -49,6 +50,7 @@ export class Bombero {
   get domicilio() { return this._domicilio }
   get grupoSanguineo() { return this._grupoSanguineo }
   get idUsuario() { return this._idUsuario }
+  get telegramChatId() { return this._telegramChatId }
 
   // Métodos de negocio
   puedeRealizarServicio() {
@@ -200,7 +202,8 @@ export class Bombero {
       aptoPsicologico: this.aptoPsicologico,
       domicilio: this.domicilio?.toString(),
       grupoSanguineo: this.grupoSanguineo?.toString(),
-      idUsuario: this.idUsuario
+      idUsuario: this.idUsuario,
+      telegramChatId: this.telegramChatId
     }
   }
 }

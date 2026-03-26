@@ -15,7 +15,8 @@ export class MySQLBomberoRepository {
     const query = `
       SELECT dni, nombre, apellido, legajo, antiguedad, idRango, correo, telefono, 
             esDelPlan, fichaMedica, fichaMedicaArchivo, fechaFichaMedica, 
-            aptoPsicologico, domicilio, grupoSanguineo, idUsuario
+            aptoPsicologico, domicilio, grupoSanguineo, idUsuario,
+            telegram_chat_id AS telegramChatId
       FROM ${this.tableName}
       ORDER BY nombre ASC, apellido ASC
     `
@@ -38,10 +39,13 @@ export class MySQLBomberoRepository {
   async findById(id) {
     const query = `
       SELECT dni, nombre, apellido, legajo, antiguedad, idRango, correo, telefono, 
-            esDelPlan, fichaMedica, fichaMedicaArchivo, fechaFichaMedica, 
-            aptoPsicologico, domicilio, grupoSanguineo, idUsuario
-      FROM ${this.tableName} 
-      WHERE dni = ?
+      esDelPlan, fichaMedica, fichaMedicaArchivo, fechaFichaMedica, 
+      aptoPsicologico, domicilio, grupoSanguineo, idUsuario,
+      telegram_chat_id AS telegramChatId,
+      telegram_link_code AS telegramLinkCode,
+      telegram_codigo_expira AS telegramCodigoExpira
+FROM ${this.tableName} 
+WHERE dni = ?
     `
 
     const connection = getConnection()
@@ -86,7 +90,7 @@ export class MySQLBomberoRepository {
         b.dni, b.nombre, b.apellido, b.legajo, b.antiguedad, b.idRango, b.correo, b.telefono, 
         b.esDelPlan, b.fichaMedica, b.fichaMedicaArchivo, b.fechaFichaMedica, 
         b.aptoPsicologico, b.domicilio, b.grupoSanguineo, b.idUsuario,
-        r.descripcion AS rangoDescripcion,
+        r.descripcion AS rangoDescripcion, b.telegram_chat_id AS telegramChatId,
         GROUP_CONCAT(g.nombre SEPARATOR ', ') AS grupos
       FROM ${this.tableName} b
       LEFT JOIN rango r ON r.idRango = b.idRango
@@ -95,7 +99,7 @@ export class MySQLBomberoRepository {
       ${whereClause}
       GROUP BY b.dni, b.nombre, b.apellido, b.legajo, b.antiguedad, b.idRango, b.correo, b.telefono, 
                b.esDelPlan, b.fichaMedica, b.fichaMedicaArchivo, b.fechaFichaMedica, 
-               b.aptoPsicologico, b.domicilio, b.grupoSanguineo, b.idUsuario, r.descripcion
+               b.aptoPsicologico, b.domicilio, b.grupoSanguineo, b.idUsuario, r.descripcion, telegramChatId 
       ORDER BY b.apellido ASC, b.nombre ASC
       LIMIT ${limitInt} OFFSET ${offsetInt}
     `
@@ -122,6 +126,7 @@ export class MySQLBomberoRepository {
         fechaFichaMedica: row.fechaFichaMedica,
         aptoPsicologico: Boolean(row.aptoPsicologico),
         idUsuario: row.idUsuario,
+        telegramChatId: row.telegramChatId,
         grupoGuardia: row.grupos ? row.grupos.split(', ') : [] // Separar los grupos por coma
       }))
 
@@ -146,7 +151,9 @@ export class MySQLBomberoRepository {
       })
       throw new Error('Error interno al buscar bomberos')
     }
-  }async actualizarTelegramChatId(dni, telegramChatId) {
+  }
+  
+  async actualizarTelegramChatId(dni, telegramChatId) {
   const query = `
     UPDATE ${this.tableName} 
     SET telegram_chat_id = ? 
@@ -170,6 +177,50 @@ export class MySQLBomberoRepository {
     })
     throw new Error('Error al actualizar el Telegram del bombero')
   }
+}
+
+async desvincularTelegram(dni) {
+  const query = `
+    UPDATE ${this.tableName}
+    SET telegram_chat_id = NULL,
+        telegram_link_code = NULL
+    WHERE dni = ?
+  `
+
+  const connection = getConnection()
+
+  try {
+    const [result] = await connection.execute(query, [dni])
+    return result.affectedRows > 0
+  } catch (error) {
+    logger.error('Error al desvincular Telegram', {
+      dni,
+      error: error.message
+    })
+    throw new Error('Error al desvincular Telegram')
+  }
+}
+
+async limpiarCodigoTelegram(codigo) {
+  const connection = getConnection()
+
+  await connection.execute(
+    `UPDATE bombero 
+     SET telegram_link_code = NULL 
+     WHERE telegram_link_code = ?`,
+    [codigo]
+  )
+}
+
+async limpiarCodigoPorDni(dni) {
+  const connection = getConnection()
+
+  await connection.execute(
+    `UPDATE bombero 
+     SET telegram_link_code = NULL 
+     WHERE dni = ?`,
+    [dni]
+  )
 }
 
 
@@ -324,7 +375,8 @@ export class MySQLBomberoRepository {
   async actualizarTelegramCodigo(dni, codigo) {
   const query = `
     UPDATE bombero
-    SET telegram_link_code = ?
+    SET telegram_link_code = ?,
+        telegram_codigo_expira = DATE_ADD(NOW(), INTERVAL 10 MINUTE)
     WHERE dni = ?
   `
 
@@ -339,6 +391,59 @@ export class MySQLBomberoRepository {
       error: error.message
     })
     throw new Error('Error al actualizar código de Telegram')
+  }
+}
+
+// 🔍 Buscar bombero por código de Telegram
+async findByCodigoTelegram(codigo) {
+  const query = `
+  SELECT dni, nombre, apellido
+  FROM ${this.tableName}
+  WHERE telegram_link_code = ?
+    AND telegram_codigo_expira > NOW()
+`
+
+  const connection = getConnection()
+
+  try {
+    const [rows] = await connection.execute(query, [codigo])
+    return rows.length > 0 ? rows[0] : null
+  } catch (error) {
+    logger.error('Error al buscar por código Telegram', {
+      codigo,
+      error: error.message
+    })
+    throw new Error('Error al buscar código de Telegram')
+  }
+}
+
+// 🔗 Vincular chatId con el bombero
+async vincularTelegram(dni, chatId) {
+  const query = `
+    UPDATE ${this.tableName}
+    SET telegram_chat_id = ?, 
+        telegram_link_code = NULL
+    WHERE dni = ?
+  `
+
+  const connection = getConnection()
+
+  try {
+    const [result] = await connection.execute(query, [chatId, dni])
+
+    if (result.affectedRows > 0) {
+      logger.info('Telegram vinculado correctamente', { dni, chatId })
+      return true
+    }
+
+    return false
+  } catch (error) {
+    logger.error('Error al vincular Telegram', {
+      dni,
+      chatId,
+      error: error.message
+    })
+    throw new Error('Error al vincular Telegram')
   }
 }
 

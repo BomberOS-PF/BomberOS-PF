@@ -283,12 +283,63 @@ async generarCodigoTelegram(id) {
     throw new Error('Bombero no encontrado')
   }
 
+  // 🚫 Ya vinculado
+  if (bombero.telegramChatId) {
+    throw new Error('Este bombero ya tiene Telegram vinculado')
+  }
+
+  // 🚫 Código activo
+  if (bombero.telegramLinkCode && bombero.telegramCodigoExpira) {
+    const expira = new Date(bombero.telegramCodigoExpira)
+
+    if (expira > new Date()) {
+      throw new Error('Ya existe un código activo. Esperá a que expire.')
+    }
+  }
+
   const codigo = Math.floor(100000 + Math.random() * 900000)
 
-  // 👇 ESTA ES LA LÍNEA IMPORTANTE
   await this.bomberoRepository.actualizarTelegramCodigo(id, codigo)
 
   return codigo
+}
+
+async desvincularTelegram(dni) {
+  return await this.bomberoRepository.desvincularTelegram(dni)
+}
+
+async limpiarCodigoTelegram(codigo) {
+  return await this.bomberoRepository.limpiarCodigoTelegram(codigo)
+}
+
+async vincularTelegramPorCodigo(codigo, chatId) {
+  try {
+    logger.debug('Servicio: Vincular Telegram', { codigo, chatId })
+
+    if (!codigo || !chatId) {
+      throw new Error('Código y chatId son requeridos')
+    }
+
+    const bombero = await this.bomberoRepository.findByCodigoTelegram(codigo)
+
+    if (!bombero) {
+      throw new Error('Código inválido')
+    }
+
+    // 🚫 NUEVO
+  const bomberoCompleto = await this.bomberoRepository.findById(bombero.dni)
+
+  if (bomberoCompleto.telegramChatId) {
+    throw new Error('Este bombero ya está vinculado')
+  }
+
+    await this.bomberoRepository.vincularTelegram(bombero.dni, chatId)
+
+    return true
+  } catch (error) {
+    logger.error('Error al vincular Telegram', { error: error.message })
+    throw error
+  }
 }
 
   // Validación básica de datos - Solo campos requeridos

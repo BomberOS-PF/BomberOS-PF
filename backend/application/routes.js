@@ -1036,6 +1036,36 @@ app.post('/api/webhooks/telegram', async (req, res) => {
       return res.status(400).json({ success: false, error: 'No se encontró callback ni mensaje' });
     }
 
+    // 🔍 Detectar si el mensaje es un código (6 dígitos)
+const esCodigo = texto && /^\d{6}$/.test(texto)
+
+if (esCodigo) {
+  try {
+    await container.bomberoService.vincularTelegramPorCodigo(texto, chatId)
+    await container.bomberoService.limpiarCodigoTelegram(texto)
+
+    // Responder al usuario en Telegram
+    if (respuestaService.telegramService) {
+      await respuestaService.telegramService.enviarMensaje(
+        chatId,
+        '✅ Vinculación exitosa. Ahora recibirás notificaciones 🚒'
+      )
+    }
+
+    return res.status(200).json({ success: true })
+
+  } catch (error) {
+    if (respuestaService.telegramService) {
+      await respuestaService.telegramService.enviarMensaje(
+        chatId,
+        '❌ Código inválido o expirado'
+      )
+    }
+
+    return res.status(200).json({ success: false })
+  }
+}
+
     // Procesar la respuesta con tu servicio
     const resultado = await respuestaService.procesarRespuestaWebhook({
       chatId,
@@ -1073,6 +1103,17 @@ app.post('/api/webhooks/telegram', async (req, res) => {
   }
 });
 
+app.post('/api/bomberos/:dni/telegram/desvincular', async (req, res) => {
+  try {
+    await bomberoHandler.desvincularTelegram(req, res)
+  } catch (error) {
+    logger.error('Error en ruta desvincularTelegram:', error)
+    res.status(500).json({
+      success: false,
+      message: error.message
+    })
+  }
+})
 
 
   app.use((req, res) => {

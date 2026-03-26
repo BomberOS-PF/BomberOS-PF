@@ -435,5 +435,30 @@ export class BomberoHandler {
       })
     }
   }
+
+  async desvincularTelegram(req, res) {
+  try {
+    const { dni } = req.params
+
+    logger.info('Solicitud: Desvincular Telegram', { dni })
+
+    await this.bomberoService.desvincularTelegram(dni)
+
+    res.status(200).json({
+      success: true,
+      message: 'Telegram desvinculado correctamente'
+    })
+  } catch (error) {
+    logger.error('Error al desvincular Telegram', {
+      dni: req.params.dni,
+      error: error.message
+    })
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    })
+  }
+}
 }
 
