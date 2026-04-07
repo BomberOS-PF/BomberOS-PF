@@ -91,11 +91,11 @@ WHERE dni = ?
         b.esDelPlan, b.fichaMedica, b.fichaMedicaArchivo, b.fechaFichaMedica, 
         b.aptoPsicologico, b.domicilio, b.grupoSanguineo, b.idUsuario,
         r.descripcion AS rangoDescripcion, b.telegram_chat_id AS telegramChatId,
-        GROUP_CONCAT(g.nombre SEPARATOR ', ') AS grupos
+        GROUP_CONCAT(DISTINCT g.nombre SEPARATOR ', ') AS grupos
       FROM ${this.tableName} b
       LEFT JOIN rango r ON r.idRango = b.idRango
-      LEFT JOIN bomberosGrupo bg ON bg.dni = b.dni
-      LEFT JOIN grupoGuardia g ON g.idGrupo = bg.idGrupo
+      LEFT JOIN bomberosGrupo bg ON bg.dni = b.dni AND bg.activo = 1
+      LEFT JOIN grupoGuardia g ON g.idGrupo = bg.idGrupo AND g.activo = 1
       ${whereClause}
       GROUP BY b.dni, b.nombre, b.apellido, b.legajo, b.antiguedad, b.idRango, b.correo, b.telefono, 
                b.esDelPlan, b.fichaMedica, b.fichaMedicaArchivo, b.fechaFichaMedica, 

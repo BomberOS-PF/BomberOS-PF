@@ -119,7 +119,13 @@ const RegistrarGuardia = ({
     // Agrupar por DNI y construir string de grupos
     const arr = Array.isArray(data.data) ? data.data : []
     const agrupadosPorDni = arr.reduce((acc, bombero) => {
-      const grupos = bombero.grupoGuardia?.length ? bombero.grupoGuardia.join(', ') : 'No asignado'
+      const grupos = bombero.grupoGuardia || []
+      const gruposTexto = grupos.length 
+  ? grupos.map(g => g.nombre).join(', ') 
+  : 'No asignado'
+
+
+
       if (!acc[bombero.dni]) acc[bombero.dni] = { ...bombero, grupos }
       else acc[bombero.dni].grupos += `, ${grupos}`
       return acc
@@ -248,18 +254,21 @@ const RegistrarGuardia = ({
                         <tbody>
                           {items.map((b) => {
                             const yaEstaEnGrupoActual = grupo.some((g) => g.dni === b.dni)
-                            const asignado = b.grupos !== 'No asignado'
+                            const tieneGrupoActivo = b.grupoGuardia?.length > 0
 
                             let perteneceAOtroGrupo = false
-                            if (modoEdicion && asignado) {
-                              const gruposAsignados = b.grupos.split(',').map((g) => g.trim().toLowerCase())
-                              perteneceAOtroGrupo = !gruposAsignados.includes((nombreGrupo || '').toLowerCase())
-                            } else if (!modoEdicion && asignado) {
-                              perteneceAOtroGrupo = true
-                            }
+
+if (modoEdicion && tieneGrupoActivo) {
+  const nombres = (b.grupoGuardia || []).map(g =>
+  typeof g === 'string' ? g.toLowerCase() : g.nombre?.toLowerCase()
+)
+  perteneceAOtroGrupo = !nombres.includes((nombreGrupo || '').toLowerCase())
+} else if (!modoEdicion && tieneGrupoActivo) {
+  perteneceAOtroGrupo = true
+}
 
                             const deshabilitarBtn = yaEstaEnGrupoActual || perteneceAOtroGrupo
-                            const mostrarTooltip = asignado
+                            const mostrarTooltip = perteneceAOtroGrupo && !yaEstaEnGrupoActual
 
                             return (
                               <tr key={b.dni} className="border-b">
@@ -267,7 +276,11 @@ const RegistrarGuardia = ({
                                 <td className="border-end px-3" data-label="DNI">{b.dni}</td>
                                 <td className="border-end px-3" data-label="Legajo">{b.legajo || '-'}</td>
                                 <td className="border-end px-3" data-label="Teléfono">{b.telefono}</td>
-                                <td className="border-end px-3" data-label="Grupo">{b.grupos}</td>
+                                <td className="border-end px-3" data-label="Grupo">
+  {b.grupoGuardia?.length > 0 
+    ? b.grupoGuardia.join(', ') 
+    : 'No asignado'}
+</td>
                                 <td className="border-end px-3 text-center" data-label="Acciones">
                                   <div className="tooltip-container">
                                     <button
@@ -279,8 +292,12 @@ const RegistrarGuardia = ({
                                     </button>
                                     {mostrarTooltip && (
                                       <div className="tooltip">
-                                        Pertenece a: {b.grupos}
-                                      </div>
+  Pertenece a: {
+    b.grupoGuardia?.length > 0
+      ? b.grupoGuardia.join(', ')
+      : 'Sin grupo'
+  }
+</div>
                                     )}
                                   </div>
                                 </td>
